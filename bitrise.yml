@@ -1,0 +1,25 @@
+format_version: 1.0.0
+default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
+
+app:
+  envs:
+  # define these in your .bitrise.secrets.yml
+  - BITRISE_BUILD_URL:
+  - BITRISE_BUILD_API_TOKEN:
+  - BITRISE_DEPLOY_PATH:
+  - NOTIFY_USER_GROUPS:
+  - NOTIFY_EMAIL_LIST:
+
+workflows:
+  test:
+    steps:
+    - path::./:
+        run_if: true
+        inputs:
+        - build_url: $BITRISE_BUILD_URL
+        - build_api_token: $BITRISE_BUILD_API_TOKEN
+        - is_compress: "true"
+        - deploy_path: $BITRISE_DEPLOY_PATH
+        - notify_user_groups: $NOTIFY_USER_GROUPS
+        - notify_email_list: $NOTIFY_EMAIL_LIST
+        - is_enable_public_page: "false"
