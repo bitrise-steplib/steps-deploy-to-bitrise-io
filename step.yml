@@ -121,4 +121,10 @@ inputs:
       value_options:
       - "true"
       - "false"
-outputs: []
+outputs:
+  - BITRISE_PUBLIC_INSTALL_PAGE_URL:
+    opts:
+      title: Public Install Page URL
+      description: |-
+        Public Install Page's URL, if the
+        *Enable public page for the App?* option was *enabled*.
