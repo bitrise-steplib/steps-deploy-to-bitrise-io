@@ -1,11 +1,11 @@
-title: "Bitrise Artifact Deploy"
+title: "Bitrise Deploy"
 summary: |-
-  Generic Bitrise artifact deployer Step.
+  Generic Bitrise deployer Step.
 description: |-
-  Generic Bitrise artifact deployer Step.
-website: https://github.com/bitrise-io/steps-bitrise-artifact-deploy
-source_code_url: https://github.com/bitrise-io/steps-bitrise-artifact-deploy
-support_url: https://github.com/bitrise-io/steps-bitrise-artifact-deploy/issues
+  Generic Bitrise deployer Step.
+website: https://github.com/bitrise-io/steps-deploy-to-bitriseio
+source_code_url: https://github.com/bitrise-io/steps-deploy-to-bitriseio
+support_url: https://github.com/bitrise-io/steps-deploy-to-bitriseio/issues
 host_os_tags:
   - "osx-10.10"
 project_type_tags: []

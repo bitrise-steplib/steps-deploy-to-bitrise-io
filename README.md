@@ -1,6 +1,6 @@
-# Bitrise Artifact Deploy Step
+# Bitrise Deploy Step
 
-Generic Bitrise artifact deployer Step
+Generic Bitrise deployer Step
 
 
 ## How to use this Step
