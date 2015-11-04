@@ -64,6 +64,7 @@ puts " * is_enable_public_page: #{options[:is_enable_public_page]}"
 # --- Main
 
 begin
+  public_page_url = ''
   if File.directory?(options[:deploy_path])
     if options[:is_compress]
       puts
@@ -78,7 +79,7 @@ begin
 
         fail 'Failed to create compressed ZIP file' unless File.exist?(zip_archive_path)
 
-        deploy_file_to_bitrise(zip_archive_path,
+        public_page_url = deploy_file_to_bitrise(zip_archive_path,
                                options[:build_url],
                                options[:api_token]
                               )
@@ -98,8 +99,9 @@ begin
         disk_file_path = File.join(options[:deploy_path], filepth)
         next if File.directory?(disk_file_path)
 
+        a_public_page_url = ''
         if disk_file_path.match('.*.ipa')
-          deploy_ipa_to_bitrise(
+          a_public_page_url = deploy_ipa_to_bitrise(
             disk_file_path,
             options[:build_url],
             options[:api_token],
@@ -108,7 +110,7 @@ begin
             options[:is_enable_public_page]
           )
         elsif disk_file_path.match('.*.apk')
-          deploy_apk_to_bitrise(disk_file_path,
+          a_public_page_url = deploy_apk_to_bitrise(disk_file_path,
                                 options[:build_url],
                                 options[:api_token],
                                 options[:notify_user_groups],
@@ -116,23 +118,27 @@ begin
                                 options[:is_enable_public_page]
                                )
         else
-          deploy_file_to_bitrise(disk_file_path,
+          a_public_page_url = deploy_file_to_bitrise(disk_file_path,
                                  options[:build_url],
                                  options[:api_token]
                                 )
         end
+
+        public_page_url = a_public_page_url if public_page_url == '' && !a_public_page_url.nil? && a_public_page_url != ''
       end
     end
   else
     puts
     puts '## Deploying single file'
-    deploy_file_to_bitrise(options[:deploy_path],
+    public_page_url = deploy_file_to_bitrise(options[:deploy_path],
                            options[:build_url],
                            options[:api_token]
                           )
   end
 
   # - Success
+  fail 'Failed to export BITRISE_PUBLIC_INSTALL_PAGE_URL' unless system("envman add --key BITRISE_PUBLIC_INSTALL_PAGE_URL --value '#{public_page_url}'")
+
   puts
   puts '## Success'
   puts "(i) You can find the Artifact on Bitrise, on the [Build's page](#{options[:build_url]})"

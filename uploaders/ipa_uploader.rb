@@ -85,12 +85,12 @@ def deploy_ipa_to_bitrise(ipa_path, build_url, api_token, notify_user_groups, no
   # - Finish the Artifact creation
   puts
   puts '=> Finish the Artifact creation'
-  finish_artifact(build_url,
-                  api_token,
-                  artifact_id,
-                  JSON.dump(ipa_info_hsh),
-                  notify_user_groups,
-                  notify_emails,
-                  is_enable_public_page
-                 )
+  return finish_artifact(build_url,
+                         api_token,
+                         artifact_id,
+                         JSON.dump(ipa_info_hsh),
+                         notify_user_groups,
+                         notify_emails,
+                         is_enable_public_page
+                        )
 end

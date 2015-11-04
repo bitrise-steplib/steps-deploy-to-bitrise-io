@@ -48,7 +48,7 @@ def finish_artifact(url, token, artifact_id, artifact_info, notify_user_groups, 
   params['artifact_info'] = artifact_info unless artifact_info.nil?
   params['notify_user_groups'] = notify_user_groups unless notify_user_groups.nil?
   params['notify_emails'] = notify_emails unless notify_emails.nil?
-  params['is_enable_public_page'] = is_enable_public_page
+  params['is_enable_public_page'] = 'yes' if is_enable_public_page
 
   raw_resp = Net::HTTP.post_form(uri, params)
   fail "Failed to send 'finished' to Bitrise - code: #{raw_resp.code}" unless raw_resp.code == '200'
@@ -56,4 +56,12 @@ def finish_artifact(url, token, artifact_id, artifact_info, notify_user_groups, 
   parsed_resp = JSON.parse(raw_resp.body)
   puts "  (i) parsed_resp: #{parsed_resp}"
   fail 'Failed to send \'finished\' to Bitrise' unless parsed_resp['status'] == 'ok'
+
+  if is_enable_public_page == true
+    public_install_page_url = parsed_resp['public_install_page_url']
+    raise 'Public Install Page was enabled, but no Public Install Page URL is available!' if public_install_page_url.to_s.empty?
+    return public_install_page_url.to_s
+  else
+    puts 'Publis Install Page was disabled, no BITRISE_PUBLIC_INSTALL_PAGE_URL is generated.'
+  end
 end

@@ -23,12 +23,12 @@ def deploy_file_to_bitrise(file_path, build_url, api_token)
   # - Finish the Artifact creation
   puts
   puts '=> Finish the Artifact creation'
-  finish_artifact(build_url,
-                  api_token,
-                  artifact_id,
-                  '',
-                  '',
-                  '',
-                  false
-                 )
+  return finish_artifact(build_url,
+                         api_token,
+                         artifact_id,
+                         '',
+                         '',
+                         '',
+                         false
+                         )
 end
