@@ -3,9 +3,9 @@ summary: |-
   Generic Bitrise deployer Step.
 description: |-
   Generic Bitrise deployer Step.
-website: https://github.com/bitrise-io/steps-deploy-to-bitriseio
-source_code_url: https://github.com/bitrise-io/steps-deploy-to-bitriseio
-support_url: https://github.com/bitrise-io/steps-deploy-to-bitriseio/issues
+website: https://github.com/bitrise-io/steps-deploy-to-bitrise-io
+source_code_url: https://github.com/bitrise-io/steps-deploy-to-bitrise-io
+support_url: https://github.com/bitrise-io/steps-deploy-to-bitrise-io/issues
 host_os_tags:
   - "osx-10.10"
 project_type_tags: []
