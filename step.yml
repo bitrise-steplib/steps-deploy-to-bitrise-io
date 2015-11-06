@@ -1,8 +1,8 @@
-title: "Bitrise Deploy"
+title: "Deploy to bitrise.io"
 summary: |-
-  Generic Bitrise deployer Step.
+  Generic artifacts deployer, attaches the artifacts to bitrise.io builds.
 description: |-
-  Generic Bitrise deployer Step.
+  Generic artifacts deployer, attaches the artifacts to bitrise.io builds.
 website: https://github.com/bitrise-io/steps-deploy-to-bitrise-io
 source_code_url: https://github.com/bitrise-io/steps-deploy-to-bitrise-io
 support_url: https://github.com/bitrise-io/steps-deploy-to-bitrise-io/issues
