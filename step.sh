@@ -2,7 +2,14 @@
 
 THIS_SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-ruby "${THIS_SCRIPT_DIR}/step.rb" \
+set -e
+set -x
+
+cd "$THIS_SCRIPT_DIR"
+
+bundle install
+
+bundle exec ruby "./step.rb" \
   -u "${build_url}" \
   -t "${build_api_token}" \
   -c "${is_compress}" \
