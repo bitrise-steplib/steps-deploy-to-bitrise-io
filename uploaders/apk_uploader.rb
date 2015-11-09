@@ -23,6 +23,16 @@ def deploy_apk_to_bitrise(apk_path, build_url, api_token, notify_user_groups, no
   puts '=> Upload the apk'
   upload_file(upload_url, apk_path)
 
+  # !!!
+  # - Remove this if public page for android implemented on bitrise.io
+  # !!!
+  if is_enable_public_page
+    puts
+    puts '(!) Public page is not allowed yet, for apk.'
+    puts '(!) is_enable_public_page = false'
+    is_enable_public_page = false
+  end
+
   # - Finish the Artifact creation
   puts
   puts '=> Finish the Artifact creation'
