@@ -15,7 +15,7 @@ def build_tool_version_greater?(version, compare_version)
 
   for i in 0..version_componts.count - 1
     next if compare_version_components[i].to_i == version_componts[i].to_i
-    return false if compare_version_components[i].to_i > version_componts[i].to_i
+    return false if compare_version_components[i].to_i < version_componts[i].to_i
     return true if compare_version_components[i].to_i > version_componts[i].to_i
   end
   return false
