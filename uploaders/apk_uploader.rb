@@ -22,34 +22,29 @@ def build_tool_version_greater?(version, compare_version)
 end
 
 def aapt_path
-  available_package_out = `android list sdk --no-ui --all --extended`
-  latest_build_tool_version = ''
-  available_package_out.each_line do |line|
-    build_tool_regex = /"build-tools-(?<build_tool>.*)"/
-    match = line.match(build_tool_regex)
-    next unless match && match.captures
-
-    build_tool_version = match.captures[0]
-
-    latest_build_tool_version = build_tool_version if latest_build_tool_version == ''
-    latest_build_tool_version = build_tool_version if build_tool_version_greater?(latest_build_tool_version, build_tool_version)
-  end
-
-  if latest_build_tool_version == ''
-    fail_with_message('Failed to find latest build-tool version')
-  end
-
   android_home = ENV['ANDROID_HOME']
   if android_home.nil? || android_home == ''
     fail_with_message('Failed to get ANDROID_HOME env')
   end
 
-  aapt_path = File.join(android_home, 'build-tools', latest_build_tool_version, 'aapt')
-  unless File.exist?(aapt_path)
-    fail_with_message("aapt tool doesn't found at: #{aapt_path}")
+  aapt_files = Dir[File.join(android_home, 'build-tools', '/**/aapt')]
+  fail_with_message('Failed to find aapt tool') unless aapt_files
+
+  latest_build_tool_version = ''
+  latest_aapt_path = ''
+  aapt_files.each do |aapt_file|
+    path_splits = aapt_file.to_s.split('/')
+    build_tool_version = path_splits[path_splits.count - 2]
+
+    latest_build_tool_version = build_tool_version if latest_build_tool_version == ''
+    if build_tool_version_greater?(latest_build_tool_version, build_tool_version)
+      latest_build_tool_version = build_tool_version
+      latest_aapt_path = aapt_file.to_s
+    end
   end
 
-  return aapt_path
+  fail_with_message('Failed to find latest aapt tool') if latest_aapt_path == ''
+  return latest_aapt_path
 end
 
 # -----------------------
