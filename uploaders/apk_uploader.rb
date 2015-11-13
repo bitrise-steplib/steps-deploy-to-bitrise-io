@@ -1,5 +1,57 @@
 require 'json'
 
+def fail_with_message(message)
+  puts "\e[31m#{message}\e[0m"
+  exit(1)
+end
+
+def build_tool_version_greater?(version, compare_version)
+  version_componts = version.split('.')
+  compare_version_components = compare_version.split('.')
+
+  if version_componts.count != 3 || compare_version_components.count != 3
+    fail_with_message("Invalid build-tool version #{version} | #{compare_version}")
+  end
+
+  for i in 0..version_componts.count - 1
+    next if compare_version_components[i].to_i == version_componts[i].to_i
+    return false if compare_version_components[i].to_i > version_componts[i].to_i
+    return true if compare_version_components[i].to_i > version_componts[i].to_i
+  end
+  return false
+end
+
+def aapt_path
+  available_package_out = `android list sdk --no-ui --all --extended`
+  latest_build_tool_version = ''
+  available_package_out.each_line do |line|
+    build_tool_regex = /"build-tools-(?<build_tool>.*)"/
+    match = line.match(build_tool_regex)
+    next unless match && match.captures
+
+    build_tool_version = match.captures[0]
+
+    latest_build_tool_version = build_tool_version if latest_build_tool_version == ''
+    latest_build_tool_version = build_tool_version if build_tool_version_greater?(latest_build_tool_version, build_tool_version)
+  end
+
+  if latest_build_tool_version == ''
+    fail_with_message('Failed to find latest build-tool version')
+  end
+
+  android_home = ENV['ANDROID_HOME']
+  if android_home.nil? || android_home == ''
+    fail_with_message('Failed to get ANDROID_HOME env')
+  end
+
+  aapt_path = File.join(android_home, 'build-tools', latest_build_tool_version, 'aapt')
+  unless File.exist?(aapt_path)
+    fail_with_message("aapt tool doesn't found at: #{aapt_path}")
+  end
+
+  return aapt_path
+end
+
 # -----------------------
 # --- upload apk
 # -----------------------
@@ -8,8 +60,40 @@ def deploy_apk_to_bitrise(apk_path, build_url, api_token, notify_user_groups, no
   puts
   puts "# Deploying apk file: #{apk_path}"
 
+  # - Analyze the apk / collect infos from apk
+  puts
+  puts '=> Analyze the apk'
+
+  aapt = aapt_path
+  infos = `#{aapt} dump badging #{apk_path}`
+
+  package_name_version_regex = 'package: name=\'(?<package_name>.*)\' versionCode=\'(?<version_code>.*)\' versionName=\'(?<version_name>.*)\' '
+  package_name_version_match = infos.match(package_name_version_regex)
+  package_name = package_name_version_match.captures[0] if package_name_version_match && package_name_version_match.captures
+  version_code = package_name_version_match.captures[1] if package_name_version_match && package_name_version_match.captures
+  version_name = package_name_version_match.captures[2] if package_name_version_match && package_name_version_match.captures
+
+  app_name_regex = 'application-label:\'(?<min_sdk_version>.*)\''
+  app_name_match = infos.match(app_name_regex)
+  app_name = app_name_match.captures[0] if app_name_match && app_name_match.captures
+
+  min_sdk_regex = 'sdkVersion:\'(?<min_sdk_version>.*)\''
+  min_sdk_match = infos.match(min_sdk_regex)
+  min_sdk = min_sdk_match.captures[0] if min_sdk_match && min_sdk_match.captures
+
   apk_file_size = File.size(apk_path)
-  puts "  (i) apk_file_size: #{apk_file_size} KB / #{apk_file_size / 1024.0} MB"
+
+  apk_info_hsh = {
+    file_size_bytes: apk_file_size,
+    app_info: {
+      app_name: app_name,
+      package_name: package_name,
+      version_code: version_code,
+      version_name: version_name,
+      min_sdk_version: min_sdk
+    }
+  }
+  puts "  (i) apk_info_hsh: #{apk_info_hsh}"
 
   # - Create a Build Artifact on Bitrise
   puts
@@ -39,7 +123,7 @@ def deploy_apk_to_bitrise(apk_path, build_url, api_token, notify_user_groups, no
   return finish_artifact(build_url,
                          api_token,
                          artifact_id,
-                         '',
+                         JSON.dump(apk_info_hsh),
                          notify_user_groups,
                          notify_emails,
                          is_enable_public_page

@@ -130,10 +130,33 @@ begin
   else
     puts
     puts '## Deploying single file'
-    public_page_url = deploy_file_to_bitrise(options[:deploy_path],
-                           options[:build_url],
-                           options[:api_token]
-                          )
+    a_public_page_url = ''
+    if options[:deploy_path].match('.*.ipa')
+      a_public_page_url = deploy_ipa_to_bitrise(
+        options[:deploy_path],
+        options[:build_url],
+        options[:api_token],
+        options[:notify_user_groups],
+        options[:notify_email_list],
+        options[:is_enable_public_page]
+      )
+    elsif options[:deploy_path].match('.*.apk')
+      a_public_page_url = deploy_apk_to_bitrise(
+                            options[:deploy_path],
+                            options[:build_url],
+                            options[:api_token],
+                            options[:notify_user_groups],
+                            options[:notify_email_list],
+                            options[:is_enable_public_page]
+                           )
+    else
+      a_public_page_url = deploy_file_to_bitrise(
+                             options[:deploy_path],
+                             options[:build_url],
+                             options[:api_token]
+                            )
+    end
+    public_page_url = a_public_page_url
   end
 
   # - Success
