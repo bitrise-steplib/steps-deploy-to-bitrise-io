@@ -5,22 +5,6 @@ def fail_with_message(message)
   exit(1)
 end
 
-def build_tool_version_greater?(version, compare_version)
-  version_componts = version.split('.')
-  compare_version_components = compare_version.split('.')
-
-  if version_componts.count != 3 || compare_version_components.count != 3
-    fail_with_message("Invalid build-tool version #{version} | #{compare_version}")
-  end
-
-  for i in 0..version_componts.count - 1
-    next if compare_version_components[i].to_i == version_componts[i].to_i
-    return false if compare_version_components[i].to_i < version_componts[i].to_i
-    return true if compare_version_components[i].to_i > version_componts[i].to_i
-  end
-  return false
-end
-
 def aapt_path
   android_home = ENV['ANDROID_HOME']
   if android_home.nil? || android_home == ''
@@ -37,7 +21,7 @@ def aapt_path
     build_tool_version = path_splits[path_splits.count - 2]
 
     latest_build_tool_version = build_tool_version if latest_build_tool_version == ''
-    if build_tool_version_greater?(latest_build_tool_version, build_tool_version)
+    if Gem::Version.new(build_tool_version) > Gem::Version.new(latest_build_tool_version)
       latest_build_tool_version = build_tool_version
       latest_aapt_path = aapt_file.to_s
     end
