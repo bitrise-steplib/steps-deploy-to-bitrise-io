@@ -45,7 +45,6 @@ def deploy_ipa_to_bitrise(ipa_path, build_url, api_token, notify_user_groups, no
   puts
 
   ipa_file_size = File.size(ipa_path)
-  puts "  (i) ipa_file_size: #{ipa_file_size} KB / #{ipa_file_size / 1024.0} MB"
 
   info_plist_content = parsed_ipa_infos[:info_plist][:content]
   mobileprovision_content = parsed_ipa_infos[:mobileprovision][:content]
