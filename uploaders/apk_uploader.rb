@@ -21,7 +21,7 @@ def aapt_path
     build_tool_version = path_splits[path_splits.count - 2]
 
     latest_build_tool_version = build_tool_version if latest_build_tool_version == ''
-    if Gem::Version.new(build_tool_version) > Gem::Version.new(latest_build_tool_version)
+    if Gem::Version.new(build_tool_version) >= Gem::Version.new(latest_build_tool_version)
       latest_build_tool_version = build_tool_version
       latest_aapt_path = aapt_file.to_s
     end
