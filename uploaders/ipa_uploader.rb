@@ -27,6 +27,16 @@ def deploy_ipa_to_bitrise(ipa_path, build_url, api_token, notify_user_groups, no
     parsed_ipa_infos[:mobileprovision] = ipa_analyzer.collect_provision_info
     fail 'Failed to collect Provisioning Profile information' if parsed_ipa_infos[:mobileprovision].nil?
 
+    if parsed_ipa_infos[:mobileprovision]['ProvisionedDevices'].nil? && parsed_ipa_infos[:mobileprovision]['ProvisionsAllDevices'].nil?
+      if is_enable_public_page
+        puts
+        puts ' (!) is_enable_public_page is set, but public download isn\'t allowed for app-store distributions'
+        puts ' (!) setting is_enable_public_page to false ...'
+        puts
+        is_enable_public_page = false
+      end
+    end
+
     puts '  => Collecting Info.plist information'
     parsed_ipa_infos[:info_plist] = ipa_analyzer.collect_info_plist_info
     fail 'Failed to collect Info.plist information' if parsed_ipa_infos[:info_plist].nil?
