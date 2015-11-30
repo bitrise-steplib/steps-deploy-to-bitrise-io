@@ -6,6 +6,24 @@ require_relative 'common'
 # --- upload ipa
 # -----------------------
 
+def export_method(mobileprovision_content)
+  # if ProvisionedDevices: !nil & "get-task-allow": true -> development
+  # if ProvisionedDevices: !nil & "get-task-allow": false -> ad-hoc
+  # if ProvisionedDevices: nil & "ProvisionsAllDevices": "true" -> enterprise
+  # if ProvisionedDevices: nil & ProvisionsAllDevices: nil -> app-store
+  if mobileprovision_content['ProvisionedDevices'].nil?
+    return 'enterprise' if !mobileprovision_content['ProvisionsAllDevices'].nil? && (mobileprovision_content['ProvisionsAllDevices'] == true || mobileprovision_content['ProvisionsAllDevices'] == 'true')
+    return 'app-store'
+  else
+    unless mobileprovision_content['Entitlements'].nil?
+      entitlements = mobileprovision_content['Entitlements']
+      return 'development' if !entitlements['get-task-allow'].nil? && (entitlements['get-task-allow'] == true || entitlements['get-task-allow'] == 'true')
+      return 'ad-hoc'
+    end
+  end
+  return 'development'
+end
+
 def deploy_ipa_to_bitrise(ipa_path, build_url, api_token, notify_user_groups, notify_emails, is_enable_public_page)
   puts
   puts "# Deploying ipa file: #{ipa_path}"
@@ -27,7 +45,7 @@ def deploy_ipa_to_bitrise(ipa_path, build_url, api_token, notify_user_groups, no
     parsed_ipa_infos[:mobileprovision] = ipa_analyzer.collect_provision_info
     fail 'Failed to collect Provisioning Profile information' if parsed_ipa_infos[:mobileprovision].nil?
 
-    if parsed_ipa_infos[:mobileprovision]['ProvisionedDevices'].nil? && parsed_ipa_infos[:mobileprovision]['ProvisionsAllDevices'].nil?
+    if export_method(parsed_ipa_infos[:mobileprovision]) == 'app-store'
       if is_enable_public_page
         puts
         puts ' (!) is_enable_public_page is set, but public download isn\'t allowed for app-store distributions'
