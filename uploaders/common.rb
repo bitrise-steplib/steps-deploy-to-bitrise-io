@@ -35,7 +35,7 @@ end
 
 def upload_file(url, file)
   puts "  (i) upload_url: #{url}"
-  fail 'Failed to upload the Artifact file' unless system("curl --fail --silent -T '#{file}' -X PUT '#{url}'")
+  fail 'Failed to upload the Artifact file' unless system("curl --fail -T '#{file}' -X PUT '#{url}'")
 end
 
 def finish_artifact(url, token, artifact_id, artifact_info, notify_user_groups, notify_emails, is_enable_public_page)
