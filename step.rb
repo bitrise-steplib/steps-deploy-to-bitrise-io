@@ -47,7 +47,7 @@ fail_with_message('No api_token provided') unless options[:api_token]
 fail_with_message('No deploy_path provided') unless options[:deploy_path]
 
 if !Dir.exist?(options[:deploy_path]) && !File.exist?(options[:deploy_path])
-  fail_with_message('Deploy source path does not exist at the provided path')
+  fail_with_message('Deploy source path does not exist at the provided path: ' + options[:deploy_path])
 end
 
 puts
@@ -96,16 +96,19 @@ begin
       entries.delete('.')
       entries.delete('..')
 
+      entries = entries
+        .map { |e| File.join(options[:deploy_path], e) }
+        .select { |e| !File.directory?(e) }
+
       puts
       puts '======= List of files ======='
       puts ' No files found to deploy' if entries.length == 0
-      entries.each { |filepth| puts " * #{filepth}" } if entries.length > 0
+      entries.each { |filepth| puts " * #{filepth}" }
       puts '============================='
       puts
 
       entries.each do |filepth|
-        disk_file_path = File.join(options[:deploy_path], filepth)
-        next if File.directory?(disk_file_path)
+        disk_file_path = filepth
 
         a_public_page_url = ''
         if disk_file_path.match('.*.ipa')
