@@ -45,7 +45,7 @@ def deploy_ipa_to_bitrise(ipa_path, build_url, api_token, notify_user_groups, no
     parsed_ipa_infos[:mobileprovision] = ipa_analyzer.collect_provision_info
     fail 'Failed to collect Provisioning Profile information' if parsed_ipa_infos[:mobileprovision].nil?
 
-    if export_method(parsed_ipa_infos[:mobileprovision]) == 'app-store'
+    if export_method(parsed_ipa_infos[:mobileprovision][:content]) == 'app-store'
       if is_enable_public_page
         puts
         puts ' (!) is_enable_public_page is set, but public download isn\'t allowed for app-store distributions'
