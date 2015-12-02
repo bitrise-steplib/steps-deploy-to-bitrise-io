@@ -13,7 +13,7 @@ type_tags:
   - deploy
   - artifact
 is_requires_admin_user: false
-is_always_run: false
+is_always_run: true
 is_skippable: false
 run_if: .IsCI
 inputs:
