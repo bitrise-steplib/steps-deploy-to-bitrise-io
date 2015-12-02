@@ -95,6 +95,14 @@ begin
       entries = Dir.entries(options[:deploy_path])
       entries.delete('.')
       entries.delete('..')
+
+      puts
+      puts '======= List of files ======='
+      puts ' No files found to deploy' if entries.length == 0
+      entries.each { |filepth| puts " * #{filepth}" } if entries.length > 0
+      puts '============================='
+      puts
+
       entries.each do |filepth|
         disk_file_path = File.join(options[:deploy_path], filepth)
         next if File.directory?(disk_file_path)
