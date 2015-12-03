@@ -17,8 +17,27 @@ def create_artifact(url, token, file, type)
     'filename' => file_to_deploy_filename,
     'artifact_type' => type
   }
-  raw_resp = Net::HTTP.post_form(uri, params)
-  fail "Failed to create the Build Artifact on Bitrise - code: #{raw_resp.code}" unless raw_resp.code == '200'
+
+  raw_resp = nil
+  (0..2).find { |i|
+    if i > 0
+      puts "-> Retrying..."
+      sleep 5
+    end
+    begin
+      raw_resp = Net::HTTP.post_form(uri, params)
+      if raw_resp.code == '200'
+        true
+      else
+        puts " (!) Creat Artifact failed, (response code was: #{raw_resp.code})"
+        false
+      end
+    rescue => ex
+      puts " (!) Creat Artifact failed, (exception was: #{ex})"
+      false
+    end
+  }
+  fail "Failed to create the Build Artifact on Bitrise" if !raw_resp or raw_resp.code != '200'
 
   parsed_resp = JSON.parse(raw_resp.body)
   puts "  (i) parsed_resp: #{parsed_resp}"
@@ -35,7 +54,19 @@ end
 
 def upload_file(url, file)
   puts "  (i) upload_url: #{url}"
-  fail 'Failed to upload the Artifact file' unless system("curl --fail -T '#{file}' -X PUT '#{url}'")
+  is_success = (0..2).find { |i|
+    if i > 0
+      puts "-> Retrying..."
+      sleep 5
+    end
+    if system("curl --fail --tlsv1 -T '#{file}' -X PUT '#{url}'")
+      true
+    else
+      puts " (!) Upload failed"
+      false
+    end
+  }
+  fail 'Failed to upload the Artifact file' if !is_success
 end
 
 def finish_artifact(url, token, artifact_id, artifact_info, notify_user_groups, notify_emails, is_enable_public_page)
@@ -50,8 +81,26 @@ def finish_artifact(url, token, artifact_id, artifact_info, notify_user_groups, 
   params['notify_emails'] = notify_emails unless notify_emails.nil?
   params['is_enable_public_page'] = 'yes' if is_enable_public_page
 
-  raw_resp = Net::HTTP.post_form(uri, params)
-  fail "Failed to send 'finished' to Bitrise - code: #{raw_resp.code}" unless raw_resp.code == '200'
+  raw_resp = nil
+  (0..2).find { |i|
+    if i > 0
+      puts "-> Retrying..."
+      sleep 5
+    end
+    begin
+      raw_resp = Net::HTTP.post_form(uri, params)
+      if raw_resp.code == '200'
+        true
+      else
+        puts " (!) Finish Artifact failed, (response code was: #{raw_resp.code})"
+        false
+      end
+    rescue => ex
+      puts " (!) Finish Artifact failed, (exception was: #{ex})"
+      false
+    end
+  }
+  fail "Failed to send 'finished' to Bitrise" if !raw_resp or raw_resp.code != '200'
 
   parsed_resp = JSON.parse(raw_resp.body)
   puts "  (i) parsed_resp: #{parsed_resp}"
@@ -62,6 +111,6 @@ def finish_artifact(url, token, artifact_id, artifact_info, notify_user_groups, 
     raise 'Public Install Page was enabled, but no Public Install Page URL is available!' if public_install_page_url.to_s.empty?
     return public_install_page_url.to_s
   else
-    puts 'Publis Install Page was disabled, no BITRISE_PUBLIC_INSTALL_PAGE_URL is generated.'
+    puts 'Public Install Page was disabled, no BITRISE_PUBLIC_INSTALL_PAGE_URL is generated.'
   end
 end
