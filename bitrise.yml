@@ -4,11 +4,11 @@ default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 app:
   envs:
   # define these in your .bitrise.secrets.yml
-  - BITRISE_BUILD_URL:
-  - BITRISE_BUILD_API_TOKEN:
-  - BITRISE_DEPLOY_PATH:
-  - NOTIFY_USER_GROUPS:
-  - NOTIFY_EMAIL_LIST:
+  - BITRISE_BUILD_URL: $BITRISE_BUILD_URL
+  - BITRISE_BUILD_API_TOKEN: $BITRISE_BUILD_API_TOKEN
+  - BITRISE_DEPLOY_PATH: $BITRISE_DEPLOY_PATH
+  - NOTIFY_USER_GROUPS: $NOTIFY_USER_GROUPS
+  - NOTIFY_EMAIL_LIST: $NOTIFY_EMAIL_LIST
 
 workflows:
   test:
