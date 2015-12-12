@@ -5,11 +5,10 @@ THIS_SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 set -e
 set -x
 
-cd "$THIS_SCRIPT_DIR"
+export BUNDLE_GEMFILE="$THIS_SCRIPT_DIR/Gemfile"
 
 bundle install
-
-bundle exec ruby "./step.rb" \
+bundle exec ruby "$THIS_SCRIPT_DIR/step.rb" \
   -u "${build_url}" \
   -t "${build_api_token}" \
   -c "${is_compress}" \
