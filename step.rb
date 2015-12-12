@@ -54,8 +54,8 @@ end
 
 puts
 puts '========== Configs =========='
-puts " * build_url: #{options[:build_url]}"
-puts " * api_token: #{options[:api_token]}"
+puts " * Build URL: #{options[:build_url]}"
+puts " * Build's API Token: #{options[:api_token]}"
 puts " * is_compress: #{options[:is_compress]}"
 puts " * deploy_path: #{options[:deploy_path]}"
 puts " * notify_user_groups: #{options[:notify_user_groups]}"
