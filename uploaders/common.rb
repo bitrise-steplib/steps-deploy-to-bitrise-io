@@ -15,7 +15,8 @@ def create_artifact(url, token, file, type)
     'api_token' => token,
     'title' => file_to_deploy_filename,
     'filename' => file_to_deploy_filename,
-    'artifact_type' => type
+    'artifact_type' => type,
+    'file_size_bytes' => File.size(file),
   }
 
   raw_resp = nil
