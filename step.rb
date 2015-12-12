@@ -46,6 +46,8 @@ fail_with_message('No build_url provided') unless options[:build_url]
 fail_with_message('No api_token provided') unless options[:api_token]
 fail_with_message('No deploy_path provided') unless options[:deploy_path]
 
+options[:deploy_path] = File.absolute_path(options[:deploy_path])
+
 if !Dir.exist?(options[:deploy_path]) && !File.exist?(options[:deploy_path])
   fail_with_message('Deploy source path does not exist at the provided path: ' + options[:deploy_path])
 end
