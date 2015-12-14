@@ -53,14 +53,20 @@ def create_artifact(url, token, file, type)
   [upload_url, artifact_id]
 end
 
-def upload_file(url, file)
+def upload_file(url, file, content_type=nil)
   puts "  (i) upload_url: #{url}"
+  curl_call_str = "curl --fail --tlsv1"
+  if content_type
+    curl_call_str = "#{curl_call_str} -H 'Content-Type: #{content_type}'"
+  end
+  curl_call_str = "#{curl_call_str} -T '#{file}' -X PUT '#{url}'"
+  puts " (i) curl call: $ #{curl_call_str}"
   is_success = (0..2).find { |i|
     if i > 0
       puts "-> Retrying..."
       sleep 5
     end
-    if system("curl --fail --tlsv1 -T '#{file}' -X PUT '#{url}'")
+    if system(curl_call_str)
       true
     else
       puts " (!) Upload failed"
