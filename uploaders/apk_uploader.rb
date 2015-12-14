@@ -84,7 +84,7 @@ def deploy_apk_to_bitrise(apk_path, build_url, api_token, notify_user_groups, no
   # - Upload the apk
   puts
   puts '=> Upload the apk'
-  upload_file(upload_url, apk_path)
+  upload_file(upload_url, apk_path, 'application/vnd.android.package-archive')
 
   # - Finish the Artifact creation
   puts
