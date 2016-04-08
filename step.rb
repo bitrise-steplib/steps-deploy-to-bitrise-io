@@ -24,7 +24,8 @@ options = {
   deploy_path: nil,
   notify_user_groups: nil,
   notify_email_list: nil,
-  is_enable_public_page: true
+  is_enable_public_page: true,
+  qr_code_size: nil
 }
 
 parser = OptionParser.new do|opts|
@@ -36,6 +37,7 @@ parser = OptionParser.new do|opts|
   opts.on('-g', '--usergroups ARRAY', 'Notify User Groups') { |g| options[:notify_user_groups] = g unless g.to_s == '' }
   opts.on('-e', '--emaillist ARRAY', 'Notify Email List') { |e| options[:notify_email_list] = e unless e.to_s == '' }
   opts.on('-p', '--publicpage BOOL', 'Enable Public Page') { |p| options[:is_enable_public_page] = false if p.to_s == 'false' }
+  opts.on('-p', '--qr_code_size STRING', 'Public Page QR Code url') { |q| options[:qr_code_size] = q unless q.to_s == '' }
   opts.on('-h', '--help', 'Displays Help') do
     exit
   end
@@ -61,6 +63,7 @@ puts " * deploy_path: #{options[:deploy_path]}"
 puts " * notify_user_groups: #{options[:notify_user_groups]}"
 puts " * notify_email_list: #{options[:notify_email_list]}"
 puts " * is_enable_public_page: #{options[:is_enable_public_page]}"
+puts " * qr_code_size: #{options[:qr_code_size]}"
 
 # ----------------------------
 # --- Main
@@ -172,8 +175,16 @@ begin
     public_page_url = a_public_page_url
   end
 
+  public_page_qr_image_url = ''
+  if !public_page_url.empty?
+    if !options[:qr_code_size].nil? && !options[:qr_code_size].empty?
+      public_page_qr_image_url = 'https://api.qrserver.com/v1/create-qr-code/?size=' + options[:qr_code_size] + '&data=' + CGI::escape(public_page_url)
+    end
+  end
+
   # - Success
   fail 'Failed to export BITRISE_PUBLIC_INSTALL_PAGE_URL' unless system("envman add --key BITRISE_PUBLIC_INSTALL_PAGE_URL --value '#{public_page_url}'")
+  fail 'Failed to export BITRISE_PUBLIC_INSTALL_PAGE_QR_CODE_IMAGE_URL' unless system("envman add --key BITRISE_PUBLIC_INSTALL_PAGE_QR_CODE_IMAGE_URL --value '#{public_page_qr_image_url}'")
 
   puts
   puts '## Success'

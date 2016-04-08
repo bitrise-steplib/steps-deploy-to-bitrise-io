@@ -15,4 +15,5 @@ bundle exec ruby "$THIS_SCRIPT_DIR/step.rb" \
   -d "${deploy_path}" \
   -g "${notify_user_groups}" \
   -e "${notify_email_list}" \
-  -p "${is_enable_public_page}"
+  -p "${is_enable_public_page}" \
+  -p "${qr_code_size}"
