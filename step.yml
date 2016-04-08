@@ -121,10 +121,25 @@ inputs:
       value_options:
       - "true"
       - "false"
+  - qr_code_size: "150x150"
+    opts:
+      title: Public Install Page QR Code Image size
+      summary: |-
+        The size of the QR Code image using the format : WIDTHxHEIGHT
+      description: |-
+        The size of the QR Code image using the format : WIDTHxHEIGHT
+      is_required: false
+      is_expand: true
 outputs:
   - BITRISE_PUBLIC_INSTALL_PAGE_URL:
     opts:
       title: Public Install Page URL
       description: |-
         Public Install Page's URL, if the
+        *Enable public page for the App?* option was *enabled*.
+  - BITRISE_PUBLIC_INSTALL_PAGE_QR_CODE_IMAGE_URL:
+    opts:
+      title: Public Install Page QR Code Image URL
+      description: |-
+        QR Code Image URL for the public install page, if the
         *Enable public page for the App?* option was *enabled*.
