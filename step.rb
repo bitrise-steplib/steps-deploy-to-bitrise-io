@@ -178,7 +178,7 @@ begin
   public_page_qr_image_url = ''
   if !public_page_url.empty?
     if !options[:qr_code_size].nil? && !options[:qr_code_size].empty?
-      public_page_qr_image_url = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + CGI::escape(public_page_url)
+      public_page_qr_image_url = 'https://api.qrserver.com/v1/create-qr-code/?size=' + options[:qr_code_size] + '&data=' + CGI::escape(public_page_url)
     end
   end
 
