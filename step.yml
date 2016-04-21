@@ -17,24 +17,22 @@ is_always_run: true
 is_skippable: false
 run_if: .IsCI
 inputs:
-  - build_url: "$BITRISE_BUILD_URL"
+  - deploy_path: "$BITRISE_DEPLOY_DIR"
     opts:
-      title: "Bitrise Build URL"
-      summary: |-
-        Unique build URL of this build on Bitrise.io
-      description: |-
-        Unique build URL of this build on Bitrise.io
+      title: "Deploy directory or file path"
+      description: |
+        Specify the directory or file path which will be deployed.
+        If the specified path is a directory then every file
+        in the directory will be deployed - but only the
+        files in the specified directory, sub-directories
+        won't be uploaded. For uploading the directory's content
+        recursively you should use the *Compress* option
+        which will compress the whole directory, with
+        every sub-directory included.
+
+        If you specify a file path then only the specified
+        file will be deployed.
       is_required: true
-      is_expand: true
-  - build_api_token: "$BITRISE_BUILD_API_TOKEN"
-    opts:
-      title: Bitrise Build API Token
-      summary: |-
-        The build's API Token for the build on Bitrise.io
-      description: |-
-        The build's API Token for the build on Bitrise.io
-      is_required: true
-      is_expand: true
   - is_compress: "false"
     opts:
       title: Compress the artifacts into one file?
@@ -55,23 +53,6 @@ inputs:
       value_options:
         - "true"
         - "false"
-  - deploy_path: "$BITRISE_DEPLOY_DIR"
-    opts:
-      title: "Deploy directory or file path"
-      description: |
-        Specify the directory or file path which will be deployed.
-        If the specified path is a directory then every file
-        in the directory will be deployed - but only the
-        files in the specified directory, sub-directories
-        won't be uploaded. For uploading the directory's content
-        recursively you should use the *Compress* option
-        which will compress the whole directory, with
-        every sub-directory included.
-
-        If you specify a file path then only the specified
-        file will be deployed.
-      is_required: true
-      is_expand: true
   - notify_user_groups: "everyone"
     opts:
       title: "Notify: User Groups"
@@ -93,8 +74,6 @@ inputs:
         If you want to notify everyone in your team just specify `everyone`.
 
         If you don't want to notify anyone set this to `none`.
-      is_required: false
-      is_expand: false
   - notify_email_list:
     opts:
       title: "Notify: Emails"
@@ -103,8 +82,6 @@ inputs:
 
         You can specify any email address, the recepients
         don't have to be in your team.
-      is_required: false
-      is_expand: false
   - is_enable_public_page: "true"
     opts:
       title: "Enable public page for the App?"
@@ -121,6 +98,24 @@ inputs:
       value_options:
       - "true"
       - "false"
+  - build_url: "$BITRISE_BUILD_URL"
+    opts:
+      title: "Bitrise Build URL"
+      summary: |-
+        Unique build URL of this build on Bitrise.io
+      description: |-
+        Unique build URL of this build on Bitrise.io
+      is_required: true
+      is_dont_change_value: true
+  - build_api_token: "$BITRISE_BUILD_API_TOKEN"
+    opts:
+      title: Bitrise Build API Token
+      summary: |-
+        The build's API Token for the build on Bitrise.io
+      description: |-
+        The build's API Token for the build on Bitrise.io
+      is_required: true
+      is_dont_change_value: true
 outputs:
   - BITRISE_PUBLIC_INSTALL_PAGE_URL:
     opts:
