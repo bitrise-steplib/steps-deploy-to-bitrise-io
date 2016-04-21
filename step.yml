@@ -1,4 +1,4 @@
-title: "Deploy to bitrise.io"
+title: "Deploy to Bitrise.io"
 summary: |-
   Generic artifacts deployer, attaches the artifacts to bitrise.io builds.
 description: |-
