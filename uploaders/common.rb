@@ -10,12 +10,15 @@ def create_artifact(url, token, file, type)
 
   uri = URI("#{url}/artifacts.json")
 
+  file_size_bytes = File.size(file)
+  file_size_mb = file_size_bytes.to_f / 1024.0 / 1024.0
+  puts " (i) File Size: #{file_size_mb.round(2)} MB"
   params = {
     'api_token' => token,
     'title' => file_to_deploy_filename,
     'filename' => file_to_deploy_filename,
     'artifact_type' => type,
-    'file_size_bytes' => File.size(file),
+    'file_size_bytes' => file_size_bytes,
   }
 
   raw_resp = nil
