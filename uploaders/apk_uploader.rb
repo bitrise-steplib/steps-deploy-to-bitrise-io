@@ -37,11 +37,11 @@ end
 
 def deploy_apk_to_bitrise(apk_path, build_url, api_token, notify_user_groups, notify_emails, is_enable_public_page)
   puts
+  puts
   puts "# Deploying apk file: #{apk_path}"
 
   # - Analyze the apk / collect infos from apk
-  puts
-  puts '=> Analyze the apk'
+  puts '--> Analyze the apk'
 
   aapt = aapt_path
   infos = `#{aapt} dump badging #{apk_path}`
@@ -75,20 +75,17 @@ def deploy_apk_to_bitrise(apk_path, build_url, api_token, notify_user_groups, no
   puts "  (i) apk_info_hsh: #{apk_info_hsh}"
 
   # - Create a Build Artifact on Bitrise
-  puts
-  puts '=> Create a Build Artifact on Bitrise'
+  puts '--> Create a Build Artifact on Bitrise'
   upload_url, artifact_id = create_artifact(build_url, api_token, apk_path, 'android-apk')
   fail 'No upload_url provided for the artifact' if upload_url.nil?
   fail 'No artifact_id provided for the artifact' if artifact_id.nil?
 
   # - Upload the apk
-  puts
-  puts '=> Upload the apk'
+  puts '--> Upload the apk'
   upload_file(upload_url, apk_path, 'application/vnd.android.package-archive')
 
   # - Finish the Artifact creation
-  puts
-  puts '=> Finish the Artifact creation'
+  puts '--> Finish the Artifact creation'
   return finish_artifact(build_url,
                          api_token,
                          artifact_id,

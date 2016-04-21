@@ -26,11 +26,11 @@ end
 
 def deploy_ipa_to_bitrise(ipa_path, build_url, api_token, notify_user_groups, notify_emails, is_enable_public_page)
   puts
+  puts
   puts "# Deploying ipa file: #{ipa_path}"
 
   # - Analyze the IPA / collect infos from IPA
-  puts
-  puts '=> Analyze the IPA'
+  puts '--> Analyze the IPA'
 
   parsed_ipa_infos = {
     mobileprovision: nil,
@@ -99,19 +99,17 @@ def deploy_ipa_to_bitrise(ipa_path, build_url, api_token, notify_user_groups, no
 
   # - Create a Build Artifact on Bitrise
   puts
-  puts '=> Create a Build Artifact on Bitrise'
+  puts '--> Create a Build Artifact on Bitrise'
   upload_url, artifact_id = create_artifact(build_url, api_token, ipa_path, 'ios-ipa')
   fail 'No upload_url provided for the artifact' if upload_url.nil?
   fail 'No artifact_id provided for the artifact' if artifact_id.nil?
 
   # - Upload the IPA
-  puts
-  puts '=> Upload the ipa'
+  puts '--> Upload the ipa'
   upload_file(upload_url, ipa_path)
 
   # - Finish the Artifact creation
-  puts
-  puts '=> Finish the Artifact creation'
+  puts '--> Finish the Artifact creation'
   return finish_artifact(build_url,
                          api_token,
                          artifact_id,
