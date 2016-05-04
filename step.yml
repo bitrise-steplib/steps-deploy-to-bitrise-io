@@ -3,6 +3,9 @@ summary: |-
   Generic artifacts deployer, attaches the artifacts to bitrise.io builds.
 description: |-
   Generic artifacts deployer, attaches the artifacts to bitrise.io builds.
+  
+  You'll see the deployed files on bitrise.io, on the build's page,
+  in the "Apps and Artifacts" section.
 website: https://github.com/bitrise-io/steps-deploy-to-bitrise-io
 source_code_url: https://github.com/bitrise-io/steps-deploy-to-bitrise-io
 support_url: https://github.com/bitrise-io/steps-deploy-to-bitrise-io/issues
