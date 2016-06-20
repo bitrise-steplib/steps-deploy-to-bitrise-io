@@ -11,6 +11,8 @@ app:
   - NOTIFY_EMAIL_LIST: $NOTIFY_EMAIL_LIST
 
 workflows:
+  # ----------------------------------------------------------------
+  # --- workflow to Step Test
   test:
     steps:
     - script:
@@ -41,15 +43,42 @@ workflows:
         - content: |-
             echo "-> BITRISE_PUBLIC_INSTALL_PAGE_URL: ${BITRISE_PUBLIC_INSTALL_PAGE_URL}"
 
+  # ----------------------------------------------------------------
+  # --- workflows to create Release
+  create-release:
+    steps:
+    - script:
+        title:
+        inputs:
+        - content: |
+            #!/bin/bash
+            set -e
+
+            export CI=true
+            releaseman create --bump-version patch
+
+  create-release-version:
+    envs:
+    - RELEASE_VERSION: 1.2.4
+    steps:
+    - script:
+        title:
+        inputs:
+        - content: |
+            #!/bin/bash
+            set -e
+
+            export CI=true
+            releaseman create --version $RELEASE_VERSION
 
   # ----------------------------------------------------------------
-  # --- workflows to Share this step into a Step Library
+  # --- workflow to Share this step into a Step Library
   share-this-step:
     envs:
       # if you want to share this step into a StepLib
       - MY_STEPLIB_REPO_FORK_GIT_URL: $MY_STEPLIB_REPO_FORK_GIT_URL
       - STEP_ID_IN_STEPLIB: deploy-to-bitrise-io
-      - STEP_GIT_VERION_TAG_TO_SHARE: 1.2.3
+      - STEP_GIT_VERION_TAG_TO_SHARE: 1.2.4
       - STEP_GIT_CLONE_URL: https://github.com/bitrise-io/steps-deploy-to-bitrise-io.git
     description: |-
       If this is the first time you try to share a Step you should
