@@ -18,6 +18,7 @@ workflows:
         inputs:
         - content: |-
             #!/bin/bash
+            bundle install --with test
             rspec .
     - change-workdir:
         run_if: true

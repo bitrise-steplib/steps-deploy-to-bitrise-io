@@ -49,13 +49,19 @@ def filter_package_infos(infos)
 end
 
 def filter_app_label(infos)
-  app_name = ''
-
+  # application: label='CardsUp' icon='res/mipmap-hdpi-v4/ic_launcher.png'
   app_label_regex = 'application: label=\'(?<label>.+)\' icon='
   app_label_match = infos.match(app_label_regex)
-  app_name = app_label_match.captures[0] if app_label_match && app_label_match.captures
 
-  return app_name
+  return app_label_match.captures[0]  if app_label_match && app_label_match.captures
+
+  # application-label:'CardsUp'
+  app_label_regex = 'application-label:\'(?<label>.*)\''
+  app_label_match = infos.match(app_label_regex)
+
+  return app_label_match.captures[0] if app_label_match && app_label_match.captures
+
+  return ''
 end
 
 def filter_min_sdk_version(infos)
