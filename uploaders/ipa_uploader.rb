@@ -32,6 +32,7 @@ def deploy_ipa_to_bitrise(ipa_path, build_url, api_token, notify_user_groups, no
   # - Analyze the IPA / collect infos from IPA
   puts '--> Analyze the IPA'
 
+  ipa_export_method = ''
   parsed_ipa_infos = {
     mobileprovision: nil,
     info_plist: nil
@@ -45,7 +46,8 @@ def deploy_ipa_to_bitrise(ipa_path, build_url, api_token, notify_user_groups, no
     parsed_ipa_infos[:mobileprovision] = ipa_analyzer.collect_provision_info
     fail 'Failed to collect Provisioning Profile information' if parsed_ipa_infos[:mobileprovision].nil?
 
-    if export_method(parsed_ipa_infos[:mobileprovision][:content]) == 'app-store'
+    ipa_export_method = export_method(parsed_ipa_infos[:mobileprovision][:content])
+    if ipa_export_method == 'app-store'
       if is_enable_public_page
         puts
         puts ' (!) is_enable_public_page is set, but public download isn\'t allowed for app-store distributions'
@@ -92,7 +94,8 @@ def deploy_ipa_to_bitrise(ipa_path, build_url, api_token, notify_user_groups, no
       device_UDID_list: mobileprovision_content['ProvisionedDevices'],
       team_name: mobileprovision_content['TeamName'],
       profile_name: mobileprovision_content['Name'],
-      provisions_all_devices: mobileprovision_content['ProvisionsAllDevices']
+      provisions_all_devices: mobileprovision_content['ProvisionsAllDevices'],
+      ipa_export_method: ipa_export_method
     }
   }
   puts "  (i) ipa_info_hsh: #{ipa_info_hsh}"
