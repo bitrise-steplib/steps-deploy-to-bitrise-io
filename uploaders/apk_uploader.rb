@@ -31,6 +31,43 @@ def aapt_path
   return latest_aapt_path
 end
 
+def filter_package_infos(infos)
+  package_name = ''
+  version_code = ''
+  version_name = ''
+
+  package_name_version_regex = 'package: name=\'(?<package_name>.*)\' versionCode=\'(?<version_code>.*)\' versionName=\'(?<version_name>.*)\' platformBuildVersionName='
+  package_name_version_match = infos.match(package_name_version_regex)
+
+  if package_name_version_match && package_name_version_match.captures
+    package_name = package_name_version_match.captures[0]
+    version_code = package_name_version_match.captures[1]
+    version_name = package_name_version_match.captures[2]
+  end
+
+  return package_name, version_code, version_name
+end
+
+def filter_app_label(infos)
+  app_name = ''
+
+  app_label_regex = 'application: label=\'(?<label>.+)\' icon='
+  app_label_match = infos.match(app_label_regex)
+  app_name = app_label_match.captures[0] if app_label_match && app_label_match.captures
+
+  return app_name
+end
+
+def filter_min_sdk_version(infos)
+  min_sdk = ''
+
+  min_sdk_regex = 'sdkVersion:\'(?<min_sdk_version>.*)\''
+  min_sdk_match = infos.match(min_sdk_regex)
+  min_sdk = min_sdk_match.captures[0] if min_sdk_match && min_sdk_match.captures
+
+  return min_sdk
+end
+
 # -----------------------
 # --- upload apk
 # -----------------------
@@ -46,19 +83,9 @@ def deploy_apk_to_bitrise(apk_path, build_url, api_token, notify_user_groups, no
   aapt = aapt_path
   infos = `#{aapt} dump badging #{apk_path}`
 
-  package_name_version_regex = 'package: name=\'(?<package_name>.*)\' versionCode=\'(?<version_code>.*)\' versionName=\'(?<version_name>.*)\' '
-  package_name_version_match = infos.match(package_name_version_regex)
-  package_name = package_name_version_match.captures[0] if package_name_version_match && package_name_version_match.captures
-  version_code = package_name_version_match.captures[1] if package_name_version_match && package_name_version_match.captures
-  version_name = package_name_version_match.captures[2] if package_name_version_match && package_name_version_match.captures
-
-  app_name_regex = 'application-label:\'(?<min_sdk_version>.*)\''
-  app_name_match = infos.match(app_name_regex)
-  app_name = app_name_match.captures[0] if app_name_match && app_name_match.captures
-
-  min_sdk_regex = 'sdkVersion:\'(?<min_sdk_version>.*)\''
-  min_sdk_match = infos.match(min_sdk_regex)
-  min_sdk = min_sdk_match.captures[0] if min_sdk_match && min_sdk_match.captures
+  package_name, version_code, version_name = filter_package_infos(infos)
+  app_name = filter_app_label(infos)
+  min_sdk = filter_min_sdk_version(infos)
 
   apk_file_size = File.size(apk_path)
 
