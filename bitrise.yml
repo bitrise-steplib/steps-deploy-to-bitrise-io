@@ -13,6 +13,13 @@ app:
 workflows:
   test:
     steps:
+    - script:
+        title: rspec
+        inputs:
+        - content: |-
+            #!/bin/bash
+            bundle install --with test
+            rspec .
     - change-workdir:
         run_if: true
         inputs:
