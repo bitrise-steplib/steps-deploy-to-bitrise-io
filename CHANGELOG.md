@@ -1,6 +1,14 @@
-## Changelog (Current version: 1.2.4)
+## Changelog (Current version: 1.2.5)
 
 -----------------
+
+### 1.2.5 (2016 Sep 01)
+
+* [f3a5bd0] prep for v1.2.5
+* [47a3d35] updated "step version" env
+* [99b814c] removed "create-release" workflow
+* [d961f8e] Merge pull request #21 from bitrise-io/feature/bundle-install-retry
+* [32b0cd7] added retry and parallel params to bundle install
 
 ### 1.2.4 (2016 Jun 20)
 
@@ -82,4 +90,4 @@
 
 -----------------
 
-Updated: 2016 Jun 20
+Updated: 2016 Sep 01
