@@ -10,7 +10,7 @@ app:
   - NOTIFY_USER_GROUPS: $NOTIFY_USER_GROUPS
   - NOTIFY_EMAIL_LIST: $NOTIFY_EMAIL_LIST
   #
-  - STEP_VERSION: "1.2.4"
+  - STEP_VERSION: "1.2.5"
 
 workflows:
   # ----------------------------------------------------------------
