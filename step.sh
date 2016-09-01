@@ -9,7 +9,7 @@ export BUNDLE_GEMFILE="$THIS_SCRIPT_DIR/Gemfile"
 echo
 echo "=> Preparing step ..."
 echo
-bundle install --without test
+bundle install --without test --jobs 20 --retry 5
 
 echo
 echo "=> Running the step ..."
