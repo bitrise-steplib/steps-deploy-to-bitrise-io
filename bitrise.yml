@@ -59,6 +59,7 @@ workflows:
             set -ex
             export CI=true
             releaseman create --version $RELEASE_VERSION
+
   publish-release:
     steps:
     - script:
@@ -68,7 +69,7 @@ workflows:
             #!/bin/bash
             set -ex
             git push
-            git push origin tags/$RELEASE_VERSION
+            git push origin tags/$STEP_VERSION
 
   # ----------------------------------------------------------------
   # --- workflow to Share this step into a Step Library
