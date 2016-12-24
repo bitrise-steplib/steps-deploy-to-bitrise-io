@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.2.5)
+## Changelog (Current version: 1.2.6)
 
 -----------------
+
+### 1.2.6 (2016 Dec 24)
+
+* [281d967] 1.2.6 - title revision / clarification
+* [1505d4a] publish-release workflow
 
 ### 1.2.5 (2016 Sep 01)
 
@@ -90,4 +95,4 @@
 
 -----------------
 
-Updated: 2016 Sep 01
+Updated: 2016 Dec 24
