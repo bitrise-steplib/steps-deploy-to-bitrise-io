@@ -47,7 +47,19 @@ workflows:
 
   # ----------------------------------------------------------------
   # --- workflows to create Release
+
+  audit-this-step:
+    steps:
+    - script:
+        inputs:
+        - content: |-
+            #!/bin/bash
+            set -ex
+            stepman audit --step-yml ./step.yml
+
   create-release-version:
+    before_run:
+    - audit-this-step
     envs:
     - RELEASE_VERSION: $STEP_VERSION
     steps:
