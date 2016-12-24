@@ -1,4 +1,4 @@
-format_version: 1.1.0
+format_version: 1.4.0
 default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
 app:
@@ -10,7 +10,7 @@ app:
   - NOTIFY_USER_GROUPS: $NOTIFY_USER_GROUPS
   - NOTIFY_EMAIL_LIST: $NOTIFY_EMAIL_LIST
   #
-  - STEP_VERSION: "1.2.5"
+  - STEP_VERSION: "1.2.6"
 
 workflows:
   # ----------------------------------------------------------------
@@ -106,9 +106,6 @@ workflows:
         - content: |-
             #!/bin/bash
             set -ex
-
             bitrise share start -c ${MY_STEPLIB_REPO_FORK_GIT_URL}
-
             bitrise share create --stepid ${STEP_ID_IN_STEPLIB} --tag ${STEP_GIT_VERION_TAG_TO_SHARE} --git ${STEP_GIT_CLONE_URL}
-
             bitrise share finish
