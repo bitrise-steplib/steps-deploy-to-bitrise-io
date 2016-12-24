@@ -68,7 +68,7 @@ workflows:
             #!/bin/bash
             set -ex
             git push
-            git push --tags
+            git push origin tags/$RELEASE_VERSION
 
   # ----------------------------------------------------------------
   # --- workflow to Share this step into a Step Library
