@@ -1,6 +1,18 @@
-## Changelog (Current version: 1.2.6)
+## Changelog (Current version: 1.2.7)
 
 -----------------
+
+### 1.2.7 (2017 Jan 24)
+
+* [4803038] bitrise.yml fix
+* [b0e9a85] bitrise.yml updates
+* [afa68ca] prepare for 1.2.7
+* [9d5f295] Merge pull request #25 from trapacska/master
+* [360ea8f] Issue: close #24
+* [a2395a9] readme update
+* [27efff4] audit-this-step workflow
+* [bfbf279] publish-release fix
+* [0e378ac] minor publish-release fix
 
 ### 1.2.6 (2016 Dec 24)
 
@@ -95,4 +107,4 @@
 
 -----------------
 
-Updated: 2016 Dec 24
+Updated: 2017 Jan 24
