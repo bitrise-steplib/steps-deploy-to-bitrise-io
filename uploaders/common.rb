@@ -60,7 +60,7 @@ def create_artifact(url, token, file, type)
 end
 
 def upload_file(url, file, content_type=nil)
-  curl_call_str = "curl --fail --tlsv1"
+  curl_call_str = "curl --fail --tlsv1 --globoff"
   if content_type
     curl_call_str = "#{curl_call_str} -H 'Content-Type: #{content_type}'"
   end
