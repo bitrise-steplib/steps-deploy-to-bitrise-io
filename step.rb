@@ -15,12 +15,14 @@ def fail_with_message(message)
 end
 
 def validate_emails(emails)
-  emailsSplitted = emails.split(',')
-  emailsSplitted.size.times{|i|
-    if emailsSplitted[i].scan(/.+@.+\..+/).empty?
-        fail_with_message('Invalid e-mail format: #{emailsSplitted[i]}')
-    end
-  }
+  if !emails.nil?
+    emailsSplitted = emails.split(',')
+    emailsSplitted.size.times{|i|
+      if emailsSplitted[i].scan(/.+@.+\..+/).empty?
+          fail_with_message('Invalid e-mail format: #{emailsSplitted[i]}')
+      end
+    }
+  end
 end
 
 # ----------------------------
