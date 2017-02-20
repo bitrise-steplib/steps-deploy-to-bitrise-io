@@ -14,6 +14,18 @@ def fail_with_message(message)
   exit(1)
 end
 
+def validate_emails(emails)
+  if emails.to_s == ''
+    return
+  end
+  emailsSplitted = emails.split(',')
+  emailsSplitted.size.times{|i|
+    if emailsSplitted[i].scan(/.+@.+\..+/).empty?
+      fail_with_message('Invalid e-mail format: #{emailsSplitted[i]}')
+    end
+  }
+end
+
 # ----------------------------
 # --- Options
 
@@ -51,6 +63,8 @@ options[:deploy_path] = File.absolute_path(options[:deploy_path])
 if !Dir.exist?(options[:deploy_path]) && !File.exist?(options[:deploy_path])
   fail_with_message('Deploy source path does not exist at the provided path: ' + options[:deploy_path])
 end
+
+validate_emails(options[:notify_email_list])
 
 puts
 puts '========== Configs =========='
