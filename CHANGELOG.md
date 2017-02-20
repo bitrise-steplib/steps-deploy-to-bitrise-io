@@ -1,6 +1,12 @@
-## Changelog (Current version: 1.2.7)
+## Changelog (Current version: 1.2.8)
 
 -----------------
+
+### 1.2.8 (2017 Feb 20)
+
+* [0bba1ec] Prepare for 1.2.8
+* [e281b66] Check emails format (#27)
+* [e27c4f5] Update README.md (#26)
 
 ### 1.2.7 (2017 Jan 24)
 
@@ -107,4 +113,4 @@
 
 -----------------
 
-Updated: 2017 Jan 24
+Updated: 2017 Feb 20
