@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.2.8)
+## Changelog (Current version: 1.2.9)
 
 -----------------
+
+### 1.2.9 (2017 Mar 02)
+
+* [d6f690a] prepare for 1.2.9
+* [3d75b5b] fixed .ipa and .apk determination (#28)
 
 ### 1.2.8 (2017 Feb 20)
 
@@ -113,4 +118,4 @@
 
 -----------------
 
-Updated: 2017 Feb 20
+Updated: 2017 Mar 02
