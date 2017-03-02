@@ -127,7 +127,7 @@ begin
         disk_file_path = filepth
 
         a_public_page_url = ''
-        if disk_file_path.match('.*.ipa')
+        if File.extname(disk_file_path) == '.ipa'
           a_public_page_url = deploy_ipa_to_bitrise(
             disk_file_path,
             options[:build_url],
@@ -136,7 +136,7 @@ begin
             options[:notify_email_list],
             options[:is_enable_public_page]
           )
-        elsif disk_file_path.match('.*.apk')
+        elsif File.extname(disk_file_path) == '.apk'
           a_public_page_url = deploy_apk_to_bitrise(disk_file_path,
                                 options[:build_url],
                                 options[:api_token],
