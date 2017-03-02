@@ -10,7 +10,7 @@ app:
   - NOTIFY_USER_GROUPS: $NOTIFY_USER_GROUPS
   - NOTIFY_EMAIL_LIST: $NOTIFY_EMAIL_LIST
   #
-  - RELEASE_VERSION: 1.2.8
+  - RELEASE_VERSION: 1.2.9
 
 workflows:
   # ----------------------------------------------------------------
