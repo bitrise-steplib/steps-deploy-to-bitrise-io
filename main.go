@@ -165,17 +165,37 @@ func main() {
 		switch ext {
 		case ".ipa":
 			log.Donef("Uploading ipa file: %s", pth)
-			publicInstallPage, err = uploaders.DeployIPA(pth, configs.BuildURL, configs.APIToken, configs.NotifyUserGroups, configs.NotifyEmailList, configs.IsPublicPageEnabled)
+
+			installPage, err := uploaders.DeployIPA(pth, configs.BuildURL, configs.APIToken, configs.NotifyUserGroups, configs.NotifyEmailList, configs.IsPublicPageEnabled)
+			if err != nil {
+				fail("Deploy failed, error: %s", err)
+			}
+
+			if installPage != "" {
+				publicInstallPage = installPage
+			}
 		case ".apk":
 			log.Donef("Uploading apk file: %s", pth)
-			publicInstallPage, err = uploaders.DeployAPK(pth, configs.BuildURL, configs.APIToken, configs.NotifyUserGroups, configs.NotifyEmailList, configs.IsPublicPageEnabled)
+
+			installPage, err := uploaders.DeployAPK(pth, configs.BuildURL, configs.APIToken, configs.NotifyUserGroups, configs.NotifyEmailList, configs.IsPublicPageEnabled)
+			if err != nil {
+				fail("Deploy failed, error: %s", err)
+			}
+
+			if installPage != "" {
+				publicInstallPage = installPage
+			}
 		default:
 			log.Donef("Uploading file: %s", pth)
-			publicInstallPage, err = uploaders.DeployFile(pth, configs.BuildURL, configs.APIToken, configs.NotifyUserGroups, configs.NotifyEmailList, configs.IsPublicPageEnabled)
-		}
 
-		if err != nil {
-			fail("Deploy failed, error: %s", err)
+			installPage, err := uploaders.DeployFile(pth, configs.BuildURL, configs.APIToken, configs.NotifyUserGroups, configs.NotifyEmailList, configs.IsPublicPageEnabled)
+			if err != nil {
+				fail("Deploy failed, error: %s", err)
+			}
+
+			if installPage != "" {
+				publicInstallPage = installPage
+			}
 		}
 	}
 
