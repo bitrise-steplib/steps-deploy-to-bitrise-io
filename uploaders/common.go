@@ -83,10 +83,10 @@ func createArtifact(buildURL, token, artifactPth, artifactType string) (string, 
 		return "", "", fmt.Errorf("failed to create artifact on bitrise, error message: %s", artifactResponse.ErrorMessage)
 	}
 	if artifactResponse.UploadURL == "" {
-		return "", "", fmt.Errorf("failed to create artifact on bitrise, error: no upload url got")
+		return "", "", fmt.Errorf("failed to create artifact on bitrise, error: no upload url received")
 	}
 	if artifactResponse.ID == 0 {
-		return "", "", fmt.Errorf("failed to create artifact on bitrise, error: no artifact id got")
+		return "", "", fmt.Errorf("failed to create artifact on bitrise, error: no artifact id received")
 	}
 	// ---
 
