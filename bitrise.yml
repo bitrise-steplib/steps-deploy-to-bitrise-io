@@ -12,7 +12,7 @@ app:
   #
   - SAMPLE_APP_GIT_CLONE_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
 
-  - RELEASE_VERSION: 1.2.9
+  - RELEASE_VERSION: 1.3.0
 
 workflows:
   # ----------------------------------------------------------------
