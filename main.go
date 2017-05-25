@@ -195,6 +195,8 @@ func main() {
 
 			if installPage != "" {
 				publicInstallPage = installPage
+			} else if configs.IsPublicPageEnabled == "true" {
+				log.Warnf("is_enable_public_page is set, but public download isn't allowed for this type of file")
 			}
 		}
 	}
