@@ -1,6 +1,12 @@
-## Changelog (Current version: 1.2.9)
+## Changelog (Current version: 1.3.0)
 
 -----------------
+
+### 1.3.0 (2017 May 25)
+
+* [e283f7b] prepare for v1.3.0
+* [5b4a4c9] warn if public install is not allowed (#31)
+* [5d00381] go toolkit & review (#30)
 
 ### 1.2.9 (2017 Mar 02)
 
@@ -118,4 +124,4 @@
 
 -----------------
 
-Updated: 2017 Mar 02
+Updated: 2017 May 25
