@@ -1,24 +1,15 @@
 #!/bin/bash
-
+set -ex
 THIS_SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-set -e
+tmp_gopath_dir="$(mktemp -d)"
 
-export BUNDLE_GEMFILE="$THIS_SCRIPT_DIR/Gemfile"
+go_package_name="github.com/bitrise-io/steps-deploy-to-bitrise-io"
+full_package_path="${tmp_gopath_dir}/src/${go_package_name}"
+mkdir -p "${full_package_path}"
 
-echo
-echo "=> Preparing step ..."
-echo
-bundle install --without test --jobs 20 --retry 5
+rsync -avh --quiet "${THIS_SCRIPT_DIR}/" "${full_package_path}/"
 
-echo
-echo "=> Running the step ..."
-echo
-bundle exec ruby "$THIS_SCRIPT_DIR/step.rb" \
-  -u "${build_url}" \
-  -t "${build_api_token}" \
-  -c "${is_compress}" \
-  -d "${deploy_path}" \
-  -g "${notify_user_groups}" \
-  -e "${notify_email_list}" \
-  -p "${is_enable_public_page}"
+export GOPATH="${tmp_gopath_dir}"
+export GO15VENDOREXPERIMENT=1
+go run "${full_package_path}/main.go"
