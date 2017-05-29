@@ -108,7 +108,7 @@ func main() {
 		dirName := filepath.Base(configs.DeployPath)
 		tmpZipPath := filepath.Join(tmpDir, dirName+".zip")
 
-		if err := ziputil.Zip(configs.DeployPath, tmpZipPath); err != nil {
+		if err := ziputil.ZipDir(configs.DeployPath, tmpZipPath, true); err != nil {
 			fail("Failed to zip output dir, error: %s", err)
 		}
 
