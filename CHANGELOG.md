@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.3.1)
+## Changelog (Current version: 1.3.2)
 
 -----------------
+
+### 1.3.2 (2017 May 29)
+
+* [c8907b4] prepare for 1.3.2
+* [af1ded0] Unwrap ipa fix (#35)
 
 ### 1.3.1 (2017 May 25)
 
@@ -129,4 +134,4 @@
 
 -----------------
 
-Updated: 2017 May 25
+Updated: 2017 May 29
