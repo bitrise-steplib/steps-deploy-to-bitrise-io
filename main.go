@@ -83,6 +83,11 @@ func main() {
 		fail("Issue with input: %s", err)
 	}
 
+	absDeployPth, err := pathutil.AbsPath(configs.DeployPath)
+	if err != nil {
+		fail("Failed to expand path: %s, error: %s", configs.DeployPath, err)
+	}
+
 	filesToDeploy := []string{}
 
 	tmpDir, err := pathutil.NormalizedOSTempDirPath("__deploy-to-bitrise-io__")
@@ -91,24 +96,24 @@ func main() {
 	}
 
 	// Collect files to deploy
-	isDeployPathDir, err := pathutil.IsDirExists(configs.DeployPath)
+	isDeployPathDir, err := pathutil.IsDirExists(absDeployPth)
 	if err != nil {
-		fail("Failed to check if DeployPath (%s) is a directory or a file, error: %s", configs.DeployPath, err)
+		fail("Failed to check if DeployPath (%s) is a directory or a file, error: %s", absDeployPth, err)
 	}
 
 	if !isDeployPathDir {
 		fmt.Println()
 		log.Infof("Deploying single file")
 
-		filesToDeploy = []string{configs.DeployPath}
+		filesToDeploy = []string{absDeployPth}
 	} else if configs.IsCompress == "true" {
 		fmt.Println()
 		log.Infof("Deploying compressed Deploy directory")
 
-		dirName := filepath.Base(configs.DeployPath)
+		dirName := filepath.Base(absDeployPth)
 		tmpZipPath := filepath.Join(tmpDir, dirName+".zip")
 
-		if err := ziputil.ZipDir(configs.DeployPath, tmpZipPath, true); err != nil {
+		if err := ziputil.ZipDir(absDeployPth, tmpZipPath, true); err != nil {
 			fail("Failed to zip output dir, error: %s", err)
 		}
 
@@ -117,7 +122,7 @@ func main() {
 		fmt.Println()
 		log.Infof("Deploying the content of the Deploy directory separately")
 
-		pattern := filepath.Join(configs.DeployPath, "*")
+		pattern := filepath.Join(absDeployPth, "*")
 		pths, err := filepath.Glob(pattern)
 		if err != nil {
 			fail("Failed to list files in DeployPath, error: %s", err)
