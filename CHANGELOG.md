@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.3.2)
+## Changelog (Current version: 1.3.3)
 
 -----------------
+
+### 1.3.3 (2017 May 31)
+
+* [9560a8b] prepare for 1.3.3
+* [c243a5a] Unzip fix (#36)
 
 ### 1.3.2 (2017 May 29)
 
@@ -134,4 +139,4 @@
 
 -----------------
 
-Updated: 2017 May 29
+Updated: 2017 May 31
