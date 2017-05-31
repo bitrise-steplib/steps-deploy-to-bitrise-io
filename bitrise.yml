@@ -10,7 +10,7 @@ app:
   - NOTIFY_USER_GROUPS: $NOTIFY_USER_GROUPS
   - NOTIFY_EMAIL_LIST: $NOTIFY_EMAIL_LIST
   #
-  - SAMPLE_APP_GIT_CLONE_URL: https://github.com/bitrise-samples/sample-apps-android-sdk22.git
+  - SAMPLE_ARTIFACTS_GIT_CLONE_URL: https://github.com/bitrise-samples/sample-artifacts.git
 
   - RELEASE_VERSION: 1.3.2
 
@@ -21,6 +21,13 @@ workflows:
     before_run:
     - go-tests
     steps:
+    - script:
+        inputs:
+        - content: |-
+            #!/bin/bash
+            set -e
+            set -v
+            rm -rf ./_tmp
     - change-workdir:
         run_if: true
         inputs:
@@ -29,23 +36,19 @@ workflows:
     - git-clone:
         run_if: true
         inputs:
-        - repository_url: $SAMPLE_APP_GIT_CLONE_URL
+        - repository_url: $SAMPLE_ARTIFACTS_GIT_CLONE_URL
         - branch: master
         - commit: ""
         - tag: ""
         - pull_request_id: ""
         - clone_into_dir: ./
-    - gradle-runner:
-        inputs:
-        - gradle_file: build.gradle
-        - gradlew_path: ./gradlew
     - path::./:
         run_if: true
         inputs:
         - build_url: $BITRISE_BUILD_URL
         - build_api_token: $BITRISE_BUILD_API_TOKEN
         - is_compress: "false"
-        - deploy_path: $BITRISE_APK_PATH
+        - deploy_path: ./ipas
         - notify_user_groups: $NOTIFY_USER_GROUPS
         - notify_email_list: $NOTIFY_EMAIL_LIST
         - is_enable_public_page: "true"
