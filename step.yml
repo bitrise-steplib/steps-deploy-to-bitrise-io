@@ -14,7 +14,6 @@ host_os_tags:
 project_type_tags: []
 type_tags:
   - deploy
-  - artifact
 is_requires_admin_user: false
 is_always_run: true
 is_skippable: false
@@ -25,6 +24,7 @@ toolkit:
 inputs:
   - deploy_path: "$BITRISE_DEPLOY_DIR"
     opts:
+      category: Config
       title: "Deploy directory or file path"
       description: |
         Specify the directory or file path which will be deployed.
@@ -41,6 +41,7 @@ inputs:
       is_required: true
   - is_compress: "false"
     opts:
+      category: Config
       title: Compress the artifacts into one file?
       summary: |-
         If this option is allowed the artifacts
@@ -59,8 +60,26 @@ inputs:
       value_options:
         - "true"
         - "false"
+  - is_enable_public_page: "true"
+    opts:
+      category: Config
+      title: "Enable public page for the App?"
+      description: |
+        If this option is enabled a public install page
+        will be available with a long and random URL which can be shared
+        with others who are not registered on Bitrise.
+
+        **If you disable this option the Notify Emails option will
+        be ignored and the Notify Groups will receive the build's
+        URL instead of the public page's URL!**
+      is_required: true
+      is_expand: false
+      value_options:
+      - "true"
+      - "false"
   - notify_user_groups: "everyone"
     opts:
+      category: Notification
       title: "Notify: User Groups"
       description: |
         Your App's user groups to notify, comma separated.
@@ -82,30 +101,17 @@ inputs:
         If you don't want to notify anyone set this to `none`.
   - notify_email_list:
     opts:
+      category: Notification
       title: "Notify: Emails"
       description: |
         Email addresses to notify, comma separated.
 
         You can specify any email address, the recepients
         don't have to be in your team.
-  - is_enable_public_page: "true"
-    opts:
-      title: "Enable public page for the App?"
-      description: |
-        If this option is enabled a public install page
-        will be available with a long and random URL which can be shared
-        with others who are not registered on Bitrise.
 
-        **If you disable this option the Notify Emails option will
-        be ignored and the Notify Groups will receive the build's
-        URL instead of the public page's URL!**
-      is_required: true
-      is_expand: false
-      value_options:
-      - "true"
-      - "false"
   - build_url: "$BITRISE_BUILD_URL"
     opts:
+      category: Debug
       title: "Bitrise Build URL"
       summary: |-
         Unique build URL of this build on Bitrise.io
@@ -115,6 +121,7 @@ inputs:
       is_dont_change_value: true
   - build_api_token: "$BITRISE_BUILD_API_TOKEN"
     opts:
+      category: Debug
       title: Bitrise Build API Token
       summary: |-
         The build's API Token for the build on Bitrise.io
