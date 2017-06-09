@@ -1,8 +1,10 @@
-format_version: 2
+format_version: "2"
 default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
 app:
   envs:
+  - RELEASE_VERSION: 1.3.4
+  
   # define these in your .bitrise.secrets.yml
   - BITRISE_BUILD_URL: $BITRISE_BUILD_URL
   - BITRISE_BUILD_API_TOKEN: $BITRISE_BUILD_API_TOKEN
@@ -11,8 +13,6 @@ app:
   - NOTIFY_EMAIL_LIST: $NOTIFY_EMAIL_LIST
   #
   - SAMPLE_ARTIFACTS_GIT_CLONE_URL: https://github.com/bitrise-samples/sample-artifacts.git
-
-  - RELEASE_VERSION: 1.3.3
 
 workflows:
   # ----------------------------------------------------------------
