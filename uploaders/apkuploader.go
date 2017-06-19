@@ -57,17 +57,17 @@ func filterMinSDKVersion(aaptOut string) string {
 func getAPKInfo(apkPth string) (ApkInfo, error) {
 	sdkModel, err := sdk.New(os.Getenv("ANDROID_HOME"))
 	if err != nil {
-		return ApkInfo{}, err
+		return ApkInfo{}, fmt.Errorf("failed to create sdk model, error: %s", err)
 	}
 
 	aaptPth, err := sdkModel.LatestBuildToolPath("aapt")
 	if err != nil {
-		return ApkInfo{}, err
+		return ApkInfo{}, fmt.Errorf("failed to find latest aapt binary, error: %s", err)
 	}
 
 	aaptOut, err := command.New(aaptPth, "dump", "badging", apkPth).RunAndReturnTrimmedCombinedOutput()
 	if err != nil {
-		return ApkInfo{}, err
+		return ApkInfo{}, fmt.Errorf("failed to get apk infos, output: %s, error: %s", aaptOut, err)
 	}
 
 	appName := filterAppLable(aaptOut)
@@ -89,7 +89,7 @@ func DeployAPK(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 
 	apkInfo, err := getAPKInfo(pth)
 	if err != nil {
-		return "", fmt.Errorf("failed to get apk infos, error: %s", err)
+		return "", err
 	}
 
 	appInfo := map[string]interface{}{
