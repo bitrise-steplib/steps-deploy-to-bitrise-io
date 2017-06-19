@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.3.4)
+## Changelog (Current version: 1.3.5)
 
 -----------------
+
+### 1.3.5 (2017 Jun 19)
+
+* [3665451] prepare for 1.3.5
+* [8d724ea] print output, if aapt dump command fails (#38)
 
 ### 1.3.4 (2017 Jun 09)
 
@@ -144,4 +149,4 @@
 
 -----------------
 
-Updated: 2017 Jun 09
+Updated: 2017 Jun 19
