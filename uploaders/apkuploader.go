@@ -2,6 +2,7 @@ package uploaders
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"regexp"
@@ -55,7 +56,12 @@ func filterMinSDKVersion(aaptOut string) string {
 }
 
 func getAPKInfo(apkPth string) (ApkInfo, error) {
-	sdkModel, err := sdk.New(os.Getenv("ANDROID_HOME"))
+	androidHome := os.Getenv("ANDROID_HOME")
+	if androidHome == "" {
+		return ApkInfo{}, errors.New("ANDROID_HOME environment not set")
+	}
+
+	sdkModel, err := sdk.New(androidHome)
 	if err != nil {
 		return ApkInfo{}, fmt.Errorf("failed to create sdk model, error: %s", err)
 	}
