@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.3.5)
+## Changelog (Current version: 1.3.6)
 
 -----------------
+
+### 1.3.6 (2017 Jul 06)
+
+* [5fc245b] prepare for 1.3.6
+* [df9c28f] fixed error if ANDROID_HOME not set (#40)
 
 ### 1.3.5 (2017 Jun 19)
 
@@ -149,4 +154,4 @@
 
 -----------------
 
-Updated: 2017 Jun 19
+Updated: 2017 Jul 06
