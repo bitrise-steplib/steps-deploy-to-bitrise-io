@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.3.6)
+## Changelog (Current version: 1.3.7)
 
 -----------------
+
+### 1.3.7 (2017 Sep 01)
+
+* [668219b] Prepare for 1.3.7
+* [998b888] Allow custom name for compressed artifacts (#42) (#45)
 
 ### 1.3.6 (2017 Jul 06)
 
@@ -154,4 +159,4 @@
 
 -----------------
 
-Updated: 2017 Jul 06
+Updated: 2017 Sep 01
