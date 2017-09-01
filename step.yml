@@ -52,6 +52,9 @@ inputs:
         found in the *Deploy directory* folder will be compressed
         into a single file.
 
+        You can specify a custom name for the ZIP using the *zip_name*
+        option - otherwise we're going to use the *Deploy directory* name.
+
         If this option is turned off the artifacts
         found in the *Deploy directory* folder will be deployed
         separately.
@@ -60,6 +63,18 @@ inputs:
       value_options:
         - "true"
         - "false"
+  - zip_name:
+    opts:
+      category: Config
+      title: Name of the compressed artifact (without .zip extension)
+      summary: |-
+        Specify a custom name for the compressed artifact. We're going to
+        use the deploy directory name if you leave it blank.
+      description: |-
+        Specify a custom name for the compressed artifact. We're going to
+        use the *Deploy directory* name if you leave it blank.
+
+        This option only works if you selected *true* for *is_compress*.
   - is_enable_public_page: "true"
     opts:
       category: Config
