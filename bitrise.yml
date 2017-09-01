@@ -43,11 +43,35 @@ workflows:
         - pull_request_id: ""
         - clone_into_dir: ./
     - path::./:
+        title: Test uncompressed
         run_if: true
         inputs:
         - build_url: $BITRISE_BUILD_URL
         - build_api_token: $BITRISE_BUILD_API_TOKEN
         - is_compress: "false"
+        - deploy_path: ./ipas
+        - notify_user_groups: $NOTIFY_USER_GROUPS
+        - notify_email_list: $NOTIFY_EMAIL_LIST
+        - is_enable_public_page: "true"
+    - path::./:
+        title: Test compressed with default name
+        run_if: true
+        inputs:
+        - build_url: $BITRISE_BUILD_URL
+        - build_api_token: $BITRISE_BUILD_API_TOKEN
+        - is_compress: "true"
+        - deploy_path: ./ipas
+        - notify_user_groups: $NOTIFY_USER_GROUPS
+        - notify_email_list: $NOTIFY_EMAIL_LIST
+        - is_enable_public_page: "true"
+    - path::./:
+        title: Test compressed with custom name
+        run_if: true
+        inputs:
+        - build_url: $BITRISE_BUILD_URL
+        - build_api_token: $BITRISE_BUILD_API_TOKEN
+        - is_compress: "true"
+        - zip_name: zip-name-test
         - deploy_path: ./ipas
         - notify_user_groups: $NOTIFY_USER_GROUPS
         - notify_email_list: $NOTIFY_EMAIL_LIST
@@ -133,6 +157,8 @@ workflows:
             #!/bin/bash
             set -ex
             go get -u -v github.com/tools/godep
+
+            go get howett.net/plist
 
             rm -rf ./Godeps
             rm -rf ./vendor

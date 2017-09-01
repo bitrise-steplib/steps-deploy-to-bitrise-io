@@ -20,6 +20,7 @@ type ConfigsModel struct {
 	BuildURL            string
 	APIToken            string
 	IsCompress          string
+	ZipName             string
 	DeployPath          string
 	NotifyUserGroups    string
 	NotifyEmailList     string
@@ -31,6 +32,7 @@ func createConfigsModelFromEnvs() ConfigsModel {
 		BuildURL:            os.Getenv("build_url"),
 		APIToken:            os.Getenv("build_api_token"),
 		IsCompress:          os.Getenv("is_compress"),
+		ZipName:             os.Getenv("zip_name"),
 		DeployPath:          os.Getenv("deploy_path"),
 		NotifyUserGroups:    os.Getenv("notify_user_groups"),
 		NotifyEmailList:     os.Getenv("notify_email_list"),
@@ -110,8 +112,11 @@ func main() {
 		fmt.Println()
 		log.Infof("Deploying compressed Deploy directory")
 
-		dirName := filepath.Base(absDeployPth)
-		tmpZipPath := filepath.Join(tmpDir, dirName+".zip")
+		zipName := filepath.Base(absDeployPth)
+		if configs.ZipName != "" {
+			zipName = configs.ZipName
+		}
+		tmpZipPath := filepath.Join(tmpDir, zipName+".zip")
 
 		if err := ziputil.ZipDir(absDeployPth, tmpZipPath, true); err != nil {
 			fail("Failed to zip output dir, error: %s", err)
