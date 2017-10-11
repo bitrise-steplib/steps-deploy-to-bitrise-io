@@ -8,9 +8,11 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/log"
+	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-io/go-utils/urlutil"
 )
 
@@ -48,16 +50,7 @@ func createArtifact(buildURL, token, artifactPth, artifactType string) (string, 
 		return "", "", fmt.Errorf("failed to generate create artifact url, error: %s", err)
 	}
 
-	response, err := http.PostForm(uri, data)
-	if err != nil {
-		return "", "", fmt.Errorf("failed to perform create artifact request, error: %s", err)
-	}
-	defer func() {
-		if err := response.Body.Close(); err != nil {
-			log.Errorf("Failed to close reponse body, error: %s", err)
-		}
-	}()
-	// --
+	var response *http.Response
 
 	// process response
 	type createArtifactResponse struct {
@@ -66,29 +59,49 @@ func createArtifact(buildURL, token, artifactPth, artifactType string) (string, 
 		ID           int    `json:"id"`
 	}
 
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return "", "", fmt.Errorf("failed to read create artifact response, error: %s", err)
-	}
-	if response.StatusCode != http.StatusOK {
-		return "", "", fmt.Errorf("failed to create artifact on bitrise, status code: %d, response: %s", response.StatusCode, string(body))
-	}
-
 	var artifactResponse createArtifactResponse
-	if err := json.Unmarshal(body, &artifactResponse); err != nil {
-		return "", "", fmt.Errorf("failed to unmarshal response (%s), error: %s", string(body), err)
-	}
 
-	if artifactResponse.ErrorMessage != "" {
-		return "", "", fmt.Errorf("failed to create artifact on bitrise, error message: %s", artifactResponse.ErrorMessage)
+	if err := retry.Times(3).Wait(5 * time.Second).Try(func(attempt uint) error {
+		if attempt > 0 {
+			log.Warnf("%d attempt failed", attempt)
+		}
+		response, err = http.PostForm(uri, data)
+		if err != nil {
+			return fmt.Errorf("failed to perform create artifact request, error: %s", err)
+		}
+
+		defer func() {
+			if err := response.Body.Close(); err != nil {
+				log.Errorf("Failed to close reponse body, error: %s", err)
+			}
+		}()
+
+		body, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			return fmt.Errorf("failed to read create artifact response, error: %s", err)
+		}
+		if response.StatusCode != http.StatusOK {
+			return fmt.Errorf("failed to create artifact on bitrise, status code: %d, response: %s", response.StatusCode, string(body))
+		}
+
+		if err := json.Unmarshal(body, &artifactResponse); err != nil {
+			return fmt.Errorf("failed to unmarshal response (%s), error: %s", string(body), err)
+		}
+
+		if artifactResponse.ErrorMessage != "" {
+			return fmt.Errorf("failed to create artifact on bitrise, error message: %s", artifactResponse.ErrorMessage)
+		}
+		if artifactResponse.UploadURL == "" {
+			return fmt.Errorf("failed to create artifact on bitrise, error: no upload url received")
+		}
+		if artifactResponse.ID == 0 {
+			return fmt.Errorf("failed to create artifact on bitrise, error: no artifact id received")
+		}
+
+		return nil
+	}); err != nil {
+		return "", "", err
 	}
-	if artifactResponse.UploadURL == "" {
-		return "", "", fmt.Errorf("failed to create artifact on bitrise, error: no upload url received")
-	}
-	if artifactResponse.ID == 0 {
-		return "", "", fmt.Errorf("failed to create artifact on bitrise, error: no artifact id received")
-	}
-	// ---
 
 	return artifactResponse.UploadURL, fmt.Sprintf("%d", artifactResponse.ID), nil
 }
@@ -112,18 +125,17 @@ func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 	}
 	args = append(args, "-T", artifactPth, "-X", "PUT", uploadURL)
 
-	cmd, err := command.NewFromSlice(args)
-	if err != nil {
-		return err
-	}
-
-	cmd.SetStdout(os.Stdout).SetStderr(os.Stderr)
-
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-
-	return nil
+	return retry.Times(3).Wait(5 * time.Second).Try(func(attempt uint) error {
+		if attempt > 0 {
+			log.Warnf("%d attempt failed", attempt)
+		}
+		cmd, err := command.NewFromSlice(args)
+		if err != nil {
+			return err
+		}
+		cmd.SetStdout(os.Stdout).SetStderr(os.Stderr)
+		return cmd.Run()
+	})
 }
 
 func finishArtifact(buildURL, token, artifactID, artifactInfo, notifyUserGroups, notifyEmails, isEnablePublicPage string) (string, error) {
@@ -151,35 +163,44 @@ func finishArtifact(buildURL, token, artifactID, artifactInfo, notifyUserGroups,
 		return "", fmt.Errorf("failed to generate finish artifact url, error: %s", err)
 	}
 
-	response, err := http.PostForm(uri, data)
-	if err != nil {
-		return "", fmt.Errorf("failed to perform finish artifact request, error: %s", err)
-	}
-	defer func() {
-		if err := response.Body.Close(); err != nil {
-			log.Errorf("Failed to close reponse body, error: %s", err)
-		}
-	}()
-	// --
+	var response *http.Response
 
-	// process response
 	type finishArtifactResponse struct {
 		PublicInstallPageURL string `json:"public_install_page_url"`
 	}
 
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return "", fmt.Errorf("failed to read finish artifact response, error: %s", err)
-	}
-	if response.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("failed to create artifact on bitrise, status code: %d, response: %s", response.StatusCode, string(body))
-	}
-
 	var artifactResponse finishArtifactResponse
-	if err := json.Unmarshal(body, &artifactResponse); err != nil {
-		return "", fmt.Errorf("failed to unmarshal response (%s), error: %s", string(body), err)
+	if err := retry.Times(3).Wait(5 * time.Second).Try(func(attempt uint) error {
+		if attempt > 0 {
+			log.Warnf("%d attempt failed", attempt)
+		}
+		response, err = http.PostForm(uri, data)
+		if err != nil {
+			return fmt.Errorf("failed to perform finish artifact request, error: %s", err)
+		}
+		defer func() {
+			if err := response.Body.Close(); err != nil {
+				log.Errorf("Failed to close reponse body, error: %s", err)
+			}
+		}()
+
+		// process response
+		body, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			return fmt.Errorf("failed to read finish artifact response, error: %s", err)
+		}
+		if response.StatusCode != http.StatusOK {
+			return fmt.Errorf("failed to create artifact on bitrise, status code: %d, response: %s", response.StatusCode, string(body))
+		}
+
+		if err := json.Unmarshal(body, &artifactResponse); err != nil {
+			return fmt.Errorf("failed to unmarshal response (%s), error: %s", string(body), err)
+		}
+
+		return nil
+	}); err != nil {
+		return "", err
 	}
-	// ---
 
 	if isEnablePublicPage == "true" {
 		if artifactResponse.PublicInstallPageURL == "" {
@@ -188,5 +209,6 @@ func finishArtifact(buildURL, token, artifactID, artifactInfo, notifyUserGroups,
 
 		return artifactResponse.PublicInstallPageURL, nil
 	}
+
 	return "", nil
 }

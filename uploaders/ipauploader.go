@@ -50,18 +50,18 @@ func DeployIPA(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 		return "", fmt.Errorf("failed to unwrap embedded.mobilprovision from ipa, error: %s", err)
 	}
 
-	provisioningProfileData, err := provisioningprofile.NewPlistDataFromFile(provisioningProfilePth)
+	provisioningProfileData, err := provisioningprofile.NewProfileFromFile(provisioningProfilePth)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse embedded.mobilprovision, error: %s", err)
 	}
 
-	creationDate, _ := provisioningProfileData.GetTime("CreationDate")
-	expirationDate, _ := provisioningProfileData.GetTime("ExpirationDate")
-	deviceUDIDList, _ := provisioningProfileData.GetStringArray("ProvisionedDevices")
-	teamName, _ := provisioningProfileData.GetString("TeamName")
-	profileName, _ := provisioningProfileData.GetString("Name")
-	provisionsAlldevices, _ := provisioningProfileData.GetBool("ProvisionsAllDevices")
-	exportMethod := provisioningprofile.GetExportMethod(provisioningProfileData)
+	creationDate, _ := plistutil.PlistData(provisioningProfileData).GetTime("CreationDate")
+	expirationDate := provisioningProfileData.GetExpirationDate()
+	deviceUDIDList, _ := plistutil.PlistData(provisioningProfileData).GetStringArray("ProvisionedDevices")
+	teamName, _ := plistutil.PlistData(provisioningProfileData).GetString("TeamName")
+	profileName := provisioningProfileData.GetName()
+	provisionsAlldevices, _ := plistutil.PlistData(provisioningProfileData).GetBool("ProvisionsAllDevices")
+	exportMethod := provisioningProfileData.GetExportMethod()
 
 	if exportMethod == exportoptions.MethodAppStore {
 		log.Warnf("is_enable_public_page is set, but public download isn't allowed for app-store distributions")
