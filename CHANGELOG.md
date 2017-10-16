@@ -1,6 +1,12 @@
-## Changelog (Current version: 1.3.7)
+## Changelog (Current version: 1.3.8)
 
 -----------------
+
+### 1.3.8 (2017 Oct 16)
+
+* [6094e13] prepare for 1.3.8
+* [04e7688] manage dependencies with dep (#48)
+* [937450d] Retry on error with create/upload/finishArtifact (#47)
 
 ### 1.3.7 (2017 Sep 01)
 
@@ -159,4 +165,4 @@
 
 -----------------
 
-Updated: 2017 Sep 01
+Updated: 2017 Oct 16
