@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/bitrise-io/go-utils/command"
@@ -166,7 +167,8 @@ func finishArtifact(buildURL, token, artifactID, artifactInfo, notifyUserGroups,
 	var response *http.Response
 
 	type finishArtifactResponse struct {
-		PublicInstallPageURL string `json:"public_install_page_url"`
+		PublicInstallPageURL string   `json:"public_install_page_url"`
+		InvalidEmails        []string `json:"invalid_emails"`
 	}
 
 	var artifactResponse finishArtifactResponse
@@ -200,6 +202,10 @@ func finishArtifact(buildURL, token, artifactID, artifactInfo, notifyUserGroups,
 		return nil
 	}); err != nil {
 		return "", err
+	}
+
+	if len(artifactResponse.InvalidEmails) > 0 {
+		log.Warnf("Invalid e-mail addresses: %s", strings.Join(artifactResponse.InvalidEmails, ", "))
 	}
 
 	if isEnablePublicPage == "true" {
