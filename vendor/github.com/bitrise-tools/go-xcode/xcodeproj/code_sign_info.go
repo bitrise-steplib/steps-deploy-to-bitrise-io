@@ -16,20 +16,49 @@ import (
 
 // CodeSignInfo ...
 type CodeSignInfo struct {
-	BundleIdentifier             string `json:"bundle_id"`
-	CodeSignIdentity             string `json:"code_sign_identity"`
-	ProvisioningProfileSpecifier string `json:"provisioning_profile_specifier"`
-	ProvisioningProfile          string `json:"provisioning_profile"`
-	DevelopmentTeam              string `json:"development_team"`
+	CodeSignEntitlementsPath     string
+	BundleIdentifier             string
+	CodeSignIdentity             string
+	ProvisioningProfileSpecifier string
+	ProvisioningProfile          string
+	DevelopmentTeam              string
 }
 
 // TargetMapping ...
 type TargetMapping struct {
-	Configuration string              `json:"configuration"`
-	Targets       map[string][]string `json:"targets"`
+	Configuration  string              `json:"configuration"`
+	ProjectTargets map[string][]string `json:"project_targets"`
 }
 
-func readSchemeTargetMapping(projectPth, scheme, configuration, user string) (TargetMapping, error) {
+func clearRubyScriptOutput(out string) string {
+	reader := strings.NewReader(out)
+	scanner := bufio.NewScanner(reader)
+
+	jsonLines := []string{}
+	jsonResponseStart := false
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		trimmed := strings.TrimSpace(line)
+
+		if !jsonResponseStart && trimmed == "{" {
+			jsonResponseStart = true
+		}
+		if !jsonResponseStart {
+			continue
+		}
+
+		jsonLines = append(jsonLines, line)
+	}
+
+	if len(jsonLines) == 0 {
+		return out
+	}
+
+	return strings.Join(jsonLines, "\n")
+}
+
+func readSchemeTargetMapping(projectPth, scheme, user string) (TargetMapping, error) {
 	runner := rubyscript.New(codeSignInfoScriptContent)
 	bundleInstallCmd, err := runner.BundleInstallCommand(gemfileContent, "")
 	if err != nil {
@@ -48,7 +77,6 @@ func readSchemeTargetMapping(projectPth, scheme, configuration, user string) (Ta
 	envsToAppend := []string{
 		"project=" + projectPth,
 		"scheme=" + scheme,
-		"configuration=" + configuration,
 		"user=" + user}
 	envs := append(runCmd.GetCmd().Env, envsToAppend...)
 
@@ -56,17 +84,19 @@ func readSchemeTargetMapping(projectPth, scheme, configuration, user string) (Ta
 
 	out, err := runCmd.RunAndReturnTrimmedCombinedOutput()
 	if err != nil {
-		return TargetMapping{}, fmt.Errorf("failed to run ruby script, output: %s, error: %s", out, err)
+		return TargetMapping{}, fmt.Errorf("failed to run code signing analyzer script, output: %s, error: %s", out, err)
 	}
 
-	// OutputModel ...
 	type OutputModel struct {
 		Data  TargetMapping `json:"data"`
 		Error string        `json:"error"`
 	}
 	var output OutputModel
 	if err := json.Unmarshal([]byte(out), &output); err != nil {
-		return TargetMapping{}, fmt.Errorf("failed to unmarshal output: %s", out)
+		out = clearRubyScriptOutput(out)
+		if err := json.Unmarshal([]byte(out), &output); err != nil {
+			return TargetMapping{}, fmt.Errorf("failed to unmarshal output: %s", out)
+		}
 	}
 
 	if output.Error != "" {
@@ -148,19 +178,14 @@ func firstNonEmpty(values ...string) string {
 }
 
 // ResolveCodeSignInfo ...
-func ResolveCodeSignInfo(projectOrWorkspacePth, scheme, configuration, user string) (map[string]CodeSignInfo, error) {
-	projectTargetsMapping, err := readSchemeTargetMapping(projectOrWorkspacePth, scheme, configuration, user)
+func ResolveCodeSignInfo(projectOrWorkspacePth, scheme, user string) (map[string]CodeSignInfo, error) {
+	projectTargetsMapping, err := readSchemeTargetMapping(projectOrWorkspacePth, scheme, user)
 	if err != nil {
 		return nil, err
 	}
 
 	resolvedCodeSignInfoMap := map[string]CodeSignInfo{}
-
-	if configuration == "" {
-		configuration = projectTargetsMapping.Configuration
-	}
-
-	for projectPth, targets := range projectTargetsMapping.Targets {
+	for projectPth, targets := range projectTargetsMapping.ProjectTargets {
 		for _, targetName := range targets {
 			if targetName == "" {
 				return nil, errors.New("target name is empty")
@@ -170,7 +195,7 @@ func ResolveCodeSignInfo(projectOrWorkspacePth, scheme, configuration, user stri
 				return nil, fmt.Errorf("failed to resolve which project contains target: %s", targetName)
 			}
 
-			buildSettings, err := getTargetBuildSettingsWithXcodebuild(projectPth, targetName, configuration)
+			buildSettings, err := getTargetBuildSettingsWithXcodebuild(projectPth, targetName, projectTargetsMapping.Configuration)
 			if err != nil {
 				return nil, fmt.Errorf("failed to read project build settings, error: %s", err)
 			}
@@ -199,12 +224,19 @@ func ResolveCodeSignInfo(projectOrWorkspacePth, scheme, configuration, user stri
 			}
 			// ---
 
+			codeSignEntitlementsPth := buildSettings["CODE_SIGN_ENTITLEMENTS"]
+			if codeSignEntitlementsPth != "" {
+				projectDir := filepath.Dir(projectPth)
+				codeSignEntitlementsPth = filepath.Join(projectDir, codeSignEntitlementsPth)
+			}
+
 			codeSignIdentity := buildSettings["CODE_SIGN_IDENTITY"]
 			provisioningProfileSpecifier := buildSettings["PROVISIONING_PROFILE_SPECIFIER"]
 			provisioningProfile := buildSettings["PROVISIONING_PROFILE"]
 			developmentTeam := buildSettings["DEVELOPMENT_TEAM"]
 
 			resolvedCodeSignInfo := CodeSignInfo{
+				CodeSignEntitlementsPath:     codeSignEntitlementsPth,
 				BundleIdentifier:             bundleID,
 				CodeSignIdentity:             codeSignIdentity,
 				ProvisioningProfileSpecifier: provisioningProfileSpecifier,
