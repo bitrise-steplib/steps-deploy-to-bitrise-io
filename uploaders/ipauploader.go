@@ -9,7 +9,6 @@ import (
 	"github.com/bitrise-tools/go-xcode/ipa"
 	"github.com/bitrise-tools/go-xcode/plistutil"
 	"github.com/bitrise-tools/go-xcode/profileutil"
-	"howett.net/plist"
 )
 
 // DeployIPA ...
@@ -51,26 +50,18 @@ func DeployIPA(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 		return "", fmt.Errorf("failed to unwrap embedded.mobilprovision from ipa, error: %s", err)
 	}
 
-	provisioningProfile, err := profileutil.ProvisioningProfileFromFile(provisioningProfilePth)
+	provisioningProfileInfo, err := profileutil.NewProvisioningProfileInfoFromFile(provisioningProfilePth)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse embedded.mobilprovision, error: %s", err)
 	}
 
-	var data plistutil.PlistData
-	if _, err := plist.Unmarshal(provisioningProfile.Content, &data); err != nil {
-		return "", err
-	}
-
-	teamName, _ := data.GetString("TeamName")
-	creationDate, _ := data.GetTime("CreationDate")
-	provisionsAlldevices, _ := data.GetBool("ProvisionsAllDevices")
-
-	profile := profileutil.PlistData(data)
-
-	expirationDate := profile.GetExpirationDate()
-	deviceUDIDList := profile.GetProvisionedDevices()
-	profileName := profile.GetName()
-	exportMethod := profile.GetExportMethod()
+	teamName := provisioningProfileInfo.TeamName
+	creationDate := provisioningProfileInfo.CreationDate
+	provisionsAlldevices := provisioningProfileInfo.ProvisionsAllDevices
+	expirationDate := provisioningProfileInfo.ExpirationDate
+	deviceUDIDList := provisioningProfileInfo.ProvisionedDevices
+	profileName := provisioningProfileInfo.Name
+	exportMethod := provisioningProfileInfo.ExportType
 
 	if exportMethod == exportoptions.MethodAppStore {
 		log.Warnf("is_enable_public_page is set, but public download isn't allowed for app-store distributions")
