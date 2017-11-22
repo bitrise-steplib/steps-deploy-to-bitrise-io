@@ -1,6 +1,12 @@
-## Changelog (Current version: 1.3.8)
+## Changelog (Current version: 1.3.9)
 
 -----------------
+
+### 1.3.9 (2017 Nov 22)
+
+* [dbfed19] Bump version to 1.3.9
+* [112eaa9] Use profileutil package instead of provisioningprofile (#52)
+* [fb6230c] Add invalid email warning (#51)
 
 ### 1.3.8 (2017 Oct 16)
 
@@ -165,4 +171,4 @@
 
 -----------------
 
-Updated: 2017 Oct 16
+Updated: 2017 Nov 22
