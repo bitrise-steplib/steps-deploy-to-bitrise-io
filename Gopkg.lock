@@ -4,8 +4,8 @@
 [[projects]]
   branch = "master"
   name = "github.com/bitrise-io/go-utils"
-  packages = ["colorstring","command","errorutil","fileutil","log","pathutil","retry","urlutil","ziputil"]
-  revision = "4ea9c35054b7f8cce3940bf73b5dcd395e9c9226"
+  packages = ["colorstring","command","errorutil","fileutil","log","pathutil","pkcs12","pkcs12/internal/rc2","retry","urlutil","ziputil"]
+  revision = "961320f9011cedf55e1da0578949bf63450a96c0"
 
 [[projects]]
   branch = "master"
@@ -22,8 +22,14 @@
 [[projects]]
   branch = "master"
   name = "github.com/bitrise-tools/go-xcode"
-  packages = ["exportoptions","ipa","models","plistutil","provisioningprofile","utility"]
-  revision = "52495a9c3a5fdea31f4ca3e9bdf6e07531ab0f49"
+  packages = ["certificateutil","exportoptions","ipa","models","plistutil","profileutil","utility"]
+  revision = "6ef1fa022c0b47d73da0028f52b4be86bc6248a0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/fullsailor/pkcs7"
+  packages = ["."]
+  revision = "a009d8d7de53d9503c797cb8ec66fa3b21eed209"
 
 [[projects]]
   branch = "master"
@@ -32,14 +38,20 @@
   revision = "fc61389e27c71d120f87031ca8c88a3428f372dd"
 
 [[projects]]
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
+
+[[projects]]
   branch = "master"
   name = "howett.net/plist"
   packages = ["."]
-  revision = "f00f32b327ca6ad11a7c53d9ccc34d031b3795b8"
+  revision = "233df3c4f07b0c562da0e8a6fb850681ac49bb90"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "42387b54c3e3b0bd38116430c7dc7ce771a7799d961b117b84a550e3fb26bc13"
+  inputs-digest = "11a91fd6c3234bea574b52e6e71f55047f3899549ff2667886c4b444e9ed2e4b"
   solver-name = "gps-cdcl"
   solver-version = 1

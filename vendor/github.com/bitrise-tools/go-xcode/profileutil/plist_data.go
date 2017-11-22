@@ -1,64 +1,52 @@
-package provisioningprofile
+package profileutil
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
-	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-tools/go-xcode/exportoptions"
 	"github.com/bitrise-tools/go-xcode/plistutil"
+	"howett.net/plist"
 )
 
 const (
 	notValidParameterErrorMessage = "security: SecPolicySetValue: One or more parameters passed to a function were not valid."
 )
 
-// Profile ...
-type Profile plistutil.PlistData
+// PlistData ...
+type PlistData plistutil.PlistData
 
-// NewProfileFromFile ...
-func NewProfileFromFile(provisioningProfilePth string) (Profile, error) {
-	cmd := command.New("security", "cms", "-D", "-i", provisioningProfilePth)
-
-	out, err := cmd.RunAndReturnTrimmedCombinedOutput()
+// NewPlistDataFromFile ...
+func NewPlistDataFromFile(provisioningProfilePth string) (PlistData, error) {
+	provisioningProfilePKCS7, err := ProvisioningProfileFromFile(provisioningProfilePth)
 	if err != nil {
-		return nil, fmt.Errorf("command failed, error: %s", err)
+		return PlistData{}, err
 	}
 
-	// fix: security: SecPolicySetValue: One or more parameters passed to a function were not valid.
-	outSplit := strings.Split(out, "\n")
-	if len(outSplit) > 0 {
-		if strings.Contains(outSplit[0], notValidParameterErrorMessage) {
-			fixedOutSplit := outSplit[1:len(outSplit)]
-			out = strings.Join(fixedOutSplit, "\n")
-		}
+	var plistData plistutil.PlistData
+	if _, err := plist.Unmarshal(provisioningProfilePKCS7.Content, &plistData); err != nil {
+		return PlistData{}, err
 	}
-	// ---
 
-	plistData, err := plistutil.NewPlistDataFromContent(out)
-	if err != nil {
-		return Profile{}, err
-	}
-	return Profile(plistData), nil
+	return PlistData(plistData), nil
 }
 
 // GetUUID ...
-func (profile Profile) GetUUID() string {
+func (profile PlistData) GetUUID() string {
 	data := plistutil.PlistData(profile)
 	uuid, _ := data.GetString("UUID")
 	return uuid
 }
 
 // GetName ...
-func (profile Profile) GetName() string {
+func (profile PlistData) GetName() string {
 	data := plistutil.PlistData(profile)
 	uuid, _ := data.GetString("Name")
 	return uuid
 }
 
 // GetApplicationIdentifier ...
-func (profile Profile) GetApplicationIdentifier() string {
+func (profile PlistData) GetApplicationIdentifier() string {
 	data := plistutil.PlistData(profile)
 	entitlements, ok := data.GetMapStringInterface("Entitlements")
 	if !ok {
@@ -67,13 +55,16 @@ func (profile Profile) GetApplicationIdentifier() string {
 
 	applicationID, ok := entitlements.GetString("application-identifier")
 	if !ok {
-		return ""
+		applicationID, ok = entitlements.GetString("com.apple.application-identifier")
+		if !ok {
+			return ""
+		}
 	}
 	return applicationID
 }
 
 // GetBundleIdentifier ...
-func (profile Profile) GetBundleIdentifier() string {
+func (profile PlistData) GetBundleIdentifier() string {
 	applicationID := profile.GetApplicationIdentifier()
 
 	plistData := plistutil.PlistData(profile)
@@ -89,8 +80,22 @@ func (profile Profile) GetBundleIdentifier() string {
 }
 
 // GetExportMethod ...
-func (profile Profile) GetExportMethod() exportoptions.Method {
+func (profile PlistData) GetExportMethod(profileType ...ProfileType) exportoptions.Method {
 	data := plistutil.PlistData(profile)
+
+	if len(profileType) > 0 {
+		if profileType[0] == ProfileTypeMacOs {
+			_, ok := data.GetStringArray("ProvisionedDevices")
+			if !ok {
+				if allDevices, ok := data.GetBool("ProvisionsAllDevices"); ok && allDevices {
+					return exportoptions.MethodDeveloperID
+				}
+				return exportoptions.MethodAppStore
+			}
+			return exportoptions.MethodDevelopment
+		}
+	}
+
 	_, ok := data.GetStringArray("ProvisionedDevices")
 	if !ok {
 		if allDevices, ok := data.GetBool("ProvisionsAllDevices"); ok && allDevices {
@@ -110,8 +115,15 @@ func (profile Profile) GetExportMethod() exportoptions.Method {
 	return exportoptions.MethodDefault
 }
 
+// GetEntitlements ...
+func (profile PlistData) GetEntitlements() plistutil.PlistData {
+	data := plistutil.PlistData(profile)
+	entitlements, _ := data.GetMapStringInterface("Entitlements")
+	return entitlements
+}
+
 // GetTeamID ...
-func (profile Profile) GetTeamID() string {
+func (profile PlistData) GetTeamID() string {
 	data := plistutil.PlistData(profile)
 	entitlements, ok := data.GetMapStringInterface("Entitlements")
 	if ok {
@@ -122,22 +134,43 @@ func (profile Profile) GetTeamID() string {
 }
 
 // GetExpirationDate ...
-func (profile Profile) GetExpirationDate() time.Time {
+func (profile PlistData) GetExpirationDate() time.Time {
 	data := plistutil.PlistData(profile)
 	expiry, _ := data.GetTime("ExpirationDate")
 	return expiry
 }
 
 // GetProvisionedDevices ...
-func (profile Profile) GetProvisionedDevices() []string {
+func (profile PlistData) GetProvisionedDevices() []string {
 	data := plistutil.PlistData(profile)
 	devices, _ := data.GetStringArray("ProvisionedDevices")
 	return devices
 }
 
 // GetDeveloperCertificates ...
-func (profile Profile) GetDeveloperCertificates() [][]byte {
+func (profile PlistData) GetDeveloperCertificates() [][]byte {
 	data := plistutil.PlistData(profile)
 	developerCertificates, _ := data.GetByteArrayArray("DeveloperCertificates")
 	return developerCertificates
+}
+
+// GetTeamName ...
+func (profile PlistData) GetTeamName() string {
+	data := plistutil.PlistData(profile)
+	teamName, _ := data.GetString("TeamName")
+	return teamName
+}
+
+// GetCreationDate ...
+func (profile PlistData) GetCreationDate() time.Time {
+	data := plistutil.PlistData(profile)
+	creationDate, _ := data.GetTime("CreationDate")
+	return creationDate
+}
+
+// GetProvisionsAllDevices ...
+func (profile PlistData) GetProvisionsAllDevices() bool {
+	data := plistutil.PlistData(profile)
+	provisionsAlldevices, _ := data.GetBool("ProvisionsAllDevices")
+	return provisionsAlldevices
 }
