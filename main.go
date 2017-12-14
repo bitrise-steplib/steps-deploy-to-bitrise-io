@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
@@ -167,7 +166,6 @@ func main() {
 	log.Infof("Deploying files")
 
 	publicInstallPage := ""
-	publicInstallPages := make([]string,0)
 	publicInstallPageMap := make(map[string]string)
 
 	for _, pth := range clearedFilesToDeploy {
@@ -186,7 +184,6 @@ func main() {
 
 			if installPage != "" {
 				publicInstallPage = installPage
-				publicInstallPages = append(publicInstallPages, installPage)
 				publicInstallPageMap[filepath.Base(pth)] = installPage
 			}
 		case ".apk":
@@ -199,7 +196,6 @@ func main() {
 
 			if installPage != "" {
 				publicInstallPage = installPage
-				publicInstallPages = append(publicInstallPages, installPage)
 				publicInstallPageMap[filepath.Base(pth)] = installPage
 			}
 		default:
@@ -212,7 +208,6 @@ func main() {
 
 			if installPage != "" {
 				publicInstallPage = installPage
-				publicInstallPages = append(publicInstallPages, installPage)
 				publicInstallPageMap[filepath.Base(pth)] = installPage
 			} else if configs.IsPublicPageEnabled == "true" {
 				log.Warnf("is_enable_public_page is set, but public download isn't allowed for this type of file")
@@ -228,25 +223,19 @@ func main() {
 		if err := tools.ExportEnvironmentWithEnvman("BITRISE_PUBLIC_INSTALL_PAGE_URL", publicInstallPage); err != nil {
 			fail("Failed to export BITRISE_PUBLIC_INSTALL_PAGE_URL, error: %s", err)
 		}
-		log.Printf("The public install page url is now available in the Environment Variable: BITRISE_PUBLIC_INSTALL_PAGE_URL (value: %s)", publicInstallPage)
-		log.Printf("")
+		log.Printf("The public install page url is now available in the Environment Variable: BITRISE_PUBLIC_INSTALL_PAGE_URL (value: %s)\n", publicInstallPage)
 	}
 
 	if len(publicInstallPageMap) > 0 {
-		tuples := make([]string, 0)
-
+		urlsByPage, sep := "", ""
 		for file, url := range publicInstallPageMap {
-			tuples = append(tuples, file + "," + url)
+			urlsByPage += fmt.Sprintf("%s%s,%s", sep, file, url)
+			sep = "|"
 		}
-
-		value := strings.Join(tuples, "|")
-		if err := tools.ExportEnvironmentWithEnvman("BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP", value); err != nil {
+		if err := tools.ExportEnvironmentWithEnvman("BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP", urlsByPage); err != nil {
 			fail("Failed to export BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP, error: %s", err)
 		}
-		log.Printf("A map of deployed files and their public install page urls is now available in the Environment Variable: BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP (value: %s)", value)
+		log.Printf("A map of deployed files and their public install page urls is now available in the Environment Variable: BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP (value: %s)", urlsByPage)
 		log.Printf("")
 	}
-
-	// --
-
 }

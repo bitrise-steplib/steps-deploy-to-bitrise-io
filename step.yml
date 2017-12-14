@@ -151,12 +151,6 @@ outputs:
       description: |-
         Public Install Page's URL, if the
         *Enable public page for the App?* option was *enabled*.
-  - BITRISE_PUBLIC_INSTALL_PAGE_URL_LIST:
-    opts:
-      title: List of Public Install Page URLs
-      description: |-
-        An array of pipe-separted (|) Public Install Page URLs, if the
-        *Enable public page for the App?* option was *enabled*.
   - BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP:
     opts:
       title: Map of filenames and Public Install Page URLs
