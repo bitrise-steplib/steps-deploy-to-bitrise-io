@@ -33,15 +33,9 @@ workflows:
         inputs:
         - path: ./_tmp
         - is_create_path: true
-    - git-clone:
-        run_if: true
+    - script:
         inputs:
-        - repository_url: $SAMPLE_ARTIFACTS_GIT_CLONE_URL
-        - branch: master
-        - commit: ""
-        - tag: ""
-        - pull_request_id: ""
-        - clone_into_dir: ./
+        - content: git clone $SAMPLE_ARTIFACTS_GIT_CLONE_URL .
     - path::./:
         title: Test uncompressed
         run_if: true
