@@ -155,6 +155,12 @@ outputs:
     opts:
       title: Map of filenames and Public Install Page URLs
       description: |-
-        A dictionary of Public Install Page URLs, with the uploaded filename as
-        the key. The format is KEY1:VALUE|KEY2:VALUE
+        Public Install Page URLs by the artifact's file path.
         Only set if the *Enable public page for the App?* option was *enabled*.
+
+        The format is `KEY1=>VALUE|KEY2=>VALUE`
+
+        Examples:
+
+        - $BITRISE_DEPLOY_DIR/ios_app.ipa=>https://ios_app/public/install/page
+        - $BITRISE_DEPLOY_DIR/android_app.apk=>https://android_app/public/install/page|$BITRISE_DEPLOY_DIR/ios_app.ipa=>https://ios_app/public/install/page
