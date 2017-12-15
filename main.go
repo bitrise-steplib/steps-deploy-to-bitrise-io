@@ -229,7 +229,7 @@ func main() {
 	if len(publicInstallPageMap) > 0 {
 		urlsByPage, sep := "", ""
 		for file, url := range publicInstallPageMap {
-			urlsByPage += fmt.Sprintf("%s%s,%s", sep, file, url)
+			urlsByPage += fmt.Sprintf("%s%s=>%s", sep, file, url)
 			sep = "|"
 		}
 		if err := tools.ExportEnvironmentWithEnvman("BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP", urlsByPage); err != nil {
