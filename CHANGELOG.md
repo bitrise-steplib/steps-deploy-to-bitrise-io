@@ -1,6 +1,12 @@
-## Changelog (Current version: 1.3.9)
+## Changelog (Current version: 1.3.10)
 
 -----------------
+
+### 1.3.10 (2017 Dec 15)
+
+* [30a643b] Bump version to 1.3.10
+* [3ec9b13] Remove installPageUrlList as step output (#55)
+* [1c7b54e] Export all public URLs to the environment (#54)
 
 ### 1.3.9 (2017 Nov 22)
 
@@ -171,4 +177,4 @@
 
 -----------------
 
-Updated: 2017 Nov 22
+Updated: 2017 Dec 15
