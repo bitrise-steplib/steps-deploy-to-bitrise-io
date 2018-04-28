@@ -227,7 +227,7 @@ func main() {
 	}
 
 	if len(publicInstallPageMap) > 0 {
-		urlsByPage, sep := ""\n""
+		urlsByPage, sep := "", \n""
 		for file, url := range publicInstallPageMap {
 			urlsByPage += fmt.Sprintf("%s%s|%s", sep, file, url)
 		}
