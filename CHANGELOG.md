@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.3.10)
+## Changelog (Current version: 1.3.11)
 
 -----------------
+
+### 1.3.11 (2018 May 07)
+
+* [92fe7c5] Prepare for 1.3.11
+* [fc81375] input grouping (#62)
 
 ### 1.3.10 (2017 Dec 15)
 
@@ -177,4 +182,4 @@
 
 -----------------
 
-Updated: 2017 Dec 15
+Updated: 2018 May 07
