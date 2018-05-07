@@ -24,7 +24,6 @@ toolkit:
 inputs:
   - deploy_path: "$BITRISE_DEPLOY_DIR"
     opts:
-      category: Config
       title: "Deploy directory or file path"
       description: |
         Specify the directory or file path which will be deployed.
@@ -39,9 +38,53 @@ inputs:
         If you specify a file path then only the specified
         file will be deployed.
       is_required: true
+  - notify_user_groups: "everyone"
+    opts:
+      title: "Notify: User Groups"
+      description: |
+        Your App's user groups to notify, comma separated.
+        Possible group names:
+
+        * none
+        * testers
+        * developers
+        * admins
+        * owner
+        * everyone
+
+        An example to notify your developers and testers:
+
+        `testers, developers`
+
+        If you want to notify everyone in your team just specify `everyone`.
+
+        If you don't want to notify anyone set this to `none`.
+  - notify_email_list:
+    opts:
+      title: "Notify: Emails"
+      description: |
+        Email addresses to notify, comma separated.
+
+        You can specify any email address, the recepients
+        don't have to be in your team.
+  - is_enable_public_page: "true"
+    opts:
+      title: "Enable public page for the App?"
+      description: |
+        If this option is enabled a public install page
+        will be available with a long and random URL which can be shared
+        with others who are not registered on Bitrise.
+
+        **If you disable this option the Notify Emails option will
+        be ignored and the Notify Groups will receive the build's
+        URL instead of the public page's URL!**
+      is_required: true
+      is_expand: false
+      value_options:
+      - "true"
+      - "false"
   - is_compress: "false"
     opts:
-      category: Config
       title: Compress the artifacts into one file?
       summary: |-
         If this option is allowed the artifacts
@@ -65,7 +108,7 @@ inputs:
         - "false"
   - zip_name:
     opts:
-      category: Config
+      category: Debug
       title: Name of the compressed artifact (without .zip extension)
       summary: |-
         Specify a custom name for the compressed artifact. We're going to
@@ -75,55 +118,6 @@ inputs:
         use the *Deploy directory* name if you leave it blank.
 
         This option only works if you selected *true* for *is_compress*.
-  - is_enable_public_page: "true"
-    opts:
-      category: Config
-      title: "Enable public page for the App?"
-      description: |
-        If this option is enabled a public install page
-        will be available with a long and random URL which can be shared
-        with others who are not registered on Bitrise.
-
-        **If you disable this option the Notify Emails option will
-        be ignored and the Notify Groups will receive the build's
-        URL instead of the public page's URL!**
-      is_required: true
-      is_expand: false
-      value_options:
-      - "true"
-      - "false"
-  - notify_user_groups: "everyone"
-    opts:
-      category: Notification
-      title: "Notify: User Groups"
-      description: |
-        Your App's user groups to notify, comma separated.
-        Possible group names:
-
-        * none
-        * testers
-        * developers
-        * admins
-        * owner
-        * everyone
-
-        An example to notify your developers and testers:
-
-        `testers, developers`
-
-        If you want to notify everyone in your team just specify `everyone`.
-
-        If you don't want to notify anyone set this to `none`.
-  - notify_email_list:
-    opts:
-      category: Notification
-      title: "Notify: Emails"
-      description: |
-        Email addresses to notify, comma separated.
-
-        You can specify any email address, the recepients
-        don't have to be in your team.
-
   - build_url: "$BITRISE_BUILD_URL"
     opts:
       category: Debug
