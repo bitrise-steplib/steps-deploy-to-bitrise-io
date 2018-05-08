@@ -75,6 +75,7 @@ workflows:
         inputs:
         - content: |-
             echo "-> BITRISE_PUBLIC_INSTALL_PAGE_URL: ${BITRISE_PUBLIC_INSTALL_PAGE_URL}"
+            echo "-> BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP: ${BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP}"
 
   go-tests:
     before_run:

@@ -106,6 +106,15 @@ inputs:
       value_options:
         - "true"
         - "false"
+  - public_install_page_url_map_format: "{{range $index, $element := .}}{{if $index}}|{{end}}{{$element.File}}=>{{$element.URL}}{{end}}"
+    opts:
+      title: Format for the BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP output?
+      summary: You can change the format of the BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP output
+      description: |-
+        Specify the output pattern with golang template.
+        https://golang.org/pkg/text/template/
+      is_required: true
+      is_expand: false                    
   - zip_name:
     opts:
       category: Debug

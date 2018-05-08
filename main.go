@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"html/template"
 	"os"
 	"path/filepath"
 
@@ -17,26 +19,34 @@ var fileBaseNamesToSkip = []string{".DS_Store"}
 
 // ConfigsModel ...
 type ConfigsModel struct {
-	BuildURL            string
-	APIToken            string
-	IsCompress          string
-	ZipName             string
-	DeployPath          string
-	NotifyUserGroups    string
-	NotifyEmailList     string
-	IsPublicPageEnabled string
+	BuildURL                   string
+	APIToken                   string
+	IsCompress                 string
+	ZipName                    string
+	DeployPath                 string
+	NotifyUserGroups           string
+	NotifyEmailList            string
+	IsPublicPageEnabled        string
+	PublicInstallPageMapFormat string
+}
+
+// PublicInstallPageItem ...
+type PublicInstallPageItem struct {
+	File string
+	URL  string
 }
 
 func createConfigsModelFromEnvs() ConfigsModel {
 	return ConfigsModel{
-		BuildURL:            os.Getenv("build_url"),
-		APIToken:            os.Getenv("build_api_token"),
-		IsCompress:          os.Getenv("is_compress"),
-		ZipName:             os.Getenv("zip_name"),
-		DeployPath:          os.Getenv("deploy_path"),
-		NotifyUserGroups:    os.Getenv("notify_user_groups"),
-		NotifyEmailList:     os.Getenv("notify_email_list"),
-		IsPublicPageEnabled: os.Getenv("is_enable_public_page"),
+		BuildURL:                   os.Getenv("build_url"),
+		APIToken:                   os.Getenv("build_api_token"),
+		IsCompress:                 os.Getenv("is_compress"),
+		ZipName:                    os.Getenv("zip_name"),
+		DeployPath:                 os.Getenv("deploy_path"),
+		NotifyUserGroups:           os.Getenv("notify_user_groups"),
+		NotifyEmailList:            os.Getenv("notify_email_list"),
+		IsPublicPageEnabled:        os.Getenv("is_enable_public_page"),
+		PublicInstallPageMapFormat: os.Getenv("public_install_page_url_map_format"),
 	}
 }
 
@@ -56,6 +66,12 @@ func (configs ConfigsModel) validate() error {
 	if err := input.ValidateWithOptions(configs.IsPublicPageEnabled, "true", "false"); err != nil {
 		return fmt.Errorf("IsPublicPageEnabled - %s", err)
 	}
+	if err := input.ValidateIfNotEmpty(configs.PublicInstallPageMapFormat); err != nil {
+		return fmt.Errorf("PublicInstallPageMapFormat - %s", err)
+	}
+	if err := validateGoTemplate(configs.PublicInstallPageMapFormat); err != nil {
+		return fmt.Errorf("PublicInstallPageMapFormat - %s", err)
+	}
 	return nil
 }
 
@@ -68,6 +84,7 @@ func (configs ConfigsModel) print() {
 	log.Printf("- NotifyUserGroups: %s", configs.NotifyUserGroups)
 	log.Printf("- NotifyEmailList: %s", configs.NotifyEmailList)
 	log.Printf("- IsPublicPageEnabled: %s", configs.IsPublicPageEnabled)
+	log.Printf("- PublicInstallPageMapFormat: %s", configs.PublicInstallPageMapFormat)
 }
 
 func fail(format string, v ...interface{}) {
@@ -227,15 +244,36 @@ func main() {
 	}
 
 	if len(publicInstallPageMap) > 0 {
-		urlsByPage, sep := "", ""
+		temp := template.New("Public Install Page Map template")
+		var urlMap []PublicInstallPageItem
 		for file, url := range publicInstallPageMap {
-			urlsByPage += fmt.Sprintf("%s%s=>%s", sep, file, url)
-			sep = "|"
+			urlMap = append(urlMap, PublicInstallPageItem{
+				File: file,
+				URL:  url,
+			})
 		}
-		if err := tools.ExportEnvironmentWithEnvman("BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP", urlsByPage); err != nil {
+
+		temp, err := temp.Parse(configs.PublicInstallPageMapFormat)
+		if err != nil {
+			fail("Error during parsing PublicInstallPageMap: ", err)
+		}
+
+		buf := new(bytes.Buffer)
+		if err := temp.Execute(buf, urlMap); err != nil {
+			fail("Execute: ", err)
+		}
+
+		if err := tools.ExportEnvironmentWithEnvman("BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP", buf.String()); err != nil {
 			fail("Failed to export BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP, error: %s", err)
 		}
-		log.Printf("A map of deployed files and their public install page urls is now available in the Environment Variable: BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP (value: %s)", urlsByPage)
+		log.Printf("A map of deployed files and their public install page urls is now available in the Environment Variable: BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP (value: %s)", buf.String())
 		log.Printf("")
 	}
+}
+
+func validateGoTemplate(publicInstallPageMapFormat string) error {
+	temp := template.New("Public Install Page Map template")
+
+	_, err := temp.Parse(publicInstallPageMapFormat)
+	return err
 }
