@@ -30,8 +30,8 @@ type ConfigsModel struct {
 	PublicInstallPageMapFormat string
 }
 
-// PublicInstallPageItem ...
-type PublicInstallPageItem struct {
+// PublicInstallPage ...
+type PublicInstallPage struct {
 	File string
 	URL  string
 }
@@ -182,8 +182,7 @@ func main() {
 	fmt.Println()
 	log.Infof("Deploying files")
 
-	publicInstallPage := ""
-	publicInstallPageMap := make(map[string]string)
+	publicInstallPages := make(map[string]string)
 
 	for _, pth := range clearedFilesToDeploy {
 		ext := filepath.Ext(pth)
@@ -200,8 +199,7 @@ func main() {
 			}
 
 			if installPage != "" {
-				publicInstallPage = installPage
-				publicInstallPageMap[filepath.Base(pth)] = installPage
+				publicInstallPages[filepath.Base(pth)] = installPage
 			}
 		case ".apk":
 			log.Donef("Uploading apk file: %s", pth)
@@ -212,8 +210,7 @@ func main() {
 			}
 
 			if installPage != "" {
-				publicInstallPage = installPage
-				publicInstallPageMap[filepath.Base(pth)] = installPage
+				publicInstallPages[filepath.Base(pth)] = installPage
 			}
 		default:
 			log.Donef("Uploading file: %s", pth)
@@ -224,8 +221,7 @@ func main() {
 			}
 
 			if installPage != "" {
-				publicInstallPage = installPage
-				publicInstallPageMap[filepath.Base(pth)] = installPage
+				publicInstallPages[filepath.Base(pth)] = installPage
 			} else if configs.IsPublicPageEnabled == "true" {
 				log.Warnf("is_enable_public_page is set, but public download isn't allowed for this type of file")
 			}
@@ -236,22 +232,20 @@ func main() {
 	log.Donef("Success")
 	log.Printf("You can find the Artifact on Bitrise, on the Build's page: %s", configs.BuildURL)
 
-	if publicInstallPage != "" {
-		if err := tools.ExportEnvironmentWithEnvman("BITRISE_PUBLIC_INSTALL_PAGE_URL", publicInstallPage); err != nil {
-			fail("Failed to export BITRISE_PUBLIC_INSTALL_PAGE_URL, error: %s", err)
-		}
-		log.Printf("The public install page url is now available in the Environment Variable: BITRISE_PUBLIC_INSTALL_PAGE_URL (value: %s)\n", publicInstallPage)
-	}
-
-	if len(publicInstallPageMap) > 0 {
-		temp := template.New("Public Install Page Map template")
-		var urlMap []PublicInstallPageItem
-		for file, url := range publicInstallPageMap {
-			urlMap = append(urlMap, PublicInstallPageItem{
+	if len(publicInstallPages) > 0 {
+		temp := template.New("Public Install Page template")
+		var pages []PublicInstallPage
+		for file, url := range publicInstallPages {
+			pages = append(pages, PublicInstallPage{
 				File: file,
 				URL:  url,
 			})
 		}
+
+		if err := tools.ExportEnvironmentWithEnvman("BITRISE_PUBLIC_INSTALL_PAGE_URL", pages[0].URL); err != nil {
+			fail("Failed to export BITRISE_PUBLIC_INSTALL_PAGE_URL, error: %s", err)
+		}
+		log.Printf("The public install page url is now available in the Environment Variable: BITRISE_PUBLIC_INSTALL_PAGE_URL (value: %s)\n", pages[0].URL)
 
 		temp, err := temp.Parse(configs.PublicInstallPageMapFormat)
 		if err != nil {
@@ -259,7 +253,7 @@ func main() {
 		}
 
 		buf := new(bytes.Buffer)
-		if err := temp.Execute(buf, urlMap); err != nil {
+		if err := temp.Execute(buf, pages); err != nil {
 			fail("Execute: ", err)
 		}
 
