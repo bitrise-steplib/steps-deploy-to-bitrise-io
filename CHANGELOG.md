@@ -1,6 +1,11 @@
-## Changelog (Current version: 1.3.11)
+## Changelog (Current version: 1.3.12)
 
 -----------------
+
+### 1.3.12 (2018 May 11)
+
+* [640ddff] Prepare for 1.3.12
+* [e1bf8cb] public_install_page_url_map_format input added; (#63)
 
 ### 1.3.11 (2018 May 07)
 
@@ -182,4 +187,4 @@
 
 -----------------
 
-Updated: 2018 May 07
+Updated: 2018 May 11
