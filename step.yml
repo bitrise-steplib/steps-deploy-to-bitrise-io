@@ -67,6 +67,7 @@ inputs:
 
         You can specify any email address, the recepients
         don't have to be in your team.
+      is_sensitive: true
   - is_enable_public_page: "true"
     opts:
       title: "Enable public page for the App?"
