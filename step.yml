@@ -137,6 +137,7 @@ inputs:
         Unique build URL of this build on Bitrise.io
       is_required: true
       is_dont_change_value: true
+      is_sensitive: true
   - build_api_token: "$BITRISE_BUILD_API_TOKEN"
     opts:
       category: Debug
@@ -147,6 +148,7 @@ inputs:
         The build's API Token for the build on Bitrise.io
       is_required: true
       is_dont_change_value: true
+      is_sensitive: true
 outputs:
   - BITRISE_PUBLIC_INSTALL_PAGE_URL:
     opts:
