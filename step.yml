@@ -40,10 +40,10 @@ inputs:
       is_required: true
   - notify_user_groups: "everyone"
     opts:
-      title: "Notify: User Groups"
+      title: "Notify: User Roles"
       description: |
-        Your App's user groups to notify, comma separated.
-        Possible group names:
+        Your App's user roles to notify, comma separated.
+        Possible role names:
 
         * none
         * testers
@@ -56,7 +56,7 @@ inputs:
 
         `testers, developers`
 
-        If you want to notify everyone in your team just specify `everyone`.
+        If you want to notify everyone in the app's team just specify `everyone`.
 
         If you don't want to notify anyone set this to `none`.
   - notify_email_list:
@@ -67,6 +67,7 @@ inputs:
 
         You can specify any email address, the recepients
         don't have to be in your team.
+      is_sensitive: true
   - is_enable_public_page: "true"
     opts:
       title: "Enable public page for the App?"
@@ -76,7 +77,7 @@ inputs:
         with others who are not registered on Bitrise.
 
         **If you disable this option the Notify Emails option will
-        be ignored and the Notify Groups will receive the build's
+        be ignored and the Notify User Roles users will receive the build's
         URL instead of the public page's URL!**
       is_required: true
       is_expand: false
@@ -136,6 +137,7 @@ inputs:
         Unique build URL of this build on Bitrise.io
       is_required: true
       is_dont_change_value: true
+      is_sensitive: true
   - build_api_token: "$BITRISE_BUILD_API_TOKEN"
     opts:
       category: Debug
@@ -146,6 +148,7 @@ inputs:
         The build's API Token for the build on Bitrise.io
       is_required: true
       is_dont_change_value: true
+      is_sensitive: true
 outputs:
   - BITRISE_PUBLIC_INSTALL_PAGE_URL:
     opts:
