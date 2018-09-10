@@ -24,7 +24,8 @@ type ApkInfo struct {
 func filterPackageInfos(aaptOut string) (string, string, string) {
 	// build tools version >= 28 package: name='sample.results.test.multiple.bitrise.com.multipletestresultssample' versionCode='1' versionName='1.0'
 	// build tools version < 28 package: name='sample.results.test.multiple.bitrise.com.multipletestresultssample' versionCode='1' versionName='1.0' platformBuildVersionName=''
-	pattern := `package: name=\'(?P<package_name>.*)\' versionCode=\'(?P<version_code>.*)\' versionName=\'(?P<version_name>.*)\'`
+	pattern := `package: name=\'(?P<package_name>.*)\' versionCode=\'(?P<version_code>.*)\' versionName=\'(?P<version_name>.[^\s]*)\'`
+
 	re := regexp.MustCompile(pattern)
 	if matches := re.FindStringSubmatch(aaptOut); len(matches) == 4 {
 		return matches[1], matches[2], matches[3]
