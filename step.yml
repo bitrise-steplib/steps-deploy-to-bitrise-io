@@ -2,10 +2,9 @@ title: "Deploy to Bitrise.io - Apps, Logs, Artifacts"
 summary: |-
   Generic artifacts deployer, attaches the artifacts to bitrise.io builds.
 description: |-
-  Generic artifacts deployer, attaches the artifacts to bitrise.io builds.
+  This generic artifacts deployer attaches the artifacts to bitrise.io builds.
 
-  You'll see the deployed files on bitrise.io, on the build's page,
-  in the "Apps and Artifacts" section.
+  You'll see the deployed files in the `Apps and Artifacts` section of the build's page on bitrise.io.
 website: https://github.com/bitrise-io/steps-deploy-to-bitrise-io
 source_code_url: https://github.com/bitrise-io/steps-deploy-to-bitrise-io
 support_url: https://github.com/bitrise-io/steps-deploy-to-bitrise-io/issues
@@ -27,22 +26,21 @@ inputs:
       title: "Deploy directory or file path"
       description: |
         Specify the directory or file path which will be deployed.
-        If the specified path is a directory then every file
-        in the directory will be deployed - but only the
-        files in the specified directory, sub-directories
-        won't be uploaded. For uploading the directory's content
-        recursively you should use the *Compress* option
+        If the specified path is a directory, then every file
+        in the specified directory will be deployed, sub-directories, however,
+        won't be uploaded. To upload the directory's content
+        recursively, you should use the *Compress* option
         which will compress the whole directory, with
         every sub-directory included.
 
-        If you specify a file path then only the specified
+        If you specify a file path, then only the specified
         file will be deployed.
       is_required: true
   - notify_user_groups: "everyone"
     opts:
       title: "Notify: User Roles"
       description: |
-        Your App's user roles to notify, comma separated.
+        Your App's user roles you want to notify. Separate the role names with commas.
         Possible role names:
 
         * none
@@ -56,28 +54,28 @@ inputs:
 
         `testers, developers`
 
-        If you want to notify everyone in the app's team just specify `everyone`.
+        If you want to notify everyone in the app's team, just specify `everyone`.
 
-        If you don't want to notify anyone set this to `none`.
+        If you don't want to notify anyone, set this to `none`.
   - notify_email_list:
     opts:
       title: "Notify: Emails"
       description: |
-        Email addresses to notify, comma separated.
+        Email addresses to notify. Separate them with commas.
 
-        You can specify any email address, the recepients
+        You can specify any email address, the recipients
         don't have to be in your team.
       is_sensitive: true
   - is_enable_public_page: "true"
     opts:
       title: "Enable public page for the App?"
       description: |
-        If this option is enabled a public install page
+        If this option is enabled, a public install page
         will be available with a long and random URL which can be shared
         with others who are not registered on Bitrise.
 
-        **If you disable this option the Notify Emails option will
-        be ignored and the Notify User Roles users will receive the build's
+        **If you disable this option, the `Notify Emails` option will
+        be ignored and the `Notify User Roles` users will receive the build's
         URL instead of the public page's URL!**
       is_required: true
       is_expand: false
@@ -88,18 +86,18 @@ inputs:
     opts:
       title: Compress the artifacts into one file?
       summary: |-
-        If this option is allowed the artifacts
+        If this option is allowed, the artifacts
         found in the *Deploy directory* folder will be compressed
         into a single (ZIP) file.
       description: |-
-        If this option is allowed the artifacts
+        If this option is allowed, the artifacts
         found in the *Deploy directory* folder will be compressed
         into a single file.
 
         You can specify a custom name for the ZIP using the *zip_name*
         option - otherwise we're going to use the *Deploy directory* name.
 
-        If this option is turned off the artifacts
+        If this option is turned off, the artifacts
         found in the *Deploy directory* folder will be deployed
         separately.
       is_required: true
@@ -161,7 +159,7 @@ outputs:
       title: Map of filenames and Public Install Page URLs
       description: |-
         Public Install Page URLs by the artifact's file path.
-        Only set if the *Enable public page for the App?* option was *enabled*.
+        Only set it if the *Enable public page for the App?* option was *enabled*.
 
         The format is `KEY1=>VALUE|KEY2=>VALUE`
 
