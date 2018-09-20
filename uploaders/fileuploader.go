@@ -13,7 +13,7 @@ func DeployFile(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePu
 		return "", fmt.Errorf("failed to upload file artifact, error: %s", err)
 	}
 
-	publicInstallPage, err := finishArtifact(buildURL, token, artifactID, "", "", "", "no")
+	publicInstallPage, err := finishArtifact(buildURL, token, artifactID, "", "", "", isEnablePublicPage)
 	if err != nil {
 		return "", fmt.Errorf("failed to finish file artifact, error: %s", err)
 	}
