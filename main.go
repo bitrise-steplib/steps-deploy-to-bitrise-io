@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
@@ -94,6 +95,7 @@ func fail(format string, v ...interface{}) {
 
 func main() {
 	configs := createConfigsModelFromEnvs()
+	configs.DeployPath = strings.TrimSpace(configs.DeployPath)
 
 	fmt.Println()
 	configs.print()
