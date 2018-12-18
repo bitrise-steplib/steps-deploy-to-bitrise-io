@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/log"
@@ -14,23 +15,29 @@ import (
 
 // ApkInfo ...
 type ApkInfo struct {
-	AppName       string
-	PackageName   string
-	VersionCode   string
-	VersionName   string
-	MinSDKVersion string
+	AppName           string
+	PackageName       string
+	VersionCode       string
+	VersionName       string
+	MinSDKVersion     string
+	RawPackageContent string
+}
+
+func packageField(data, key string) string {
+	pattern := fmt.Sprintf(`%s=['"](.*?)['"]`, key)
+
+	re := regexp.MustCompile(pattern)
+	if matches := re.FindStringSubmatch(data); len(matches) == 2 {
+		return matches[1]
+	}
+
+	return ""
 }
 
 func filterPackageInfos(aaptOut string) (string, string, string) {
-	// build tools version >= 28 package: name='sample.results.test.multiple.bitrise.com.multipletestresultssample' versionCode='1' versionName='1.0'
-	// build tools version < 28 package: name='sample.results.test.multiple.bitrise.com.multipletestresultssample' versionCode='1' versionName='1.0' platformBuildVersionName=''
-	pattern := `package: name=\'(?P<package_name>.*)\' versionCode=\'(?P<version_code>.*)\' versionName=\'(?P<version_name>.[^\s]*)\'`
-
-	re := regexp.MustCompile(pattern)
-	if matches := re.FindStringSubmatch(aaptOut); len(matches) == 4 {
-		return matches[1], matches[2], matches[3]
-	}
-	return "", "", ""
+	return packageField(aaptOut, "name"),
+		packageField(aaptOut, "versionCode"),
+		packageField(aaptOut, "versionName")
 }
 
 func filterAppLable(aaptOut string) string {
@@ -83,12 +90,20 @@ func getAPKInfo(apkPth string) (ApkInfo, error) {
 	packageName, versionCode, versionName := filterPackageInfos(aaptOut)
 	minSDKVersion := filterMinSDKVersion(aaptOut)
 
+	packageContent := ""
+	for _, line := range strings.Split(aaptOut, "\n") {
+		if strings.HasPrefix(line, "package:") {
+			packageContent = line
+		}
+	}
+
 	return ApkInfo{
-		AppName:       appName,
-		PackageName:   packageName,
-		VersionCode:   versionCode,
-		VersionName:   versionName,
-		MinSDKVersion: minSDKVersion,
+		AppName:           appName,
+		PackageName:       packageName,
+		VersionCode:       versionCode,
+		VersionName:       versionName,
+		MinSDKVersion:     minSDKVersion,
+		RawPackageContent: packageContent,
 	}, nil
 }
 
@@ -110,6 +125,18 @@ func DeployAPK(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 	}
 
 	log.Printf("  apk infos: %v", appInfo)
+
+	if apkInfo.PackageName == "" {
+		log.Warnf("Package name is undefined, AndroidManifest.xml package content:\n%s", apkInfo.RawPackageContent)
+	}
+
+	if apkInfo.VersionCode == "" {
+		log.Warnf("Version code is undefined, AndroidManifest.xml package content:\n%s", apkInfo.RawPackageContent)
+	}
+
+	if apkInfo.VersionName == "" {
+		log.Warnf("Version name is undefined, AndroidManifest.xml package content:\n%s", apkInfo.RawPackageContent)
+	}
 
 	// ---
 
