@@ -2,7 +2,6 @@ package test
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -85,7 +84,9 @@ func Test_Upload(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			w.Write(b)
+			if _, err := w.Write(b); err != nil {
+				t.Fatal("Failed to write to the writer, error:", err)
+			}
 		}).Methods("POST")
 
 		router.HandleFunc("/teststorage/{file_name}", func(w http.ResponseWriter, r *http.Request) {
@@ -99,8 +100,6 @@ func Test_Upload(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-
-			fmt.Println("uploading:", fName)
 
 			if fName == "test_result.xml" {
 				if string(receivedData) == string(testXMLContent) {

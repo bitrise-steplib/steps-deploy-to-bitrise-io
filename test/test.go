@@ -16,22 +16,26 @@ import (
 	"github.com/bitrise-io/steps-deploy-to-bitrise-io/test/converters"
 )
 
+// FileInfo ...
 type FileInfo struct {
 	FileName string `json:"filename"`
 	FileSize int    `json:"filesize"`
 }
 
+// UploadURL ...
 type UploadURL struct {
 	FileName string `json:"filename"`
 	URL      string `json:"upload_url"`
 }
 
+// UploadRequest ...
 type UploadRequest struct {
 	Step   models.TestResultStepInfo `json:"step"`
 	Assets []FileInfo                `json:"assets"`
 	FileInfo
 }
 
+// UploadResponse ...
 type UploadResponse struct {
 	ID     string      `json:"id"`
 	Assets []UploadURL `json:"assets"`
