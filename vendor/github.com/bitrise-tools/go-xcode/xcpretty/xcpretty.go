@@ -7,8 +7,10 @@ import (
 	"os"
 
 	"github.com/bitrise-io/go-utils/command"
+	"github.com/bitrise-io/go-utils/command/rubycommand"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-tools/go-xcode/xcodebuild"
+	version "github.com/hashicorp/go-version"
 )
 
 const (
@@ -18,8 +20,7 @@ const (
 // CommandModel ...
 type CommandModel struct {
 	xcodebuildCommand xcodebuild.CommandModel
-
-	customOptions []string
+	customOptions     []string
 }
 
 // New ...
@@ -103,4 +104,29 @@ func (c CommandModel) Run() (string, error) {
 	}
 
 	return outBuffer.String(), nil
+}
+
+// IsInstalled ...
+func IsInstalled() (bool, error) {
+	return rubycommand.IsGemInstalled("xcpretty", "")
+}
+
+// Install ...
+func Install() ([]*command.Model, error) {
+	cmds, err := rubycommand.GemInstall("xcpretty", "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create command model, error: %s", err)
+	}
+	return cmds, nil
+}
+
+// Version ...
+func Version() (*version.Version, error) {
+	cmd := command.New("xcpretty", "--version")
+	versionOut, err := cmd.RunAndReturnTrimmedCombinedOutput()
+	if err != nil {
+		return nil, err
+	}
+
+	return version.NewVersion(versionOut)
 }
