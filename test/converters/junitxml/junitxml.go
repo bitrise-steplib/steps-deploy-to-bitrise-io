@@ -6,17 +6,15 @@ import (
 	"github.com/bitrise-io/go-utils/fileutil"
 )
 
-type Handler struct {
+// Converter holds data of the converter
+type Converter struct {
 	files       []string
 	xmlFilePath string
 }
 
-func (h *Handler) SetFiles(files []string) {
+// Detect return true if the test results a Juni4 XML file
+func (h *Converter) Detect(files []string) bool {
 	h.files = files
-}
-
-func (h *Handler) Detect() bool {
-	// TODO: detect more and validate if Junit4 xml
 	for _, file := range h.files {
 		if strings.HasSuffix(file, ".xml") {
 			h.xmlFilePath = file
@@ -26,6 +24,7 @@ func (h *Handler) Detect() bool {
 	return false
 }
 
-func (h *Handler) XML() ([]byte, error) {
+// XML returns the xml content bytes
+func (h *Converter) XML() ([]byte, error) {
 	return fileutil.ReadBytesFromFile(h.xmlFilePath)
 }

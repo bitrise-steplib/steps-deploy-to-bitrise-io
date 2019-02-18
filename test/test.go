@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -13,8 +14,70 @@ import (
 	"github.com/bitrise-io/bitrise/models"
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/steps-deploy-to-bitrise-io/test/converters"
-	"github.com/google/uuid"
 )
+
+type FileInfo struct {
+	FileName string `json:"filename"`
+	FileSize int    `json:"filesize"`
+}
+
+type UploadURL struct {
+	FileName string `json:"filename"`
+	URL      string `json:"upload_url"`
+}
+
+type UploadRequest struct {
+	Step   models.TestResultStepInfo `json:"step"`
+	Assets []FileInfo                `json:"assets"`
+	FileInfo
+}
+
+type UploadResponse struct {
+	ID     string      `json:"id"`
+	Assets []UploadURL `json:"assets"`
+	UploadURL
+}
+
+// Result ...
+type Result struct {
+	XMLContent []byte
+	ImagePaths []string
+	StepInfo   models.TestResultStepInfo
+}
+
+// Results ...
+type Results []Result
+
+func httpCall(client *http.Client, method, endpointURL string, input io.Reader, output interface{}) error {
+	req, err := http.NewRequest(method, endpointURL, input)
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			fmt.Printf("Failed to close body, error: %s\n", err)
+		}
+	}()
+
+	if resp.StatusCode < 200 || 299 < resp.StatusCode {
+		bodyData, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("unsuccessful response code: %d and failed to read body, error: %s", resp.StatusCode, err)
+		}
+		return fmt.Errorf("unsuccessful response code: %d\nbody:\n%s", resp.StatusCode, bodyData)
+	}
+
+	if output != nil {
+		return json.NewDecoder(resp.Body).Decode(&output)
+	}
+	return nil
+}
 
 func findImages(testDir string) (imageFilePaths []string) {
 	for _, ext := range []string{".jpg", ".jpeg", ".png"} {
@@ -28,18 +91,8 @@ func findImages(testDir string) (imageFilePaths []string) {
 	return
 }
 
-// ResultAssets ...
-type ResultAssets struct {
-	XMLContent []byte                    `json:"xml"`
-	ImagePaths []string                  `json:"-"`
-	StepInfo   models.TestResultStepInfo `json:"step_info"`
-}
-
-// Bundle ...
-type Bundle []ResultAssets
-
 // ParseTestResults ...
-func ParseTestResults(testsRootDir string) (bundle Bundle, err error) {
+func ParseTestResults(testsRootDir string) (results Results, err error) {
 	// read dirs in base tests dir
 	testDirs, err := ioutil.ReadDir(testsRootDir)
 	if err != nil {
@@ -75,18 +128,17 @@ func ParseTestResults(testsRootDir string) (bundle Bundle, err error) {
 			continue
 		}
 
-		// get the handler that can manage test type contained in the dir
-		for _, handler := range converters.List() {
-			handler.SetFiles(testFiles)
-			// skip if couldn't find handler for content type
-			if handler.Detect() {
-				xml, err := handler.XML()
+		// get the converter that can manage test type contained in the dir
+		for _, converter := range converters.List() {
+			// skip if couldn't find converter for content type
+			if converter.Detect(testFiles) {
+				xml, err := converter.XML()
 				if err != nil {
 					return nil, err
 				}
 
 				// so here I will have image paths, xml data, and step info per test dir in a bundle info
-				bundle = append(bundle, ResultAssets{
+				results = append(results, Result{
 					XMLContent: xml,
 					ImagePaths: findImages(filepath.Join(testsRootDir, testDir.Name())),
 					StepInfo:   *stepInfo,
@@ -94,120 +146,64 @@ func ParseTestResults(testsRootDir string) (bundle Bundle, err error) {
 			}
 		}
 	}
-	return bundle, nil
-}
-
-func checkResponse(resp *http.Response) error {
-	if resp.StatusCode < 200 || 299 < resp.StatusCode {
-		bodyData, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return fmt.Errorf("unsuccessful response code: %d and failed to read body, error: %s", resp.StatusCode, err)
-		}
-		return fmt.Errorf("unsuccessful response code: %d\nbody:\n%s", resp.StatusCode, bodyData)
-	}
-	return nil
+	return results, nil
 }
 
 // Upload ...
-func (bundle Bundle) Upload(client *http.Client, endpointURL string) error {
-	// generate UUID->filename and UUID->filepath maps and fill them with the assets need to be uploaded
-	assetUploadRequestMap, assetIDPathMap := map[string]string{}, map[string]string{}
-	for _, testResultAsset := range bundle {
-		for _, path := range testResultAsset.ImagePaths {
-			assetUUID := uuid.New().String()
-			assetUploadRequestMap[assetUUID] = filepath.Base(path)
-			assetIDPathMap[assetUUID] = path
+func (results Results) Upload(client *http.Client, endpointBaseURL, appSlug, buildSlug string) error {
+	for _, result := range results {
+		uploadReq := UploadRequest{
+			FileInfo: FileInfo{
+				FileName: "test_result.xml",
+				FileSize: len(result.XMLContent),
+			},
+			Step: result.StepInfo,
 		}
-	}
-
-	// Get an uploadURL map from the server UUID->URL to upload
-	var assetUploadRequestMapData bytes.Buffer
-	if err := json.NewEncoder(&assetUploadRequestMapData).Encode(assetUploadRequestMap); err != nil {
-		return err
-	}
-
-	req, err := http.NewRequest(http.MethodGet, endpointURL, bytes.NewReader(assetUploadRequestMapData.Bytes()))
-	if err != nil {
-		return err
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			fmt.Printf("Failed to close body, error: %s\n", err)
-		}
-	}()
-
-	if err := checkResponse(resp); err != nil {
-		return err
-	}
-
-	var assetUploadURLMap map[string]string
-	if err := json.NewDecoder(resp.Body).Decode(&assetUploadURLMap); err != nil {
-		return err
-	}
-
-	// upload files matching to heir UUIDs
-	for uuid, uploadURL := range assetUploadURLMap {
-		assetPath, ok := assetIDPathMap[uuid]
-		if !ok {
-			return fmt.Errorf("unknown UUID(%s) for asset", uuid)
-		}
-
-		assetFile, err := os.Open(assetPath)
-		if err != nil {
-			return err
-		}
-
-		req, err := http.NewRequest(http.MethodPut, uploadURL, assetFile)
-		if err != nil {
-			return err
-		}
-
-		resp, err := client.Do(req)
-		if err != nil {
-			return err
-		}
-
-		defer func() {
-			if err := resp.Body.Close(); err != nil {
-				fmt.Printf("Failed to close body, error: %s\n", err)
+		for _, asset := range result.ImagePaths {
+			fi, err := os.Stat(asset)
+			if err != nil {
+				return err
 			}
-		}()
+			uploadReq.Assets = append(uploadReq.Assets, FileInfo{
+				FileName: filepath.Base(asset),
+				FileSize: int(fi.Size()),
+			})
+		}
 
-		if err := checkResponse(resp); err != nil {
+		uploadRequestBodyData, err := json.Marshal(uploadReq)
+		if err != nil {
 			return err
 		}
 
-	}
-
-	// post a confirmation the assets are uploaded and send the xml and step info with it as well
-	var bundleData bytes.Buffer
-	if err := json.NewEncoder(&bundleData).Encode(bundle); err != nil {
-		return err
-	}
-
-	fmt.Println("ITT", string(bundleData.String()))
-
-	req, err = http.NewRequest(http.MethodPost, endpointURL, bytes.NewReader(bundleData.Bytes()))
-	if err != nil {
-		return err
-	}
-
-	resp, err = client.Do(req)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			fmt.Printf("Failed to close body, error: %s\n", err)
+		var uploadResponse UploadResponse
+		if err := httpCall(client, http.MethodPost, fmt.Sprintf("%s/test/apps/%s/builds/%s/test_reports", endpointBaseURL, appSlug, buildSlug), bytes.NewReader(uploadRequestBodyData), &uploadResponse); err != nil {
+			return err
 		}
-	}()
 
-	return checkResponse(resp)
+		if err := httpCall(client, http.MethodPut, uploadResponse.URL, bytes.NewReader(result.XMLContent), nil); err != nil {
+			return err
+		}
+
+		for _, upload := range uploadResponse.Assets {
+			for _, file := range result.ImagePaths {
+				if filepath.Base(file) == upload.FileName {
+					fi, err := os.Open(file)
+					if err != nil {
+						return err
+					}
+					if err := httpCall(client, http.MethodPut, upload.URL, fi, nil); err != nil {
+						return err
+					}
+					break
+				}
+			}
+		}
+
+		fmt.Println("patch:", fmt.Sprintf("%s/test/apps/%s/builds/%s/test_reports/%s", endpointBaseURL, appSlug, buildSlug, uploadResponse.ID))
+		if err := httpCall(client, http.MethodPatch, fmt.Sprintf("%s/test/apps/%s/builds/%s/test_reports/%s", endpointBaseURL, appSlug, buildSlug, uploadResponse.ID), nil, nil); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
