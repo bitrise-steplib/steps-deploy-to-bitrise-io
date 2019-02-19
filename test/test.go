@@ -53,7 +53,10 @@ type Result struct {
 type Results []Result
 
 func httpCall(apiToken, method, url string, input io.Reader, output interface{}) error {
-	req, err := http.NewRequest(method, url+"/"+apiToken, input)
+	if apiToken != "" {
+		url = url + "/" + apiToken
+	}
+	req, err := http.NewRequest(method, url, input)
 	if err != nil {
 		return err
 	}
@@ -184,7 +187,7 @@ func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug stri
 			return err
 		}
 
-		if err := httpCall(apiToken, http.MethodPut, uploadResponse.URL, bytes.NewReader(result.XMLContent), nil); err != nil {
+		if err := httpCall("", http.MethodPut, uploadResponse.URL, bytes.NewReader(result.XMLContent), nil); err != nil {
 			return err
 		}
 
@@ -195,7 +198,7 @@ func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug stri
 					if err != nil {
 						return err
 					}
-					if err := httpCall(apiToken, http.MethodPut, upload.URL, fi, nil); err != nil {
+					if err := httpCall("", http.MethodPut, upload.URL, fi, nil); err != nil {
 						return err
 					}
 					break

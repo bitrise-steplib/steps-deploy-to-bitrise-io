@@ -54,7 +54,7 @@ func Test_Upload(t *testing.T) {
 	go func() {
 		router := mux.NewRouter()
 
-		router.HandleFunc("/test/apps/{app_slug}/builds/{build_slug}/test_reports", func(w http.ResponseWriter, r *http.Request) {
+		router.HandleFunc("/test/apps/{app_slug}/builds/{build_slug}/test_reports/{accessToken}", func(w http.ResponseWriter, r *http.Request) {
 			vars := mux.Vars(r)
 			if _, ok := vars["app_slug"]; !ok {
 				t.Fatal("app_slug must be specified")
@@ -127,7 +127,7 @@ func Test_Upload(t *testing.T) {
 			w.WriteHeader(http.StatusNotAcceptable)
 		}).Methods("PUT")
 
-		router.HandleFunc("/test/apps/{app_slug}/builds/{build_slug}/test_reports/{id}", func(w http.ResponseWriter, r *http.Request) {
+		router.HandleFunc("/test/apps/{app_slug}/builds/{build_slug}/test_reports/{id}/{accessToken}", func(w http.ResponseWriter, r *http.Request) {
 			vars := mux.Vars(r)
 			if _, ok := vars["app_slug"]; !ok {
 				t.Fatal("app_slug must be specified")
@@ -151,7 +151,7 @@ func Test_Upload(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	if err := results.Upload(http.DefaultClient, "http://localhost:8893", "test-app-slug", "test-build-slug"); err != nil {
+	if err := results.Upload("access-token", "http://localhost:8893/test", "test-app-slug", "test-build-slug"); err != nil {
 		t.Fatalf("%v", errors.WithStack(err))
 		return
 	}
