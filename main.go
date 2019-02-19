@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/bitrise-io/steps-deploy-to-bitrise-io/test"
+
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/ziputil"
@@ -28,6 +30,11 @@ type Config struct {
 	NotifyEmailList            string `env:"notify_email_list"`
 	IsPublicPageEnabled        string `env:"is_enable_public_page,opt[true,false]"`
 	PublicInstallPageMapFormat string `env:"public_install_page_url_map_format,required"`
+	BuildSlug                  string `env:"BITRISE_BUILD_SLUG,required"`
+	TestDeployDir              string `env:"BITRISE_TEST_DEPLOY_DIR,required"`
+	AppSlug                    string `env:"BITRISE_APP_SLUG,required"`
+	AddonAPIBaseURL            string `env:"addon_api_base_url,required"`
+	AddonAPIToken              string `env:"addon_api_token,required"`
 }
 
 // PublicInstallPage ...
@@ -215,6 +222,23 @@ func main() {
 		log.Printf("A map of deployed files and their public install page urls is now available in the Environment Variable: BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP (value: %s)", buf.String())
 		log.Printf("")
 	}
+
+	// Deploy test files
+	fmt.Println()
+	log.Infof("Upload test results")
+
+	testResults, err := test.ParseTestResults(config.TestDeployDir)
+	if err != nil {
+		fail("Error during parsing test results: ", err)
+	}
+
+	log.Printf("- uploading (%d) test results", len(testResults))
+
+	if err := testResults.Upload(config.AddonAPIToken, config.AddonAPIBaseURL, config.AppSlug, config.BuildSlug); err != nil {
+		fail("Failed to upload test results: ", err)
+	}
+
+	log.Donef("Success")
 }
 
 func validateGoTemplate(publicInstallPageMapFormat string) error {

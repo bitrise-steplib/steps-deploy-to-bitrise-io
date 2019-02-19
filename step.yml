@@ -146,6 +146,23 @@ inputs:
       is_required: true
       is_dont_change_value: true
       is_sensitive: true
+  - addon_api_base_url: "https://vdt.bitrise.io/test"
+    opts:
+      title: "Test API's base URL"
+      summary: The URL where test API is accessible.
+      description: |
+        The URL where test API is accessible.
+      is_required: true
+      is_dont_change_value: true
+  - addon_api_token: $ADDON_VDTESTING_API_TOKEN
+    opts: 
+      title: "API Token"
+      summary: The token required to authenticate with the API.
+      description: |
+        The token required to authenticate with the API.
+      is_required: true
+      is_dont_change_value: true
+      is_sensitive: true
 outputs:
   - BITRISE_PUBLIC_INSTALL_PAGE_URL:
     opts:

@@ -52,13 +52,13 @@ type Result struct {
 // Results ...
 type Results []Result
 
-func httpCall(client *http.Client, method, endpointURL string, input io.Reader, output interface{}) error {
-	req, err := http.NewRequest(method, endpointURL, input)
+func httpCall(apiToken, method, url string, input io.Reader, output interface{}) error {
+	req, err := http.NewRequest(method, url+"/"+apiToken, input)
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -154,7 +154,7 @@ func ParseTestResults(testsRootDir string) (results Results, err error) {
 }
 
 // Upload ...
-func (results Results) Upload(client *http.Client, endpointBaseURL, appSlug, buildSlug string) error {
+func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug string) error {
 	for _, result := range results {
 		uploadReq := UploadRequest{
 			FileInfo: FileInfo{
@@ -180,11 +180,11 @@ func (results Results) Upload(client *http.Client, endpointBaseURL, appSlug, bui
 		}
 
 		var uploadResponse UploadResponse
-		if err := httpCall(client, http.MethodPost, fmt.Sprintf("%s/test/apps/%s/builds/%s/test_reports", endpointBaseURL, appSlug, buildSlug), bytes.NewReader(uploadRequestBodyData), &uploadResponse); err != nil {
+		if err := httpCall(apiToken, http.MethodPost, fmt.Sprintf("%s/apps/%s/builds/%s/test_reports", endpointBaseURL, appSlug, buildSlug), bytes.NewReader(uploadRequestBodyData), &uploadResponse); err != nil {
 			return err
 		}
 
-		if err := httpCall(client, http.MethodPut, uploadResponse.URL, bytes.NewReader(result.XMLContent), nil); err != nil {
+		if err := httpCall(apiToken, http.MethodPut, uploadResponse.URL, bytes.NewReader(result.XMLContent), nil); err != nil {
 			return err
 		}
 
@@ -195,7 +195,7 @@ func (results Results) Upload(client *http.Client, endpointBaseURL, appSlug, bui
 					if err != nil {
 						return err
 					}
-					if err := httpCall(client, http.MethodPut, upload.URL, fi, nil); err != nil {
+					if err := httpCall(apiToken, http.MethodPut, upload.URL, fi, nil); err != nil {
 						return err
 					}
 					break
@@ -203,8 +203,7 @@ func (results Results) Upload(client *http.Client, endpointBaseURL, appSlug, bui
 			}
 		}
 
-		fmt.Println("patch:", fmt.Sprintf("%s/test/apps/%s/builds/%s/test_reports/%s", endpointBaseURL, appSlug, buildSlug, uploadResponse.ID))
-		if err := httpCall(client, http.MethodPatch, fmt.Sprintf("%s/test/apps/%s/builds/%s/test_reports/%s", endpointBaseURL, appSlug, buildSlug, uploadResponse.ID), nil, nil); err != nil {
+		if err := httpCall(apiToken, http.MethodPatch, fmt.Sprintf("%s/apps/%s/builds/%s/test_reports/%s", endpointBaseURL, appSlug, buildSlug, uploadResponse.ID), nil, nil); err != nil {
 			return err
 		}
 	}
