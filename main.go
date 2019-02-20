@@ -34,7 +34,7 @@ type Config struct {
 	TestDeployDir              string `env:"BITRISE_TEST_DEPLOY_DIR,required"`
 	AppSlug                    string `env:"BITRISE_APP_SLUG,required"`
 	AddonAPIBaseURL            string `env:"addon_api_base_url,required"`
-	AddonAPIToken              string `env:"addon_api_token,required"`
+	AddonAPIToken              string `env:"addon_api_token"`
 }
 
 // PublicInstallPage ...
@@ -224,21 +224,23 @@ func main() {
 	}
 
 	// Deploy test files
-	fmt.Println()
-	log.Infof("Upload test results")
+	if config.AddonAPIToken != "" {
+		fmt.Println()
+		log.Infof("Upload test results")
 
-	testResults, err := test.ParseTestResults(config.TestDeployDir)
-	if err != nil {
-		fail("Error during parsing test results: ", err)
+		testResults, err := test.ParseTestResults(config.TestDeployDir)
+		if err != nil {
+			fail("Error during parsing test results: ", err)
+		}
+
+		log.Printf("- uploading (%d) test results", len(testResults))
+
+		if err := testResults.Upload(config.AddonAPIToken, config.AddonAPIBaseURL, config.AppSlug, config.BuildSlug); err != nil {
+			fail("Failed to upload test results: ", err)
+		}
+
+		log.Donef("Success")
 	}
-
-	log.Printf("- uploading (%d) test results", len(testResults))
-
-	if err := testResults.Upload(config.AddonAPIToken, config.AddonAPIBaseURL, config.AppSlug, config.BuildSlug); err != nil {
-		fail("Failed to upload test results: ", err)
-	}
-
-	log.Donef("Success")
 }
 
 func validateGoTemplate(publicInstallPageMapFormat string) error {

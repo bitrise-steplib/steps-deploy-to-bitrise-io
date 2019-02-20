@@ -160,7 +160,6 @@ inputs:
       summary: The token required to authenticate with the API.
       description: |
         The token required to authenticate with the API.
-      is_required: true
       is_dont_change_value: true
       is_sensitive: true
 outputs:
