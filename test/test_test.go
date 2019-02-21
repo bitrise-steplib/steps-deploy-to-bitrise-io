@@ -158,6 +158,15 @@ func Test_Upload(t *testing.T) {
 }
 
 func Test_ParseTestResults(t *testing.T) {
+	sampleTestSummariesPlist, err := fileutil.ReadStringFromFile(filepath.Join("testdata", "ios_testsummaries_plist.golden"))
+	if err != nil {
+		t.Fatal("unable to read golden file, error:", err)
+	}
+	sampleIOSXmlOutput, err := fileutil.ReadStringFromFile(filepath.Join("testdata", "ios_xml_output.golden"))
+	if err != nil {
+		t.Fatal("unable to read golden file, error:", err)
+	}
+
 	// creating test results
 	{
 		testsDir, err := pathutil.NormalizedOSTempDirPath("test")
@@ -195,7 +204,10 @@ func Test_ParseTestResults(t *testing.T) {
 		if err := createDummyFilesInDirWithContent(testDir, `{"title": "test title"}`, []string{"step-info.json"}); err != nil {
 			t.Fatal("failed to create dummy files in dir, error:", err)
 		}
-		if err := createDummyFilesInDirWithContent(testDir, "test content", []string{"result.xml", "image.png", "image3.jpeg", "dirty.gif", "dirty.html"}); err != nil {
+		if err := createDummyFilesInDirWithContent(testDir, "test content", []string{"image.png", "image3.jpeg", "dirty.gif", "dirty.html"}); err != nil {
+			t.Fatal("failed to create dummy files in dir, error:", err)
+		}
+		if err := createDummyFilesInDirWithContent(testDir, sampleIOSXmlOutput, []string{"result.xml"}); err != nil {
 			t.Fatal("failed to create dummy files in dir, error:", err)
 		}
 
@@ -208,22 +220,13 @@ func Test_ParseTestResults(t *testing.T) {
 			t.Fatalf("should be 1 test asset pack: %#v", bundle)
 		}
 
-		if string(bundle[0].XMLContent) != "test content" {
+		if len(bundle[0].XMLContent) != len(sampleIOSXmlOutput) {
 			t.Fatal("wrong xml content")
 		}
 	}
 
 	// creating ios test results
 	{
-		sampleTestSummariesPlist, err := fileutil.ReadStringFromFile(filepath.Join("testdata", "ios_testsummaries_plist.golden"))
-		if err != nil {
-			t.Fatal("unable to read golden file, error:", err)
-		}
-		sampleIOSXmlOutput, err := fileutil.ReadStringFromFile(filepath.Join("testdata", "ios_xml_output.golden"))
-		if err != nil {
-			t.Fatal("unable to read golden file, error:", err)
-		}
-
 		testsDir, err := pathutil.NormalizedOSTempDirPath("test")
 		if err != nil {
 			t.Fatal("failed to create temp dir, error:", err)

@@ -8,11 +8,12 @@ package converters
 import (
 	"github.com/bitrise-io/steps-deploy-to-bitrise-io/test/converters/junitxml"
 	"github.com/bitrise-io/steps-deploy-to-bitrise-io/test/converters/xcresult"
+	"github.com/bitrise-io/steps-deploy-to-bitrise-io/test/junit"
 )
 
 // Intf is the required interface a converter need to match
 type Intf interface {
-	XML() ([]byte, error)
+	XML() (junit.XML, error)
 	Detect([]string) bool
 }
 

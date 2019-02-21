@@ -1,13 +1,12 @@
 package xcresult
 
 import (
-	"encoding/xml"
 	"path/filepath"
 	"strings"
 
-	"howett.net/plist"
-
 	"github.com/bitrise-io/go-utils/fileutil"
+	"github.com/bitrise-io/steps-deploy-to-bitrise-io/test/junit"
+	"howett.net/plist"
 )
 
 // Converter ...
@@ -29,20 +28,20 @@ func (h *Converter) Detect(files []string) bool {
 }
 
 // XML ...
-func (h *Converter) XML() ([]byte, error) {
+func (h *Converter) XML() (junit.XML, error) {
 	data, err := fileutil.ReadBytesFromFile(h.testSummariesPlistPath)
 	if err != nil {
-		return nil, err
+		return junit.XML{}, err
 	}
 
 	var plistData TestSummaryPlist
 	if _, err := plist.Unmarshal(data, &plistData); err != nil {
-		return nil, err
+		return junit.XML{}, err
 	}
 
-	var xmlData Junit4XML
+	var xmlData junit.XML
 	for testID, tests := range plistData.Tests() {
-		testSuite := TestSuite{
+		testSuite := junit.TestSuite{
 			Name:     testID,
 			Tests:    len(tests),
 			Failures: tests.FailuresCount(),
@@ -50,7 +49,7 @@ func (h *Converter) XML() ([]byte, error) {
 		}
 
 		for _, test := range tests {
-			testSuite.TestCases = append(testSuite.TestCases, TestCase{
+			testSuite.TestCases = append(testSuite.TestCases, junit.TestCase{
 				Name:      test.TestName,
 				ClassName: testID,
 				Failure:   test.Failure(),
@@ -61,6 +60,5 @@ func (h *Converter) XML() ([]byte, error) {
 		xmlData.TestSuites = append(xmlData.TestSuites, testSuite)
 	}
 
-	xmlOutputData, err := xml.MarshalIndent(xmlData, "", " ")
-	return append([]byte(`<?xml version="1.0" encoding="UTF-8"?>`+"\n"), xmlOutputData...), err
+	return xmlData, nil
 }

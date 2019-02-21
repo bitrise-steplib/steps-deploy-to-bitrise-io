@@ -3,6 +3,7 @@ package test
 import (
 	"bytes"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -139,14 +140,20 @@ func ParseTestResults(testsRootDir string) (results Results, err error) {
 		for _, converter := range converters.List() {
 			// skip if couldn't find converter for content type
 			if converter.Detect(testFiles) {
-				xml, err := converter.XML()
+				junitXML, err := converter.XML()
 				if err != nil {
 					return nil, err
 				}
 
+				xmlData, err := xml.MarshalIndent(junitXML, "", " ")
+				if err != nil {
+					return nil, err
+				}
+				xmlData = append([]byte(`<?xml version="1.0" encoding="UTF-8"?>`+"\n"), xmlData...)
+
 				// so here I will have image paths, xml data, and step info per test dir in a bundle info
 				results = append(results, Result{
-					XMLContent: xml,
+					XMLContent: xmlData,
 					ImagePaths: findImages(filepath.Join(testsRootDir, testDir.Name())),
 					StepInfo:   *stepInfo,
 				})
