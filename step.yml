@@ -146,6 +146,18 @@ inputs:
       is_required: true
       is_dont_change_value: true
       is_sensitive: true
+  - clear_directory: "false"
+    opts:
+      title: Clear the dirctory when finished?
+      description: |-
+        If this option is allowed, the artifacts
+        found in the *Deploy directory* folder will be removed
+        when the deploy is finished.
+      is_required: false
+      is_expand: false
+      value_options:
+        - "true"
+        - "false"
 outputs:
   - BITRISE_PUBLIC_INSTALL_PAGE_URL:
     opts:

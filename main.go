@@ -29,6 +29,7 @@ type ConfigsModel struct {
 	NotifyEmailList            string
 	IsPublicPageEnabled        string
 	PublicInstallPageMapFormat string
+	ClearDirectoryWhenFinished string
 }
 
 // PublicInstallPage ...
@@ -48,6 +49,7 @@ func createConfigsModelFromEnvs() ConfigsModel {
 		NotifyEmailList:            os.Getenv("notify_email_list"),
 		IsPublicPageEnabled:        os.Getenv("is_enable_public_page"),
 		PublicInstallPageMapFormat: os.Getenv("public_install_page_url_map_format"),
+		ClearDirectoryWhenFinished: os.Getenv("clear_directory"),
 	}
 }
 
@@ -73,6 +75,9 @@ func (configs ConfigsModel) validate() error {
 	if err := validateGoTemplate(configs.PublicInstallPageMapFormat); err != nil {
 		return fmt.Errorf("PublicInstallPageMapFormat - %s", err)
 	}
+	if err := input.ValidateWithOptions(configs.ClearDirectoryWhenFinished, "true", "false"); err != nil {
+		return fmt.Errorf("ClearDirectoryWhenFinished - %s", err)
+	}
 	return nil
 }
 
@@ -86,10 +91,12 @@ func (configs ConfigsModel) print() {
 	log.Printf("- NotifyEmailList: %s", configs.NotifyEmailList)
 	log.Printf("- IsPublicPageEnabled: %s", configs.IsPublicPageEnabled)
 	log.Printf("- PublicInstallPageMapFormat: %s", configs.PublicInstallPageMapFormat)
+	log.Printf("- ClearDirectoryWhenFinished: %s", configs.ClearDirectoryWhenFinished)
 }
 
 func fail(format string, v ...interface{}) {
 	log.Errorf(format, v...)
+	clearDirectoryIfNeeded()
 	os.Exit(1)
 }
 
@@ -265,6 +272,8 @@ func main() {
 		log.Printf("A map of deployed files and their public install page urls is now available in the Environment Variable: BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP (value: %s)", buf.String())
 		log.Printf("")
 	}
+
+	clearDirectoryIfNeeded()
 }
 
 func validateGoTemplate(publicInstallPageMapFormat string) error {
@@ -272,4 +281,32 @@ func validateGoTemplate(publicInstallPageMapFormat string) error {
 
 	_, err := temp.Parse(publicInstallPageMapFormat)
 	return err
+}
+
+func clearDirectoryIfNeeded() {
+	configs := createConfigsModelFromEnvs()
+
+	if configs.ClearDirectoryWhenFinished == "true" {
+		log.Printf("Clearing Directory")
+		removeContents(configs.DeployPath)
+	}
+}
+
+func removeContents(pathToDir string) error {
+	d, err := os.Open(pathToDir)
+	if err != nil {
+		return err
+	}
+	defer d.Close()
+	names, err := d.Readdirnames(-1)
+	if err != nil {
+		return err
+	}
+	for _, name := range names {
+		err = os.RemoveAll(filepath.Join(pathToDir, name))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
