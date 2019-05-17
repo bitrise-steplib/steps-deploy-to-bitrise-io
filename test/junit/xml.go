@@ -5,7 +5,7 @@ import "encoding/xml"
 // XML ...
 type XML struct {
 	XMLName    xml.Name    `xml:"testsuites"`
-	TestSuites []TestSuite `xml:",any"`
+	TestSuites []TestSuite `xml:"testsuite"`
 }
 
 // TestSuite ...
@@ -16,7 +16,7 @@ type TestSuite struct {
 	Failures  int        `xml:"failures,attr"`
 	Errors    int        `xml:"errors,attr"`
 	Time      float64    `xml:"time,attr"`
-	TestCases []TestCase `xml:",any"`
+	TestCases []TestCase `xml:"testcase"`
 }
 
 // TestCase ...
