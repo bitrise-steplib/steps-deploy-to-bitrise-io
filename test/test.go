@@ -105,62 +105,78 @@ func findImages(testDir string) (imageFilePaths []string) {
 func ParseTestResults(testsRootDir string) (results Results, err error) {
 	// read dirs in base tests dir
 	// <root_tests_dir>
+	fmt.Println("readdir:", testsRootDir)
 	testDirs, err := ioutil.ReadDir(testsRootDir)
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("count:", len(testDirs))
 
 	// find test results in each dir, skip if invalid test dir
 	for _, testDir := range testDirs {
 		// <root_tests_dir>/<test_dir>
 		testDirPath := filepath.Join(testsRootDir, testDir.Name())
 		// read unique test phase dirs
+		fmt.Println("readdir:", testDirPath)
 		testPhaseDirs, err := ioutil.ReadDir(testDirPath)
 		if err != nil {
 			return nil, err
 		}
+		fmt.Println("count:", len(testDirPath))
 
 		// find step-info in dir, continue if no step-info.json as this file is only required if step has exported artifacts also
 		// <root_tests_dir>/<test_dir>/step-info.json
+		fmt.Println("readfile:", filepath.Join(testDirPath, "step-info.json"))
 		var stepInfo *models.TestResultStepInfo
 		stepInfoFileContent, err := fileutil.ReadBytesFromFile(filepath.Join(testDirPath, "step-info.json"))
 		if err != nil {
 			continue
 		}
+		fmt.Println("unmarshal:", string(stepInfoFileContent))
 		if err := json.Unmarshal(stepInfoFileContent, &stepInfo); err != nil {
 			continue
 		}
+		fmt.Println("done:", *stepInfo)
 
 		for _, testPhaseDir := range testPhaseDirs {
 			// <root_tests_dir>/<test_dir>/<unique_dir>
 			testPhaseDirPath := filepath.Join(testDirPath, testPhaseDir.Name())
-
+			fmt.Println("readdir:", testPhaseDirPath)
 			// read one level of file set only <root_tests_dir>/<test_dir>/<unique_dir>/files_to_get
 			testFiles, err := filepath.Glob(filepath.Join(testPhaseDirPath, "*"))
 			if err != nil {
 				return nil, err
 			}
+			fmt.Println("done:", testFiles)
 
 			// get the converter that can manage test type contained in the dir
 			for _, converter := range converters.List() {
+				fmt.Println("running converter")
 				// skip if couldn't find converter for content type
 				if converter.Detect(testFiles) {
+					fmt.Println("detected")
 					// test-info.json file is required
+					fmt.Println("reading file:", filepath.Join(testPhaseDirPath, "test-info.json"))
 					testInfoFileContent, err := fileutil.ReadBytesFromFile(filepath.Join(testPhaseDirPath, "test-info.json"))
 					if err != nil {
 						return nil, err
 					}
+					fmt.Println("done")
 					var testInfo struct {
 						Name string `json:"test-name"`
 					}
+					fmt.Println("unmarshal:", string(testInfoFileContent))
 					if err := json.Unmarshal(testInfoFileContent, &testInfo); err != nil {
 						return nil, err
 					}
+					fmt.Println("done:", testInfo)
 
+					fmt.Println("getting xml")
 					junitXML, err := converter.XML()
 					if err != nil {
 						return nil, err
 					}
+					fmt.Println("done, marshalling:", junitXML)
 
 					xmlData, err := xml.MarshalIndent(junitXML, "", " ")
 					if err != nil {
