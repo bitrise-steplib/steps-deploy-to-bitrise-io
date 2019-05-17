@@ -181,6 +181,7 @@ func ParseTestResults(testsRootDir string) (results Results, err error) {
 						return nil, err
 					}
 
+					fmt.Println("getting xml for files:", testFiles)
 					junitXML, err := converter.XML()
 					if err != nil {
 						return nil, err
