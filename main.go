@@ -7,12 +7,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/bitrise-io/steps-deploy-to-bitrise-io/test"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test"
 
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/ziputil"
-	"github.com/bitrise-io/steps-deploy-to-bitrise-io/uploaders"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/uploaders"
 	"github.com/bitrise-tools/go-steputils/stepconf"
 	"github.com/bitrise-tools/go-steputils/tools"
 )

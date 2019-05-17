@@ -6,9 +6,9 @@
 package converters
 
 import (
-	"github.com/bitrise-io/steps-deploy-to-bitrise-io/test/converters/junitxml"
-	"github.com/bitrise-io/steps-deploy-to-bitrise-io/test/converters/xcresult"
-	"github.com/bitrise-io/steps-deploy-to-bitrise-io/test/junit"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/junitxml"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
 )
 
 // Intf is the required interface a converter need to match

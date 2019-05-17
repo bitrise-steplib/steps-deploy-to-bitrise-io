@@ -14,7 +14,7 @@ import (
 
 	"github.com/bitrise-io/bitrise/models"
 	"github.com/bitrise-io/go-utils/fileutil"
-	"github.com/bitrise-io/steps-deploy-to-bitrise-io/test/converters"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters"
 )
 
 // FileInfo ...
@@ -31,7 +31,8 @@ type UploadURL struct {
 
 // UploadRequest ...
 type UploadRequest struct {
-	Step   models.TestResultStepInfo `json:"step"`
+	Name   string                    `json:"name"`
+	Step   models.TestResultStepInfo `json:"step_info"`
 	Assets []FileInfo                `json:"assets"`
 	FileInfo
 }
@@ -45,6 +46,7 @@ type UploadResponse struct {
 
 // Result ...
 type Result struct {
+	Name       string
 	XMLContent []byte
 	ImagePaths []string
 	StepInfo   models.TestResultStepInfo
@@ -109,54 +111,74 @@ func ParseTestResults(testsRootDir string) (results Results, err error) {
 
 	// find test results in each dir, skip if invalid test dir
 	for _, testDir := range testDirs {
-		testDirPath := filepath.Join(testsRootDir, testDir.Name())
-
-		// read one level of file set only <root_tests_dir>/<test_dir>/file_to_get
-		testFiles, err := filepath.Glob(filepath.Join(testDirPath, "*"))
+		// read unique test phase dirs
+		testPhaseDirs, err := ioutil.ReadDir(filepath.Join(testsRootDir, testDir.Name()))
 		if err != nil {
 			return nil, err
 		}
 
-		// find step-info in dir
-		var stepInfo *models.TestResultStepInfo
-		for _, file := range testFiles {
-			if strings.HasSuffix(file, "step-info.json") {
-				stepInfoFileContent, err := fileutil.ReadBytesFromFile(file)
-				if err != nil {
-					return nil, err
-				}
-				if err := json.Unmarshal(stepInfoFileContent, &stepInfo); err != nil {
-					return nil, err
+		for _, testPhaseDir := range testPhaseDirs {
+			testPhaseDirPath := filepath.Join(testsRootDir, testPhaseDir.Name())
+
+			// read one level of file set only <root_tests_dir>/<test_dir>/<unique_dir>/file_to_get
+			testFiles, err := filepath.Glob(filepath.Join(testPhaseDirPath, "*"))
+			if err != nil {
+				return nil, err
+			}
+
+			// find step-info in dir
+			var stepInfo *models.TestResultStepInfo
+			for _, file := range testFiles {
+				if strings.HasSuffix(file, "step-info.json") {
+					stepInfoFileContent, err := fileutil.ReadBytesFromFile(file)
+					if err != nil {
+						return nil, err
+					}
+					if err := json.Unmarshal(stepInfoFileContent, &stepInfo); err != nil {
+						return nil, err
+					}
 				}
 			}
-		}
 
-		// if no step-info.json then skip
-		if stepInfo == nil {
-			continue
-		}
+			// if no step-info.json then skip
+			if stepInfo == nil {
+				continue
+			}
 
-		// get the converter that can manage test type contained in the dir
-		for _, converter := range converters.List() {
-			// skip if couldn't find converter for content type
-			if converter.Detect(testFiles) {
-				junitXML, err := converter.XML()
-				if err != nil {
-					return nil, err
+			// get the converter that can manage test type contained in the dir
+			for _, converter := range converters.List() {
+				// skip if couldn't find converter for content type
+				if converter.Detect(testFiles) {
+					junitXML, err := converter.XML()
+					if err != nil {
+						return nil, err
+					}
+
+					xmlData, err := xml.MarshalIndent(junitXML, "", " ")
+					if err != nil {
+						return nil, err
+					}
+					xmlData = append([]byte(`<?xml version="1.0" encoding="UTF-8"?>`+"\n"), xmlData...)
+
+					var testInfo struct {
+						Name string `json:"test-name"`
+					}
+					testInfoFileContent, err := fileutil.ReadBytesFromFile(filepath.Join(testPhaseDirPath, "test-info.json"))
+					if err != nil {
+						return nil, err
+					}
+					if err := json.Unmarshal(testInfoFileContent, &testInfo); err != nil {
+						return nil, err
+					}
+
+					// so here I will have image paths, xml data, and step info per test dir in a bundle info
+					results = append(results, Result{
+						Name:       testInfo.Name,
+						XMLContent: xmlData,
+						ImagePaths: findImages(filepath.Join(testsRootDir, testPhaseDir.Name())),
+						StepInfo:   *stepInfo,
+					})
 				}
-
-				xmlData, err := xml.MarshalIndent(junitXML, "", " ")
-				if err != nil {
-					return nil, err
-				}
-				xmlData = append([]byte(`<?xml version="1.0" encoding="UTF-8"?>`+"\n"), xmlData...)
-
-				// so here I will have image paths, xml data, and step info per test dir in a bundle info
-				results = append(results, Result{
-					XMLContent: xmlData,
-					ImagePaths: findImages(filepath.Join(testsRootDir, testDir.Name())),
-					StepInfo:   *stepInfo,
-				})
 			}
 		}
 	}
@@ -171,6 +193,7 @@ func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug stri
 				FileName: "test_result.xml",
 				FileSize: len(result.XMLContent),
 			},
+			Name: result.Name,
 			Step: result.StepInfo,
 		}
 		for _, asset := range result.ImagePaths {
@@ -213,7 +236,7 @@ func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug stri
 			}
 		}
 
-		if err := httpCall(apiToken, http.MethodPatch, fmt.Sprintf("%s/apps/%s/builds/%s/test_reports/%s", endpointBaseURL, appSlug, buildSlug, uploadResponse.ID), nil, nil); err != nil {
+		if err := httpCall(apiToken, http.MethodPatch, fmt.Sprintf("%s/apps/%s/builds/%s/test_reports/%s", endpointBaseURL, appSlug, buildSlug, uploadResponse.ID), strings.NewReader(`{"uploaded":true}`), nil); err != nil {
 			return err
 		}
 	}

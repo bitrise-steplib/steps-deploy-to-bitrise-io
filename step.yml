@@ -5,9 +5,9 @@ description: |-
   This generic artifacts deployer attaches the artifacts to bitrise.io builds.
 
   You'll see the deployed files in the `Apps and Artifacts` section of the build's page on bitrise.io.
-website: https://github.com/bitrise-io/steps-deploy-to-bitrise-io
-source_code_url: https://github.com/bitrise-io/steps-deploy-to-bitrise-io
-support_url: https://github.com/bitrise-io/steps-deploy-to-bitrise-io/issues
+website: https://github.com/bitrise-steplib/steps-deploy-to-bitrise-io
+source_code_url: https://github.com/bitrise-steplib/steps-deploy-to-bitrise-io
+support_url: https://github.com/bitrise-steplib/steps-deploy-to-bitrise-io/issues
 host_os_tags:
   - "osx-10.10"
 project_type_tags: []
@@ -19,7 +19,7 @@ is_skippable: false
 run_if: .IsCI
 toolkit:
   go:
-    package_name: github.com/bitrise-io/steps-deploy-to-bitrise-io
+    package_name: github.com/bitrise-steplib/steps-deploy-to-bitrise-io
 inputs:
   - deploy_path: "$BITRISE_DEPLOY_DIR"
     opts:

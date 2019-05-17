@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/bitrise-io/go-utils/fileutil"
-	"github.com/bitrise-io/steps-deploy-to-bitrise-io/test/junit"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
 )
 
 // Converter holds data of the converter
