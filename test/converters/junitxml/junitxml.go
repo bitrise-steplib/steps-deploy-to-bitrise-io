@@ -16,6 +16,7 @@ type Converter struct {
 
 // Detect return true if the test results a Juni4 XML file
 func (h *Converter) Detect(files []string) bool {
+	h.files = nil
 	for _, file := range files {
 		if strings.HasSuffix(file, ".xml") {
 			h.files = append(h.files, file)
