@@ -6,6 +6,7 @@ import (
 
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
+	"github.com/pkg/errors"
 )
 
 // Converter holds data of the converter
@@ -35,7 +36,7 @@ func (h *Converter) XML() (junit.XML, error) {
 
 	var xmlContent junit.XML
 	if err := xml.Unmarshal(data, &xmlContent); err != nil {
-		return junit.XML{}, err
+		return junit.XML{}, errors.Wrap(err, string(data))
 	}
 	return xmlContent, nil
 }

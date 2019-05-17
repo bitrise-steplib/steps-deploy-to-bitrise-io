@@ -120,7 +120,7 @@ func ParseTestResults(testsRootDir string) (results Results, err error) {
 			return nil, err
 		}
 
-		// find step-info in dir
+		// find step-info in dir, continue if no step-info.json as this file is only required if step has exported artifacts also
 		// <root_tests_dir>/<test_dir>/step-info.json
 		var stepInfo *models.TestResultStepInfo
 		stepInfoFileContent, err := fileutil.ReadBytesFromFile(filepath.Join(testDirPath, "step-info.json"))
