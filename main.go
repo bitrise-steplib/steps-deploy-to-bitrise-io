@@ -9,12 +9,12 @@ import (
 
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test"
 
+	"github.com/bitrise-io/go-steputils/stepconf"
+	"github.com/bitrise-io/go-steputils/tools"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/ziputil"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/uploaders"
-	"github.com/bitrise-tools/go-steputils/stepconf"
-	"github.com/bitrise-tools/go-steputils/tools"
 )
 
 var fileBaseNamesToSkip = []string{".DS_Store"}
