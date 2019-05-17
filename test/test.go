@@ -113,6 +113,10 @@ func ParseTestResults(testsRootDir string) (results Results, err error) {
 
 	// find test results in each dir, skip if invalid test dir
 	for _, testDir := range testDirs {
+		if !testDir.IsDir() {
+			continue
+		}
+
 		// <root_tests_dir>/<test_dir>
 		testDirPath := filepath.Join(testsRootDir, testDir.Name())
 		// read unique test phase dirs
@@ -134,6 +138,10 @@ func ParseTestResults(testsRootDir string) (results Results, err error) {
 		}
 
 		for _, testPhaseDir := range testPhaseDirs {
+			if !testDir.IsDir() {
+				continue
+			}
+
 			// <root_tests_dir>/<test_dir>/<unique_dir>
 			testPhaseDirPath := filepath.Join(testDirPath, testPhaseDir.Name())
 			// read one level of file set only <root_tests_dir>/<test_dir>/<unique_dir>/files_to_get
