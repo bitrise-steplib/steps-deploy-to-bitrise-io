@@ -138,7 +138,7 @@ func ParseTestResults(testsRootDir string) (results Results, err error) {
 		}
 
 		for _, testPhaseDir := range testPhaseDirs {
-			if !testDir.IsDir() {
+			if !testPhaseDir.IsDir() {
 				continue
 			}
 
