@@ -105,24 +105,28 @@ func findImages(testDir string) (imageFilePaths []string) {
 func ParseTestResults(testsRootDir string) (results Results, err error) {
 	// read dirs in base tests dir
 	// <root_tests_dir>
-	fmt.Println("readdir:", testsRootDir)
+	fmt.Println("read root dir:", testsRootDir)
 	testDirs, err := ioutil.ReadDir(testsRootDir)
 	if err != nil {
 		return nil, err
 	}
 	fmt.Println("count:", len(testDirs))
+	fmt.Println("paths:", testDirs)
+	fmt.Println()
 
 	// find test results in each dir, skip if invalid test dir
 	for _, testDir := range testDirs {
 		// <root_tests_dir>/<test_dir>
 		testDirPath := filepath.Join(testsRootDir, testDir.Name())
 		// read unique test phase dirs
-		fmt.Println("readdir:", testDirPath)
+		fmt.Println("read test result dir:", testDirPath)
 		testPhaseDirs, err := ioutil.ReadDir(testDirPath)
 		if err != nil {
 			return nil, err
 		}
 		fmt.Println("count:", len(testDirPath))
+		fmt.Println("paths:", testDirPath)
+		fmt.Println()
 
 		// find step-info in dir, continue if no step-info.json as this file is only required if step has exported artifacts also
 		// <root_tests_dir>/<test_dir>/step-info.json
