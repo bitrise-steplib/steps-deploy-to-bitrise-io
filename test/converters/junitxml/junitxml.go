@@ -24,7 +24,7 @@ func (h *Converter) Detect(files []string) bool {
 	return len(h.files) > 0
 }
 
-func parseParseTestSuites(filePath string) ([]junit.TestSuite, error) {
+func parseTestSuites(filePath string) ([]junit.TestSuite, error) {
 	data, err := fileutil.ReadBytesFromFile(filePath)
 	if err != nil {
 		return nil, err
@@ -49,7 +49,7 @@ func (h *Converter) XML() (junit.XML, error) {
 	var xmlContent junit.XML
 
 	for _, file := range h.files {
-		testSuites, err := parseParseTestSuites(file)
+		testSuites, err := parseTestSuites(file)
 		if err != nil {
 			return junit.XML{}, err
 		}
