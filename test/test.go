@@ -104,6 +104,7 @@ func findImages(testDir string) (imageFilePaths []string) {
 // ParseTestResults ...
 func ParseTestResults(testsRootDir string) (results Results, err error) {
 	// read dirs in base tests dir
+	// <root_tests_dir>
 	testDirs, err := ioutil.ReadDir(testsRootDir)
 	if err != nil {
 		return nil, err
@@ -111,44 +112,51 @@ func ParseTestResults(testsRootDir string) (results Results, err error) {
 
 	// find test results in each dir, skip if invalid test dir
 	for _, testDir := range testDirs {
+		// <root_tests_dir>/<test_dir>
+		testDirPath := filepath.Join(testsRootDir, testDir.Name())
 		// read unique test phase dirs
-		testPhaseDirs, err := ioutil.ReadDir(filepath.Join(testsRootDir, testDir.Name()))
+		testPhaseDirs, err := ioutil.ReadDir(testDirPath)
 		if err != nil {
 			return nil, err
 		}
 
-		for _, testPhaseDir := range testPhaseDirs {
-			testPhaseDirPath := filepath.Join(testsRootDir, testPhaseDir.Name())
+		// find step-info in dir
+		// <root_tests_dir>/<test_dir>/step-info.json
+		var stepInfo *models.TestResultStepInfo
+		stepInfoFileContent, err := fileutil.ReadBytesFromFile(filepath.Join(testDirPath, "step-info.json"))
+		if err != nil {
+			continue
+		}
+		if err := json.Unmarshal(stepInfoFileContent, &stepInfo); err != nil {
+			continue
+		}
 
-			// read one level of file set only <root_tests_dir>/<test_dir>/<unique_dir>/file_to_get
+		for _, testPhaseDir := range testPhaseDirs {
+			// <root_tests_dir>/<test_dir>/<unique_dir>
+			testPhaseDirPath := filepath.Join(testDirPath, testPhaseDir.Name())
+
+			// read one level of file set only <root_tests_dir>/<test_dir>/<unique_dir>/files_to_get
 			testFiles, err := filepath.Glob(filepath.Join(testPhaseDirPath, "*"))
 			if err != nil {
 				return nil, err
-			}
-
-			// find step-info in dir
-			var stepInfo *models.TestResultStepInfo
-			for _, file := range testFiles {
-				if strings.HasSuffix(file, "step-info.json") {
-					stepInfoFileContent, err := fileutil.ReadBytesFromFile(file)
-					if err != nil {
-						return nil, err
-					}
-					if err := json.Unmarshal(stepInfoFileContent, &stepInfo); err != nil {
-						return nil, err
-					}
-				}
-			}
-
-			// if no step-info.json then skip
-			if stepInfo == nil {
-				continue
 			}
 
 			// get the converter that can manage test type contained in the dir
 			for _, converter := range converters.List() {
 				// skip if couldn't find converter for content type
 				if converter.Detect(testFiles) {
+					// test-info.json file is required
+					testInfoFileContent, err := fileutil.ReadBytesFromFile(filepath.Join(testPhaseDirPath, "test-info.json"))
+					if err != nil {
+						return nil, err
+					}
+					var testInfo struct {
+						Name string `json:"test-name"`
+					}
+					if err := json.Unmarshal(testInfoFileContent, &testInfo); err != nil {
+						return nil, err
+					}
+
 					junitXML, err := converter.XML()
 					if err != nil {
 						return nil, err
@@ -159,17 +167,6 @@ func ParseTestResults(testsRootDir string) (results Results, err error) {
 						return nil, err
 					}
 					xmlData = append([]byte(`<?xml version="1.0" encoding="UTF-8"?>`+"\n"), xmlData...)
-
-					var testInfo struct {
-						Name string `json:"test-name"`
-					}
-					testInfoFileContent, err := fileutil.ReadBytesFromFile(filepath.Join(testPhaseDirPath, "test-info.json"))
-					if err != nil {
-						return nil, err
-					}
-					if err := json.Unmarshal(testInfoFileContent, &testInfo); err != nil {
-						return nil, err
-					}
 
 					// so here I will have image paths, xml data, and step info per test dir in a bundle info
 					results = append(results, Result{
