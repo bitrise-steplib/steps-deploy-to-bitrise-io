@@ -195,7 +195,7 @@ func ParseTestResults(testsRootDir string) (results Results, err error) {
 					results = append(results, Result{
 						Name:       testInfo.Name,
 						XMLContent: xmlData,
-						ImagePaths: findImages(testPhaseDirPath),
+						ImagePaths: findImages(testDirPath),
 						StepInfo:   *stepInfo,
 					})
 				}
