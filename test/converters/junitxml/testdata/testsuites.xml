@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+ <testsuite name="BitriseBasicUITest" tests="4" failures="0" errors="0" time="77.06086790561676">
+  <testcase name="testCollectionView()" classname="BitriseBasicUITest" time="23.776288986206055"></testcase>
+  <testcase name="testInReadTopView()" classname="BitriseBasicUITest" time="34.97628891468048"></testcase>
+  <testcase name="testInterstitialView()" classname="BitriseBasicUITest" time="10.270301938056946"></testcase>
+  <testcase name="testRewardView()" classname="BitriseBasicUITest" time="8.037988066673279"></testcase>
+ </testsuite>
+</testsuites>
