@@ -31,7 +31,7 @@ func parseTestSuites(filePath string) ([]junit.TestSuite, error) {
 		return nil, err
 	}
 
-	var testSuites junit.TestSuites
+	var testSuites junit.XML
 	testSuitesError := xml.Unmarshal(data, &testSuites)
 	if testSuitesError == nil {
 		return testSuites.TestSuites, nil
@@ -46,13 +46,13 @@ func parseTestSuites(filePath string) ([]junit.TestSuite, error) {
 }
 
 // XML returns the xml content bytes
-func (h *Converter) XML() (junit.TestSuites, error) {
-	var xmlContent junit.TestSuites
+func (h *Converter) XML() (junit.XML, error) {
+	var xmlContent junit.XML
 
 	for _, file := range h.files {
 		testSuites, err := parseTestSuites(file)
 		if err != nil {
-			return junit.TestSuites{}, err
+			return junit.XML{}, err
 		}
 
 		xmlContent.TestSuites = append(xmlContent.TestSuites, testSuites...)

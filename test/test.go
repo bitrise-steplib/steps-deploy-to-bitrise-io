@@ -14,7 +14,10 @@ import (
 	"strings"
 
 	"github.com/bitrise-io/bitrise/models"
+	"github.com/bitrise-io/go-utils/colorstring"
 	"github.com/bitrise-io/go-utils/fileutil"
+	"github.com/bitrise-io/go-utils/log"
+	"github.com/bitrise-io/go-xcode/utility"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters"
 )
 
@@ -80,7 +83,7 @@ func httpCall(apiToken, method, url string, input io.Reader, output interface{})
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(b))
+	log.Debugf(string(b))
 
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -126,12 +129,14 @@ func ParseTestResults(testsRootDir string) (results Results, err error) {
 
 	// find test results in each dir, skip if invalid test dir
 	for _, testDir := range testDirs {
+		// <root_tests_dir>/<test_dir>
+		testDirPath := filepath.Join(testsRootDir, testDir.Name())
+
 		if !testDir.IsDir() {
+			log.Debugf(colorstring.Yellowf("%s is not a directory", testDirPath))
 			continue
 		}
 
-		// <root_tests_dir>/<test_dir>
-		testDirPath := filepath.Join(testsRootDir, testDir.Name())
 		// read unique test phase dirs
 		testPhaseDirs, err := ioutil.ReadDir(testDirPath)
 		if err != nil {
@@ -143,6 +148,7 @@ func ParseTestResults(testsRootDir string) (results Results, err error) {
 		var stepInfo *models.TestResultStepInfo
 		stepInfoFileContent, err := fileutil.ReadBytesFromFile(filepath.Join(testDirPath, "step-info.json"))
 		if err != nil {
+			log.Debugf(colorstring.Yellowf("Failed to read step-info.json file in dir: %s, error: %s", testDirPath, err))
 			continue
 		}
 
@@ -158,7 +164,7 @@ func ParseTestResults(testsRootDir string) (results Results, err error) {
 			// <root_tests_dir>/<test_dir>/<unique_dir>
 			testPhaseDirPath := filepath.Join(testDirPath, testPhaseDir.Name())
 			// read one level of file set only <root_tests_dir>/<test_dir>/<unique_dir>/files_to_get
-			testFiles, err := filepath.Glob(filepath.Join(testPhaseDirPath, "*"))
+			testFiles, err := filepath.Glob(filepath.Join(utility.EscapeGlobPath(testPhaseDirPath), "*"))
 			if err != nil {
 				return nil, err
 			}
@@ -232,8 +238,11 @@ func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug stri
 			return err
 		}
 
-		var uploadResponse UploadResponse
-		if err := httpCall(apiToken, http.MethodPost, fmt.Sprintf("%s/apps/%s/builds/%s/test_reports", endpointBaseURL, appSlug, buildSlug), bytes.NewReader(uploadRequestBodyData), &uploadResponse); err != nil {
+		var (
+			uploadResponse   UploadResponse
+			uploadRequestURL = fmt.Sprintf("%s/apps/%s/builds/%s/test_reports", endpointBaseURL, appSlug, buildSlug)
+		)
+		if err := httpCall(apiToken, http.MethodPost, uploadRequestURL, bytes.NewReader(uploadRequestBodyData), &uploadResponse); err != nil {
 			return err
 		}
 
@@ -256,7 +265,8 @@ func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug stri
 			}
 		}
 
-		if err := httpCall(apiToken, http.MethodPatch, fmt.Sprintf("%s/apps/%s/builds/%s/test_reports/%s", endpointBaseURL, appSlug, buildSlug, uploadResponse.ID), strings.NewReader(`{"uploaded":true}`), nil); err != nil {
+		var uploadPatchURL = fmt.Sprintf("%s/apps/%s/builds/%s/test_reports/%s", endpointBaseURL, appSlug, buildSlug, uploadResponse.ID)
+		if err := httpCall(apiToken, http.MethodPatch, uploadPatchURL, strings.NewReader(`{"uploaded":true}`), nil); err != nil {
 			return err
 		}
 	}

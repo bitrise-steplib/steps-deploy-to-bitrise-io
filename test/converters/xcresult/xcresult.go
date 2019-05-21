@@ -28,18 +28,18 @@ func (h *Converter) Detect(files []string) bool {
 }
 
 // XML ...
-func (h *Converter) XML() (junit.TestSuites, error) {
+func (h *Converter) XML() (junit.XML, error) {
 	data, err := fileutil.ReadBytesFromFile(h.testSummariesPlistPath)
 	if err != nil {
-		return junit.TestSuites{}, err
+		return junit.XML{}, err
 	}
 
 	var plistData TestSummaryPlist
 	if _, err := plist.Unmarshal(data, &plistData); err != nil {
-		return junit.TestSuites{}, err
+		return junit.XML{}, err
 	}
 
-	var xmlData junit.TestSuites
+	var xmlData junit.XML
 	for testID, tests := range plistData.Tests() {
 		testSuite := junit.TestSuite{
 			Name:     testID,

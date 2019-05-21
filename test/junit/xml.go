@@ -2,8 +2,8 @@ package junit
 
 import "encoding/xml"
 
-// TestSuites ...
-type TestSuites struct {
+// XML ...
+type XML struct {
 	XMLName    xml.Name    `xml:"testsuites"`
 	TestSuites []TestSuite `xml:"testsuite"`
 }

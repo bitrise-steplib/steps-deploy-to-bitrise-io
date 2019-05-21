@@ -13,7 +13,7 @@ import (
 
 // Intf is the required interface a converter need to match
 type Intf interface {
-	XML() (junit.TestSuites, error)
+	XML() (junit.XML, error)
 	Detect([]string) bool
 }
 
