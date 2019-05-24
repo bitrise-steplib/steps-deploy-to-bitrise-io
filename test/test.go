@@ -72,7 +72,7 @@ func httpCall(apiToken, method, url string, input io.Reader, output interface{})
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(b))
+	log.Debugf(string(b))
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
