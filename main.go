@@ -35,7 +35,7 @@ type Config struct {
 	AppSlug                    string `env:"BITRISE_APP_SLUG,required"`
 	AddonAPIBaseURL            string `env:"addon_api_base_url,required"`
 	AddonAPIToken              string `env:"addon_api_token"`
-	DebugMode                  bool   `env:"debug_mode,required"`
+	DebugMode                  bool   `env:"debug_mode,opt[true,false]"`
 }
 
 // PublicInstallPage ...
