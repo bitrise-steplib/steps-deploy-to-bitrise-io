@@ -162,6 +162,16 @@ inputs:
         The token required to authenticate with the API.
       is_dont_change_value: true
       is_sensitive: true
+  - debug_mode: "false"
+    opts: 
+      category: Debug
+      title: "Enable Debug Mode"
+      summary: The step will print more verbose logs if enabled.
+      description: The step will print more verbose logs if enabled.
+      is_required: true
+      value_options:
+        - "false"
+        - "true"
 outputs:
   - BITRISE_PUBLIC_INSTALL_PAGE_URL:
     opts:
