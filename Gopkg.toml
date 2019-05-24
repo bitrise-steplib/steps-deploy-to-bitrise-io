@@ -1,15 +1,36 @@
+
 [[constraint]]
+  branch = "master"
+  name = "github.com/bitrise-io/bitrise"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/bitrise-io/go-android"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/bitrise-io/go-steputils"
+
+[[constraint]]
+  branch = "master"
   name = "github.com/bitrise-io/go-utils"
-  branch = "master"
 
 [[constraint]]
-  name = "github.com/bitrise-tools/go-android"
   branch = "master"
+  name = "github.com/bitrise-io/go-xcode"
 
 [[constraint]]
-  name = "github.com/bitrise-tools/go-steputils"
-  branch = "master"
+  name = "github.com/gorilla/mux"
+  version = "1.7.2"
 
 [[constraint]]
-  name = "github.com/bitrise-tools/go-xcode"
+  name = "github.com/pkg/errors"
+  version = "0.8.1"
+
+[[constraint]]
   branch = "master"
+  name = "howett.net/plist"
+
+[prune]
+  go-tests = true
+  unused-packages = true

@@ -5,9 +5,9 @@ description: |-
   This generic artifacts deployer attaches the artifacts to bitrise.io builds.
 
   You'll see the deployed files in the `Apps and Artifacts` section of the build's page on bitrise.io.
-website: https://github.com/bitrise-io/steps-deploy-to-bitrise-io
-source_code_url: https://github.com/bitrise-io/steps-deploy-to-bitrise-io
-support_url: https://github.com/bitrise-io/steps-deploy-to-bitrise-io/issues
+website: https://github.com/bitrise-steplib/steps-deploy-to-bitrise-io
+source_code_url: https://github.com/bitrise-steplib/steps-deploy-to-bitrise-io
+support_url: https://github.com/bitrise-steplib/steps-deploy-to-bitrise-io/issues
 host_os_tags:
   - "osx-10.10"
 project_type_tags: []
@@ -19,7 +19,7 @@ is_skippable: false
 run_if: .IsCI
 toolkit:
   go:
-    package_name: github.com/bitrise-io/steps-deploy-to-bitrise-io
+    package_name: github.com/bitrise-steplib/steps-deploy-to-bitrise-io
 inputs:
   - deploy_path: "$BITRISE_DEPLOY_DIR"
     opts:
@@ -146,6 +146,32 @@ inputs:
       is_required: true
       is_dont_change_value: true
       is_sensitive: true
+  - addon_api_base_url: "https://vdt.bitrise.io/test"
+    opts:
+      title: "Test API's base URL"
+      summary: The URL where test API is accessible.
+      description: |
+        The URL where test API is accessible.
+      is_required: true
+      is_dont_change_value: true
+  - addon_api_token: $ADDON_VDTESTING_API_TOKEN
+    opts: 
+      title: "API Token"
+      summary: The token required to authenticate with the API.
+      description: |
+        The token required to authenticate with the API.
+      is_dont_change_value: true
+      is_sensitive: true
+  - debug_mode: "false"
+    opts: 
+      category: Debug
+      title: "Enable Debug Mode"
+      summary: The step will print more verbose logs if enabled.
+      description: The step will print more verbose logs if enabled.
+      is_required: true
+      value_options:
+        - "false"
+        - "true"
 outputs:
   - BITRISE_PUBLIC_INSTALL_PAGE_URL:
     opts:

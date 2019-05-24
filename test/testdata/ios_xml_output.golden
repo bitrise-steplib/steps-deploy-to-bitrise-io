@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+ <testsuite name="BitriseBasicUITest" tests="4" failures="0" errors="0" time="77.06086790561676">
+  <testcase name="testCollectionView()" classname="BitriseBasicUITest" time="23.776288986206055"></testcase>
+  <testcase name="testInReadTopView()" classname="BitriseBasicUITest" time="34.97628891468048"></testcase>
+  <testcase name="testInterstitialView()" classname="BitriseBasicUITest" time="10.270301938056946"></testcase>
+  <testcase name="testRewardView()" classname="BitriseBasicUITest" time="8.037988066673279"></testcase>
+ </testsuite>
+ <testsuite name="BitriseCommanderUITests" tests="1" failures="0" errors="0" time="40.58690905570984">
+  <testcase name="testCommanderUpdate()" classname="BitriseCommanderUITests" time="40.58690905570984"></testcase>
+ </testsuite>
+ <testsuite name="BitriseComponentUITest" tests="2" failures="0" errors="0" time="33.92029893398285">
+  <testcase name="testAdChoiceIcon()" classname="BitriseComponentUITest" time="15.12886095046997"></testcase>
+  <testcase name="testFullScreenReplay()" classname="BitriseComponentUITest" time="18.79143798351288"></testcase>
+ </testsuite>
+ <testsuite name="BitriseOMUITests" tests="3" failures="1" errors="0" time="80.687903881073">
+  <testcase name="testOMBanner()" classname="BitriseOMUITests" time="15.550718903541565">
+   <failure>/Users/vagrant/git/BitriseApp/BitriseAppUITests/BitriseOMUITests.swift:70 - XCTAssertTrue failed - No session found</failure>
+  </testcase>
+  <testcase name="testOMInterstitial()" classname="BitriseOMUITests" time="26.03164303302765"></testcase>
+  <testcase name="testOMScrollView()" classname="BitriseOMUITests" time="39.105541944503784"></testcase>
+ </testsuite>
+ <testsuite name="BitriseTrackingsUITest" tests="2" failures="0" errors="0" time="28.362125039100647">
+  <testcase name="testTrackingsWithAd()" classname="BitriseTrackingsUITest" time="16.5611629486084"></testcase>
+  <testcase name="testTrackingsWithNoAd()" classname="BitriseTrackingsUITest" time="11.800962090492249"></testcase>
+ </testsuite>
+ <testsuite name="bitrErrorUITest" tests="9" failures="0" errors="0" time="152.8058191537857">
+  <testcase name="testbitrError403()" classname="bitrErrorUITest" time="16.062182068824768"></testcase>
+  <testcase name="testbitrError405()" classname="bitrErrorUITest" time="16.12081003189087"></testcase>
+  <testcase name="testbitrError901()" classname="bitrErrorUITest" time="16.46643900871277"></testcase>
+  <testcase name="testbitrError901_2()" classname="bitrErrorUITest" time="16.493804097175598"></testcase>
+  <testcase name="testbitrError901_3()" classname="bitrErrorUITest" time="16.023802995681763"></testcase>
+  <testcase name="testbitrError901_4()" classname="bitrErrorUITest" time="16.05063498020172"></testcase>
+  <testcase name="testbitrError901_5()" classname="bitrErrorUITest" time="16.06726598739624"></testcase>
+  <testcase name="testbitrVideoError402()" classname="bitrErrorUITest" time="23.205875992774963"></testcase>
+  <testcase name="testVpaidError401()" classname="bitrErrorUITest" time="16.315003991127014"></testcase>
+ </testsuite>
+</testsuites>

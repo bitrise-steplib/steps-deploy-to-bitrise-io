@@ -8,9 +8,9 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/bitrise-io/go-android/sdk"
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/log"
-	"github.com/bitrise-tools/go-android/sdk"
 )
 
 // ApkInfo ...

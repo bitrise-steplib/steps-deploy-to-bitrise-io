@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="newapptest.bitrise.io.newapptest.ExampleUnitTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2019-05-17T13:57:23" hostname="Tamass-MBP.localdomain" time="0.0">
+  <properties/>
+  <testcase name="addition_isCorrect" classname="newapptest.bitrise.io.newapptest.ExampleUnitTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
