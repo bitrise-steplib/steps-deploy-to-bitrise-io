@@ -201,13 +201,21 @@ func Test_ParseTestResults(t *testing.T) {
 			t.Fatal("failed to create temp dir, error:", err)
 		}
 
+		phaseDir, err := ioutil.TempDir(testDir, "phase")
+		if err != nil {
+			t.Fatal("failed to create temp dir, error:", err)
+		}
+
 		if err := createDummyFilesInDirWithContent(testDir, `{"title": "test title"}`, []string{"step-info.json"}); err != nil {
 			t.Fatal("failed to create dummy files in dir, error:", err)
 		}
-		if err := createDummyFilesInDirWithContent(testDir, "test content", []string{"image.png", "image3.jpeg", "dirty.gif", "dirty.html"}); err != nil {
+		if err := createDummyFilesInDirWithContent(phaseDir, `{"name": "test name"}`, []string{"test-info.json"}); err != nil {
 			t.Fatal("failed to create dummy files in dir, error:", err)
 		}
-		if err := createDummyFilesInDirWithContent(testDir, sampleIOSXmlOutput, []string{"result.xml"}); err != nil {
+		if err := createDummyFilesInDirWithContent(phaseDir, "test content", []string{"image.png", "image3.jpeg", "dirty.gif", "dirty.html"}); err != nil {
+			t.Fatal("failed to create dummy files in dir, error:", err)
+		}
+		if err := createDummyFilesInDirWithContent(phaseDir, sampleIOSXmlOutput, []string{"result.xml"}); err != nil {
 			t.Fatal("failed to create dummy files in dir, error:", err)
 		}
 
@@ -215,7 +223,6 @@ func Test_ParseTestResults(t *testing.T) {
 		if err != nil {
 			t.Fatal("failed to get bundle, error:", err)
 		}
-
 		if len(bundle) != 1 {
 			t.Fatalf("should be 1 test asset pack: %#v", bundle)
 		}
@@ -237,10 +244,18 @@ func Test_ParseTestResults(t *testing.T) {
 			t.Fatal("failed to create temp dir, error:", err)
 		}
 
+		phaseDir, err := ioutil.TempDir(testDir, "phase")
+		if err != nil {
+			t.Fatal("failed to create temp dir, error:", err)
+		}
+
 		if err := createDummyFilesInDirWithContent(testDir, `{"title": "test title"}`, []string{"step-info.json"}); err != nil {
 			t.Fatal("failed to create dummy files in dir, error:", err)
 		}
-		if err := createDummyFilesInDirWithContent(testDir, sampleTestSummariesPlist, []string{"mytests.xcresult/TestSummaries.plist"}); err != nil {
+		if err := createDummyFilesInDirWithContent(phaseDir, `{"name": "test name"}`, []string{"test-info.json"}); err != nil {
+			t.Fatal("failed to create dummy files in dir, error:", err)
+		}
+		if err := createDummyFilesInDirWithContent(phaseDir, sampleTestSummariesPlist, []string{"mytests.xcresult/TestSummaries.plist"}); err != nil {
 			t.Fatal("failed to create dummy files in dir, error:", err)
 		}
 
