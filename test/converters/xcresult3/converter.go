@@ -6,8 +6,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/fileutil"
+	"github.com/bitrise-io/go-utils/log"
+	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/xcode-project/serialized"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
 )
@@ -53,15 +54,18 @@ func (c *Converter) Detect(files []string) bool {
 
 		infoPth := filepath.Join(file, "Info.plist")
 		if exist, err := pathutil.IsPathExists(infoPth); err != nil || exist == false {
+			log.Debugf("Info.plist not found at: %s", infoPth)
 			continue
 		}
 
 		version, err := documentMajorVersion(infoPth)
 		if err != nil {
+			log.Debugf("failed to get document version: %s", err)
 			continue
 		}
 
 		if version < 3 {
+			log.Debugf("version < 3")
 			continue
 		}
 
