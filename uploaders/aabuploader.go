@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/pathutil"
@@ -12,6 +13,28 @@ import (
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/bundletool"
 )
+
+func getAABInfo(toolOutput string) (ApkInfo, error) {
+	appName := filterAppLable(toolOutput)
+	packageName, versionCode, versionName := filterPackageInfos(toolOutput)
+	minSDKVersion := filterMinSDKVersion(toolOutput)
+
+	packageContent := ""
+	for _, line := range strings.Split(toolOutput, "\n") {
+		if strings.HasPrefix(line, "package:") {
+			packageContent = line
+		}
+	}
+
+	return ApkInfo{
+		AppName:           appName,
+		PackageName:       packageName,
+		VersionCode:       versionCode,
+		VersionName:       versionName,
+		MinSDKVersion:     minSDKVersion,
+		RawPackageContent: packageContent,
+	}, nil
+}
 
 // DeployAAB ...
 func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePublicPage string) (string, error) {
@@ -44,7 +67,12 @@ func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 		return "", err
 	}
 
-	aabInfo, err := getAPKInfo(renamedUniversalAPKPath)
+	out, err := r.Execute("dump", "manifest", "--bundle", pth)
+	if err != nil {
+		return "", err
+	}
+
+	aabInfo, err := getAABInfo(out)
 	if err != nil {
 		return "", err
 	}
