@@ -3,6 +3,7 @@ package uploaders
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/bitrise-io/go-utils/command"
@@ -38,8 +39,12 @@ func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 	}
 
 	universalAPKPath := filepath.Join(tmpPth, "universal.apk")
+	renamedUniversalAPKPath := filepath.Join(tmpPth, filepath.Base(pth)+".universal.apk")
+	if err := os.Rename(universalAPKPath, renamedUniversalAPKPath); err != nil {
+		return "", err
+	}
 
-	aabInfo, err := getAPKInfo(universalAPKPath)
+	aabInfo, err := getAPKInfo(renamedUniversalAPKPath)
 	if err != nil {
 		return "", err
 	}
@@ -85,7 +90,7 @@ func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 
 	// ---
 
-	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "android-apk")
+	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "")
 	if err != nil {
 		return "", fmt.Errorf("failed to create apk artifact, error: %s", err)
 	}
@@ -98,5 +103,7 @@ func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 		return "", fmt.Errorf("failed to finish apk artifact, error: %s", err)
 	}
 
-	return DeployAPK(universalAPKPath, buildURL, token, notifyUserGroups, notifyEmails, isEnablePublicPage)
+	fmt.Println()
+
+	return DeployAPK(renamedUniversalAPKPath, buildURL, token, notifyUserGroups, notifyEmails, isEnablePublicPage)
 }
