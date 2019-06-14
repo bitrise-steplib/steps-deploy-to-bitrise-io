@@ -8,6 +8,7 @@ package converters
 import (
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/junitxml"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
 )
 
@@ -20,6 +21,7 @@ type Intf interface {
 var converters = []Intf{
 	&junitxml.Converter{},
 	&xcresult.Converter{},
+	&xcresult3.Converter{},
 }
 
 // List lists all supported converters
