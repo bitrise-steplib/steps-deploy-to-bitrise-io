@@ -171,9 +171,14 @@ func ParseTestResults(testsRootDir string) (results Results, err error) {
 
 			// get the converter that can manage test type contained in the dir
 			for _, converter := range converters.List() {
+				log.Debugf("Running converter: %T", converter)
 
 				// skip if couldn't find converter for content type
-				if converter.Detect(testFiles) {
+				detected := converter.Detect(testFiles)
+
+				log.Debugf("known test result detected: %v", detected)
+
+				if detected {
 					// test-info.json file is required
 					testInfoFileContent, err := fileutil.ReadBytesFromFile(filepath.Join(testPhaseDirPath, "test-info.json"))
 					if err != nil {
@@ -198,10 +203,14 @@ func ParseTestResults(testsRootDir string) (results Results, err error) {
 					xmlData = append([]byte(`<?xml version="1.0" encoding="UTF-8"?>`+"\n"), xmlData...)
 
 					// so here I will have image paths, xml data, and step info per test dir in a bundle info
+					images := findImages(testPhaseDirPath)
+
+					log.Debugf("found images: %d", len(images))
+
 					results = append(results, Result{
 						Name:       testInfo.Name,
 						XMLContent: xmlData,
-						ImagePaths: findImages(testPhaseDirPath),
+						ImagePaths: images,
 						StepInfo:   *stepInfo,
 					})
 				}
