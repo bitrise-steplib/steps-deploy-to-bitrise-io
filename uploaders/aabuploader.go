@@ -57,7 +57,7 @@ func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 		return "", err
 	}
 
-	if err := command.New("unzip", apksPth, "-d", tmpPth).Run(); err != nil {
+	if err := command.New("unzip", "-b", apksPth, "-d", tmpPth).Run(); err != nil {
 		return "", err
 	}
 
