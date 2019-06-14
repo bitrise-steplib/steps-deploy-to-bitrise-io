@@ -90,7 +90,7 @@ func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 
 	// ---
 
-	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "")
+	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "file")
 	if err != nil {
 		return "", fmt.Errorf("failed to create apk artifact, error: %s", err)
 	}
