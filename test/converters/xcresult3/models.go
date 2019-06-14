@@ -20,48 +20,81 @@ type ActionsInvocationRecord struct {
 		} `json:"_values"`
 	} `json:"actions"`
 
-	Issues struct {
-		TestFailureSummaries struct {
-			Values []TestFailureSummary `json:"_values"`
-		} `json:"testFailureSummaries"`
-	} `json:"issues"`
+	Issues Issues `json:"issues"`
+}
+
+// URL ...
+type URL struct {
+	Value string `json:"_value"`
+}
+
+// DocumentLocationInCreatingWorkspace ...
+type DocumentLocationInCreatingWorkspace struct {
+	URL URL `json:"url"`
+}
+
+// ProducingTarget ...
+type ProducingTarget struct {
+	Value string `json:"_value"`
+}
+
+// TestCaseName ...
+type TestCaseName struct {
+	Value string `json:"_value"`
+}
+
+// Message ...
+type Message struct {
+	Value string `json:"_value"`
 }
 
 // TestFailureSummary ...
 type TestFailureSummary struct {
-	DocumentLocationInCreatingWorkspace struct {
-		URL struct {
-			Value string `json:"_value"`
-		} `json:"url"`
-	} `json:"documentLocationInCreatingWorkspace"`
-	Message struct {
-		Value string `json:"_value"`
-	} `json:"message"`
-	ProducingTarget struct {
-		Value string `json:"_value"`
-	} `json:"producingTarget"`
-	TestCaseName struct {
-		Value string `json:"_value"`
-	} `json:"testCaseName"`
+	DocumentLocationInCreatingWorkspace DocumentLocationInCreatingWorkspace `json:"documentLocationInCreatingWorkspace"`
+	Message                             Message                             `json:"message"`
+	ProducingTarget                     ProducingTarget                     `json:"producingTarget"`
+	TestCaseName                        TestCaseName                        `json:"testCaseName"`
+}
+
+// TestFailureSummaries ...
+type TestFailureSummaries struct {
+	Values []TestFailureSummary `json:"_values"`
+}
+
+// Issues ...
+type Issues struct {
+	TestFailureSummaries TestFailureSummaries `json:"testFailureSummaries"`
+}
+
+// TestStatus ...
+type TestStatus struct {
+	Value string `json:"_value"`
+}
+
+// Subtests ...
+type Subtests struct {
+	Values []ActionTestSummaryGroup `json:"_values"`
+}
+
+// Duration ...
+type Duration struct {
+	Value string `json:"_value"`
+}
+
+// Identifier ...
+type Identifier struct {
+	Value string `json:"_value"`
 }
 
 // ActionTestSummaryGroup ...
 type ActionTestSummaryGroup struct {
-	Name struct {
-		Value string `json:"_value"`
-	} `json:"name"`
+	Name Name `json:"name"`
 
-	Identifier struct {
-		Value string `json:"_value"`
-	} `json:"identifier"`
+	Identifier Identifier `json:"identifier"`
 
-	Duration struct {
-		Value string `json:"_value"`
-	} `json:"duration"`
+	Duration Duration `json:"duration"`
 
-	TestStatus struct {
-		Value string `json:"_value"`
-	} `json:"testStatus"`
+	TestStatus TestStatus `json:"testStatus"`
 
 	SummaryRef struct {
 		ID struct {
@@ -69,36 +102,49 @@ type ActionTestSummaryGroup struct {
 		} `json:"id"`
 	} `json:"summaryRef"`
 
-	Subtests struct {
-		Values []ActionTestSummaryGroup `json:"_values"`
-	} `json:"subtests"`
+	Subtests Subtests `json:"subtests"`
+}
+
+// Tests ...
+type Tests struct {
+	Values []ActionTestSummaryGroup `json:"_values"`
+}
+
+// Name ...
+type Name struct {
+	Value string `json:"_value"`
 }
 
 // ActionTestableSummary ...
 type ActionTestableSummary struct {
-	Name struct {
-		Value string `json:"_value"`
-	} `json:"name"`
+	Name Name `json:"name"`
 
-	Tests struct {
-		Values []ActionTestSummaryGroup `json:"_values"`
-	} `json:"tests"`
+	Tests Tests `json:"tests"`
+}
+
+// TestableSummaries ...
+type TestableSummaries struct {
+	Values []ActionTestableSummary `json:"_values"`
+}
+
+// Summary ...
+type Summary struct {
+	TestableSummaries TestableSummaries `json:"testableSummaries"`
+}
+
+// Summaries ...
+type Summaries struct {
+	Values []Summary `json:"_values"`
 }
 
 // ActionTestPlanRunSummaries ...
 type ActionTestPlanRunSummaries struct {
-	Summaries struct {
-		Values []struct {
-			TestableSummaries struct {
-				Values []ActionTestableSummary `json:"_values"`
-			} `json:"testableSummaries"`
-		} `json:"_values"`
-	} `json:"summaries"`
+	Summaries Summaries `json:"summaries"`
 }
 
 // producingTargetAndTestCaseName unwraps the target and test case name from a given ActionTestSummaryGroup's Identifier.
 func (g ActionTestSummaryGroup) producingTargetAndTestCaseName() (target string, testCase string) {
-	// Xcode11TestUITests2\/testFail()
+	// Xcode11TestUITests2/testFail()
 	if g.Identifier.Value != "" {
 		s := strings.Split(g.Identifier.Value, "/")
 		if len(s) == 2 {
@@ -183,8 +229,8 @@ func (s TestFailureSummary) fileAndLineNumber() (file string, line string) {
 	// file:\/\/\/Users\/bitrisedeveloper\/Develop\/ios\/Xcode11Test\/Xcode11TestUITests\/Xcode11TestUITests.swift#CharacterRangeLen=0&EndingLineNumber=42&StartingLineNumber=42
 	if s.DocumentLocationInCreatingWorkspace.URL.Value != "" {
 		i := strings.LastIndex(s.DocumentLocationInCreatingWorkspace.URL.Value, "#")
-		if i > -1 {
-			return s.DocumentLocationInCreatingWorkspace.URL.Value[:i], s.DocumentLocationInCreatingWorkspace.URL.Value[i:]
+		if i > -1 && i+1 < len(s.DocumentLocationInCreatingWorkspace.URL.Value) {
+			return s.DocumentLocationInCreatingWorkspace.URL.Value[:i], s.DocumentLocationInCreatingWorkspace.URL.Value[i+1:]
 		}
 	}
 	return
