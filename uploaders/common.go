@@ -17,13 +17,11 @@ import (
 	"github.com/bitrise-io/go-utils/urlutil"
 )
 
-func createArtifact(buildURL, token, artifactPth, artifactType, artifactName string) (string, string, error) {
+func createArtifact(buildURL, token, artifactPth, artifactType string) (string, string, error) {
 	log.Printf("creating artifact")
 
 	// create form data
-	if artifactName == "" {
-		artifactName = filepath.Base(artifactPth)
-	}
+	artifactName := filepath.Base(artifactPth)
 	fileSize, err := fileSizeInBytes(artifactPth)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to get file size, error: %s", err)

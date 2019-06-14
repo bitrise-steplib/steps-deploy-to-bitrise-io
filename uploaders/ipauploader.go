@@ -99,7 +99,7 @@ func DeployIPA(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 
 	// ---
 
-	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "ios-ipa", "")
+	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "ios-ipa")
 	if err != nil {
 		return "", fmt.Errorf("failed to create ipa artifact, error: %s", err)
 	}

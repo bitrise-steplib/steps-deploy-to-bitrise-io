@@ -90,7 +90,7 @@ func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 
 	// ---
 
-	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "file", "")
+	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "android-apk")
 	if err != nil {
 		return "", fmt.Errorf("failed to create apk artifact, error: %s", err)
 	}
@@ -105,19 +105,5 @@ func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 
 	fmt.Println()
 
-	uploadURL, artifactID, err = createArtifact(buildURL, token, renamedUniversalAPKPath, "android-apk", filepath.Base(pth))
-	if err != nil {
-		return "", fmt.Errorf("failed to create apk artifact, error: %s", err)
-	}
-
-	if err := uploadArtifact(uploadURL, renamedUniversalAPKPath, "application/vnd.android.package-archive"); err != nil {
-		return "", fmt.Errorf("failed to upload apk artifact, error: %s", err)
-	}
-
-	publicInstallPage, err := finishArtifact(buildURL, token, artifactID, string(artifactInfoBytes), notifyUserGroups, notifyEmails, isEnablePublicPage)
-	if err != nil {
-		return "", fmt.Errorf("failed to finish apk artifact, error: %s", err)
-	}
-
-	return publicInstallPage, nil
+	return DeployAPK(renamedUniversalAPKPath, buildURL, token, notifyUserGroups, notifyEmails, isEnablePublicPage)
 }
