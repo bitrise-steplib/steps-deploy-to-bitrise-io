@@ -95,7 +95,10 @@ func (c *Converter) XML() (junit.XML, error) {
 			for _, test := range tests {
 				var duartion float64
 				if test.Duration.Value != "" {
-					duartion, _ = strconv.ParseFloat(test.Duration.Value, 64)
+					duartion, err = strconv.ParseFloat(test.Duration.Value, 64)
+					if err != nil {
+						return junit.XML{}, err
+					}
 				}
 
 				testSuit.TestCases = append(testSuit.TestCases, junit.TestCase{
