@@ -17,7 +17,7 @@ import (
 	"github.com/bitrise-io/go-utils/urlutil"
 )
 
-func createArtifact(buildURL, token, artifactPth, artifactType string) (string, string, error) {
+func createArtifact(buildURL, token, artifactPth, artifactType, artifactTitle string) (string, string, error) {
 	log.Printf("creating artifact")
 
 	// create form data
@@ -42,6 +42,9 @@ func createArtifact(buildURL, token, artifactPth, artifactType string) (string, 
 		"filename":        {artifactName},
 		"artifact_type":   {artifactType},
 		"file_size_bytes": {fmt.Sprintf("%d", int(fileSize))},
+	}
+	if artifactTitle != "" {
+		data.Set("title", artifactTitle)
 	}
 	// ---
 

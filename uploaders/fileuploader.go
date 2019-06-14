@@ -4,7 +4,7 @@ import "fmt"
 
 // DeployFile ...
 func DeployFile(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePublicPage string) (string, error) {
-	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "file")
+	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "file", "")
 	if err != nil {
 		return "", fmt.Errorf("failed to create file artifact, error: %s", err)
 	}
