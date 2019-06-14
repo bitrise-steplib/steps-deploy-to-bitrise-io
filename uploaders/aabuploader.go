@@ -95,7 +95,7 @@ func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 		return "", fmt.Errorf("failed to create apk artifact, error: %s", err)
 	}
 
-	if err := uploadArtifact(uploadURL, pth, "application/vnd.android.package-archive"); err != nil {
+	if err := uploadArtifact(uploadURL, pth, ""); err != nil {
 		return "", fmt.Errorf("failed to upload apk artifact, error: %s", err)
 	}
 
