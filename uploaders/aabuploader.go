@@ -57,11 +57,12 @@ func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 		return "", err
 	}
 
-	if o, err := command.New("unzip", "-v", apksPth, "-d", tmpPth).RunAndReturnTrimmedCombinedOutput(); err != nil {
+	o, err := command.New("unzip", "-v", apksPth, "-d", tmpPth).RunAndReturnTrimmedCombinedOutput()
+	if err != nil {
 		return "", err
-	} else {
-		fmt.Println(o)
 	}
+
+	fmt.Println(o)
 
 	universalAPKPath := filepath.Join(tmpPth, "universal.apk")
 	renamedUniversalAPKPath := filepath.Join(tmpPth, filepath.Base(pth)+".universal.apk")
