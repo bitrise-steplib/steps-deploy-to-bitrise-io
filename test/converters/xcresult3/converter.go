@@ -1,7 +1,6 @@
 package xcresult3
 
 import (
-	"encoding/json"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -11,6 +10,7 @@ import (
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/xcode-project/serialized"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
+	"howett.net/plist"
 )
 
 // Converter ...
@@ -38,7 +38,7 @@ func documentMajorVersion(pth string) (int, error) {
 	}
 
 	var info serialized.Object
-	if err := json.Unmarshal(content, &info); err != nil {
+	if _, err := plist.Unmarshal(content, &info); err != nil {
 		return -1, err
 	}
 
@@ -65,7 +65,7 @@ func (c *Converter) Detect(files []string) bool {
 		}
 
 		if version < 3 {
-			log.Debugf("version < 3")
+			log.Debugf("version < 3: %d", version)
 			continue
 		}
 
