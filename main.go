@@ -174,6 +174,17 @@ func main() {
 			if installPage != "" {
 				publicInstallPages[filepath.Base(pth)] = installPage
 			}
+		case ".aab":
+			log.Donef("Uploading aab file: %s", pth)
+
+			installPage, err := uploaders.DeployAPK(pth, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
+			if err != nil {
+				fail("Deploy failed, error: %s", err)
+			}
+
+			if installPage != "" {
+				publicInstallPages[filepath.Base(pth)] = installPage
+			}
 		default:
 			log.Donef("Uploading file: %s", pth)
 
