@@ -52,10 +52,11 @@ func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 
 	apksPth := filepath.Join(tmpPth, "apks.apks")
 
-	_, err = r.Execute("build-apks", "--mode=universal", "--bundle", pth, "--output", apksPth)
+	o, err := r.Execute("build-apks", "--mode=universal", "--bundle", pth, "--output", apksPth)
 	if err != nil {
 		return "", err
 	}
+	fmt.Println(o)
 
 	const spec = `{
 		"sdkVersion": 100,
@@ -69,7 +70,7 @@ func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 		return "", err
 	}
 	//extract-apks --apks /tmp/lol.apks --output-dir /tmp/here --device-spec /tmp/spec.json
-	o, err := r.Execute("extract-apks", "--apks", apksPth, "--output-dir", tmpPth, "--device-spec", specPath)
+	o, err = r.Execute("extract-apks", "--apks", apksPth, "--output-dir", tmpPth, "--device-spec", specPath)
 	if err != nil {
 		return "", err
 	}
