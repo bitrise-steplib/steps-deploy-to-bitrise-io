@@ -3,43 +3,14 @@ package uploaders
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
+	"path/filepath"
+
+	"github.com/bitrise-io/go-utils/command"
+	"github.com/bitrise-io/go-utils/pathutil"
 
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/bundletool"
 )
-
-// AABInfo ...
-type AABInfo struct {
-	AppName           string
-	PackageName       string
-	VersionCode       string
-	VersionName       string
-	MinSDKVersion     string
-	RawPackageContent string
-}
-
-func getAABInfo(toolOutput string) (ApkInfo, error) {
-	appName := filterAppLable(toolOutput)
-	packageName, versionCode, versionName := filterPackageInfos(toolOutput)
-	minSDKVersion := filterMinSDKVersion(toolOutput)
-
-	packageContent := ""
-	for _, line := range strings.Split(toolOutput, "\n") {
-		if strings.HasPrefix(line, "package:") {
-			packageContent = line
-		}
-	}
-
-	return ApkInfo{
-		AppName:           appName,
-		PackageName:       packageName,
-		VersionCode:       versionCode,
-		VersionName:       versionName,
-		MinSDKVersion:     minSDKVersion,
-		RawPackageContent: packageContent,
-	}, nil
-}
 
 // DeployAAB ...
 func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePublicPage string) (string, error) {
@@ -50,36 +21,49 @@ func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 		return "", err
 	}
 
-	out, err := r.Execute("dump", "manifest", "--bundle", pth)
+	tmpPth, err := pathutil.NormalizedOSTempDirPath("apks")
 	if err != nil {
 		return "", err
 	}
 
-	apkInfo, err := getAABInfo(out)
+	apksPth := filepath.Join(tmpPth, "apks.apks")
+
+	_, err = r.Execute("build-apks", "--mode=universal", "--bundle", pth, "--output", apksPth)
+	if err != nil {
+		return "", err
+	}
+
+	if err := command.New("unzip", apksPth, "-d", tmpPth).Run(); err != nil {
+		return "", err
+	}
+
+	universalAPKPath := filepath.Join(tmpPth, "universal.apk")
+
+	aabInfo, err := getAPKInfo(universalAPKPath)
 	if err != nil {
 		return "", err
 	}
 
 	appInfo := map[string]interface{}{
-		"app_name":        apkInfo.AppName,
-		"package_name":    apkInfo.PackageName,
-		"version_code":    apkInfo.VersionCode,
-		"version_name":    apkInfo.VersionName,
-		"min_sdk_version": apkInfo.MinSDKVersion,
+		"app_name":        aabInfo.AppName,
+		"package_name":    aabInfo.PackageName,
+		"version_code":    aabInfo.VersionCode,
+		"version_name":    aabInfo.VersionName,
+		"min_sdk_version": aabInfo.MinSDKVersion,
 	}
 
-	log.Printf("  apk infos: %v", appInfo)
+	log.Printf("  aab infos: %v", appInfo)
 
-	if apkInfo.PackageName == "" {
-		log.Warnf("Package name is undefined, AndroidManifest.xml package content:\n%s", apkInfo.RawPackageContent)
+	if aabInfo.PackageName == "" {
+		log.Warnf("Package name is undefined, AndroidManifest.xml package content:\n%s", aabInfo.RawPackageContent)
 	}
 
-	if apkInfo.VersionCode == "" {
-		log.Warnf("Version code is undefined, AndroidManifest.xml package content:\n%s", apkInfo.RawPackageContent)
+	if aabInfo.VersionCode == "" {
+		log.Warnf("Version code is undefined, AndroidManifest.xml package content:\n%s", aabInfo.RawPackageContent)
 	}
 
-	if apkInfo.VersionName == "" {
-		log.Warnf("Version name is undefined, AndroidManifest.xml package content:\n%s", apkInfo.RawPackageContent)
+	if aabInfo.VersionName == "" {
+		log.Warnf("Version name is undefined, AndroidManifest.xml package content:\n%s", aabInfo.RawPackageContent)
 	}
 
 	// ---
@@ -89,12 +73,12 @@ func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 		return "", fmt.Errorf("failed to get apk size, error: %s", err)
 	}
 
-	apkInfoMap := map[string]interface{}{
+	aabInfoMap := map[string]interface{}{
 		"file_size_bytes": fmt.Sprintf("%f", fileSize),
 		"app_info":        appInfo,
 	}
 
-	artifactInfoBytes, err := json.Marshal(apkInfoMap)
+	artifactInfoBytes, err := json.Marshal(aabInfoMap)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal apk infos, error: %s", err)
 	}
@@ -110,10 +94,9 @@ func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 		return "", fmt.Errorf("failed to upload apk artifact, error: %s", err)
 	}
 
-	publicInstallPage, err := finishArtifact(buildURL, token, artifactID, string(artifactInfoBytes), notifyUserGroups, notifyEmails, isEnablePublicPage)
-	if err != nil {
+	if _, err = finishArtifact(buildURL, token, artifactID, string(artifactInfoBytes), "", "", "false"); err != nil {
 		return "", fmt.Errorf("failed to finish apk artifact, error: %s", err)
 	}
 
-	return publicInstallPage, nil
+	return DeployAPK(universalAPKPath, buildURL, token, notifyUserGroups, notifyEmails, isEnablePublicPage)
 }
