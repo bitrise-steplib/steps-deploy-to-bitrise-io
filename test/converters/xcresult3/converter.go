@@ -26,6 +26,8 @@ func (c *Converter) Detect(files []string) bool {
 
 // XML ...
 func (c *Converter) XML() (junit.XML, error) {
+	testResultDir := filepath.Dir(c.xcresultPth)
+
 	record, summaries, err := Parse(c.xcresultPth)
 	if err != nil {
 		return junit.XML{}, err
@@ -55,6 +57,10 @@ func (c *Converter) XML() (junit.XML, error) {
 					Failure:   record.failure(test),
 					Time:      duartion,
 				})
+
+				if err := test.exportScreenshots(c.xcresultPth, testResultDir); err != nil {
+					return junit.XML{}, err
+				}
 			}
 
 			xmlData.TestSuites = append(xmlData.TestSuites, testSuit)
