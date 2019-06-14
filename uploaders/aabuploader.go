@@ -3,11 +3,11 @@ package uploaders
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/pathutil"
 
 	"github.com/bitrise-io/go-utils/log"
@@ -57,7 +57,19 @@ func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 		return "", err
 	}
 
-	o, err := command.New("unzip", "-v", apksPth, "-d", tmpPth).RunAndReturnTrimmedCombinedOutput()
+	const spec = `{
+		"sdkVersion": 100,
+		"screenDensity": 560,
+		"supportedAbis": ["arm64-v8a", "armeabi-v7a", "armeabi"],
+		"supportedLocales": ["en-US"]
+	}`
+
+	specPath := filepath.Join(tmpPth, "spec.json")
+	if err := ioutil.WriteFile(specPath, []byte(spec), 0777); err != nil {
+		return "", err
+	}
+	//extract-apks --apks /tmp/lol.apks --output-dir /tmp/here --device-spec /tmp/spec.json
+	o, err := r.Execute("extract-apks", "--apks", apksPth, "--output-dir", tmpPth, "--device-spec", specPath)
 	if err != nil {
 		return "", err
 	}
