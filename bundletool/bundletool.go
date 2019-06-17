@@ -43,6 +43,6 @@ func NewRunner() (Runner, error) {
 }
 
 // Execute ...
-func (r Runner) Execute(cmd string, args ...string) (string, error) {
-	return command.New("java", append([]string{"-jar", r.localPath, cmd}, args...)...).RunAndReturnTrimmedCombinedOutput()
+func (r Runner) Command(cmd string, args ...string) *command.Model {
+	return command.New("java", append([]string{"-jar", r.localPath, cmd}, args...)...)
 }

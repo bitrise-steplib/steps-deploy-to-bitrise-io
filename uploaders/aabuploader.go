@@ -8,7 +8,6 @@ import (
 
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/pathutil"
-	"github.com/pkg/errors"
 
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/bundletool"
@@ -28,25 +27,47 @@ func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 		return "", err
 	}
 
+	fmt.Println()
+
 	// create debug keystore for signing
 	log.Printf("- generating debug keystore")
 	keystorePath := filepath.Join(tmpPth, "debug.keystore")
-	if out, err := command.New("keytool", "-genkey", "-v", "-keystore", keystorePath, "-storepass", "android", "-alias", "androiddebugkey", "-keypass", "android", "-keyalg", "RSA", "-keysize", "2048", "-validity", "10000", "-dname", "C=US, O=Android, CN=Android Debug").RunAndReturnTrimmedCombinedOutput(); err != nil {
-		return "", errors.Wrap(err, out)
+
+	cmd := command.New("keytool", "-genkey", "-v", "-keystore", keystorePath, "-storepass", "android", "-alias", "androiddebugkey", "-keypass", "android", "-keyalg", "RSA", "-keysize", "2048", "-validity", "10000", "-dname", "C=US, O=Android, CN=Android Debug").SetStdout(os.Stdout).SetStderr(os.Stderr)
+
+	log.Donef("$ %s", cmd.PrintableCommandArgs())
+
+	if err := cmd.Run(); err != nil {
+		return "", err
 	}
+
+	fmt.Println()
 
 	// generate `tmpDir/universal.apks` from aab file
 	log.Printf("- generating universal apk")
 	apksPth := filepath.Join(tmpPth, "universal.apks")
-	if out, err := r.Execute("build-apks", "--mode=universal", "--bundle", pth, "--output", apksPth, "--ks", keystorePath, "--ks-pass", "pass:android", "--ks-key-alias", "androiddebugkey", "--key-pass", "pass:android"); err != nil {
-		return "", errors.Wrap(err, out)
+
+	cmd = r.Command("build-apks", "--mode=universal", "--bundle", pth, "--output", apksPth, "--ks", keystorePath, "--ks-pass", "pass:android", "--ks-key-alias", "androiddebugkey", "--key-pass", "pass:android").SetStdout(os.Stdout).SetStderr(os.Stderr)
+
+	log.Donef("$ %s", cmd.PrintableCommandArgs())
+
+	if err := cmd.Run(); err != nil {
+		return "", err
 	}
+
+	fmt.Println()
 
 	// unzip `tmpDir/universal.apks` to tmpPth to have `tmpDir/universal.apk`
 	log.Printf("- unzip")
-	if out, err := command.New("unzip", "-v", apksPth, "-d", tmpPth).RunAndReturnTrimmedCombinedOutput(); err != nil {
-		return "", errors.Wrap(err, out)
+	cmd = command.New("unzip", "-v", apksPth, "-d", tmpPth).SetStdout(os.Stdout).SetStderr(os.Stderr)
+
+	log.Donef("$ %s", cmd.PrintableCommandArgs())
+
+	if err := cmd.Run(); err != nil {
+		return "", err
 	}
+
+	fmt.Println()
 
 	// rename `tmpDir/universal.apk` to `tmpDir/aab-name.aab.universal.apk`
 	universalAPKPath := filepath.Join(tmpPth, "universal.apk")
@@ -56,11 +77,17 @@ func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 		return "", err
 	}
 
+	fmt.Println()
+
 	// get aab manifest dump
 	log.Printf("- fetching info")
-	out, err := r.Execute("dump", "manifest", "--bundle", pth)
+	cmd = r.Command("dump", "manifest", "--bundle", pth)
+
+	log.Donef("$ %s", cmd.PrintableCommandArgs())
+
+	out, err := cmd.RunAndReturnTrimmedCombinedOutput()
 	if err != nil {
-		return "", errors.Wrap(err, out)
+		return "", err
 	}
 
 	packageName, versionCode, versionName := filterPackageInfos(out)
