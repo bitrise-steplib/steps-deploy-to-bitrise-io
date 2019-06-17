@@ -53,8 +53,11 @@ func (c *Converter) Detect(files []string) bool {
 		}
 
 		infoPth := filepath.Join(file, "Info.plist")
-		if exist, err := pathutil.IsPathExists(infoPth); err != nil || exist == false {
-			log.Debugf("Info.plist not found at: %s", infoPth)
+		if exist, err := pathutil.IsPathExists(infoPth); err != nil {
+			log.Debugf("Failed to find Info.plist at %s: %s", infoPth, err)
+			continue
+		} else if !exist {
+			log.Debugf("No Info.plist found at %s", infoPth)
 			continue
 		}
 

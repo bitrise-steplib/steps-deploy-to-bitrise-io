@@ -24,8 +24,7 @@ type TestableSummaries struct {
 
 // ActionTestableSummary ...
 type ActionTestableSummary struct {
-	Name Name `json:"name"`
-
+	Name  Name  `json:"name"`
 	Tests Tests `json:"tests"`
 }
 

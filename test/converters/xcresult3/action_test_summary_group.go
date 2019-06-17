@@ -7,17 +7,12 @@ import (
 
 // ActionTestSummaryGroup ...
 type ActionTestSummaryGroup struct {
-	Name Name `json:"name"`
-
+	Name       Name       `json:"name"`
 	Identifier Identifier `json:"identifier"`
-
-	Duration Duration `json:"duration"`
-
+	Duration   Duration   `json:"duration"`
 	TestStatus TestStatus `json:"testStatus"`
-
 	SummaryRef SummaryRef `json:"summaryRef"`
-
-	Subtests Subtests `json:"subtests"`
+	Subtests   Subtests   `json:"subtests"`
 }
 
 // Subtests ...
