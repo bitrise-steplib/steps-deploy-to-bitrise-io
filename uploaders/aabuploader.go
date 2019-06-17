@@ -8,6 +8,7 @@ import (
 
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/pathutil"
+	"github.com/pkg/errors"
 
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/bundletool"
@@ -15,7 +16,7 @@ import (
 
 // DeployAAB ...
 func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePublicPage string) (string, error) {
-	log.Printf("analyzing aab")
+	log.Printf("- analyzing aab")
 
 	tmpPth, err := pathutil.NormalizedOSTempDirPath("aab-bundle")
 	if err != nil {
@@ -28,21 +29,22 @@ func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 	}
 
 	// create debug keystore for signing
+	log.Printf("- generating debug keystore")
 	keystorePath := filepath.Join(tmpPth, "debug.keystore")
-	if err := command.New("keytool", "-genkey", "-v", "-keystore", keystorePath, "-storepass", "android", "-alias", "androiddebugkey", "-keypass", "android", "-keyalg", "RSA", "-keysize", "2048", "-validity", "10000", "-dname", "C=US, O=Android, CN=Android Debug").Run(); err != nil {
-		return "", err
+	if out, err := command.New("keytool", "-genkey", "-v", "-keystore", keystorePath, "-storepass", "android", "-alias", "androiddebugkey", "-keypass", "android", "-keyalg", "RSA", "-keysize", "2048", "-validity", "10000", "-dname", "C=US, O=Android, CN=Android Debug").RunAndReturnTrimmedCombinedOutput(); err != nil {
+		return "", errors.Wrap(err, out)
 	}
 
 	// generate `tmpDir/universal.apks` from aab file
+	log.Printf("- generating universal apk")
 	apksPth := filepath.Join(tmpPth, "universal.apks")
-	_, err = r.Execute("build-apks", "--mode=universal", "--bundle", pth, "--output", apksPth, "--ks", keystorePath, "--ks-pass", "pass:android", "--ks-key-alias", "androiddebugkey", "--key-pass", "pass:android")
-	if err != nil {
-		return "", err
+	if out, err := r.Execute("build-apks", "--mode=universal", "--bundle", pth, "--output", apksPth, "--ks", keystorePath, "--ks-pass", "pass:android", "--ks-key-alias", "androiddebugkey", "--key-pass", "pass:android"); err != nil {
+		return "", errors.Wrap(err, out)
 	}
 
 	// unzip `tmpDir/universal.apks` to tmpPth to have `tmpDir/universal.apk`
-	if err := command.New("unzip", "-v", apksPth, "-d", tmpPth).Run(); err != nil {
-		return "", err
+	if out, err := command.New("unzip", "-v", apksPth, "-d", tmpPth).RunAndReturnTrimmedCombinedOutput(); err != nil {
+		return "", errors.Wrap(err, out)
 	}
 
 	// rename `tmpDir/universal.apk` to `tmpDir/aab-name.aab.universal.apk`
@@ -55,7 +57,7 @@ func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 	// get aab manifest dump
 	out, err := r.Execute("dump", "manifest", "--bundle", pth)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, out)
 	}
 
 	packageName, versionCode, versionName := filterPackageInfos(out)
