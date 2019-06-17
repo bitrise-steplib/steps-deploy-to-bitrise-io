@@ -47,6 +47,11 @@ func documentMajorVersion(pth string) (int, error) {
 
 // Detect ...
 func (c *Converter) Detect(files []string) bool {
+	if !isXcresulttoolAvailable() {
+		log.Debugf("xcresult tool is not available")
+		return false
+	}
+
 	for _, file := range files {
 		if filepath.Ext(file) != ".xcresult" {
 			continue

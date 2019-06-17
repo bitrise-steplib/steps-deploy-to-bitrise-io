@@ -3,10 +3,18 @@ package xcresult3
 import (
 	"encoding/json"
 	"fmt"
+	"os/exec"
 
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/errorutil"
 )
+
+func isXcresulttoolAvailable() bool {
+	if _, err := exec.LookPath("xcrun"); err != nil {
+		return false
+	}
+	return command.New("xcrun", "--find", "xcresulttool").Run() == nil
+}
 
 // xcresulttoolGet performs xcrun xcresulttool get with --id flag defined if id provided and marshals the output into v.
 func xcresulttoolGet(xcresultPth, id string, v interface{}) error {
