@@ -43,6 +43,7 @@ func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 	}
 
 	// unzip `tmpDir/universal.apks` to tmpPth to have `tmpDir/universal.apk`
+	log.Printf("- unzip")
 	if out, err := command.New("unzip", "-v", apksPth, "-d", tmpPth).RunAndReturnTrimmedCombinedOutput(); err != nil {
 		return "", errors.Wrap(err, out)
 	}
@@ -50,11 +51,13 @@ func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 	// rename `tmpDir/universal.apk` to `tmpDir/aab-name.aab.universal.apk`
 	universalAPKPath := filepath.Join(tmpPth, "universal.apk")
 	renamedUniversalAPKPath := filepath.Join(tmpPth, filepath.Base(pth)+".universal.apk")
+	log.Printf("- rename")
 	if err := os.Rename(universalAPKPath, renamedUniversalAPKPath); err != nil {
 		return "", err
 	}
 
 	// get aab manifest dump
+	log.Printf("- fetching info")
 	out, err := r.Execute("dump", "manifest", "--bundle", pth)
 	if err != nil {
 		return "", errors.Wrap(err, out)
