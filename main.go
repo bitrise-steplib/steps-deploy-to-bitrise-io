@@ -244,16 +244,16 @@ func main() {
 
 		testResults, err := test.ParseTestResults(config.TestDeployDir)
 		if err != nil {
-			fail("Error during parsing test results: ", err)
+			log.Warnf("Error during parsing test results: ", err)
+		} else {
+			log.Printf("- uploading (%d) test results", len(testResults))
+
+			if err := testResults.Upload(config.AddonAPIToken, config.AddonAPIBaseURL, config.AppSlug, config.BuildSlug); err != nil {
+				log.Warnf("Failed to upload test results: ", err)
+			} else {
+				log.Donef("Success")
+			}
 		}
-
-		log.Printf("- uploading (%d) test results", len(testResults))
-
-		if err := testResults.Upload(config.AddonAPIToken, config.AddonAPIBaseURL, config.AppSlug, config.BuildSlug); err != nil {
-			fail("Failed to upload test results: ", err)
-		}
-
-		log.Donef("Success")
 	}
 }
 

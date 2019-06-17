@@ -2,9 +2,9 @@ package xcresult
 
 import (
 	"path/filepath"
-	"strings"
 
 	"github.com/bitrise-io/go-utils/fileutil"
+	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
 	"howett.net/plist"
 )
@@ -19,8 +19,13 @@ type Converter struct {
 func (h *Converter) Detect(files []string) bool {
 	h.files = files
 	for _, file := range h.files {
-		if strings.HasSuffix(file, ".xcresult") {
-			h.testSummariesPlistPath = filepath.Join(file, "TestSummaries.plist")
+		if filepath.Ext(file) == ".xcresult" {
+			testSummariesPlistPath := filepath.Join(file, "TestSummaries.plist")
+			if exist, err := pathutil.IsPathExists(testSummariesPlistPath); err != nil || exist == false {
+				continue
+			}
+
+			h.testSummariesPlistPath = testSummariesPlistPath
 			return true
 		}
 	}
