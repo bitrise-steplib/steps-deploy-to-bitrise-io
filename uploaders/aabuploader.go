@@ -59,7 +59,7 @@ func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 
 	// unzip `tmpDir/universal.apks` to tmpPth to have `tmpDir/universal.apk`
 	log.Printf("- unzip")
-	cmd = command.New("unzip", "-v", apksPth, "-d", tmpPth).SetStdout(os.Stdout).SetStderr(os.Stderr)
+	cmd = command.New("unzip", apksPth, "-d", tmpPth).SetStdout(os.Stdout).SetStderr(os.Stderr)
 
 	log.Donef("$ %s", cmd.PrintableCommandArgs())
 
