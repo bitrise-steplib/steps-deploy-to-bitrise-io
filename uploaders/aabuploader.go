@@ -13,6 +13,33 @@ import (
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/bundletool"
 )
 
+// create debug keystore for signing
+func generateKeystore(tmpPth string) (string, error) {
+	log.Printf("- generating debug keystore")
+
+	keystorePath := filepath.Join(tmpPth, "debug.keystore")
+	cmd := command.New("keytool", "-genkey", "-v", "-keystore", keystorePath, "-storepass", "android", "-alias", "androiddebugkey",
+		"-keypass", "android", "-keyalg", "RSA", "-keysize", "2048", "-validity", "10000", "-dname", "C=US, O=Android, CN=Android Debug").
+		SetStdout(os.Stdout).
+		SetStderr(os.Stderr)
+
+	log.Donef("$ %s", cmd.PrintableCommandArgs())
+
+	return keystorePath, cmd.Run()
+}
+
+// generate `tmpDir/universal.apks` from aab file
+func buildApksArchive(r bundletool.Runner, tmpPth, aabPth, keystorePath string) (string, error) {
+	log.Printf("- generating universal apk")
+
+	apksPth := filepath.Join(tmpPth, "universal.apks")
+	cmd := r.Command("build-apks", "--mode=universal", "--bundle", aabPth, "--output", apksPth, "--ks", keystorePath, "--ks-pass", "pass:android", "--ks-key-alias", "androiddebugkey", "--key-pass", "pass:android").SetStdout(os.Stdout).SetStderr(os.Stderr)
+
+	log.Donef("$ %s", cmd.PrintableCommandArgs())
+
+	return apksPth, cmd.Run()
+}
+
 // DeployAAB ...
 func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePublicPage string) (string, error) {
 	log.Printf("- analyzing aab")
@@ -29,29 +56,15 @@ func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 
 	fmt.Println()
 
-	// create debug keystore for signing
-	log.Printf("- generating debug keystore")
-	keystorePath := filepath.Join(tmpPth, "debug.keystore")
-
-	cmd := command.New("keytool", "-genkey", "-v", "-keystore", keystorePath, "-storepass", "android", "-alias", "androiddebugkey", "-keypass", "android", "-keyalg", "RSA", "-keysize", "2048", "-validity", "10000", "-dname", "C=US, O=Android, CN=Android Debug").SetStdout(os.Stdout).SetStderr(os.Stderr)
-
-	log.Donef("$ %s", cmd.PrintableCommandArgs())
-
-	if err := cmd.Run(); err != nil {
+	keystorePath, err := generateKeystore(tmpPth)
+	if err != nil {
 		return "", err
 	}
 
 	fmt.Println()
 
-	// generate `tmpDir/universal.apks` from aab file
-	log.Printf("- generating universal apk")
-	apksPth := filepath.Join(tmpPth, "universal.apks")
-
-	cmd = r.Command("build-apks", "--mode=universal", "--bundle", pth, "--output", apksPth, "--ks", keystorePath, "--ks-pass", "pass:android", "--ks-key-alias", "androiddebugkey", "--key-pass", "pass:android").SetStdout(os.Stdout).SetStderr(os.Stderr)
-
-	log.Donef("$ %s", cmd.PrintableCommandArgs())
-
-	if err := cmd.Run(); err != nil {
+	apksPth, err := buildApksArchive(r, tmpPth, pth, keystorePath)
+	if err != nil {
 		return "", err
 	}
 
@@ -59,7 +72,7 @@ func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 
 	// unzip `tmpDir/universal.apks` to tmpPth to have `tmpDir/universal.apk`
 	log.Printf("- unzip")
-	cmd = command.New("unzip", apksPth, "-d", tmpPth).SetStdout(os.Stdout).SetStderr(os.Stderr)
+	cmd := command.New("unzip", apksPth, "-d", tmpPth).SetStdout(os.Stdout).SetStderr(os.Stderr)
 
 	log.Donef("$ %s", cmd.PrintableCommandArgs())
 
@@ -68,11 +81,10 @@ func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 	}
 
 	fmt.Println()
+	log.Printf("- rename")
 
 	// rename `tmpDir/universal.apk` to `tmpDir/aab-name.aab.universal.apk`
-	universalAPKPath := filepath.Join(tmpPth, "universal.apk")
-	renamedUniversalAPKPath := filepath.Join(tmpPth, filepath.Base(pth)+".universal.apk")
-	log.Printf("- rename")
+	universalAPKPath, renamedUniversalAPKPath := filepath.Join(tmpPth, "universal.apk"), filepath.Join(tmpPth, filepath.Base(pth)+".universal.apk")
 	if err := os.Rename(universalAPKPath, renamedUniversalAPKPath); err != nil {
 		return "", err
 	}
@@ -81,6 +93,7 @@ func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 
 	// get aab manifest dump
 	log.Printf("- fetching info")
+
 	cmd = r.Command("dump", "manifest", "--bundle", pth)
 
 	log.Donef("$ %s", cmd.PrintableCommandArgs())
