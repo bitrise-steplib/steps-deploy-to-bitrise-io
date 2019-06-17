@@ -42,7 +42,7 @@ func NewRunner() (Runner, error) {
 	return Runner{toolPath}, ioutil.WriteFile(toolPath, d, 0777)
 }
 
-// Execute ...
+// Command ...
 func (r Runner) Command(cmd string, args ...string) *command.Model {
 	return command.New("java", append([]string{"-jar", r.localPath, cmd}, args...)...)
 }
