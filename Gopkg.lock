@@ -60,7 +60,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:50b4bd882c227361587748d6b941fd19d1fc2ba9147ee256b69f587a4b6b81d0"
+  digest = "1:2f550b23d0be286e179428e5f70d110621be01cacbb7ecf72ff73b28a1a8c075"
   name = "github.com/bitrise-io/go-xcode"
   packages = [
     "certificateutil",
@@ -70,6 +70,7 @@
     "plistutil",
     "profileutil",
     "utility",
+    "xcarchive",
   ]
   pruneopts = "UT"
   revision = "c1544b4453f2869335f71fb53c0360bdb91d01b4"
@@ -168,6 +169,7 @@
     "github.com/bitrise-io/go-xcode/plistutil",
     "github.com/bitrise-io/go-xcode/profileutil",
     "github.com/bitrise-io/go-xcode/utility",
+    "github.com/bitrise-io/go-xcode/xcarchive",
     "github.com/bitrise-io/xcode-project/serialized",
     "github.com/bitrise-steplib/steps-xcode-test/pretty",
     "github.com/gorilla/mux",
