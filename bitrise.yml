@@ -52,6 +52,17 @@ workflows:
         - notify_email_list: $NOTIFY_EMAIL_LIST
         - is_enable_public_page: "true"
     - path::./:
+        title: IOS Test xcarhive
+        run_if: true
+        inputs:
+        - build_url: $BITRISE_BUILD_URL
+        - build_api_token: $BITRISE_BUILD_API_TOKEN
+        - is_compress: "false"
+        - deploy_path: ./archives
+        - notify_user_groups: $NOTIFY_USER_GROUPS
+        - notify_email_list: $NOTIFY_EMAIL_LIST
+        - is_enable_public_page: "true"
+    - path::./:
         title: IOS Test compressed with default name
         run_if: true
         inputs:

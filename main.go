@@ -45,6 +45,8 @@ type PublicInstallPage struct {
 	URL  string
 }
 
+const zippedXcarchiveExt := ".xcarchive.zip"
+
 func fail(format string, v ...interface{}) {
 	log.Errorf(format, v...)
 	os.Exit(1)
@@ -74,23 +76,33 @@ func main() {
 		fail("Failed to create tmp dir, error: %s", err)
 	}
 
-	filesToDeploy := collectFilesToDeploy(absDeployPth, config, tmpDir)
+	filesToDeploy, err := collectFilesToDeploy(absDeployPth, config, tmpDir)
+	if err != nil {
+		fail(err)
+	}
 	clearedFilesToDeploy := clearDeployFiles(filesToDeploy)
+	fmt.Println()
+	log.Infof("List of files to deploy")
 	logDeployFiles(clearedFilesToDeploy)
 
 	fmt.Println()
 	log.Infof("Deploying files")
 
-	publicInstallPages := deploy(clearedFilesToDeploy, config)
+	publicInstallPages, err := deploy(clearedFilesToDeploy, config)
+	if err != nil {
+		fail(err)
+	}
 	fmt.Println()
 	log.Donef("Success")
 	log.Printf("You can find the Artifact on Bitrise, on the Build's page: %s", config.BuildURL)
 
-	exportInstallPages(publicInstallPages, config)
+	if err := exportInstallPages(publicInstallPages, config); err != nil {
+		fail(err)
+	}
 	deployTestResults(config)
 }
 
-func exportInstallPages(publicInstallPages map[string]string, config Config) {
+func exportInstallPages(publicInstallPages map[string]string, config Config) error {
 	if len(publicInstallPages) > 0 {
 		temp := template.New("Public Install Page template")
 		var pages []PublicInstallPage
@@ -102,31 +114,30 @@ func exportInstallPages(publicInstallPages map[string]string, config Config) {
 		}
 
 		if err := tools.ExportEnvironmentWithEnvman("BITRISE_PUBLIC_INSTALL_PAGE_URL", pages[0].URL); err != nil {
-			fail("Failed to export BITRISE_PUBLIC_INSTALL_PAGE_URL, error: %s", err)
+			return fmt.Sprintf("Failed to export BITRISE_PUBLIC_INSTALL_PAGE_URL, error: %s", err)
 		}
 		log.Printf("The public install page url is now available in the Environment Variable: BITRISE_PUBLIC_INSTALL_PAGE_URL (value: %s)\n", pages[0].URL)
 
 		temp, err := temp.Parse(config.PublicInstallPageMapFormat)
 		if err != nil {
-			fail("Error during parsing PublicInstallPageMap: ", err)
+			return fmt.Sprintf("Error during parsing PublicInstallPageMap: ", err)
 		}
 
 		buf := new(bytes.Buffer)
 		if err := temp.Execute(buf, pages); err != nil {
-			fail("Execute: ", err)
+			return fmt.Sprintf("Execute: ", err)
 		}
 
 		if err := tools.ExportEnvironmentWithEnvman("BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP", buf.String()); err != nil {
-			fail("Failed to export BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP, error: %s", err)
+			return fmt.Sprintf("Failed to export BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP, error: %s", err)
 		}
 		log.Printf("A map of deployed files and their public install page urls is now available in the Environment Variable: BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP (value: %s)", buf.String())
 		log.Printf("")
 	}
+	return nil
 }
 
 func logDeployFiles(clearedFilesToDeploy []string) {
-	fmt.Println()
-	log.Infof("List of files to deploy")
 	for _, pth := range clearedFilesToDeploy {
 		log.Printf("- %s", pth)
 	}
@@ -147,11 +158,10 @@ func clearDeployFiles(filesToDeploy []string) []string {
 	return clearedFilesToDeploy
 }
 
-func collectFilesToDeploy(absDeployPth string, config Config, tmpDir string) []string {
-	filesToDeploy := []string{}
+func collectFilesToDeploy(absDeployPth string, config Config, tmpDir string) (filesToDeploy []string, error) {
 	isDeployPathDir, err := pathutil.IsDirExists(absDeployPth)
 	if err != nil {
-		fail("Failed to check if DeployPath (%s) is a directory or a file, error: %s", absDeployPth, err)
+		return nil, fmt.Sprintf("Failed to check if DeployPath (%s) is a directory or a file, error: %s", absDeployPth, err)
 	}
 
 	if !isDeployPathDir {
@@ -170,7 +180,7 @@ func collectFilesToDeploy(absDeployPth string, config Config, tmpDir string) []s
 		tmpZipPath := filepath.Join(tmpDir, zipName+".zip")
 
 		if err := ziputil.ZipDir(absDeployPth, tmpZipPath, true); err != nil {
-			fail("Failed to zip output dir, error: %s", err)
+			return nil, fmt.Sprintf("Failed to zip output dir, error: %s", err)
 		}
 
 		filesToDeploy = []string{tmpZipPath}
@@ -181,19 +191,19 @@ func collectFilesToDeploy(absDeployPth string, config Config, tmpDir string) []s
 		pattern := filepath.Join(absDeployPth, "*")
 		pths, err := filepath.Glob(pattern)
 		if err != nil {
-			fail("Failed to list files in DeployPath, error: %s", err)
+			return nil, fmt.Sprintf("Failed to list files in DeployPath, error: %s", err)
 		}
 
 		for _, pth := range pths {
 			if isDir, err := pathutil.IsDirExists(pth); err != nil {
-				fail("Failed to check if path (%s) is a directory or a file, error: %s", pth, err)
+				return nil, fmt.Sprintf("Failed to check if path (%s) is a directory or a file, error: %s", pth, err)
 			} else if !isDir {
 				filesToDeploy = append(filesToDeploy, pth)
 			}
 		}
 	}
 
-	return filesToDeploy
+	return filesToDeploy, nil
 }
 
 func deployTestResults(config Config) {
@@ -216,11 +226,11 @@ func deployTestResults(config Config) {
 	}
 }
 
-func deploy(clearedFilesToDeploy []string, config Config) map[string]string {
+func deploy(clearedFilesToDeploy []string, config Config) (map[string]string, error) {
 	publicInstallPages := make(map[string]string)
 	for _, pth := range clearedFilesToDeploy {
-		ext := filepath.Ext(pth)
-
+		
+		ext := getExtension(pth)
 		fmt.Println()
 
 		switch ext {
@@ -229,7 +239,7 @@ func deploy(clearedFilesToDeploy []string, config Config) map[string]string {
 
 			installPage, err := uploaders.DeployIPA(pth, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
 			if err != nil {
-				fail("Deploy failed, error: %s", err)
+				return nil, fmt.Sprintf("Deploy failed, error: %s", err)
 			}
 
 			if installPage != "" {
@@ -240,7 +250,7 @@ func deploy(clearedFilesToDeploy []string, config Config) map[string]string {
 
 			installPage, err := uploaders.DeployAPK(pth, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
 			if err != nil {
-				fail("Deploy failed, error: %s", err)
+				return nil, fmt.Sprintf("Deploy failed, error: %s", err)
 			}
 
 			if installPage != "" {
@@ -251,33 +261,23 @@ func deploy(clearedFilesToDeploy []string, config Config) map[string]string {
 
 			installPage, err := uploaders.DeployAAB(pth, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
 			if err != nil {
-				fail("Deploy failed, error: %s", err)
+				return nil, fmt.Sprintf("Deploy failed, error: %s", err)
 			}
 
 			if installPage != "" {
 				publicInstallPages[filepath.Base(pth)] = installPage
 			}
-		case ".zip":
-			if xcarchive.CheckForXcarchive(pth) {
-				log.Donef("Uploading xcarchive file: %s", pth)
-
-				installPage, err := uploaders.DeployXcarchive(pth, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
-				if err != nil {
-					fail("Deploy failed, error: %s", err)
-				}
-
-				if installPage != "" {
-					publicInstallPages[filepath.Base(pth)] = installPage
-				}
-				break
+		case zippedXcarchiveExt:
+			log.Donef("Uploading xcarchive file: %s", pth)
+			if err := uploaders.DeployXcarchive(pth, config.BuildURL, config.APIToken); err != nil {
+				return nil, fmt.Sprintf("Deploy failed, error: %s", err)
 			}
-			fallthrough
 		default:
 			log.Donef("Uploading file: %s", pth)
 
 			installPage, err := uploaders.DeployFile(pth, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
 			if err != nil {
-				fail("Deploy failed, error: %s", err)
+				return nil, fmt.Sprintf("Deploy failed, error: %s", err)
 			}
 
 			if installPage != "" {
@@ -287,7 +287,14 @@ func deploy(clearedFilesToDeploy []string, config Config) map[string]string {
 			}
 		}
 	}
-	return publicInstallPages
+	return publicInstallPages, nil
+}
+
+func getExtension(pth string) string {
+	if xcarchive.CheckForXcarchive(pth) {
+		return zippedXcarchiveExt
+	}
+	return filepath.Ext(pth)
 }
 
 func validateGoTemplate(publicInstallPageMapFormat string) error {

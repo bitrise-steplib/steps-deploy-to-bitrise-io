@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/bitrise-io/go-utils/log"
-	"github.com/bitrise-io/go-xcode/exportoptions"
 	"github.com/bitrise-io/go-xcode/ipa"
 	"github.com/bitrise-io/go-xcode/plistutil"
 	"github.com/bitrise-io/go-xcode/profileutil"
@@ -13,25 +12,25 @@ import (
 )
 
 // DeployXcarchive ...
-func DeployXcarchive(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePublicPage string) (string, error) {
-	log.Printf("analyzing xcarchieve")
+func DeployXcarchive(pth, buildURL, token string) error {
+	log.Printf("analyzing xcarchive")
 
 	infoPlistPth, err := xcarchive.UnwrapEmbeddedInfoPlist(pth)
 	if err != nil {
-		return "", fmt.Errorf("failed to unwrap Info.plist from xcarchive, error: %s", err)
+		return fmt.Errorf("failed to unwrap Info.plist from xcarchive, error: %s", err)
 	}
 
 	infoPlistData, err := plistutil.NewPlistDataFromFile(infoPlistPth)
 	if err != nil {
-		return "", fmt.Errorf("failed to parse Info.plist, error: %s", err)
+		return fmt.Errorf("failed to parse Info.plist, error: %s", err)
 	}
 
-	appTitle, _ := infoPlistData.GetString("CFBundleName")
-	bundleID, _ := infoPlistData.GetString("CFBundleIdentifier")
-	version, _ := infoPlistData.GetString("CFBundleShortVersionString")
-	buildNumber, _ := infoPlistData.GetString("CFBundleVersion")
-	minOSVersion, _ := infoPlistData.GetString("MinimumOSVersion")
-	deviceFamilyList, _ := infoPlistData.GetUInt64Array("UIDeviceFamily")
+	appTitle, _ := infoPlistData.GetString("CFBundleName")                // i
+	bundleID, _ := infoPlistData.GetString("CFBundleIdentifier")          // o i
+	version, _ := infoPlistData.GetString("CFBundleShortVersionString")   // o i
+	buildNumber, _ := infoPlistData.GetString("CFBundleVersion")          // o i
+	minOSVersion, _ := infoPlistData.GetString("MinimumOSVersion")        // i
+	deviceFamilyList, _ := infoPlistData.GetUInt64Array("UIDeviceFamily") // i
 
 	appInfo := map[string]interface{}{
 		"app_title":          appTitle,
@@ -48,12 +47,12 @@ func DeployXcarchive(pth, buildURL, token, notifyUserGroups, notifyEmails, isEna
 
 	provisioningProfilePth, err := ipa.UnwrapEmbeddedMobileProvision(pth)
 	if err != nil {
-		return "", fmt.Errorf("failed to unwrap embedded.mobilprovision from xcarchive, error: %s", err)
+		return fmt.Errorf("failed to unwrap embedded.mobilprovision from xcarchive, error: %s", err)
 	}
 
 	provisioningProfileInfo, err := profileutil.NewProvisioningProfileInfoFromFile(provisioningProfilePth)
 	if err != nil {
-		return "", fmt.Errorf("failed to parse embedded.mobilprovision, error: %s", err)
+		return fmt.Errorf("failed to parse embedded.mobilprovision, error: %s", err)
 	}
 
 	teamName := provisioningProfileInfo.TeamName
@@ -62,13 +61,6 @@ func DeployXcarchive(pth, buildURL, token, notifyUserGroups, notifyEmails, isEna
 	expirationDate := provisioningProfileInfo.ExpirationDate
 	deviceUDIDList := provisioningProfileInfo.ProvisionedDevices
 	profileName := provisioningProfileInfo.Name
-	exportMethod := provisioningProfileInfo.ExportType
-
-	if exportMethod == exportoptions.MethodAppStore {
-		log.Warnf("is_enable_public_page is set, but public download isn't allowed for app-store distributions")
-		log.Warnf("setting is_enable_public_page to false ...")
-		isEnablePublicPage = "false"
-	}
 
 	provisioningInfo := map[string]interface{}{
 		"creation_date":          creationDate,
@@ -77,14 +69,13 @@ func DeployXcarchive(pth, buildURL, token, notifyUserGroups, notifyEmails, isEna
 		"team_name":              teamName,
 		"profile_name":           profileName,
 		"provisions_all_devices": provisionsAlldevices,
-		"ipa_export_method":      exportMethod,
 	}
 
 	// ---
 
 	fileSize, err := fileSizeInBytes(pth)
 	if err != nil {
-		return "", fmt.Errorf("failed to get xcarchive size, error: %s", err)
+		return fmt.Errorf("failed to get xcarchive size, error: %s", err)
 	}
 
 	xcarchiveInfoMap := map[string]interface{}{
@@ -95,24 +86,18 @@ func DeployXcarchive(pth, buildURL, token, notifyUserGroups, notifyEmails, isEna
 
 	artifactInfoBytes, err := json.Marshal(xcarchiveInfoMap)
 	if err != nil {
-		return "", fmt.Errorf("failed to marshal xcarchive infos, error: %s", err)
+		return fmt.Errorf("failed to marshal xcarchive infos, error: %s", err)
 	}
 
 	// ---
 
 	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "ios-xcarchive")
 	if err != nil {
-		return "", fmt.Errorf("failed to create xcarchive artifact, error: %s", err)
+		return fmt.Errorf("failed to create xcarchive artifact, error: %s", err)
 	}
 
 	if err := uploadArtifact(uploadURL, pth, ""); err != nil {
-		return "", fmt.Errorf("failed to upload xcarchive artifact, error: %s", err)
+		return fmt.Errorf("failed to upload xcarchive artifact, error: %s", err)
 	}
-
-	publicInstallPage, err := finishArtifact(buildURL, token, artifactID, string(artifactInfoBytes), notifyUserGroups, notifyEmails, isEnablePublicPage)
-	if err != nil {
-		return "", fmt.Errorf("failed to finish xcarchive artifact, error: %s", err)
-	}
-
-	return publicInstallPage, nil
+	return nil
 }
