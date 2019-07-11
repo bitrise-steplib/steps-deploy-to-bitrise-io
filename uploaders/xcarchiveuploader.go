@@ -5,17 +5,19 @@ import (
 	"fmt"
 
 	"github.com/bitrise-io/go-utils/log"
-	"github.com/bitrise-io/go-xcode/ipa"
 	"github.com/bitrise-io/go-xcode/plistutil"
 	"github.com/bitrise-io/go-xcode/profileutil"
-	xcarchive "github.com/bitrise-io/go-xcode/xcarchive"
+	"github.com/bitrise-io/go-xcode/xcarchive"
 )
 
 // DeployXcarchive ...
 func DeployXcarchive(pth, buildURL, token string) error {
 	log.Printf("analyzing xcarchive")
-
-	infoPlistPth, err := xcarchive.UnwrapEmbeddedInfoPlist(pth)
+	unzippedPth, err := xcarchive.UnzipXcarchive(pth)
+	if err != nil {
+		return err
+	}
+	infoPlistPth, err := xcarchive.GetEmbeddedInfoPlistPath(unzippedPth)
 	if err != nil {
 		return fmt.Errorf("failed to unwrap Info.plist from xcarchive, error: %s", err)
 	}
@@ -25,12 +27,12 @@ func DeployXcarchive(pth, buildURL, token string) error {
 		return fmt.Errorf("failed to parse Info.plist, error: %s", err)
 	}
 
-	appTitle, _ := infoPlistData.GetString("CFBundleName")                // i
-	bundleID, _ := infoPlistData.GetString("CFBundleIdentifier")          // o i
-	version, _ := infoPlistData.GetString("CFBundleShortVersionString")   // o i
-	buildNumber, _ := infoPlistData.GetString("CFBundleVersion")          // o i
-	minOSVersion, _ := infoPlistData.GetString("MinimumOSVersion")        // i
-	deviceFamilyList, _ := infoPlistData.GetUInt64Array("UIDeviceFamily") // i
+	appTitle, _ := infoPlistData.GetString("CFBundleName")
+	bundleID, _ := infoPlistData.GetString("CFBundleIdentifier")
+	version, _ := infoPlistData.GetString("CFBundleShortVersionString")
+	buildNumber, _ := infoPlistData.GetString("CFBundleVersion")
+	minOSVersion, _ := infoPlistData.GetString("MinimumOSVersion")
+	deviceFamilyList, _ := infoPlistData.GetUInt64Array("UIDeviceFamily")
 
 	appInfo := map[string]interface{}{
 		"app_title":          appTitle,
@@ -43,9 +45,7 @@ func DeployXcarchive(pth, buildURL, token string) error {
 
 	log.Printf("  xcarchive infos: %v", appInfo)
 
-	// ---
-
-	provisioningProfilePth, err := ipa.UnwrapEmbeddedMobileProvision(pth)
+	provisioningProfilePth, err := xcarchive.GetEmbeddedMobileProvisionPath(unzippedPth)
 	if err != nil {
 		return fmt.Errorf("failed to unwrap embedded.mobilprovision from xcarchive, error: %s", err)
 	}
@@ -55,20 +55,13 @@ func DeployXcarchive(pth, buildURL, token string) error {
 		return fmt.Errorf("failed to parse embedded.mobilprovision, error: %s", err)
 	}
 
-	teamName := provisioningProfileInfo.TeamName
-	creationDate := provisioningProfileInfo.CreationDate
-	provisionsAlldevices := provisioningProfileInfo.ProvisionsAllDevices
-	expirationDate := provisioningProfileInfo.ExpirationDate
-	deviceUDIDList := provisioningProfileInfo.ProvisionedDevices
-	profileName := provisioningProfileInfo.Name
-
 	provisioningInfo := map[string]interface{}{
-		"creation_date":          creationDate,
-		"expire_date":            expirationDate,
-		"device_UDID_list":       deviceUDIDList,
-		"team_name":              teamName,
-		"profile_name":           profileName,
-		"provisions_all_devices": provisionsAlldevices,
+		"creation_date":          provisioningProfileInfo.CreationDate,
+		"expire_date":            provisioningProfileInfo.ExpirationDate,
+		"device_UDID_list":       provisioningProfileInfo.ProvisionedDevices,
+		"team_name":              provisioningProfileInfo.TeamName,
+		"profile_name":           provisioningProfileInfo.Name,
+		"provisions_all_devices": provisioningProfileInfo.ProvisionsAllDevices,
 	}
 
 	// ---
@@ -88,8 +81,6 @@ func DeployXcarchive(pth, buildURL, token string) error {
 	if err != nil {
 		return fmt.Errorf("failed to marshal xcarchive infos, error: %s", err)
 	}
-
-	// ---
 
 	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "ios-xcarchive")
 	if err != nil {

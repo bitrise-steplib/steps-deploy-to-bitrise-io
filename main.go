@@ -14,7 +14,7 @@ import (
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/ziputil"
-	xcarchive "github.com/bitrise-io/go-xcode/xcarchive"
+	"github.com/bitrise-io/go-xcode/xcarchive"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/uploaders"
 )
 
@@ -230,10 +230,10 @@ func deploy(clearedFilesToDeploy []string, config Config) (map[string]string, er
 	publicInstallPages := make(map[string]string)
 	for _, pth := range clearedFilesToDeploy {
 		
-		ext := getExtension(pth)
+		fileType := getFileType(pth)
 		fmt.Println()
 
-		switch ext {
+		switch fileType {
 		case ".ipa":
 			log.Donef("Uploading ipa file: %s", pth)
 
@@ -290,8 +290,8 @@ func deploy(clearedFilesToDeploy []string, config Config) (map[string]string, er
 	return publicInstallPages, nil
 }
 
-func getExtension(pth string) string {
-	if xcarchive.CheckForXcarchive(pth) {
+func getFileType(pth string) string {
+	if strings.HasSuffix(pth, zippedXcarchiveExt) {
 		return zippedXcarchiveExt
 	}
 	return filepath.Ext(pth)
