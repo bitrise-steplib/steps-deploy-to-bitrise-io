@@ -39,7 +39,7 @@ workflows:
         - is_create_path: true
     - script:
         inputs:
-        - content: git clone $SAMPLE_ARTIFACTS_GIT_CLONE_URL -b BirmacherAkos-patch-2 .
+        - content: git clone $SAMPLE_ARTIFACTS_GIT_CLONE_URL .
     - path::./:
         title: IOS Test uncompressed
         run_if: true
