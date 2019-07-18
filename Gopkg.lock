@@ -7,7 +7,7 @@
   name = "github.com/bitrise-io/bitrise"
   packages = ["models"]
   pruneopts = "UT"
-  revision = "f7458dd6a6c5612fd3e92ab021fb7f18a7d0abc4"
+  revision = "85fcf1f508cb6d92ddd2ddf788988fde6cf5178f"
 
 [[projects]]
   branch = "master"
@@ -15,7 +15,7 @@
   name = "github.com/bitrise-io/envman"
   packages = ["models"]
   pruneopts = "UT"
-  revision = "eb2e53257e527de59351cec1ecdffb50dadd5a07"
+  revision = "b62ffe18bb760bf14002dd1a80b059180ef910f1"
 
 [[projects]]
   branch = "master"
@@ -38,7 +38,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:390a96a47623fbafd79a9bb015b58444134210db7859647235ad98b94c2f07af"
+  digest = "1:e9326b09da9dd2f97874437829052fef70dbf1cc83645fd0880c6f30c38a2916"
   name = "github.com/bitrise-io/go-utils"
   packages = [
     "colorstring",
@@ -56,11 +56,11 @@
     "ziputil",
   ]
   pruneopts = "UT"
-  revision = "7a4402b387ebcdf3e2a0aa3b18d4c8636768f9a0"
+  revision = "5dfd5a5f1271cffb2bc0b1cf4c3815139da8175a"
 
 [[projects]]
   branch = "master"
-  digest = "1:2f550b23d0be286e179428e5f70d110621be01cacbb7ecf72ff73b28a1a8c075"
+  digest = "1:b56f4c1e2f6834da9549215c3c56b0e590cf04e8a400928a2e079ac4c0322187"
   name = "github.com/bitrise-io/go-xcode"
   packages = [
     "certificateutil",
@@ -73,7 +73,7 @@
     "xcarchive",
   ]
   pruneopts = "UT"
-  revision = "c1544b4453f2869335f71fb53c0360bdb91d01b4"
+  revision = "07ccf582b6b1afa2c33e133447a3e22c811ffd90"
 
 [[projects]]
   branch = "master"
@@ -81,7 +81,7 @@
   name = "github.com/bitrise-io/stepman"
   packages = ["models"]
   pruneopts = "UT"
-  revision = "af0e468635253eaf3a66dca748af4a5966d161b1"
+  revision = "605a625dade4553d2e2c5dcc9e3459844cd2f5b4"
 
 [[projects]]
   branch = "master"
@@ -96,8 +96,8 @@
   name = "github.com/bitrise-steplib/steps-xcode-test"
   packages = ["pretty"]
   pruneopts = "UT"
-  revision = "4f55fd573bc53b2c355baaeabc116cd5bf294d5a"
-  version = "2.3.1"
+  revision = "c05bd3a50ee36040bd047cf4618615083a9d0b2c"
+  version = "2.3.2"
 
 [[projects]]
   branch = "master"
@@ -108,12 +108,12 @@
   revision = "d7302db945fa6ea264fb79d8e13e931ea514a602"
 
 [[projects]]
-  digest = "1:3af6be4fee7c08f81f13d36f04ffb63ad4b6b5aaba12cce96095c7c2863d4912"
+  digest = "1:cbec35fe4d5a4fba369a656a8cd65e244ea2c743007d8f6c1ccb132acf9d1296"
   name = "github.com/gorilla/mux"
   packages = ["."]
   pruneopts = "UT"
-  revision = "ed099d42384823742bba0bf9a72b53b55c9e2e38"
-  version = "v1.7.2"
+  revision = "00bdffe0f3c77e27d2cf6f5c70232a2d3e4d9c15"
+  version = "v1.7.3"
 
 [[projects]]
   digest = "1:88e0b0baeb9072f0a4afbcf12dda615fc8be001d1802357538591155998da21b"
@@ -124,20 +124,20 @@
   version = "v1.2.0"
 
 [[projects]]
-  digest = "1:cf31692c14422fa27c83a05292eb5cbe0fb2775972e8f1f8446a71549bd8980b"
+  branch = "master"
+  digest = "1:deff41c4160cc5b487a1d1a69a58925f2d3ac11befa0692b50e76940594e20f5"
   name = "github.com/pkg/errors"
   packages = ["."]
   pruneopts = "UT"
-  revision = "ba968bfe8b2f7e042a574c888954fccecfa385b4"
-  version = "v0.8.1"
+  revision = "27936f6d90f9c8e1145f11ed52ffffbfdb9e0af7"
 
 [[projects]]
-  branch = "master"
   digest = "1:6baa565fe16f8657cf93469b2b8a6c61a277827734400d27e44d589547297279"
   name = "github.com/ryanuber/go-glob"
   packages = ["."]
   pruneopts = "UT"
   revision = "51a8f68e6c24dc43f1e371749c89a267de4ebc53"
+  version = "v1.0.0"
 
 [[projects]]
   branch = "master"
