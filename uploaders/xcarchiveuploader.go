@@ -55,7 +55,7 @@ func DeployXcarchive(pth, buildURL, token string) error {
 
 	log.Printf("  xcarchive infos: %v", appInfo)
 
-	uploadURL, _, err := createArtifact(buildURL, token, pth, "ios-xcarchive")
+	uploadURL, _, err := createArtifact(buildURL, token, pth, "file")
 	if err != nil {
 		return fmt.Errorf("failed to create xcarchive artifact, error: %s", err)
 	}
