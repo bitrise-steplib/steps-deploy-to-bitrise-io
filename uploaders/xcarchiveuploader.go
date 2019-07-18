@@ -18,7 +18,7 @@ func DeployXcarchive(pth, buildURL, token string) error {
 		return err
 	}
 
-	ismacos, err := xcarchive.IsMacOS(unzippedPth)
+	ismacos, err := xcarchive.IsMacOS(filepath.Join(unzippedPth, pathutil.GetFileName(pth)))
 	if err != nil {
 		return fmt.Errorf("could not check if given project is macOS or not, error: %s", err)
 	}
