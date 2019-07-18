@@ -52,7 +52,7 @@ workflows:
         - notify_email_list: $NOTIFY_EMAIL_LIST
         - is_enable_public_page: "true"
     - path::./:
-        title: IOS Test xcarchive
+        title: IOS Test XcArchive
         run_if: true
         inputs:
         - build_url: $BITRISE_BUILD_URL
