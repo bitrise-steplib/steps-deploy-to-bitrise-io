@@ -2,6 +2,8 @@ package uploaders
 
 import (
 	"fmt"
+	"github.com/bitrise-io/go-utils/pathutil"
+	"path/filepath"
 
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-xcode/plistutil"
@@ -15,7 +17,17 @@ func DeployXcarchive(pth, buildURL, token string) error {
 	if err != nil {
 		return err
 	}
-	infoPlistPth, err := xcarchive.GetEmbeddedInfoPlistPath(unzippedPth)
+
+	ismacos, err := xcarchive.IsMacOS(unzippedPth)
+	if err != nil {
+		return fmt.Errorf("could not check if given project is macOS or not, error: %s", err)
+	}
+	if ismacos {
+		log.Warnf("mocOS project found at path %s. Currently it's not supported, so won't be deployed", unzippedPth)
+		return nil
+	}
+
+	infoPlistPth, err := xcarchive.GetEmbeddedInfoPlistPath(filepath.Join(unzippedPth, pathutil.GetFileName(pth)))
 	if err != nil {
 		return fmt.Errorf("failed to unwrap Info.plist from xcarchive, error: %s", err)
 	}
