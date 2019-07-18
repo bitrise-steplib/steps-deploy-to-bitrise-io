@@ -23,7 +23,7 @@ func DeployXcarchive(pth, buildURL, token string) error {
 		return fmt.Errorf("could not check if given project is macOS or not, error: %s", err)
 	}
 	if ismacos {
-		log.Warnf("mocOS project found at path %s. Currently it's not supported, so won't be deployed", unzippedPth)
+		log.Warnf("MacOS project found at path %s. Currently it's not supported, so won't be deployed", unzippedPth)
 		return nil
 	}
 
