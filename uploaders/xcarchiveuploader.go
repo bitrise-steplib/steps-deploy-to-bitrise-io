@@ -1,6 +1,7 @@
 package uploaders
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"path/filepath"
@@ -53,15 +54,37 @@ func DeployXcarchive(pth, buildURL, token string) error {
 		"device_family_list": deviceFamilyList,
 	}
 
+	// ---
+
+	fileSize, err := fileSizeInBytes(pth)
+	if err != nil {
+		return fmt.Errorf("failed to get xcarchive size, error: %s", err)
+	}
+
+	xcarchiveInfoMap := map[string]interface{}{
+		"file_size_bytes": fmt.Sprintf("%f", fileSize),
+		"app_info":        appInfo,
+	}
+
+	artifactInfoBytes, err := json.Marshal(xcarchiveInfoMap)
+	if err != nil {
+		return fmt.Errorf("failed to marshal xcarchive infos, error: %s", err)
+	}
+
 	log.Printf("  xcarchive infos: %v", appInfo)
 
-	uploadURL, _, err := createArtifact(buildURL, token, pth, "file")
+	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "file")
 	if err != nil {
 		return fmt.Errorf("failed to create xcarchive artifact, error: %s", err)
 	}
 
 	if err := uploadArtifact(uploadURL, pth, ""); err != nil {
 		return fmt.Errorf("failed to upload xcarchive artifact, error: %s", err)
+	}
+
+	_, err = finishArtifact(buildURL, token, artifactID, string(artifactInfoBytes), "", "", "false")
+	if err != nil {
+		return fmt.Errorf("failed to finish xcarchive artifact, error: %s", err)
 	}
 	return nil
 }
