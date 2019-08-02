@@ -3,8 +3,9 @@ package uploaders
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/bitrise-io/go-utils/pathutil"
 	"path/filepath"
+
+	"github.com/bitrise-io/go-utils/pathutil"
 
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-xcode/plistutil"
@@ -73,7 +74,7 @@ func DeployXcarchive(pth, buildURL, token string) error {
 
 	log.Printf("  xcarchive infos: %v", appInfo)
 
-	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "file")
+	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "ios-xcarchive")
 	if err != nil {
 		return fmt.Errorf("failed to create xcarchive artifact, error: %s", err)
 	}
