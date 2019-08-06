@@ -55,7 +55,7 @@ func fail(format string, v ...interface{}) {
 func main() {
 	var config Config
 	if err := stepconf.Parse(&config); err != nil {
-		fail("issue with input: %s", err)
+		fail("Issue with input: %s", err)
 	}
 
 	if err := validateGoTemplate(config.PublicInstallPageMapFormat); err != nil {
@@ -68,12 +68,12 @@ func main() {
 
 	absDeployPth, err := pathutil.AbsPath(config.DeployPath)
 	if err != nil {
-		fail("failed to expand path: %s, error: %s", config.DeployPath, err)
+		fail("Failed to expand path: %s, error: %s", config.DeployPath, err)
 	}
 
 	tmpDir, err := pathutil.NormalizedOSTempDirPath("__deploy-to-bitrise-io__")
 	if err != nil {
-		fail("failed to create tmp dir, error: %s", err)
+		fail("Failed to create tmp dir, error: %s", err)
 	}
 
 	filesToDeploy, err := collectFilesToDeploy(absDeployPth, config, tmpDir)
