@@ -76,9 +76,12 @@ func getAPKInfo(apkPth string) (ApkInfo, error) {
 		return ApkInfo{}, fmt.Errorf("failed to create sdk model, error: %s", err)
 	}
 
-	aaptPth, err := sdkModel.LatestBuildToolPath("aapt")
+	aaptPth, err := sdkModel.LatestBuildToolPath("aapt2")
 	if err != nil {
-		return ApkInfo{}, fmt.Errorf("failed to find latest aapt binary, error: %s", err)
+		// if noo aapt2 found then fallback to aapt
+		if aaptPth, err = sdkModel.LatestBuildToolPath("aapt"); err != nil {
+			return ApkInfo{}, fmt.Errorf("failed to find latest aapt binary, error: %s", err)
+		}
 	}
 
 	aaptOut, err := command.New(aaptPth, "dump", "badging", apkPth).RunAndReturnTrimmedCombinedOutput()
