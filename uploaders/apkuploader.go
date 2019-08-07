@@ -84,9 +84,11 @@ func getAPKInfo(apkPth string) (ApkInfo, error) {
 		}
 	}
 
-	aaptOut, err := command.New(aaptPth, "dump", "badging", apkPth).RunAndReturnTrimmedCombinedOutput()
+	cmd := command.New(aaptPth, "dump", "badging", apkPth)
+	
+	aaptOut, err := cmd.RunAndReturnTrimmedCombinedOutput()
 	if err != nil {
-		return ApkInfo{}, fmt.Errorf("failed to get apk infos, output: %s, error: %s", aaptOut, err)
+		return ApkInfo{}, fmt.Errorf("$ %s\nfailed to get apk infos, output: %s, error: %s", cmd.PrintableCommandArgs(), aaptOut, err)
 	}
 
 	appName := filterAppLable(aaptOut)
