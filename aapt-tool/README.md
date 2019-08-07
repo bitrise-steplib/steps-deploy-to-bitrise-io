@@ -1,9 +1,9 @@
-Version: 3.4.2-5326820
+Version: 3.5.0-rc02-5435860
 
 Downloaded based on the docs: https://developer.android.com/studio/command-line/aapt2#download_aapt2
 
 URLs:
-https://dl.google.com/dl/android/maven2/com/android/tools/build/aapt2/3.4.2-5326820/aapt2-3.4.2-5326820-linux.jar
-https://dl.google.com/dl/android/maven2/com/android/tools/build/aapt2/3.4.2-5326820/aapt2-3.4.2-5326820-osx.jar
+https://dl.google.com/dl/android/maven2/com/android/tools/build/aapt2/3.5.0-rc02-5435860/aapt2-3.5.0-rc02-5435860-linux.jar
+https://dl.google.com/dl/android/maven2/com/android/tools/build/aapt2/3.5.0-rc02-5435860/aapt2-3.5.0-rc02-5435860-osx.jar
 
 extracted as zips and copied the binaries from inside
