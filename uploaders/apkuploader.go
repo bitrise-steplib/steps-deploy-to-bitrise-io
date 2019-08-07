@@ -5,10 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 
-	"github.com/bitrise-io/go-android/sdk"
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/log"
 )
@@ -71,31 +72,12 @@ func getAPKInfo(apkPth string) (ApkInfo, error) {
 		return ApkInfo{}, errors.New("ANDROID_HOME environment not set")
 	}
 
-	sdkModel, err := sdk.New(androidHome)
-	if err != nil {
-		return ApkInfo{}, fmt.Errorf("failed to create sdk model, error: %s", err)
-	}
-
-	aaptPth, err := sdkModel.LatestBuildToolPath("aapt")
-	if err != nil {
-		return ApkInfo{}, fmt.Errorf("failed to find latest aapt binary, error: %s", err)
-	}
+	aaptPth := filepath.Join(os.Getenv("BITRISE_STEP_SOURCE_DIR"), "aapt-tool", "aapt2-"+runtime.GOOS)
 
 	cmd := command.New(aaptPth, "dump", "badging", apkPth)
-	
 	aaptOut, err := cmd.RunAndReturnTrimmedCombinedOutput()
 	if err != nil {
-		aaptPth, err = sdkModel.LatestBuildToolPath("aapt2")
-		if err != nil {
-			return ApkInfo{}, fmt.Errorf("failed to find latest aapt2 binary, error: %s", err)
-		}
-
-		cmd = command.New(aaptPth, "dump", "badging", apkPth)
-
-		aaptOut, err = cmd.RunAndReturnTrimmedCombinedOutput()
-		if err != nil {
-			return ApkInfo{}, fmt.Errorf("$ %s\nfailed to get apk infos, output: %s, error: %s", cmd.PrintableCommandArgs(), aaptOut, err)
-		}
+		return ApkInfo{}, fmt.Errorf("$ %s\nfailed to get apk infos, output: %s, error: %s", cmd.PrintableCommandArgs(), aaptOut, err)
 	}
 
 	appName := filterAppLable(aaptOut)
