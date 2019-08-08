@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test"
 
@@ -44,6 +45,8 @@ type PublicInstallPage struct {
 	URL  string
 }
 
+const zippedXcarchiveExt = ".xcarchive.zip"
+
 func fail(format string, v ...interface{}) {
 	log.Errorf(format, v...)
 	os.Exit(1)
@@ -54,14 +57,13 @@ func main() {
 	if err := stepconf.Parse(&config); err != nil {
 		fail("Issue with input: %s", err)
 	}
+
 	if err := validateGoTemplate(config.PublicInstallPageMapFormat); err != nil {
 		fail("PublicInstallPageMapFormat - %s", err)
 	}
 
 	stepconf.Print(config)
-
 	fmt.Println()
-
 	log.SetEnableDebugLog(config.DebugMode)
 
 	absDeployPth, err := pathutil.AbsPath(config.DeployPath)
@@ -69,17 +71,97 @@ func main() {
 		fail("Failed to expand path: %s, error: %s", config.DeployPath, err)
 	}
 
-	filesToDeploy := []string{}
-
 	tmpDir, err := pathutil.NormalizedOSTempDirPath("__deploy-to-bitrise-io__")
 	if err != nil {
 		fail("Failed to create tmp dir, error: %s", err)
 	}
 
-	// Collect files to deploy
+	filesToDeploy, err := collectFilesToDeploy(absDeployPth, config, tmpDir)
+	if err != nil {
+		fail("%s", err)
+	}
+	clearedFilesToDeploy := clearDeployFiles(filesToDeploy)
+	fmt.Println()
+	log.Infof("List of files to deploy")
+	logDeployFiles(clearedFilesToDeploy)
+
+	fmt.Println()
+	log.Infof("Deploying files")
+
+	publicInstallPages, err := deploy(clearedFilesToDeploy, config)
+	if err != nil {
+		fail("%s", err)
+	}
+	fmt.Println()
+	log.Donef("Success")
+	log.Printf("You can find the Artifact on Bitrise, on the Build's page: %s", config.BuildURL)
+
+	if err := exportInstallPages(publicInstallPages, config); err != nil {
+		fail("%s", err)
+	}
+	deployTestResults(config)
+}
+
+func exportInstallPages(publicInstallPages map[string]string, config Config) error {
+	if len(publicInstallPages) > 0 {
+		temp := template.New("Public Install Page template")
+		var pages []PublicInstallPage
+		for file, url := range publicInstallPages {
+			pages = append(pages, PublicInstallPage{
+				File: file,
+				URL:  url,
+			})
+		}
+
+		if err := tools.ExportEnvironmentWithEnvman("BITRISE_PUBLIC_INSTALL_PAGE_URL", pages[0].URL); err != nil {
+			return fmt.Errorf("failed to export BITRISE_PUBLIC_INSTALL_PAGE_URL, error: %s", err)
+		}
+		log.Printf("The public install page url is now available in the Environment Variable: BITRISE_PUBLIC_INSTALL_PAGE_URL (value: %s)\n", pages[0].URL)
+
+		temp, err := temp.Parse(config.PublicInstallPageMapFormat)
+		if err != nil {
+			return fmt.Errorf("error during parsing PublicInstallPageMap: %s", err)
+		}
+
+		buf := new(bytes.Buffer)
+		if err := temp.Execute(buf, pages); err != nil {
+			return fmt.Errorf("execute: %s", err)
+		}
+
+		if err := tools.ExportEnvironmentWithEnvman("BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP", buf.String()); err != nil {
+			return fmt.Errorf("failed to export BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP, error: %s", err)
+		}
+		log.Printf("A map of deployed files and their public install page urls is now available in the Environment Variable: BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP (value: %s)", buf.String())
+		log.Printf("")
+	}
+	return nil
+}
+
+func logDeployFiles(clearedFilesToDeploy []string) {
+	for _, pth := range clearedFilesToDeploy {
+		log.Printf("- %s", pth)
+	}
+}
+
+func clearDeployFiles(filesToDeploy []string) []string {
+	var clearedFilesToDeploy []string
+	for _, pth := range filesToDeploy {
+		for _, fileBaseNameToSkip := range fileBaseNamesToSkip {
+			if filepath.Base(pth) == fileBaseNameToSkip {
+				log.Warnf("skipping: %s", pth)
+			} else {
+				clearedFilesToDeploy = append(clearedFilesToDeploy, pth)
+			}
+
+		}
+	}
+	return clearedFilesToDeploy
+}
+
+func collectFilesToDeploy(absDeployPth string, config Config, tmpDir string) (filesToDeploy []string, err error) {
 	isDeployPathDir, err := pathutil.IsDirExists(absDeployPth)
 	if err != nil {
-		fail("Failed to check if DeployPath (%s) is a directory or a file, error: %s", absDeployPth, err)
+		return nil, fmt.Errorf("failed to check if DeployPath (%s) is a directory or a file, error: %s", absDeployPth, err)
 	}
 
 	if !isDeployPathDir {
@@ -98,7 +180,7 @@ func main() {
 		tmpZipPath := filepath.Join(tmpDir, zipName+".zip")
 
 		if err := ziputil.ZipDir(absDeployPth, tmpZipPath, true); err != nil {
-			fail("Failed to zip output dir, error: %s", err)
+			return nil, fmt.Errorf("failed to zip output dir, error: %s", err)
 		}
 
 		filesToDeploy = []string{tmpZipPath}
@@ -109,142 +191,29 @@ func main() {
 		pattern := filepath.Join(absDeployPth, "*")
 		pths, err := filepath.Glob(pattern)
 		if err != nil {
-			fail("Failed to list files in DeployPath, error: %s", err)
+			return nil, fmt.Errorf("failed to list files in DeployPath, error: %s", err)
 		}
 
 		for _, pth := range pths {
 			if isDir, err := pathutil.IsDirExists(pth); err != nil {
-				fail("Failed to check if path (%s) is a directory or a file, error: %s", pth, err)
+				return nil, fmt.Errorf("failed to check if path (%s) is a directory or a file, error: %s", pth, err)
 			} else if !isDir {
 				filesToDeploy = append(filesToDeploy, pth)
 			}
 		}
 	}
 
-	clearedFilesToDeploy := []string{}
-	for _, pth := range filesToDeploy {
-		for _, fileBaseNameToSkip := range fileBaseNamesToSkip {
-			if filepath.Base(pth) == fileBaseNameToSkip {
-				log.Warnf("skipping: %s", pth)
-			} else {
-				clearedFilesToDeploy = append(clearedFilesToDeploy, pth)
-			}
+	return filesToDeploy, nil
+}
 
-		}
-	}
-
-	fmt.Println()
-	log.Infof("List of files to deploy")
-	for _, pth := range clearedFilesToDeploy {
-		log.Printf("- %s", pth)
-	}
-	// ---
-
-	// Deploy files
-	fmt.Println()
-	log.Infof("Deploying files")
-
-	publicInstallPages := make(map[string]string)
-
-	for _, pth := range clearedFilesToDeploy {
-		ext := filepath.Ext(pth)
-
-		fmt.Println()
-
-		switch ext {
-		case ".ipa":
-			log.Donef("Uploading ipa file: %s", pth)
-
-			installPage, err := uploaders.DeployIPA(pth, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
-			if err != nil {
-				fail("Deploy failed, error: %s", err)
-			}
-
-			if installPage != "" {
-				publicInstallPages[filepath.Base(pth)] = installPage
-			}
-		case ".apk":
-			log.Donef("Uploading apk file: %s", pth)
-
-			installPage, err := uploaders.DeployAPK(pth, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
-			if err != nil {
-				fail("Deploy failed, error: %s", err)
-			}
-
-			if installPage != "" {
-				publicInstallPages[filepath.Base(pth)] = installPage
-			}
-		case ".aab":
-			log.Donef("Uploading aab file: %s", pth)
-
-			installPage, err := uploaders.DeployAAB(pth, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
-			if err != nil {
-				fail("Deploy failed, error: %s", err)
-			}
-
-			if installPage != "" {
-				publicInstallPages[filepath.Base(pth)] = installPage
-			}
-		default:
-			log.Donef("Uploading file: %s", pth)
-
-			installPage, err := uploaders.DeployFile(pth, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
-			if err != nil {
-				fail("Deploy failed, error: %s", err)
-			}
-
-			if installPage != "" {
-				publicInstallPages[filepath.Base(pth)] = installPage
-			} else if config.IsPublicPageEnabled == "true" {
-				log.Warnf("is_enable_public_page is set, but public download isn't allowed for this type of file")
-			}
-		}
-	}
-
-	fmt.Println()
-	log.Donef("Success")
-	log.Printf("You can find the Artifact on Bitrise, on the Build's page: %s", config.BuildURL)
-
-	if len(publicInstallPages) > 0 {
-		temp := template.New("Public Install Page template")
-		var pages []PublicInstallPage
-		for file, url := range publicInstallPages {
-			pages = append(pages, PublicInstallPage{
-				File: file,
-				URL:  url,
-			})
-		}
-
-		if err := tools.ExportEnvironmentWithEnvman("BITRISE_PUBLIC_INSTALL_PAGE_URL", pages[0].URL); err != nil {
-			fail("Failed to export BITRISE_PUBLIC_INSTALL_PAGE_URL, error: %s", err)
-		}
-		log.Printf("The public install page url is now available in the Environment Variable: BITRISE_PUBLIC_INSTALL_PAGE_URL (value: %s)\n", pages[0].URL)
-
-		temp, err := temp.Parse(config.PublicInstallPageMapFormat)
-		if err != nil {
-			fail("Error during parsing PublicInstallPageMap: ", err)
-		}
-
-		buf := new(bytes.Buffer)
-		if err := temp.Execute(buf, pages); err != nil {
-			fail("Execute: ", err)
-		}
-
-		if err := tools.ExportEnvironmentWithEnvman("BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP", buf.String()); err != nil {
-			fail("Failed to export BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP, error: %s", err)
-		}
-		log.Printf("A map of deployed files and their public install page urls is now available in the Environment Variable: BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP (value: %s)", buf.String())
-		log.Printf("")
-	}
-
-	// Deploy test files
+func deployTestResults(config Config) {
 	if config.AddonAPIToken != "" {
 		fmt.Println()
 		log.Infof("Upload test results")
 
 		testResults, err := test.ParseTestResults(config.TestDeployDir)
 		if err != nil {
-			log.Warnf("Error during parsing test results: ", err)
+			log.Warnf("error during parsing test results: ", err)
 		} else {
 			log.Printf("- uploading (%d) test results", len(testResults))
 
@@ -255,6 +224,77 @@ func main() {
 			}
 		}
 	}
+}
+
+func deploy(clearedFilesToDeploy []string, config Config) (map[string]string, error) {
+	publicInstallPages := make(map[string]string)
+	for _, pth := range clearedFilesToDeploy {
+
+		fileType := getFileType(pth)
+		fmt.Println()
+
+		switch fileType {
+		case ".ipa":
+			log.Donef("Uploading ipa file: %s", pth)
+
+			installPage, err := uploaders.DeployIPA(pth, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
+			if err != nil {
+				return nil, fmt.Errorf("deploy failed, error: %s", err)
+			}
+
+			if installPage != "" {
+				publicInstallPages[filepath.Base(pth)] = installPage
+			}
+		case ".apk":
+			log.Donef("Uploading apk file: %s", pth)
+
+			installPage, err := uploaders.DeployAPK(pth, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
+			if err != nil {
+				return nil, fmt.Errorf("deploy failed, error: %s", err)
+			}
+
+			if installPage != "" {
+				publicInstallPages[filepath.Base(pth)] = installPage
+			}
+		case ".aab":
+			log.Donef("Uploading aab file: %s", pth)
+
+			installPage, err := uploaders.DeployAAB(pth, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
+			if err != nil {
+				return nil, fmt.Errorf("deploy failed, error: %s", err)
+			}
+
+			if installPage != "" {
+				publicInstallPages[filepath.Base(pth)] = installPage
+			}
+		case zippedXcarchiveExt:
+			log.Donef("Uploading xcarchive file: %s", pth)
+			if err := uploaders.DeployXcarchive(pth, config.BuildURL, config.APIToken); err != nil {
+				return nil, fmt.Errorf("deploy failed, error: %s", err)
+			}
+		default:
+			log.Donef("Uploading file: %s", pth)
+
+			installPage, err := uploaders.DeployFile(pth, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
+			if err != nil {
+				return nil, fmt.Errorf("deploy failed, error: %s", err)
+			}
+
+			if installPage != "" {
+				publicInstallPages[filepath.Base(pth)] = installPage
+			} else if config.IsPublicPageEnabled == "true" {
+				log.Warnf("is_enable_public_page is set, but public download isn't allowed for this type of file")
+			}
+		}
+	}
+	return publicInstallPages, nil
+}
+
+func getFileType(pth string) string {
+	if strings.HasSuffix(pth, zippedXcarchiveExt) {
+		return zippedXcarchiveExt
+	}
+	return filepath.Ext(pth)
 }
 
 func validateGoTemplate(publicInstallPageMapFormat string) error {

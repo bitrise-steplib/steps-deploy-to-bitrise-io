@@ -24,8 +24,8 @@
   version = "1.7.2"
 
 [[constraint]]
+  branch = "master"
   name = "github.com/pkg/errors"
-  version = "0.8.1"
 
 [[constraint]]
   branch = "master"
