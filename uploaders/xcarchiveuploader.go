@@ -45,6 +45,7 @@ func DeployXcarchive(pth, buildURL, token string) error {
 	buildNumber, _ := infoPlistData.GetString("CFBundleVersion")
 	minOSVersion, _ := infoPlistData.GetString("MinimumOSVersion")
 	deviceFamilyList, _ := infoPlistData.GetUInt64Array("UIDeviceFamily")
+	scheme, _ := infoPlistData.GetString("SchemeName")
 
 	appInfo := map[string]interface{}{
 		"app_title":          appTitle,
@@ -53,6 +54,7 @@ func DeployXcarchive(pth, buildURL, token string) error {
 		"build_number":       buildNumber,
 		"min_OS_version":     minOSVersion,
 		"device_family_list": deviceFamilyList,
+		"scheme":             scheme,
 	}
 
 	// ---
