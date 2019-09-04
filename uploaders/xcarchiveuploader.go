@@ -20,7 +20,8 @@ func DeployXcarchive(pth, buildURL, token string) error {
 		return err
 	}
 
-	ismacos, err := xcarchive.IsMacOS(filepath.Join(unzippedPth, pathutil.GetFileName(pth)))
+	archivePth := filepath.Join(unzippedPth, pathutil.GetFileName(pth))
+	ismacos, err := xcarchive.IsMacOS(archivePth)
 	if err != nil {
 		return fmt.Errorf("could not check if given project is macOS or not, error: %s", err)
 	}
@@ -29,23 +30,29 @@ func DeployXcarchive(pth, buildURL, token string) error {
 		return nil
 	}
 
-	infoPlistPth, err := xcarchive.GetEmbeddedInfoPlistPath(filepath.Join(unzippedPth, pathutil.GetFileName(pth)))
+	appInfoPlistPth, err := xcarchive.GetEmbeddedInfoPlistPath(filepath.Join(unzippedPth, pathutil.GetFileName(pth)))
 	if err != nil {
 		return fmt.Errorf("failed to unwrap Info.plist from xcarchive, error: %s", err)
 	}
 
-	infoPlistData, err := plistutil.NewPlistDataFromFile(infoPlistPth)
+	appInfoPlistData, err := plistutil.NewPlistDataFromFile(appInfoPlistPth)
 	if err != nil {
-		return fmt.Errorf("failed to parse Info.plist, error: %s", err)
+		return fmt.Errorf("failed to parse Info.plist (%s), error: %s", appInfoPlistPth, err)
 	}
 
-	appTitle, _ := infoPlistData.GetString("CFBundleName")
-	bundleID, _ := infoPlistData.GetString("CFBundleIdentifier")
-	version, _ := infoPlistData.GetString("CFBundleShortVersionString")
-	buildNumber, _ := infoPlistData.GetString("CFBundleVersion")
-	minOSVersion, _ := infoPlistData.GetString("MinimumOSVersion")
-	deviceFamilyList, _ := infoPlistData.GetUInt64Array("UIDeviceFamily")
-	scheme, _ := infoPlistData.GetString("SchemeName")
+	archiveInfoPlistPth := filepath.Join(archivePth, "Info.plist")
+	archiveInfoPlistData, err := plistutil.NewPlistDataFromFile(archiveInfoPlistPth)
+	if err != nil {
+		return fmt.Errorf("failed to parse Info.plist (%s), error: %s", archiveInfoPlistPth, err)
+	}
+
+	appTitle, _ := appInfoPlistData.GetString("CFBundleName")
+	bundleID, _ := appInfoPlistData.GetString("CFBundleIdentifier")
+	version, _ := appInfoPlistData.GetString("CFBundleShortVersionString")
+	buildNumber, _ := appInfoPlistData.GetString("CFBundleVersion")
+	minOSVersion, _ := appInfoPlistData.GetString("MinimumOSVersion")
+	deviceFamilyList, _ := appInfoPlistData.GetUInt64Array("UIDeviceFamily")
+	scheme, _ := archiveInfoPlistData.GetString("SchemeName")
 
 	appInfo := map[string]interface{}{
 		"app_title":          appTitle,
@@ -54,7 +61,6 @@ func DeployXcarchive(pth, buildURL, token string) error {
 		"build_number":       buildNumber,
 		"min_OS_version":     minOSVersion,
 		"device_family_list": deviceFamilyList,
-		"scheme":             scheme,
 	}
 
 	// ---
@@ -67,6 +73,7 @@ func DeployXcarchive(pth, buildURL, token string) error {
 	xcarchiveInfoMap := map[string]interface{}{
 		"file_size_bytes": fmt.Sprintf("%f", fileSize),
 		"app_info":        appInfo,
+		"scheme":          scheme,
 	}
 
 	artifactInfoBytes, err := json.Marshal(xcarchiveInfoMap)
