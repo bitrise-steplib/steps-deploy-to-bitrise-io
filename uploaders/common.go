@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-io/go-utils/urlutil"
@@ -120,23 +119,40 @@ func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 		}
 	}()
 
-	args := []string{"curl", "--fail", "--tlsv1", "--globoff"}
-	if contentType != "" {
-		args = append(args, "-H", fmt.Sprintf("Content-Type: %s", contentType))
+	request, err := http.NewRequest(http.MethodPut, uploadURL, data)
+	if err != nil {
+		return fmt.Errorf("failed to create request, error: %s", err)
 	}
-	args = append(args, "-T", artifactPth, "-X", "PUT", uploadURL)
 
-	return retry.Times(3).Wait(5 * time.Second).Try(func(attempt uint) error {
-		if attempt > 0 {
-			log.Warnf("%d attempt failed", attempt)
+	request.Header.Add("Content-Type", contentType)
+
+	fileInfo, err := data.Stat()
+	if err != nil {
+		return fmt.Errorf("failed to get file info for %s, error: %s", artifactPth, err)
+	}
+	request.ContentLength = fileInfo.Size()
+
+	resp, err := http.DefaultClient.Do(request)
+	if err != nil {
+		return fmt.Errorf("failed to submit, error: %s", err)
+	}
+
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.TErrorf("Failed to close response body, error: %s", err)
 		}
-		cmd, err := command.NewFromSlice(args)
-		if err != nil {
-			return err
-		}
-		cmd.SetStdout(os.Stdout).SetStderr(os.Stderr)
-		return cmd.Run()
-	})
+	}()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read respnse body, error: %s", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("invalid status code: %d, headers: %s, body: %s", resp.StatusCode, resp.Header, body)
+	}
+
+	return nil
 }
 
 func finishArtifact(buildURL, token, artifactID, artifactInfo, notifyUserGroups, notifyEmails, isEnablePublicPage string) (string, error) {
