@@ -1,6 +1,7 @@
 package uploaders
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -116,7 +117,7 @@ func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 		}
 		defer func() {
 			if err := file.Close(); err != nil {
-				log.Warnf("failed to close file, error: %s", err)
+				log.Debugf("failed to close file, error: %s", err)
 			}
 		}()
 
@@ -134,9 +135,13 @@ func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 		}
 		request.ContentLength = fileInfo.Size()
 
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+		defer cancel()
+		request = request.WithContext(ctx)
+
 		resp, err := http.DefaultClient.Do(request)
 		if err != nil {
-			return fmt.Errorf("failed to submit, error: %s", err)
+			return fmt.Errorf("failed to upload artifact, error: %s", err)
 		}
 
 		defer func() {
