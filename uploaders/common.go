@@ -109,50 +109,53 @@ func createArtifact(buildURL, token, artifactPth, artifactType string) (string, 
 func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 	log.Printf("uploading artifact")
 
-	data, err := os.Open(artifactPth)
-	if err != nil {
-		return fmt.Errorf("failed to open artifact, error: %s", err)
-	}
-	defer func() {
-		if err := data.Close(); err != nil {
-			log.Errorf("Failed to close file, error: %s", err)
+	return retry.Times(3).Wait(5).Try(func(attempt uint) error {
+		file, err := os.Open(artifactPth)
+		if err != nil {
+			return fmt.Errorf("failed to open artifact, error: %s", err)
 		}
-	}()
+		defer func() {
+			if err := file.Close(); err != nil {
+				log.Warnf("failed to close file, error: %s", err)
+			}
+		}()
 
-	request, err := http.NewRequest(http.MethodPut, uploadURL, data)
-	if err != nil {
-		return fmt.Errorf("failed to create request, error: %s", err)
-	}
-
-	request.Header.Add("Content-Type", contentType)
-
-	fileInfo, err := data.Stat()
-	if err != nil {
-		return fmt.Errorf("failed to get file info for %s, error: %s", artifactPth, err)
-	}
-	request.ContentLength = fileInfo.Size()
-
-	resp, err := http.DefaultClient.Do(request)
-	if err != nil {
-		return fmt.Errorf("failed to submit, error: %s", err)
-	}
-
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			log.TErrorf("Failed to close response body, error: %s", err)
+		request, err := http.NewRequest(http.MethodPut, uploadURL, file)
+		if err != nil {
+			return fmt.Errorf("failed to create request, error: %s", err)
 		}
-	}()
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("failed to read respnse body, error: %s", err)
-	}
+		request.Header.Add("Content-Type", contentType)
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("invalid status code: %d, headers: %s, body: %s", resp.StatusCode, resp.Header, body)
-	}
+		// Set Content Length manually (https://stackoverflow.com/a/39764726), as it is part of signature in signed URL
+		fileInfo, err := file.Stat()
+		if err != nil {
+			return fmt.Errorf("failed to get file info for %s, error: %s", artifactPth, err)
+		}
+		request.ContentLength = fileInfo.Size()
 
-	return nil
+		resp, err := http.DefaultClient.Do(request)
+		if err != nil {
+			return fmt.Errorf("failed to submit, error: %s", err)
+		}
+
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				log.TErrorf("Failed to close response body, error: %s", err)
+			}
+		}()
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("failed to read response body, error: %s", err)
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("invalid status code: %d, headers: %s, body: %s", resp.StatusCode, resp.Header, body)
+		}
+
+		return nil
+	})
 }
 
 func finishArtifact(buildURL, token, artifactID, artifactInfo, notifyUserGroups, notifyEmails, isEnablePublicPage string) (string, error) {
