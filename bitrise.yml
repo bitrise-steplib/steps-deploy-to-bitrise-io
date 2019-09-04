@@ -22,7 +22,7 @@ workflows:
     - audit-this-step
     steps:
     - go-list:
-    - golint:
+    # - golint:
     - errcheck:
     - go-test:
     - script:
@@ -171,6 +171,7 @@ workflows:
   audit-this-step:
     steps:
     - script:
+        run_if: .IsCI
         inputs:
         - content: |-
             #!/bin/bash
