@@ -30,7 +30,7 @@ func DeployXcarchive(pth, buildURL, token string) error {
 		return nil
 	}
 
-	appInfoPlistPth, err := xcarchive.GetEmbeddedInfoPlistPath(filepath.Join(unzippedPth, pathutil.GetFileName(pth)))
+	appInfoPlistPth, err := xcarchive.GetEmbeddedInfoPlistPath(archivePth)
 	if err != nil {
 		return fmt.Errorf("failed to unwrap Info.plist from xcarchive, error: %s", err)
 	}
