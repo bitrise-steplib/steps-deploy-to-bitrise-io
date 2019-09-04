@@ -8,7 +8,6 @@ import (
 	"github.com/bitrise-io/go-utils/pathutil"
 
 	"github.com/bitrise-io/go-utils/log"
-	"github.com/bitrise-io/go-xcode/plistutil"
 	"github.com/bitrise-io/go-xcode/xcarchive"
 )
 
@@ -21,38 +20,25 @@ func DeployXcarchive(pth, buildURL, token string) error {
 	}
 
 	archivePth := filepath.Join(unzippedPth, pathutil.GetFileName(pth))
-	ismacos, err := xcarchive.IsMacOS(archivePth)
+	isMacos, err := xcarchive.IsMacOS(archivePth)
 	if err != nil {
 		return fmt.Errorf("could not check if given project is macOS or not, error: %s", err)
-	}
-	// MacOS project is not supported, so won't be deployed.
-	if ismacos {
-		return nil
+	} else if isMacos {
+		return nil // MacOS project is not supported, so won't be deployed.
 	}
 
-	appInfoPlistPth, err := xcarchive.GetEmbeddedInfoPlistPath(archivePth)
+	iosArchive, err := xcarchive.NewIosArchive(archivePth)
 	if err != nil {
-		return fmt.Errorf("failed to unwrap Info.plist from xcarchive, error: %s", err)
+		return fmt.Errorf("failed to parse iOS XcArchive from %s. Error: %s", archivePth, err)
 	}
 
-	appInfoPlistData, err := plistutil.NewPlistDataFromFile(appInfoPlistPth)
-	if err != nil {
-		return fmt.Errorf("failed to parse Info.plist (%s), error: %s", appInfoPlistPth, err)
-	}
-
-	archiveInfoPlistPth := filepath.Join(archivePth, "Info.plist")
-	archiveInfoPlistData, err := plistutil.NewPlistDataFromFile(archiveInfoPlistPth)
-	if err != nil {
-		return fmt.Errorf("failed to parse Info.plist (%s), error: %s", archiveInfoPlistPth, err)
-	}
-
-	appTitle, _ := appInfoPlistData.GetString("CFBundleName")
-	bundleID, _ := appInfoPlistData.GetString("CFBundleIdentifier")
-	version, _ := appInfoPlistData.GetString("CFBundleShortVersionString")
-	buildNumber, _ := appInfoPlistData.GetString("CFBundleVersion")
-	minOSVersion, _ := appInfoPlistData.GetString("MinimumOSVersion")
-	deviceFamilyList, _ := appInfoPlistData.GetUInt64Array("UIDeviceFamily")
-	scheme, _ := archiveInfoPlistData.GetString("SchemeName")
+	appTitle, _ := iosArchive.Application.InfoPlist.GetString("CFBundleName")
+	bundleID := iosArchive.Application.BundleIdentifier()
+	version, _ := iosArchive.Application.InfoPlist.GetString("CFBundleShortVersionString")
+	buildNumber, _ := iosArchive.Application.InfoPlist.GetString("CFBundleVersion")
+	minOSVersion, _ := iosArchive.Application.InfoPlist.GetString("MinimumOSVersion")
+	deviceFamilyList, _ := iosArchive.Application.InfoPlist.GetUInt64Array("UIDeviceFamily")
+	scheme, _ := iosArchive.InfoPlist.GetString("SchemeName")
 
 	appInfo := map[string]interface{}{
 		"app_title":          appTitle,
