@@ -125,7 +125,7 @@ func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 			}
 		}()
 
-		request, err := netClient.NewRequest(http.MethodPut, uploadURL, file)
+		request, err := http.NewRequest(http.MethodPut, uploadURL, file)
 		if err != nil {
 			return fmt.Errorf("failed to create request, error: %s", err)
 		}
@@ -143,7 +143,7 @@ func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 		defer cancel()
 		request = request.WithContext(ctx)
 
-		resp, err := http.DefaultClient.Do(request)
+		resp, err := netClient.Do(request)
 		if err != nil {
 			return fmt.Errorf("failed to upload artifact, error: %s", err)
 		}
