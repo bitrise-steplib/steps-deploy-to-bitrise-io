@@ -110,6 +110,10 @@ func createArtifact(buildURL, token, artifactPth, artifactType string) (string, 
 func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 	log.Printf("uploading artifact")
 
+	netClient := &http.Client{
+		Timeout: time.Second * 3,
+	}
+
 	return retry.Times(3).Wait(5).Try(func(attempt uint) error {
 		file, err := os.Open(artifactPth)
 		if err != nil {
@@ -121,7 +125,7 @@ func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 			}
 		}()
 
-		request, err := http.NewRequest(http.MethodPut, uploadURL, file)
+		request, err := netClient.NewRequest(http.MethodPut, uploadURL, file)
 		if err != nil {
 			return fmt.Errorf("failed to create request, error: %s", err)
 		}
@@ -129,13 +133,13 @@ func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 		request.Header.Add("Content-Type", contentType)
 
 		// Set Content Length manually (https://stackoverflow.com/a/39764726), as it is part of signature in signed URL
-		// fileInfo, err := file.Stat()
-		// if err != nil {
-		// 	return fmt.Errorf("failed to get file info for %s, error: %s", artifactPth, err)
-		// }
-		// request.ContentLength = fileInfo.Size()
+		fileInfo, err := file.Stat()
+		if err != nil {
+			return fmt.Errorf("failed to get file info for %s, error: %s", artifactPth, err)
+		}
+		request.ContentLength = fileInfo.Size()
 
-		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 		defer cancel()
 		request = request.WithContext(ctx)
 
