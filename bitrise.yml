@@ -171,7 +171,6 @@ workflows:
   audit-this-step:
     steps:
     - script:
-        run_if: .IsCI
         inputs:
         - content: |-
             #!/bin/bash
