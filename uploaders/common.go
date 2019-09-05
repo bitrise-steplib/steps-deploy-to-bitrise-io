@@ -129,10 +129,10 @@ func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 		request.Header.Add("Content-Type", contentType)
 
 		// Set Content Length manually (https://stackoverflow.com/a/39764726), as it is part of signature in signed URL
-		fileInfo, err := file.Stat()
-		if err != nil {
-			return fmt.Errorf("failed to get file info for %s, error: %s", artifactPth, err)
-		}
+		// fileInfo, err := file.Stat()
+		// if err != nil {
+		// 	return fmt.Errorf("failed to get file info for %s, error: %s", artifactPth, err)
+		// }
 		// request.ContentLength = fileInfo.Size()
 
 		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
