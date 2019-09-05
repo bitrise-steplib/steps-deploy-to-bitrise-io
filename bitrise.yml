@@ -21,10 +21,10 @@ workflows:
     before_run:
     - audit-this-step
     steps:
-    # - go-list:
-    # - golint:
-    # - errcheck:
-    # - go-test:
+    - go-list:
+    - golint:
+    - errcheck:
+    - go-test:
     - script:
         inputs:
         - content: |-

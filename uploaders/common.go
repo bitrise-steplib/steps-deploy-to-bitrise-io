@@ -133,7 +133,7 @@ func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 		if err != nil {
 			return fmt.Errorf("failed to get file info for %s, error: %s", artifactPth, err)
 		}
-		request.ContentLength = fileInfo.Size()
+		// request.ContentLength = fileInfo.Size()
 
 		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
 		defer cancel()
