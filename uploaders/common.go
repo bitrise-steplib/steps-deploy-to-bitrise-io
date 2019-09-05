@@ -121,11 +121,11 @@ func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 		}
 		defer func() {
 			if err := file.Close(); err != nil {
-				log.Debugf("failed to close file, error: %s", err)
+				log.Warnf("failed to close file, error: %s", err)
 			}
 		}()
 
-		request, err := http.NewRequest(http.MethodPut, uploadURL, file)
+		request, err := http.NewRequest(http.MethodPut, uploadURL, ioutil.NopCloser(file))
 		if err != nil {
 			return fmt.Errorf("failed to create request, error: %s", err)
 		}
