@@ -111,7 +111,7 @@ func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 	log.Printf("uploading artifact")
 
 	netClient := &http.Client{
-		Timeout: time.Second * 1,
+		Timeout: 10 * time.Minute,
 	}
 
 	return retry.Times(3).Wait(5).Try(func(attempt uint) error {

@@ -1,0 +1,138 @@
+package uploaders
+
+import (
+	"image"
+	"image/png"
+	"io/ioutil"
+	"math/rand"
+	"net/http"
+	"net/http/httptest"
+	"path/filepath"
+	"testing"
+	"time"
+)
+
+func Test_uploadArtifact(t *testing.T) {
+	const contentType = "image/png"
+
+	file, err := ioutil.TempFile("", "")
+	if err != nil {
+		t.Errorf("setup: failed to create file, error: %s", err)
+	}
+	testFilePath, err := filepath.Abs(file.Name())
+	if err != nil {
+		t.Errorf("setup: failed to get file path, error: %s", err)
+	}
+
+	img := image.NewRGBA(image.Rectangle{image.Point{0, 0}, image.Point{rand.Intn(1000) + 1, rand.Intn(1000) + 1}})
+	if err := png.Encode(file, img); err != nil {
+		t.Errorf("setup: failed to write file, error: %s", err)
+	}
+
+	fileInfo, err := file.Stat()
+	if err != nil {
+		t.Errorf("setup: failed to get file info, error: %s", err)
+	}
+	wantFileSize := fileInfo.Size()
+
+	if err := file.Close(); err != nil {
+		t.Errorf("setup: failed to close file")
+	}
+
+	storage := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		bytes, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			t.Errorf("httptest: failed to read request, error: %s", err)
+			return
+		}
+
+		if r.ContentLength != wantFileSize {
+			t.Errorf("httptest: Content-length got %d want %d", r.ContentLength, wantFileSize)
+		}
+
+		if r.Header.Get("Content-Type") != contentType {
+			t.Errorf("httptest: content type got: %s want: %s", r.Header.Get("Content-Type"), contentType)
+		}
+
+		if int64(len(bytes)) != wantFileSize {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	storageSlow := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		if r.ContentLength != wantFileSize {
+			t.Errorf("httptest: Content-length got %d want %d", r.ContentLength, wantFileSize)
+		}
+
+		if r.Header.Get("Content-Type") != contentType {
+			t.Errorf("httptest: content type got: %s want: %s", r.Header.Get("Content-Type"), contentType)
+		}
+
+		var data []byte
+
+		buf := make([]byte, 5)
+		for i := 0; i < 2; i++ {
+			n, err := r.Body.Read(data)
+			if err != nil {
+				t.Errorf("httptest: failed to read body, error: %s", err)
+			}
+			data = append(data, buf[:n]...)
+			time.Sleep(5 * time.Second)
+		}
+
+		bytes, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			t.Errorf("httptest: failed to read request, error: %s", err)
+			return
+		}
+		data = append(data, bytes...)
+
+		if int64(len(data)) != wantFileSize {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	tests := []struct {
+		name        string
+		uploadURL   string
+		artifactPth string
+		contentType string
+		wantErr     bool
+	}{
+		{
+			name:        "Happy path",
+			uploadURL:   storage.URL,
+			artifactPth: testFilePath,
+			contentType: contentType,
+		},
+		{
+			name:        "Slow server",
+			uploadURL:   storageSlow.URL,
+			artifactPth: testFilePath,
+			contentType: contentType,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := uploadArtifact(tt.uploadURL, tt.artifactPth, tt.contentType); (err != nil) != tt.wantErr {
+				t.Errorf("uploadArtifact() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
