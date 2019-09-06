@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -63,6 +64,40 @@ func filterMinSDKVersion(aaptOut string) string {
 		return matches[1]
 	}
 	return ""
+}
+
+func trimBitriseSignedSuffix(pth string) string {
+	// sign-apk step add `-bitrise-signed` suffix to the artifact base: https://github.com/bitrise-steplib/steps-sign-apk/blob/master/main.go#L411
+	ext := filepath.Ext(pth)
+	base := filepath.Base(pth)
+	base = strings.TrimSuffix(base, ext)
+	base = strings.TrimSuffix(base, "-bitrise-signed")
+	return filepath.Join(filepath.Dir(pth), base+ext)
+}
+
+func parseAppPath(pth string) (module string, productFlavour string, buildType string) {
+	pth = trimBitriseSignedSuffix(pth)
+	base := filepath.Base(pth)
+	base = strings.TrimSuffix(base, filepath.Ext(pth))
+
+	// based on: https://developer.android.com/studio/build/build-variants
+	// - <build variant> = <product flavor> + <build type>
+	// - debug and release build types always exists
+	// - APK/AAB base name layout: <module>-<product flavor?>-<build type>.<apk|aab>
+	// - Sample APK path: $BITRISE_DEPLOY_DIR/app-demo-debug.apk
+	s := strings.Split(base, "-")
+	switch len(s) {
+	case 2:
+		module = s[0]
+		buildType = s[1]
+	case 3:
+		module = s[0]
+		productFlavour = s[1]
+		buildType = s[2]
+	default:
+		// app artifact name can be customized: https://stackoverflow.com/a/28250257
+	}
+	return
 }
 
 func getAPKInfo(apkPth string) (ApkInfo, error) {
@@ -145,9 +180,14 @@ func DeployAPK(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 		return "", fmt.Errorf("failed to get apk size, error: %s", err)
 	}
 
+	module, productFlavour, buildType := parseAppPath(pth)
+
 	apkInfoMap := map[string]interface{}{
 		"file_size_bytes": fmt.Sprintf("%f", fileSize),
 		"app_info":        appInfo,
+		"module":          module,
+		"product_flavour": productFlavour,
+		"build_type":      buildType,
 	}
 
 	artifactInfoBytes, err := json.Marshal(apkInfoMap)

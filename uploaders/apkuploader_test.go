@@ -1,6 +1,8 @@
 package uploaders
 
-import "testing"
+import (
+	"testing"
+)
 
 func Test_filterPackageInfos(t *testing.T) {
 
@@ -72,6 +74,85 @@ func Test_filterPackageInfos(t *testing.T) {
 			}
 			if got2 != tt.want2 {
 				t.Errorf("filterPackageInfos() got2 = %v, want %v", got2, tt.want2)
+			}
+		})
+	}
+}
+
+func Test_trimBitriseSignedSuffix(t *testing.T) {
+	tests := []struct {
+		name string
+		pth  string
+		want string
+	}{
+		{
+			name: "Does not modify path if does not have -bitrise-signed suffix",
+			pth:  "$BITRISE_DEPLOY_DIR/app-demo-debug.apk",
+			want: "$BITRISE_DEPLOY_DIR/app-demo-debug.apk",
+		},
+		{
+			name: "Trims -bitrise-signed suffix",
+			pth:  "$BITRISE_DEPLOY_DIR/app-demo-debug-bitrise-signed.apk",
+			want: "$BITRISE_DEPLOY_DIR/app-demo-debug.apk",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := trimBitriseSignedSuffix(tt.pth); got != tt.want {
+				t.Errorf("trimBitriseSignedSuffix() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_parseAppPath(t *testing.T) {
+	tests := []struct {
+		name               string
+		pth                string
+		wantModule         string
+		wantProductFlavour string
+		wantBuildType      string
+	}{
+		{
+			name:               "Parses apk path with Product Flavour",
+			pth:                "$BITRISE_DEPLOY_DIR/app-demo-debug.apk",
+			wantModule:         "app",
+			wantProductFlavour: "demo",
+			wantBuildType:      "debug",
+		},
+		{
+			name:               "Parses apk path without Product Flavour",
+			pth:                "$BITRISE_DEPLOY_DIR/app-debug.apk",
+			wantModule:         "app",
+			wantProductFlavour: "",
+			wantBuildType:      "debug",
+		},
+		{
+			name:               "Parses aab path with -bitrise-signed suffix",
+			pth:                "$BITRISE_DEPLOY_DIR/app-demo-debug-bitrise-signed.apk",
+			wantModule:         "app",
+			wantProductFlavour: "demo",
+			wantBuildType:      "debug",
+		},
+		{
+			name:               "Returns empty for custom apk path",
+			pth:                "$BITRISE_DEPLOY_DIR/custom.apk",
+			wantModule:         "",
+			wantProductFlavour: "",
+			wantBuildType:      "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotModule, gotProductFlavour, gotBuildType := parseAppPath(tt.pth)
+			if gotModule != tt.wantModule {
+				t.Errorf("parseAppPath() gotModule = %v, want %v", gotModule, tt.wantModule)
+			}
+			if gotProductFlavour != tt.wantProductFlavour {
+				t.Errorf("parseAppPath() gotProductFlavour = %v, want %v", gotProductFlavour, tt.wantProductFlavour)
+			}
+			if gotBuildType != tt.wantBuildType {
+				t.Errorf("parseAppPath() gotBuildType = %v, want %v", gotBuildType, tt.wantBuildType)
 			}
 		})
 	}
