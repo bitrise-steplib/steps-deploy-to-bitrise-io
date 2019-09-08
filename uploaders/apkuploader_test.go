@@ -141,6 +141,20 @@ func Test_parseAppPath(t *testing.T) {
 			wantProductFlavour: "",
 			wantBuildType:      "",
 		},
+		{
+			name:               "Parses ABI split apk path",
+			pth:                "$BITRISE_SOURCE_DIR/app-arm64-v8a-debug.apk",
+			wantModule:         "app",
+			wantProductFlavour: "arm64-v8a",
+			wantBuildType:      "debug",
+		},
+		{
+			name:               "Parses 2 flavour dimensions, screen density split",
+			pth:                "$BITRISE_SOURCE_DIR/app-minApi21-demo-hdpi-debug.apk",
+			wantModule:         "app",
+			wantProductFlavour: "minApi21-demo-hdpi",
+			wantBuildType:      "debug",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
