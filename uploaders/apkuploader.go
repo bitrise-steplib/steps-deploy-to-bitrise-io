@@ -86,16 +86,16 @@ func parseAppPath(pth string) (module string, productFlavour string, buildType s
 	// - APK/AAB base name layout: <module>-<product flavor?>-<build type>.<apk|aab>
 	// - Sample APK path: $BITRISE_DEPLOY_DIR/app-demo-debug.apk
 	s := strings.Split(base, "-")
-	switch len(s) {
-	case 2:
-		module = s[0]
-		buildType = s[1]
-	case 3:
-		module = s[0]
-		productFlavour = s[1]
-		buildType = s[2]
-	default:
+	if len(s) < 2 {
+		// unknown app base name
 		// app artifact name can be customized: https://stackoverflow.com/a/28250257
+		return "", "", ""
+	}
+
+	module = s[0]
+	buildType = s[len(s)-1]
+	if len(s) > 2 {
+		productFlavour = strings.Join(s[1:len(s)-1], "-")
 	}
 	return
 }
