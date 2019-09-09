@@ -79,7 +79,7 @@ func Test_filterPackageInfos(t *testing.T) {
 	}
 }
 
-func Test_trimBitriseSignedSuffix(t *testing.T) {
+func Test_fileName(t *testing.T) {
 	tests := []struct {
 		name string
 		pth  string
@@ -88,18 +88,18 @@ func Test_trimBitriseSignedSuffix(t *testing.T) {
 		{
 			name: "Does not modify path if does not have -bitrise-signed suffix",
 			pth:  "$BITRISE_DEPLOY_DIR/app-demo-debug.apk",
-			want: "$BITRISE_DEPLOY_DIR/app-demo-debug.apk",
+			want: "app-demo-debug",
 		},
 		{
 			name: "Trims -bitrise-signed suffix",
 			pth:  "$BITRISE_DEPLOY_DIR/app-demo-debug-bitrise-signed.apk",
-			want: "$BITRISE_DEPLOY_DIR/app-demo-debug.apk",
+			want: "app-demo-debug",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := trimBitriseSignedSuffix(tt.pth); got != tt.want {
-				t.Errorf("trimBitriseSignedSuffix() = %v, want %v", got, tt.want)
+			if got := fileName(tt.pth); got != tt.want {
+				t.Errorf("fileName() = %v, want %v", got, tt.want)
 			}
 		})
 	}

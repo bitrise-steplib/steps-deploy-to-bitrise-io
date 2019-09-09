@@ -66,19 +66,18 @@ func filterMinSDKVersion(aaptOut string) string {
 	return ""
 }
 
-func trimBitriseSignedSuffix(pth string) string {
-	// sign-apk step add `-bitrise-signed` suffix to the artifact base: https://github.com/bitrise-steplib/steps-sign-apk/blob/master/main.go#L411
+// fileName return the given path's file name without extension and `-bitrise-signed` suffix.
+func fileName(pth string) string {
+	// sign-apk step adds `-bitrise-signed` suffix to the artifact base name
+	// https://github.com/bitrise-steplib/steps-sign-apk/blob/master/main.go#L411
 	ext := filepath.Ext(pth)
 	base := filepath.Base(pth)
 	base = strings.TrimSuffix(base, ext)
-	base = strings.TrimSuffix(base, "-bitrise-signed")
-	return filepath.Join(filepath.Dir(pth), base+ext)
+	return strings.TrimSuffix(base, "-bitrise-signed")
 }
 
 func parseAppPath(pth string) (module string, productFlavour string, buildType string) {
-	pth = trimBitriseSignedSuffix(pth)
-	base := filepath.Base(pth)
-	base = strings.TrimSuffix(base, filepath.Ext(pth))
+	base := fileName(pth)
 
 	// based on: https://developer.android.com/studio/build/build-variants
 	// - <build variant> = <product flavor> + <build type>
