@@ -66,14 +66,15 @@ func filterMinSDKVersion(aaptOut string) string {
 	return ""
 }
 
-// fileName return the given path's file name without extension and `-bitrise-signed` suffix.
+// fileName return the given path's file name without extension and `-bitrise-signed`, `-unsigned` suffixes.
 func fileName(pth string) string {
 	// sign-apk step adds `-bitrise-signed` suffix to the artifact base name
 	// https://github.com/bitrise-steplib/steps-sign-apk/blob/master/main.go#L411
 	ext := filepath.Ext(pth)
 	base := filepath.Base(pth)
 	base = strings.TrimSuffix(base, ext)
-	return strings.TrimSuffix(base, "-bitrise-signed")
+	base = strings.TrimSuffix(base, "-bitrise-signed")
+	return strings.TrimSuffix(base, "-unsigned")
 }
 
 func parseAppPath(pth string) (module string, productFlavour string, buildType string) {

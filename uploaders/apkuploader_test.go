@@ -95,6 +95,11 @@ func Test_fileName(t *testing.T) {
 			pth:  "$BITRISE_DEPLOY_DIR/app-demo-debug-bitrise-signed.apk",
 			want: "app-demo-debug",
 		},
+		{
+			name: "Trims -unsigned suffix",
+			pth:  "$BITRISE_DEPLOY_DIR/app-demo-debug-unsigned.apk",
+			want: "app-demo-debug",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
