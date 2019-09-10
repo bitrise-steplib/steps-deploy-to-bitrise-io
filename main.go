@@ -227,66 +227,88 @@ func deployTestResults(config Config) {
 }
 
 func deploy(clearedFilesToDeploy []string, config Config) (map[string]string, error) {
-	publicInstallPages := make(map[string]string)
+	var ipas, apks, aabs, xcarchives, files []string
 	for _, pth := range clearedFilesToDeploy {
-
 		fileType := getFileType(pth)
 		fmt.Println()
 
 		switch fileType {
 		case ".ipa":
-			log.Donef("Uploading ipa file: %s", pth)
-
-			installPage, err := uploaders.DeployIPA(pth, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
-			if err != nil {
-				return nil, fmt.Errorf("deploy failed, error: %s", err)
-			}
-
-			if installPage != "" {
-				publicInstallPages[filepath.Base(pth)] = installPage
-			}
+			ipas = append(ipas, pth)
 		case ".apk":
-			log.Donef("Uploading apk file: %s", pth)
-
-			installPage, err := uploaders.DeployAPK(pth, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
-			if err != nil {
-				return nil, fmt.Errorf("deploy failed, error: %s", err)
-			}
-
-			if installPage != "" {
-				publicInstallPages[filepath.Base(pth)] = installPage
-			}
+			apks = append(apks, pth)
 		case ".aab":
-			log.Donef("Uploading aab file: %s", pth)
-
-			installPage, err := uploaders.DeployAAB(pth, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
-			if err != nil {
-				return nil, fmt.Errorf("deploy failed, error: %s", err)
-			}
-
-			if installPage != "" {
-				publicInstallPages[filepath.Base(pth)] = installPage
-			}
+			aabs = append(aabs, pth)
 		case zippedXcarchiveExt:
-			log.Donef("Uploading xcarchive file: %s", pth)
-			if err := uploaders.DeployXcarchive(pth, config.BuildURL, config.APIToken); err != nil {
-				return nil, fmt.Errorf("deploy failed, error: %s", err)
-			}
+			xcarchives = append(xcarchives, pth)
 		default:
-			log.Donef("Uploading file: %s", pth)
-
-			installPage, err := uploaders.DeployFile(pth, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
-			if err != nil {
-				return nil, fmt.Errorf("deploy failed, error: %s", err)
-			}
-
-			if installPage != "" {
-				publicInstallPages[filepath.Base(pth)] = installPage
-			} else if config.IsPublicPageEnabled == "true" {
-				log.Warnf("is_enable_public_page is set, but public download isn't allowed for this type of file")
-			}
+			files = append(files, pth)
 		}
 	}
+
+	publicInstallPages := make(map[string]string)
+	androidArtifacts := append(apks, aabs...)
+	for _, ipa := range ipas {
+		log.Donef("Uploading ipa file: %s", ipa)
+
+		installPage, err := uploaders.DeployIPA(ipa, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
+		if err != nil {
+			return nil, fmt.Errorf("deploy failed, error: %s", err)
+		}
+
+		if installPage != "" {
+			publicInstallPages[filepath.Base(ipa)] = installPage
+		}
+	}
+
+	for _, apk := range apks {
+		log.Donef("Uploading apk file: %s", apk)
+
+		installPage, err := uploaders.DeployAPK(apk, androidArtifacts, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
+		if err != nil {
+			return nil, fmt.Errorf("deploy failed, error: %s", err)
+		}
+
+		if installPage != "" {
+			publicInstallPages[filepath.Base(apk)] = installPage
+		}
+	}
+
+	for _, aab := range aabs {
+		log.Donef("Uploading aab file: %s", aab)
+
+		installPage, err := uploaders.DeployAAB(aab, androidArtifacts, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
+		if err != nil {
+			return nil, fmt.Errorf("deploy failed, error: %s", err)
+		}
+
+		if installPage != "" {
+			publicInstallPages[filepath.Base(aab)] = installPage
+		}
+	}
+
+	for _, xcarchive := range xcarchives {
+		log.Donef("Uploading xcarchive file: %s", xcarchive)
+		if err := uploaders.DeployXcarchive(xcarchive, config.BuildURL, config.APIToken); err != nil {
+			return nil, fmt.Errorf("deploy failed, error: %s", err)
+		}
+	}
+
+	for _, file := range files {
+		log.Donef("Uploading file: %s", file)
+
+		installPage, err := uploaders.DeployFile(file, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
+		if err != nil {
+			return nil, fmt.Errorf("deploy failed, error: %s", err)
+		}
+
+		if installPage != "" {
+			publicInstallPages[filepath.Base(file)] = installPage
+		} else if config.IsPublicPageEnabled == "true" {
+			log.Warnf("is_enable_public_page is set, but public download isn't allowed for this type of file")
+		}
+	}
+
 	return publicInstallPages, nil
 }
 

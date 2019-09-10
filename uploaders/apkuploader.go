@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -66,40 +65,6 @@ func filterMinSDKVersion(aaptOut string) string {
 	return ""
 }
 
-// fileName return the given path's file name without extension and `-bitrise-signed`, `-unsigned` suffixes.
-func fileName(pth string) string {
-	// sign-apk step adds `-bitrise-signed` suffix to the artifact base name
-	// https://github.com/bitrise-steplib/steps-sign-apk/blob/master/main.go#L411
-	ext := filepath.Ext(pth)
-	base := filepath.Base(pth)
-	base = strings.TrimSuffix(base, ext)
-	base = strings.TrimSuffix(base, "-bitrise-signed")
-	return strings.TrimSuffix(base, "-unsigned")
-}
-
-func parseAppPath(pth string) (module string, productFlavour string, buildType string) {
-	base := fileName(pth)
-
-	// based on: https://developer.android.com/studio/build/build-variants
-	// - <build variant> = <product flavor> + <build type>
-	// - debug and release build types always exists
-	// - APK/AAB base name layout: <module>-<product flavor?>-<build type>.<apk|aab>
-	// - Sample APK path: $BITRISE_DEPLOY_DIR/app-minApi21-demo-hdpi-debug.apk
-	s := strings.Split(base, "-")
-	if len(s) < 2 {
-		// unknown app base name
-		// app artifact name can be customized: https://stackoverflow.com/a/28250257
-		return "", "", ""
-	}
-
-	module = s[0]
-	buildType = s[len(s)-1]
-	if len(s) > 2 {
-		productFlavour = strings.Join(s[1:len(s)-1], "-")
-	}
-	return
-}
-
 func getAPKInfo(apkPth string) (ApkInfo, error) {
 	androidHome := os.Getenv("ANDROID_HOME")
 	if androidHome == "" {
@@ -143,7 +108,7 @@ func getAPKInfo(apkPth string) (ApkInfo, error) {
 }
 
 // DeployAPK ...
-func DeployAPK(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePublicPage string) (string, error) {
+func DeployAPK(pth string, artifacts []string, buildURL, token, notifyUserGroups, notifyEmails, isEnablePublicPage string) (string, error) {
 	log.Printf("analyzing apk")
 
 	apkInfo, err := getAPKInfo(pth)
@@ -188,6 +153,14 @@ func DeployAPK(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 		"module":          module,
 		"product_flavour": productFlavour,
 		"build_type":      buildType,
+	}
+	splitM, err := splitMeta(pth, artifacts)
+	if err != nil {
+		log.Errorf("Failed to create split meta, error: %s", err)
+	} else {
+		for key, value := range splitM {
+			apkInfoMap[key] = value
+		}
 	}
 
 	artifactInfoBytes, err := json.Marshal(apkInfoMap)

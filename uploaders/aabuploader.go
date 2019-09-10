@@ -41,7 +41,7 @@ func buildApksArchive(r bundletool.Runner, tmpPth, aabPth, keystorePath string) 
 }
 
 // DeployAAB ...
-func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePublicPage string) (string, error) {
+func DeployAAB(pth string, artifacts []string, buildURL, token, notifyUserGroups, notifyEmails, isEnablePublicPage string) (string, error) {
 	log.Printf("- analyzing aab")
 
 	tmpPth, err := pathutil.NormalizedOSTempDirPath("aab-bundle")
@@ -111,6 +111,15 @@ func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 		"version_name": versionName,
 	}
 
+	splitM, err := splitMeta(pth, artifacts)
+	if err != nil {
+		log.Errorf("Failed to create split meta, error: %s", err)
+	} else {
+		for key, value := range splitM {
+			appInfo[key] = value
+		}
+	}
+
 	log.Printf("  aab infos: %v", appInfo)
 
 	if packageName == "" {
@@ -164,5 +173,5 @@ func DeployAAB(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 
 	fmt.Println()
 
-	return DeployAPK(renamedUniversalAPKPath, buildURL, token, notifyUserGroups, notifyEmails, isEnablePublicPage)
+	return DeployAPK(renamedUniversalAPKPath, []string{}, buildURL, token, notifyUserGroups, notifyEmails, isEnablePublicPage)
 }
