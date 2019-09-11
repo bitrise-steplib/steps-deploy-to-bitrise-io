@@ -111,15 +111,6 @@ func DeployAAB(pth string, artifacts []string, buildURL, token, notifyUserGroups
 		"version_name": versionName,
 	}
 
-	splitM, err := splitMeta(pth, artifacts)
-	if err != nil {
-		log.Errorf("Failed to create split meta, error: %s", err)
-	} else {
-		for key, value := range splitM {
-			appInfo[key] = value
-		}
-	}
-
 	log.Printf("  aab infos: %v", appInfo)
 
 	if packageName == "" {
@@ -149,6 +140,16 @@ func DeployAAB(pth string, artifacts []string, buildURL, token, notifyUserGroups
 		"module":          info.Module,
 		"product_flavour": info.ProductFlavour,
 		"build_type":      info.BuildType,
+	}
+
+	splitMeta, err := createSplitArtifactMeta(pth, artifacts)
+	if err != nil {
+		log.Errorf("Failed to create split meta, error: %s", err)
+	} else {
+		aabInfoMap["split"] = splitMeta.Split
+		aabInfoMap["include"] = splitMeta.Include
+		aabInfoMap["universal"] = splitMeta.Universal
+		aabInfoMap["aab"] = splitMeta.AAB
 	}
 
 	artifactInfoBytes, err := json.Marshal(aabInfoMap)

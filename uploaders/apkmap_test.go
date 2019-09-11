@@ -8,32 +8,50 @@ import (
 	"github.com/bitrise-steplib/steps-xcode-test/pretty"
 )
 
-func Test_fileName(t *testing.T) {
+func Test_parseSigningInfo(t *testing.T) {
 	tests := []struct {
-		name string
-		pth  string
-		want string
+		name     string
+		pth      string
+		wantInfo ArtifactSigningInfo
+		wantBase string
 	}{
 		{
 			name: "Does not modify path if does not have -bitrise-signed suffix",
 			pth:  "$BITRISE_DEPLOY_DIR/app-demo-debug.apk",
-			want: "app-demo-debug",
+			wantInfo: ArtifactSigningInfo{
+				Unsigned:      false,
+				BitriseSigned: false,
+			},
+			wantBase: "app-demo-debug",
 		},
 		{
 			name: "Trims -bitrise-signed suffix",
 			pth:  "$BITRISE_DEPLOY_DIR/app-demo-debug-bitrise-signed.apk",
-			want: "app-demo-debug",
+			wantInfo: ArtifactSigningInfo{
+				Unsigned:      false,
+				BitriseSigned: true,
+			},
+			wantBase: "app-demo-debug",
 		},
 		{
 			name: "Trims -unsigned suffix",
 			pth:  "$BITRISE_DEPLOY_DIR/app-demo-debug-unsigned.apk",
-			want: "app-demo-debug",
+			wantInfo: ArtifactSigningInfo{
+				Unsigned:      true,
+				BitriseSigned: false,
+			},
+			wantBase: "app-demo-debug",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := fileName(tt.pth); got != tt.want {
-				t.Errorf("fileName() = %v, want %v", got, tt.want)
+			gotInfo, gotBase := parseSigningInfo(tt.pth)
+			if !reflect.DeepEqual(gotInfo, tt.wantInfo) {
+				t.Errorf("parseSigningInfo() = %v, want %v", pretty.Object(gotInfo), pretty.Object(tt.wantInfo))
+			}
+
+			if gotBase != tt.wantBase {
+				t.Errorf("parseSigningInfo() = %v, want %v", gotBase, tt.wantBase)
 			}
 		})
 	}
@@ -41,66 +59,80 @@ func Test_fileName(t *testing.T) {
 
 func Test_parseAppPath(t *testing.T) {
 	tests := []struct {
-		name               string
-		pth                string
-		wantModule         string
-		wantProductFlavour string
-		wantBuildType      string
+		name string
+		pth  string
+		want ArtifactInfo
 	}{
 		{
-			name:               "Parses apk path with Product Flavour",
-			pth:                "$BITRISE_DEPLOY_DIR/app-demo-debug.apk",
-			wantModule:         "app",
-			wantProductFlavour: "demo",
-			wantBuildType:      "debug",
+			name: "Parses apk path with Product Flavour",
+			pth:  "$BITRISE_DEPLOY_DIR/app-demo-debug.apk",
+			want: ArtifactInfo{
+				Module:         "app",
+				ProductFlavour: "demo",
+				BuildType:      "debug",
+			},
 		},
 		{
-			name:               "Parses apk path without Product Flavour",
-			pth:                "$BITRISE_DEPLOY_DIR/app-debug.apk",
-			wantModule:         "app",
-			wantProductFlavour: "",
-			wantBuildType:      "debug",
+			name: "Parses apk path without Product Flavour",
+			pth:  "$BITRISE_DEPLOY_DIR/app-debug.apk",
+			want: ArtifactInfo{
+				Module:         "app",
+				ProductFlavour: "",
+				BuildType:      "debug",
+			},
 		},
 		{
-			name:               "Parses aab path with -bitrise-signed suffix",
-			pth:                "$BITRISE_DEPLOY_DIR/app-demo-debug-bitrise-signed.apk",
-			wantModule:         "app",
-			wantProductFlavour: "demo",
-			wantBuildType:      "debug",
+			name: "Parses aab path with -bitrise-signed suffix",
+			pth:  "$BITRISE_DEPLOY_DIR/app-demo-debug-bitrise-signed.aab",
+			want: ArtifactInfo{
+				Module:         "app",
+				ProductFlavour: "demo",
+				BuildType:      "debug",
+				SigningInfo: ArtifactSigningInfo{
+					Unsigned:      false,
+					BitriseSigned: true,
+				},
+			},
 		},
 		{
-			name:               "Returns empty for custom apk path",
-			pth:                "$BITRISE_DEPLOY_DIR/custom.apk",
-			wantModule:         "",
-			wantProductFlavour: "",
-			wantBuildType:      "",
+			name: "Returns empty for custom apk path",
+			pth:  "$BITRISE_DEPLOY_DIR/custom.apk",
+			want: ArtifactInfo{
+				Module:         "",
+				ProductFlavour: "",
+				BuildType:      "",
+			},
 		},
 		{
-			name:               "Parses ABI split apk path",
-			pth:                "$BITRISE_SOURCE_DIR/app-arm64-v8a-debug.apk",
-			wantModule:         "app",
-			wantProductFlavour: "arm64-v8a",
-			wantBuildType:      "debug",
+			name: "Parses ABI split apk path",
+			pth:  "$BITRISE_SOURCE_DIR/app-arm64-v8a-debug.apk",
+			want: ArtifactInfo{
+				Module:         "app",
+				ProductFlavour: "",
+				BuildType:      "debug",
+				SplitInfo: ArtifactSplitInfo{
+					SplitParams: []string{"arm64-v8a"},
+				},
+			},
 		},
 		{
-			name:               "Parses 2 flavour dimensions, screen density split",
-			pth:                "$BITRISE_SOURCE_DIR/app-minApi21-demo-hdpi-debug.apk",
-			wantModule:         "app",
-			wantProductFlavour: "minApi21-demo-hdpi",
-			wantBuildType:      "debug",
+			name: "Parses 2 flavour dimensions, screen density split",
+			pth:  "$BITRISE_SOURCE_DIR/app-minApi21-demo-hdpi-debug.apk",
+			want: ArtifactInfo{
+				Module:         "app",
+				ProductFlavour: "minApi21-demo",
+				BuildType:      "debug",
+				SplitInfo: ArtifactSplitInfo{
+					SplitParams: []string{"hdpi"},
+				},
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotModule, gotProductFlavour, gotBuildType := parseAppPath(tt.pth)
-			if gotModule != tt.wantModule {
-				t.Errorf("parseAppPath() gotModule = %v, want %v", gotModule, tt.wantModule)
-			}
-			if gotProductFlavour != tt.wantProductFlavour {
-				t.Errorf("parseAppPath() gotProductFlavour = %v, want %v", gotProductFlavour, tt.wantProductFlavour)
-			}
-			if gotBuildType != tt.wantBuildType {
-				t.Errorf("parseAppPath() gotBuildType = %v, want %v", gotBuildType, tt.wantBuildType)
+			got := parseAppPath(tt.pth)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("parseAppPath() = %v, want %v", pretty.Object(got), pretty.Object(tt.want))
 			}
 		})
 	}
@@ -262,12 +294,12 @@ func compareMapStringStringSlice(a, b map[string][]string) bool {
 	return true
 }
 
-func Test_splitMeta(t *testing.T) {
+func Test_createSplitArtifactMeta(t *testing.T) {
 	tests := []struct {
 		name    string
 		pth     string
 		pths    []string
-		want    map[string]interface{}
+		want    SplitArtifactMeta
 		wantErr bool
 	}{
 		{
@@ -279,15 +311,15 @@ func Test_splitMeta(t *testing.T) {
 				"app-mdpiX86-debug.apk",
 				"app-xhdpiX86_64-debug.apk",
 			},
-			want: map[string]interface{}{
-				"split": []string{
+			want: SplitArtifactMeta{
+				Split: []string{
 					"app-arm64-v8a-debug.apk",
 					"app-hdpiArmeabi-v7a-debug.apk",
 					"app-mdpiX86-debug.apk",
 					"app-xhdpiX86_64-debug.apk",
 				},
-				"include":   true,
-				"universal": false,
+				Include:   true,
+				Universal: false,
 			},
 			wantErr: false,
 		},
@@ -300,15 +332,15 @@ func Test_splitMeta(t *testing.T) {
 				"app-minApi21-demo-xxhdpi-debug.apk",
 				"app-minApi21-demo-xxxhdpi-debug.apk",
 			},
-			want: map[string]interface{}{
-				"split": []string{
+			want: SplitArtifactMeta{
+				Split: []string{
 					"app-minApi21-demo-universal-debug.apk",
 					"app-minApi21-demo-xhdpi-debug.apk",
 					"app-minApi21-demo-xxhdpi-debug.apk",
 					"app-minApi21-demo-xxxhdpi-debug.apk",
 				},
-				"include":   true,
-				"universal": true,
+				Include:   true,
+				Universal: true,
 			},
 			wantErr: false,
 		},
@@ -322,28 +354,52 @@ func Test_splitMeta(t *testing.T) {
 				"app-minApi21-demo-xxxhdpi-debug.apk",
 				"app-minApi21-demo-xhdpi-debug-bitrise-signed.apk",
 			},
-			want: map[string]interface{}{
-				"split": []string{
+			want: SplitArtifactMeta{
+				Split: []string{
 					"app-minApi21-demo-universal-debug.apk",
 					"app-minApi21-demo-xhdpi-debug.apk",
 					"app-minApi21-demo-xxhdpi-debug.apk",
 					"app-minApi21-demo-xxxhdpi-debug.apk",
 				},
-				"include":   false,
-				"universal": false,
+				Include:   false,
+				Universal: false,
+			},
+			wantErr: false,
+		},
+		{
+			name: "Split apks with aab",
+			pth:  "app-minApi21-demo-xhdpi-debug-bitrise-signed.apk",
+			pths: []string{
+				"app-minApi21-demo-universal-debug.apk",
+				"app-minApi21-demo-xhdpi-debug.apk",
+				"app-minApi21-demo-xxhdpi-debug.apk",
+				"app-minApi21-demo-xxxhdpi-debug.apk",
+				"app-minApi21-demo-xhdpi-debug-bitrise-signed.apk",
+				"app-minApi21-demo-debug.aab",
+			},
+			want: SplitArtifactMeta{
+				Split: []string{
+					"app-minApi21-demo-universal-debug.apk",
+					"app-minApi21-demo-xhdpi-debug.apk",
+					"app-minApi21-demo-xxhdpi-debug.apk",
+					"app-minApi21-demo-xxxhdpi-debug.apk",
+				},
+				Include:   false,
+				Universal: false,
+				AAB:       "app-minApi21-demo-debug.aab",
 			},
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := splitMeta(tt.pth, tt.pths)
+			got, err := createSplitArtifactMeta(tt.pth, tt.pths)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("splitMeta() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("createSplitArtifactMeta() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("splitMeta() = %v, want %v", got, tt.want)
+				t.Errorf("createSplitArtifactMeta() = %v, want %v", pretty.Object(got), pretty.Object(tt.want))
 			}
 		})
 	}

@@ -180,42 +180,50 @@ func remove(slice []string, i int) []string {
 	return append(slice[:i], slice[i+1:]...)
 }
 
-func splitMeta(pth string, pths []string) (map[string]interface{}, error) {
+// SplitArtifactMeta ...
+type SplitArtifactMeta struct {
+	Split     []string
+	Include   bool
+	Universal bool
+	AAB       string
+}
+
+func createSplitArtifactMeta(pth string, pths []string) (SplitArtifactMeta, error) {
 	artifactsMap := mapBuildArtifacts(pths)
 	info := parseAppPath(pth)
 
 	if len(info.SplitInfo.SplitParams) == 0 {
-		return nil, nil
+		return SplitArtifactMeta{}, nil
 	}
 
 	moduleArtifacts, ok := artifactsMap[info.Module]
 	if !ok {
-		return nil, fmt.Errorf("artifact: %s is not part of the artifact mapping: %s", pth, pretty.Object(artifactsMap))
+		return SplitArtifactMeta{}, fmt.Errorf("artifact: %s is not part of the artifact mapping: %s", pth, pretty.Object(artifactsMap))
 	}
 
 	buildTypeArtifacts, ok := moduleArtifacts[info.BuildType]
 	if !ok {
-		return nil, fmt.Errorf("artifact: %s is not part of the artifact mapping: %s", pth, pretty.Object(artifactsMap))
+		return SplitArtifactMeta{}, fmt.Errorf("artifact: %s is not part of the artifact mapping: %s", pth, pretty.Object(artifactsMap))
 	}
 
 	artifacts, ok := buildTypeArtifacts[info.ProductFlavour]
 	if !ok {
-		return nil, fmt.Errorf("artifact: %s is not part of the artifact mapping: %s", pth, pretty.Object(artifactsMap))
+		return SplitArtifactMeta{}, fmt.Errorf("artifact: %s is not part of the artifact mapping: %s", pth, pretty.Object(artifactsMap))
 	}
 
 	var aab string
 	for i, artifact := range artifacts {
 		if filepath.Ext(artifact) == ".aab" {
 			aab = artifact
-			remove(artifacts, i)
+			artifacts = remove(artifacts, i)
 			break
 		}
 	}
 
-	return map[string]interface{}{
-		"split":     artifacts,
-		"include":   sliceutil.IsStringInSlice(pth, artifacts),
-		"universal": info.SplitInfo.Universal,
-		"aab":       aab,
+	return SplitArtifactMeta{
+		Split:     artifacts,
+		Include:   sliceutil.IsStringInSlice(pth, artifacts),
+		Universal: info.SplitInfo.Universal,
+		AAB:       aab,
 	}, nil
 }
