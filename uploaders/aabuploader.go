@@ -141,14 +141,14 @@ func DeployAAB(pth string, artifacts []string, buildURL, token, notifyUserGroups
 		return "", fmt.Errorf("failed to get apk size, error: %s", err)
 	}
 
-	module, productFlavour, buildType := parseAppPath(pth)
+	info := parseAppPath(pth)
 
 	aabInfoMap := map[string]interface{}{
 		"file_size_bytes": fmt.Sprintf("%f", fileSize),
 		"app_info":        appInfo,
-		"module":          module,
-		"product_flavour": productFlavour,
-		"build_type":      buildType,
+		"module":          info.Module,
+		"product_flavour": info.ProductFlavour,
+		"build_type":      info.BuildType,
 	}
 
 	artifactInfoBytes, err := json.Marshal(aabInfoMap)
