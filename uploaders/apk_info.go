@@ -10,17 +10,21 @@ import (
 	"github.com/bitrise-steplib/steps-xcode-test/pretty"
 )
 
-// BuildArtifactsMap module/buildType/flavour/artifacts
-type BuildArtifactsMap map[string]map[string]map[string][]string
+// AndroidArtifactMap module/buildType/flavour/artifacts
+type AndroidArtifactMap map[string]map[string]map[string][]string
 
 const universalSplitParam = "universal"
 
-// based on: https://developer.android.com/ndk/guides/abis.html#sa
-var abis = []string{"armeabi-v7a", "arm64-v8a", "x86_64", "x86", universalSplitParam}
-var unsupportedAbis = []string{"mips64", "mips", "armeabi"}
+// The order of split params matter, while the artifact path parsing is done, we remove the split params in this order.
+// If we would remove `xhdpi` from app-xxxhdpi-debug.apk, the remaining part would be: app-xx-debug.apk
+var (
+	// based on: https://developer.android.com/ndk/guides/abis.html#sa
+	abis            = []string{"armeabi-v7a", "arm64-v8a", "x86_64", "x86", universalSplitParam}
+	unsupportedAbis = []string{"mips64", "mips", "armeabi"}
 
-// based on: https://developer.android.com/studio/build/configure-apk-splits#configure-density-split
-var screenDensities = []string{"xxxhdpi", "xxhdpi", "xhdpi", "hdpi", "mdpi", "ldpi", "280", "360", "420", "480", "560"}
+	// based on: https://developer.android.com/studio/build/configure-apk-splits#configure-density-split
+	screenDensities = []string{"xxxhdpi", "xxhdpi", "xhdpi", "hdpi", "mdpi", "ldpi", "280", "360", "420", "480", "560"}
+)
 
 // ArtifactSigningInfo ...
 type ArtifactSigningInfo struct {
@@ -39,9 +43,9 @@ func parseSigningInfo(pth string) (ArtifactSigningInfo, string) {
 	base = strings.TrimSuffix(base, ext)
 
 	// a given artifact is either:
-	// - signed: no suffix
-	// - unsigned: `-unsigned` suffix
-	// - bitrise signed: `-bitrise-signed` suffix: https://github.com/bitrise-steplib/steps-sign-apk/blob/master/main.go#L411
+	// signed: no suffix
+	// unsigned: `-unsigned` suffix
+	// bitrise signed: `-bitrise-signed` suffix: https://github.com/bitrise-steplib/steps-sign-apk/blob/master/main.go#L411
 	if strings.HasSuffix(base, bitriseSignedSuffix) {
 		base = strings.TrimSuffix(base, bitriseSignedSuffix)
 		info.BitriseSigned = true
@@ -110,7 +114,7 @@ type ArtifactInfo struct {
 	SplitInfo   ArtifactSplitInfo
 }
 
-func parseAppPath(pth string) ArtifactInfo {
+func parseArtifactInfo(pth string) ArtifactInfo {
 	info := ArtifactInfo{}
 
 	var base string
@@ -139,10 +143,10 @@ func parseAppPath(pth string) ArtifactInfo {
 }
 
 // mapBuildArtifacts returns map[module]map[buildType]map[productFlavour]path.
-func mapBuildArtifacts(pths []string) BuildArtifactsMap {
+func mapBuildArtifacts(pths []string) AndroidArtifactMap {
 	buildArtifacts := map[string]map[string]map[string][]string{}
 	for _, pth := range pths {
-		info := parseAppPath(pth)
+		info := parseArtifactInfo(pth)
 
 		moduleArtifacts, ok := buildArtifacts[info.Module]
 		if !ok {
@@ -190,7 +194,7 @@ type SplitArtifactMeta struct {
 
 func createSplitArtifactMeta(pth string, pths []string) (SplitArtifactMeta, error) {
 	artifactsMap := mapBuildArtifacts(pths)
-	info := parseAppPath(pth)
+	info := parseArtifactInfo(pth)
 
 	if len(info.SplitInfo.SplitParams) == 0 {
 		return SplitArtifactMeta{}, nil

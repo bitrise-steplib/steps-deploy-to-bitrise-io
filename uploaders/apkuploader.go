@@ -145,7 +145,7 @@ func DeployAPK(pth string, artifacts []string, buildURL, token, notifyUserGroups
 		return "", fmt.Errorf("failed to get apk size, error: %s", err)
 	}
 
-	info := parseAppPath(pth)
+	info := parseArtifactInfo(pth)
 
 	apkInfoMap := map[string]interface{}{
 		"file_size_bytes": fmt.Sprintf("%f", fileSize),

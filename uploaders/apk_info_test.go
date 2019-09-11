@@ -57,7 +57,7 @@ func Test_parseSigningInfo(t *testing.T) {
 	}
 }
 
-func Test_parseAppPath(t *testing.T) {
+func Test_parseArtifactInfo(t *testing.T) {
 	tests := []struct {
 		name string
 		pth  string
@@ -130,9 +130,9 @@ func Test_parseAppPath(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := parseAppPath(tt.pth)
+			got := parseArtifactInfo(tt.pth)
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("parseAppPath() = %v, want %v", pretty.Object(got), pretty.Object(tt.want))
+				t.Errorf("parseArtifactInfo() = %v, want %v", pretty.Object(got), pretty.Object(tt.want))
 			}
 		})
 	}
@@ -142,7 +142,7 @@ func Test_mapBuildArtifacts(t *testing.T) {
 	tests := []struct {
 		name string
 		pths []string
-		want BuildArtifactsMap
+		want AndroidArtifactMap
 	}{
 		{
 			name: "APK split by density and abi",
@@ -152,7 +152,7 @@ func Test_mapBuildArtifacts(t *testing.T) {
 				"app-mdpiX86-debug.apk",
 				"app-xhdpiX86_64-debug.apk",
 			},
-			want: BuildArtifactsMap{
+			want: AndroidArtifactMap{
 				"app": map[string]map[string][]string{
 					"debug": map[string][]string{
 						"": []string{
@@ -171,7 +171,7 @@ func Test_mapBuildArtifacts(t *testing.T) {
 				"app-debug-unsigned.apk",
 				"app-debug-bitrise-signed.apk",
 			},
-			want: BuildArtifactsMap{
+			want: AndroidArtifactMap{
 				"app": map[string]map[string][]string{
 					"debug": map[string][]string{
 						"": []string{
@@ -187,7 +187,7 @@ func Test_mapBuildArtifacts(t *testing.T) {
 				"app-demo-debug-unsigned.apk",
 				"app-demo-debug-bitrise-signed.apk",
 			},
-			want: BuildArtifactsMap{
+			want: AndroidArtifactMap{
 				"app": map[string]map[string][]string{
 					"debug": map[string][]string{
 						"demo": []string{
@@ -208,7 +208,7 @@ func Test_mapBuildArtifacts(t *testing.T) {
 				"app-minApi21-demo-xxhdpi-debug.apk",
 				"app-minApi21-demo-xxxhdpi-debug.apk",
 			},
-			want: BuildArtifactsMap{
+			want: AndroidArtifactMap{
 				"app": map[string]map[string][]string{
 					"debug": map[string][]string{
 						"minApi21-demo": []string{

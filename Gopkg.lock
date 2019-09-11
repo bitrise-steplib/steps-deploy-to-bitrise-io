@@ -3,11 +3,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:f006631e21e1ebecc5bd025f272197c6d1ee0102bc46006cf2e527b57be5e884"
+  digest = "1:5e3bbc74fb2d9b11f52377c6cf4310c084aa8f3dc1995a16f46da52862651ccd"
   name = "github.com/bitrise-io/bitrise"
   packages = ["models"]
   pruneopts = "UT"
-  revision = "85fcf1f508cb6d92ddd2ddf788988fde6cf5178f"
+  revision = "099ec60f02cc67ebd8b086e71abe0c2bd6a58c03"
 
 [[projects]]
   branch = "master"
@@ -15,7 +15,7 @@
   name = "github.com/bitrise-io/envman"
   packages = ["models"]
   pruneopts = "UT"
-  revision = "b62ffe18bb760bf14002dd1a80b059180ef910f1"
+  revision = "7698fc58b190e022c2a8ca667b539ce48c3ed1c9"
 
 [[projects]]
   branch = "master"
@@ -23,22 +23,22 @@
   name = "github.com/bitrise-io/go-android"
   packages = ["sdk"]
   pruneopts = "UT"
-  revision = "8082fe069ed29f394c2fd0724dd6bdc64e5cf6b4"
+  revision = "34d6f20488bf0e2256c034c03a2a589a4a608e3f"
 
 [[projects]]
   branch = "master"
-  digest = "1:e875a94349b121ca6fa86bd72f7593f7f0e6f0d07a7d664f31fc000d80eaeec3"
+  digest = "1:8f5fdb79a7a38f6b7dafbc47f620322f384a0cb06858cb28df0e5635e5bb4df4"
   name = "github.com/bitrise-io/go-steputils"
   packages = [
     "stepconf",
     "tools",
   ]
   pruneopts = "UT"
-  revision = "cecc766da84859e37e780d9d1c416f0f3993e6b1"
+  revision = "f540824d77dfd382ce84fd0ee0a9da2fba1cce0a"
 
 [[projects]]
   branch = "master"
-  digest = "1:c752648f9ec1c0f43af891ef888a43831d99573e4cabec34b89a74f0e1497e9f"
+  digest = "1:16fce352370acaddbf2e658b37ed0870b9490310bed5b55bbd6b47a546f5ca93"
   name = "github.com/bitrise-io/go-utils"
   packages = [
     "colorstring",
@@ -52,11 +52,12 @@
     "pkcs12/internal/rc2",
     "pointers",
     "retry",
+    "sliceutil",
     "urlutil",
     "ziputil",
   ]
   pruneopts = "UT"
-  revision = "cb35044c1bab53fdbfa1e6ea3b56478c25275c9c"
+  revision = "ad86bf775472ce1934affb9d3cb7d5ea3dffd16f"
 
 [[projects]]
   branch = "master"
@@ -81,7 +82,7 @@
   name = "github.com/bitrise-io/stepman"
   packages = ["models"]
   pruneopts = "UT"
-  revision = "605a625dade4553d2e2c5dcc9e3459844cd2f5b4"
+  revision = "8138843b694ce731d58a1754b57ac250a9dec9e6"
 
 [[projects]]
   branch = "master"
@@ -89,7 +90,7 @@
   name = "github.com/bitrise-io/xcode-project"
   packages = ["serialized"]
   pruneopts = "UT"
-  revision = "5929ad85d89233b3296d2d795e068a656db7fb25"
+  revision = "e74e748ca5af39e2bd2b24ed4e9476bc4abd1a50"
 
 [[projects]]
   digest = "1:26e714e21bef4fc07640fb796ccce6d4f9423e15b2d660e131a8e61a0ee576d5"
@@ -162,6 +163,7 @@
     "github.com/bitrise-io/go-utils/log",
     "github.com/bitrise-io/go-utils/pathutil",
     "github.com/bitrise-io/go-utils/retry",
+    "github.com/bitrise-io/go-utils/sliceutil",
     "github.com/bitrise-io/go-utils/urlutil",
     "github.com/bitrise-io/go-utils/ziputil",
     "github.com/bitrise-io/go-xcode/exportoptions",
