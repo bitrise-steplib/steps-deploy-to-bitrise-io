@@ -176,6 +176,10 @@ func mapBuildArtifacts(pths []string) BuildArtifactsMap {
 	return buildArtifacts
 }
 
+func remove(slice []string, i int) []string {
+	return append(slice[:i], slice[i+1:]...)
+}
+
 func splitMeta(pth string, pths []string) (map[string]interface{}, error) {
 	artifactsMap := mapBuildArtifacts(pths)
 	info := parseAppPath(pth)
@@ -199,9 +203,19 @@ func splitMeta(pth string, pths []string) (map[string]interface{}, error) {
 		return nil, fmt.Errorf("artifact: %s is not part of the artifact mapping: %s", pth, pretty.Object(artifactsMap))
 	}
 
+	var aab string
+	for i, artifact := range artifacts {
+		if filepath.Ext(artifact) == ".aab" {
+			aab = artifact
+			remove(artifacts, i)
+			break
+		}
+	}
+
 	return map[string]interface{}{
 		"split":     artifacts,
 		"include":   sliceutil.IsStringInSlice(pth, artifacts),
 		"universal": info.SplitInfo.Universal,
+		"aab":       aab,
 	}, nil
 }
