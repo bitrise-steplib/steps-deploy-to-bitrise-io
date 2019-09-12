@@ -145,8 +145,9 @@ type AndroidArtifactMap map[string]map[string]map[string]Artifact
 
 // Artifact ...
 type Artifact struct {
+	APK string
+
 	AAB          string
-	APK          string
 	Split        []string
 	UniversalApk string
 }
@@ -232,10 +233,6 @@ type SplitArtifactMeta Artifact
 func createSplitArtifactMeta(pth string, pths []string) (SplitArtifactMeta, error) {
 	artifactsMap := mapBuildArtifacts(pths)
 	info := parseArtifactInfo(pth)
-
-	if len(info.SplitInfo.SplitParams) == 0 {
-		return SplitArtifactMeta{}, nil
-	}
 
 	moduleArtifacts, ok := artifactsMap[info.Module]
 	if !ok {
