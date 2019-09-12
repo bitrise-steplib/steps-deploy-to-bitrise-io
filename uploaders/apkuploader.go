@@ -158,10 +158,10 @@ func DeployAPK(pth string, artifacts []string, buildURL, token, notifyUserGroups
 	if err != nil {
 		log.Errorf("Failed to create split meta, error: %s", err)
 	} else {
-		apkInfoMap["split"] = splitMeta.Split
-		apkInfoMap["include"] = splitMeta.Include
-		apkInfoMap["universal"] = splitMeta.Universal
 		apkInfoMap["aab"] = splitMeta.AAB
+		apkInfoMap["apk"] = splitMeta.APK
+		apkInfoMap["split"] = splitMeta.Split
+		apkInfoMap["universal"] = splitMeta.UniversalApk
 	}
 
 	artifactInfoBytes, err := json.Marshal(apkInfoMap)

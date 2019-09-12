@@ -6,12 +6,10 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/sliceutil"
 	"github.com/bitrise-steplib/steps-xcode-test/pretty"
 )
-
-// AndroidArtifactMap module/buildType/flavour/artifacts
-type AndroidArtifactMap map[string]map[string]map[string][]string
 
 const universalSplitParam = "universal"
 
@@ -142,41 +140,85 @@ func parseArtifactInfo(pth string) ArtifactInfo {
 	return info
 }
 
+// AndroidArtifactMap module/buildType/flavour/artifacts
+type AndroidArtifactMap map[string]map[string]map[string]Artifact
+
+// Artifact ...
+type Artifact struct {
+	AAB          string
+	APK          string
+	Split        []string
+	UniversalApk string
+}
+
 // mapBuildArtifacts returns map[module]map[buildType]map[productFlavour]path.
 func mapBuildArtifacts(pths []string) AndroidArtifactMap {
-	buildArtifacts := map[string]map[string]map[string][]string{}
+	buildArtifacts := map[string]map[string]map[string]Artifact{}
 	for _, pth := range pths {
 		info := parseArtifactInfo(pth)
 
 		moduleArtifacts, ok := buildArtifacts[info.Module]
 		if !ok {
-			moduleArtifacts = map[string]map[string][]string{}
+			moduleArtifacts = map[string]map[string]Artifact{}
 		}
 
 		buildTypeArtifacts, ok := moduleArtifacts[info.BuildType]
 		if !ok {
-			buildTypeArtifacts = map[string][]string{}
+			buildTypeArtifacts = map[string]Artifact{}
 		}
 
-		artifacts := buildTypeArtifacts[info.ProductFlavour]
+		artifact := buildTypeArtifacts[info.ProductFlavour]
+
+		if filepath.Ext(pth) == ".aab" {
+			if len(artifact.AAB) != 0 {
+				log.Warnf("Multple AAB generated for module: %s, productFlavour: %s, buildType: %s: %s", info.Module, info.ProductFlavour, info.BuildType, pth)
+			}
+			artifact.AAB = pth
+			buildTypeArtifacts[info.ProductFlavour] = artifact
+			moduleArtifacts[info.BuildType] = buildTypeArtifacts
+			buildArtifacts[info.Module] = moduleArtifacts
+			continue
+		}
+
+		if len(info.SplitInfo.SplitParams) == 0 {
+			if len(artifact.APK) != 0 {
+				log.Warnf("Multple not split APK generated for module: %s, productFlavour: %s, buildType: %s: %s", info.Module, info.ProductFlavour, info.BuildType, pth)
+			}
+			artifact.APK = pth
+			buildTypeArtifacts[info.ProductFlavour] = artifact
+			moduleArtifacts[info.BuildType] = buildTypeArtifacts
+			buildArtifacts[info.Module] = moduleArtifacts
+			continue
+		}
+
+		if info.SplitInfo.Universal {
+			if len(artifact.UniversalApk) != 0 {
+				log.Warnf("Multple universal APK generated for module: %s, productFlavour: %s, buildType: %s: %s", info.Module, info.ProductFlavour, info.BuildType, pth)
+			}
+			artifact.UniversalApk = pth
+		}
+
+		// might -unsigned and -bitrise-signed versions of the same apk is listed
 		added := false
 		for _, suffix := range []string{"", "-unsigned", "-bitrise-signed"} {
 			_, base := parseSigningInfo(pth)
-			artifact := filepath.Join(filepath.Dir(pth), base+suffix+filepath.Ext(pth))
+			artifactPth := filepath.Join(filepath.Dir(pth), base+suffix+filepath.Ext(pth))
 
-			if sliceutil.IsStringInSlice(artifact, artifacts) {
+			if sliceutil.IsStringInSlice(artifactPth, artifact.Split) {
 				added = true
 				break
 			}
 		}
 
 		if !added {
-			buildTypeArtifacts[info.ProductFlavour] = append(artifacts, pth)
+			artifact.Split = append(artifact.Split, pth)
+			buildTypeArtifacts[info.ProductFlavour] = artifact
 		}
 
 		moduleArtifacts[info.BuildType] = buildTypeArtifacts
 		buildArtifacts[info.Module] = moduleArtifacts
 	}
+
 	return buildArtifacts
 }
 
@@ -185,12 +227,7 @@ func remove(slice []string, i int) []string {
 }
 
 // SplitArtifactMeta ...
-type SplitArtifactMeta struct {
-	Split     []string
-	Include   bool
-	Universal bool
-	AAB       string
-}
+type SplitArtifactMeta Artifact
 
 func createSplitArtifactMeta(pth string, pths []string) (SplitArtifactMeta, error) {
 	artifactsMap := mapBuildArtifacts(pths)
@@ -210,24 +247,10 @@ func createSplitArtifactMeta(pth string, pths []string) (SplitArtifactMeta, erro
 		return SplitArtifactMeta{}, fmt.Errorf("artifact: %s is not part of the artifact mapping: %s", pth, pretty.Object(artifactsMap))
 	}
 
-	artifacts, ok := buildTypeArtifacts[info.ProductFlavour]
+	artifact, ok := buildTypeArtifacts[info.ProductFlavour]
 	if !ok {
 		return SplitArtifactMeta{}, fmt.Errorf("artifact: %s is not part of the artifact mapping: %s", pth, pretty.Object(artifactsMap))
 	}
 
-	var aab string
-	for i, artifact := range artifacts {
-		if filepath.Ext(artifact) == ".aab" {
-			aab = artifact
-			artifacts = remove(artifacts, i)
-			break
-		}
-	}
-
-	return SplitArtifactMeta{
-		Split:     artifacts,
-		Include:   sliceutil.IsStringInSlice(pth, artifacts),
-		Universal: info.SplitInfo.Universal,
-		AAB:       aab,
-	}, nil
+	return SplitArtifactMeta(artifact), nil
 }

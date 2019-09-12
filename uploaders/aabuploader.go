@@ -146,10 +146,10 @@ func DeployAAB(pth string, artifacts []string, buildURL, token, notifyUserGroups
 	if err != nil {
 		log.Errorf("Failed to create split meta, error: %s", err)
 	} else {
-		aabInfoMap["split"] = splitMeta.Split
-		aabInfoMap["include"] = splitMeta.Include
-		aabInfoMap["universal"] = splitMeta.Universal
+		aabInfoMap["apk"] = splitMeta.APK
 		aabInfoMap["aab"] = splitMeta.AAB
+		aabInfoMap["split"] = splitMeta.Split
+		aabInfoMap["universal"] = splitMeta.UniversalApk
 	}
 
 	artifactInfoBytes, err := json.Marshal(aabInfoMap)

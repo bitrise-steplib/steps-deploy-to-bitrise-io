@@ -153,13 +153,15 @@ func Test_mapBuildArtifacts(t *testing.T) {
 				"app-xhdpiX86_64-debug.apk",
 			},
 			want: AndroidArtifactMap{
-				"app": map[string]map[string][]string{
-					"debug": map[string][]string{
-						"": []string{
-							"app-arm64-v8a-debug.apk",
-							"app-hdpiArmeabi-v7a-debug.apk",
-							"app-mdpiX86-debug.apk",
-							"app-xhdpiX86_64-debug.apk",
+				"app": map[string]map[string]Artifact{
+					"debug": map[string]Artifact{
+						"": Artifact{
+							Split: []string{
+								"app-arm64-v8a-debug.apk",
+								"app-hdpiArmeabi-v7a-debug.apk",
+								"app-mdpiX86-debug.apk",
+								"app-xhdpiX86_64-debug.apk",
+							},
 						},
 					},
 				},
@@ -172,10 +174,10 @@ func Test_mapBuildArtifacts(t *testing.T) {
 				"app-debug-bitrise-signed.apk",
 			},
 			want: AndroidArtifactMap{
-				"app": map[string]map[string][]string{
-					"debug": map[string][]string{
-						"": []string{
-							"app-debug-unsigned.apk",
+				"app": map[string]map[string]Artifact{
+					"debug": map[string]Artifact{
+						"": Artifact{
+							APK: "app-debug-bitrise-signed.apk",
 						},
 					},
 				},
@@ -188,10 +190,10 @@ func Test_mapBuildArtifacts(t *testing.T) {
 				"app-demo-debug-bitrise-signed.apk",
 			},
 			want: AndroidArtifactMap{
-				"app": map[string]map[string][]string{
-					"debug": map[string][]string{
-						"demo": []string{
-							"app-demo-debug-unsigned.apk",
+				"app": map[string]map[string]Artifact{
+					"debug": map[string]Artifact{
+						"demo": Artifact{
+							APK: "app-demo-debug-bitrise-signed.apk",
 						},
 					},
 				},
@@ -209,18 +211,23 @@ func Test_mapBuildArtifacts(t *testing.T) {
 				"app-minApi21-demo-xxxhdpi-debug.apk",
 			},
 			want: AndroidArtifactMap{
-				"app": map[string]map[string][]string{
-					"debug": map[string][]string{
-						"minApi21-demo": []string{
-							"app-minApi21-demo-universal-debug.apk",
-							"app-minApi21-demo-xhdpi-debug.apk",
-							"app-minApi21-demo-xxhdpi-debug.apk",
-							"app-minApi21-demo-xxxhdpi-debug.apk",
+				"app": map[string]map[string]Artifact{
+					"debug": map[string]Artifact{
+						"minApi21-demo": Artifact{
+							Split: []string{
+								"app-minApi21-demo-universal-debug.apk",
+								"app-minApi21-demo-xhdpi-debug.apk",
+								"app-minApi21-demo-xxhdpi-debug.apk",
+								"app-minApi21-demo-xxxhdpi-debug.apk",
+							},
+							UniversalApk: "app-minApi21-demo-universal-debug.apk",
 						},
-						"minApi21-full": []string{
-							"app-minApi21-full-hdpi-debug.apk",
-							"app-minApi21-full-ldpi-debug.apk",
-							"app-minApi21-full-mdpi-debug.apk",
+						"minApi21-full": Artifact{
+							Split: []string{
+								"app-minApi21-full-hdpi-debug.apk",
+								"app-minApi21-full-ldpi-debug.apk",
+								"app-minApi21-full-mdpi-debug.apk",
+							},
 						},
 					},
 				},
@@ -244,15 +251,15 @@ func Test_mapBuildArtifacts(t *testing.T) {
 					return
 				}
 
-				for wantBuildType, wantBuildTypeArtifacts := range wantModuleArtifacts {
-					gotBuildTypeArtifacts := gotModuleArtifacts[wantBuildType]
+				for wantBuildType, wantBuildTypeArtifact := range wantModuleArtifacts {
+					gotBuildTypeArtifact := gotModuleArtifacts[wantBuildType]
 
-					if len(gotBuildTypeArtifacts) != len(wantBuildTypeArtifacts) {
+					if len(gotBuildTypeArtifact) != len(wantBuildTypeArtifact) {
 						t.Errorf("%v does not equal %v", pretty.Object(tt.want), pretty.Object(got))
 						return
 					}
 
-					if !compareMapStringStringSlice(wantBuildTypeArtifacts, gotBuildTypeArtifacts) {
+					if !reflect.DeepEqual(wantBuildTypeArtifact, gotBuildTypeArtifact) {
 						t.Errorf("%v does not equal %v", pretty.Object(tt.want), pretty.Object(got))
 						return
 					}
@@ -318,8 +325,7 @@ func Test_createSplitArtifactMeta(t *testing.T) {
 					"app-mdpiX86-debug.apk",
 					"app-xhdpiX86_64-debug.apk",
 				},
-				Include:   true,
-				Universal: false,
+				UniversalApk: "",
 			},
 			wantErr: false,
 		},
@@ -339,8 +345,7 @@ func Test_createSplitArtifactMeta(t *testing.T) {
 					"app-minApi21-demo-xxhdpi-debug.apk",
 					"app-minApi21-demo-xxxhdpi-debug.apk",
 				},
-				Include:   true,
-				Universal: true,
+				UniversalApk: "app-minApi21-demo-universal-debug.apk",
 			},
 			wantErr: false,
 		},
@@ -361,8 +366,7 @@ func Test_createSplitArtifactMeta(t *testing.T) {
 					"app-minApi21-demo-xxhdpi-debug.apk",
 					"app-minApi21-demo-xxxhdpi-debug.apk",
 				},
-				Include:   false,
-				Universal: false,
+				UniversalApk: "app-minApi21-demo-universal-debug.apk",
 			},
 			wantErr: false,
 		},
@@ -384,9 +388,8 @@ func Test_createSplitArtifactMeta(t *testing.T) {
 					"app-minApi21-demo-xxhdpi-debug.apk",
 					"app-minApi21-demo-xxxhdpi-debug.apk",
 				},
-				Include:   false,
-				Universal: false,
-				AAB:       "app-minApi21-demo-debug.aab",
+				UniversalApk: "app-minApi21-demo-universal-debug.apk",
+				AAB:          "app-minApi21-demo-debug.aab",
 			},
 			wantErr: false,
 		},
