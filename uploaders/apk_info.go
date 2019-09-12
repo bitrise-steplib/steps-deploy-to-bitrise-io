@@ -183,7 +183,7 @@ func mapBuildArtifacts(pths []string) AndroidArtifactMap {
 
 		if len(info.SplitInfo.SplitParams) == 0 {
 			if len(artifact.APK) != 0 {
-				log.Warnf("Multple not split APK generated for module: %s, productFlavour: %s, buildType: %s: %s", info.Module, info.ProductFlavour, info.BuildType, pth)
+				// might -unsigned and -bitrise-signed versions both exist of the same apk
 			}
 			artifact.APK = pth
 			buildTypeArtifacts[info.ProductFlavour] = artifact

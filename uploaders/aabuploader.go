@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/pathutil"
@@ -38,6 +39,26 @@ func buildApksArchive(r bundletool.Runner, tmpPth, aabPth, keystorePath string) 
 	log.Donef("$ %s", cmd.PrintableCommandArgs())
 
 	return apksPth, cmd.Run()
+}
+
+func renameUniversalAPK(basedOnAAB string) string {
+	info := parseArtifactInfo(basedOnAAB)
+
+	nameParts := []string{info.Module}
+	if len(info.ProductFlavour) > 0 {
+		nameParts = append(nameParts, info.ProductFlavour)
+	}
+	nameParts = append(nameParts, "universal", info.BuildType)
+
+	name := strings.Join(nameParts, "-")
+	if info.SigningInfo.Unsigned {
+		name = name + unsignedSuffix
+	} else if info.SigningInfo.BitriseSigned {
+		name = name + bitriseSignedSuffix
+	}
+	name += ".apk"
+
+	return name
 }
 
 // DeployAAB ...
@@ -83,8 +104,17 @@ func DeployAAB(pth string, artifacts []string, buildURL, token, notifyUserGroups
 	fmt.Println()
 	log.Printf("- rename")
 
-	// rename `tmpDir/universal.apk` to `tmpDir/aab-name.aab.universal.apk`
-	universalAPKPath, renamedUniversalAPKPath := filepath.Join(tmpPth, "universal.apk"), filepath.Join(tmpPth, filepath.Base(pth)+".universal.apk")
+	// rename universal.apk to <module>-<product_flavor>?-universal-<build type>-<unsigned|bitrise-signed>?.apk
+	info := parseArtifactInfo(pth)
+	universalAPKName := strings.Join([]string{info.Module, info.ProductFlavour, "universal", info.BuildType}, "-")
+	if info.SigningInfo.Unsigned {
+		universalAPKName = universalAPKName + "-" + unsignedSuffix
+	} else if info.SigningInfo.BitriseSigned {
+		universalAPKName = universalAPKName + "-" + bitriseSignedSuffix
+	}
+	universalAPKName += ".apk"
+
+	universalAPKPath, renamedUniversalAPKPath := filepath.Join(tmpPth, "universal.apk"), filepath.Join(tmpPth, universalAPKName)
 	if err := os.Rename(universalAPKPath, renamedUniversalAPKPath); err != nil {
 		return "", err
 	}
@@ -131,8 +161,6 @@ func DeployAAB(pth string, artifacts []string, buildURL, token, notifyUserGroups
 	if err != nil {
 		return "", fmt.Errorf("failed to get apk size, error: %s", err)
 	}
-
-	info := parseArtifactInfo(pth)
 
 	aabInfoMap := map[string]interface{}{
 		"file_size_bytes": fmt.Sprintf("%f", fileSize),
