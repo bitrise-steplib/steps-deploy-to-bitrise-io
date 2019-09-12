@@ -42,6 +42,7 @@ func buildApksArchive(r bundletool.Runner, tmpPth, aabPth, keystorePath string) 
 }
 
 func renameUniversalAPK(basedOnAAB string) string {
+	// rename universal.apk to <module>-<product_flavor>?-universal-<build type>-<unsigned|bitrise-signed>?.apk
 	info := parseArtifactInfo(basedOnAAB)
 
 	nameParts := []string{info.Module}
@@ -104,17 +105,7 @@ func DeployAAB(pth string, artifacts []string, buildURL, token, notifyUserGroups
 	fmt.Println()
 	log.Printf("- rename")
 
-	// rename universal.apk to <module>-<product_flavor>?-universal-<build type>-<unsigned|bitrise-signed>?.apk
-	info := parseArtifactInfo(pth)
-	universalAPKName := strings.Join([]string{info.Module, info.ProductFlavour, "universal", info.BuildType}, "-")
-	if info.SigningInfo.Unsigned {
-		universalAPKName = universalAPKName + "-" + unsignedSuffix
-	} else if info.SigningInfo.BitriseSigned {
-		universalAPKName = universalAPKName + "-" + bitriseSignedSuffix
-	}
-	universalAPKName += ".apk"
-
-	universalAPKPath, renamedUniversalAPKPath := filepath.Join(tmpPth, "universal.apk"), filepath.Join(tmpPth, universalAPKName)
+	universalAPKPath, renamedUniversalAPKPath := filepath.Join(tmpPth, "universal.apk"), filepath.Join(tmpPth, renameUniversalAPK(pth))
 	if err := os.Rename(universalAPKPath, renamedUniversalAPKPath); err != nil {
 		return "", err
 	}
@@ -161,6 +152,8 @@ func DeployAAB(pth string, artifacts []string, buildURL, token, notifyUserGroups
 	if err != nil {
 		return "", fmt.Errorf("failed to get apk size, error: %s", err)
 	}
+
+	info := parseArtifactInfo(pth)
 
 	aabInfoMap := map[string]interface{}{
 		"file_size_bytes": fmt.Sprintf("%f", fileSize),
