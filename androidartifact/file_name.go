@@ -1,4 +1,4 @@
-package uploaders
+package androidartifact
 
 import (
 	"fmt"
@@ -112,7 +112,8 @@ type ArtifactInfo struct {
 	SplitInfo   ArtifactSplitInfo
 }
 
-func parseArtifactInfo(pth string) ArtifactInfo {
+// ParseArtifactPath ...
+func ParseArtifactPath(pth string) ArtifactInfo {
 	info := ArtifactInfo{}
 
 	var base string
@@ -140,8 +141,8 @@ func parseArtifactInfo(pth string) ArtifactInfo {
 	return info
 }
 
-// AndroidArtifactMap module/buildType/flavour/artifacts
-type AndroidArtifactMap map[string]map[string]map[string]Artifact
+// ArtifactMap module/buildType/flavour/artifacts
+type ArtifactMap map[string]map[string]map[string]Artifact
 
 // Artifact ...
 type Artifact struct {
@@ -153,10 +154,10 @@ type Artifact struct {
 }
 
 // mapBuildArtifacts returns map[module]map[buildType]map[productFlavour]path.
-func mapBuildArtifacts(pths []string) AndroidArtifactMap {
+func mapBuildArtifacts(pths []string) ArtifactMap {
 	buildArtifacts := map[string]map[string]map[string]Artifact{}
 	for _, pth := range pths {
-		info := parseArtifactInfo(pth)
+		info := ParseArtifactPath(pth)
 
 		moduleArtifacts, ok := buildArtifacts[info.Module]
 		if !ok {
@@ -230,9 +231,10 @@ func remove(slice []string, i int) []string {
 // SplitArtifactMeta ...
 type SplitArtifactMeta Artifact
 
-func createSplitArtifactMeta(pth string, pths []string) (SplitArtifactMeta, error) {
+// CreateSplitArtifactMeta ...
+func CreateSplitArtifactMeta(pth string, pths []string) (SplitArtifactMeta, error) {
 	artifactsMap := mapBuildArtifacts(pths)
-	info := parseArtifactInfo(pth)
+	info := ParseArtifactPath(pth)
 
 	moduleArtifacts, ok := artifactsMap[info.Module]
 	if !ok {
@@ -250,4 +252,26 @@ func createSplitArtifactMeta(pth string, pths []string) (SplitArtifactMeta, erro
 	}
 
 	return SplitArtifactMeta(artifact), nil
+}
+
+// UniversalAPKBase ...
+func UniversalAPKBase(basedOnAAB string) string {
+	// rename universal.apk to <module>-<product_flavor>?-universal-<build type>-<unsigned|bitrise-signed>?.apk
+	info := ParseArtifactPath(basedOnAAB)
+
+	nameParts := []string{info.Module}
+	if len(info.ProductFlavour) > 0 {
+		nameParts = append(nameParts, info.ProductFlavour)
+	}
+	nameParts = append(nameParts, "universal", info.BuildType)
+
+	name := strings.Join(nameParts, "-")
+	if info.SigningInfo.Unsigned {
+		name = name + unsignedSuffix
+	} else if info.SigningInfo.BitriseSigned {
+		name = name + bitriseSignedSuffix
+	}
+	name += ".apk"
+
+	return name
 }

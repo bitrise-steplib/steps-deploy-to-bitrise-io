@@ -1,4 +1,4 @@
-package uploaders
+package androidartifact
 
 import (
 	"reflect"
@@ -8,7 +8,7 @@ import (
 	"github.com/bitrise-steplib/steps-xcode-test/pretty"
 )
 
-func Test_parseSigningInfo(t *testing.T) {
+func TestParseArtifactPath(t *testing.T) {
 	tests := []struct {
 		name     string
 		pth      string
@@ -130,9 +130,9 @@ func Test_parseArtifactInfo(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := parseArtifactInfo(tt.pth)
+			got := ParseArtifactPath(tt.pth)
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("parseArtifactInfo() = %v, want %v", pretty.Object(got), pretty.Object(tt.want))
+				t.Errorf("ParseArtifactPath() = %v, want %v", pretty.Object(got), pretty.Object(tt.want))
 			}
 		})
 	}
@@ -142,7 +142,7 @@ func Test_mapBuildArtifacts(t *testing.T) {
 	tests := []struct {
 		name string
 		pths []string
-		want AndroidArtifactMap
+		want ArtifactMap
 	}{
 		{
 			name: "APK split by density and abi",
@@ -152,7 +152,7 @@ func Test_mapBuildArtifacts(t *testing.T) {
 				"app-mdpiX86-debug.apk",
 				"app-xhdpiX86_64-debug.apk",
 			},
-			want: AndroidArtifactMap{
+			want: ArtifactMap{
 				"app": map[string]map[string]Artifact{
 					"debug": map[string]Artifact{
 						"": Artifact{
@@ -173,7 +173,7 @@ func Test_mapBuildArtifacts(t *testing.T) {
 				"app-debug-unsigned.apk",
 				"app-debug-bitrise-signed.apk",
 			},
-			want: AndroidArtifactMap{
+			want: ArtifactMap{
 				"app": map[string]map[string]Artifact{
 					"debug": map[string]Artifact{
 						"": Artifact{
@@ -189,7 +189,7 @@ func Test_mapBuildArtifacts(t *testing.T) {
 				"app-demo-debug-unsigned.apk",
 				"app-demo-debug-bitrise-signed.apk",
 			},
-			want: AndroidArtifactMap{
+			want: ArtifactMap{
 				"app": map[string]map[string]Artifact{
 					"debug": map[string]Artifact{
 						"demo": Artifact{
@@ -210,7 +210,7 @@ func Test_mapBuildArtifacts(t *testing.T) {
 				"app-minApi21-demo-xxhdpi-debug.apk",
 				"app-minApi21-demo-xxxhdpi-debug.apk",
 			},
-			want: AndroidArtifactMap{
+			want: ArtifactMap{
 				"app": map[string]map[string]Artifact{
 					"debug": map[string]Artifact{
 						"minApi21-demo": Artifact{
@@ -301,7 +301,7 @@ func compareMapStringStringSlice(a, b map[string][]string) bool {
 	return true
 }
 
-func Test_createSplitArtifactMeta(t *testing.T) {
+func TestCreateSplitArtifactMeta(t *testing.T) {
 	tests := []struct {
 		name    string
 		pth     string
@@ -396,13 +396,44 @@ func Test_createSplitArtifactMeta(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := createSplitArtifactMeta(tt.pth, tt.pths)
+			got, err := CreateSplitArtifactMeta(tt.pth, tt.pths)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("createSplitArtifactMeta() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("CreateSplitArtifactMeta() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("createSplitArtifactMeta() = %v, want %v", pretty.Object(got), pretty.Object(tt.want))
+				t.Errorf("CreateSplitArtifactMeta() = %v, want %v", pretty.Object(got), pretty.Object(tt.want))
+			}
+		})
+	}
+}
+
+func TestUniversalAPKBase(t *testing.T) {
+	tests := []struct {
+		name       string
+		basedOnAAB string
+		want       string
+	}{
+		{
+			name:       "simple test",
+			basedOnAAB: "app-release.aab",
+			want:       "app-universal-release.apk",
+		},
+		{
+			name:       "bitrise signed aab",
+			basedOnAAB: "app-release-bitrise-signed.aab",
+			want:       "app-universal-release-bitrise-signed.apk",
+		},
+		{
+			name:       "2 flavours",
+			basedOnAAB: "app-minApi21-demo-debug.aab",
+			want:       "app-minApi21-demo-universal-debug.apk",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := UniversalAPKBase(tt.basedOnAAB); got != tt.want {
+				t.Errorf("UniversalAPKBase() = %v, want %v", got, tt.want)
 			}
 		})
 	}
