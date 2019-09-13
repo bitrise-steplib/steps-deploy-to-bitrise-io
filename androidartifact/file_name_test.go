@@ -438,3 +438,42 @@ func TestUniversalAPKBase(t *testing.T) {
 		})
 	}
 }
+
+func TestFindSameArtifact(t *testing.T) {
+	type args struct {
+		pth  string
+		pths []string
+	}
+	tests := []struct {
+		name string
+		pth  string
+		pths []string
+		want string
+	}{
+		{
+			name: "Finds if -bitrise-signed version exists",
+			pth:  "app-minApi21-demo-debug.apk",
+			pths: []string{"app-minApi21-demo-debug-bitrise-signed.apk"},
+			want: "app-minApi21-demo-debug-bitrise-signed.apk",
+		},
+		{
+			name: "Finds if not -bitrise-signed version exists",
+			pth:  "app-minApi21-demo-debug-bitrise-signed.apk",
+			pths: []string{"app-minApi21-demo-debug.apk"},
+			want: "app-minApi21-demo-debug.apk",
+		},
+		{
+			name: "Finds if not -unsigned version exist",
+			pth:  "app-minApi21-demo-debug-unsigned.apk",
+			pths: []string{"app-minApi21-demo-debug.apk"},
+			want: "app-minApi21-demo-debug.apk",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := FindSameArtifact(tt.pth, tt.pths); got != tt.want {
+				t.Errorf("FindSameArtifact() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

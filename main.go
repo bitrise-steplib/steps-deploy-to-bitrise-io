@@ -227,36 +227,34 @@ func deployTestResults(config Config) {
 	}
 }
 
+func findUniversalAPKPair(aab string, apks []string) string {
+	universalAPKBase := androidartifact.UniversalAPKBase(aab)
+	return androidartifact.FindSameArtifact(universalAPKBase, apks)
+}
+
 func ensureAABsHasUniversalAPKPair(aabs, apks []string) ([]string, map[string]string, error) {
 	aabAPKPairs := map[string]string{}
-
 	for _, aab := range aabs {
 		log.Debugf("Looking for universal APK pair for: %s", aab)
 
-		universalAPKBase := androidartifact.UniversalAPKBase(aab)
-
-		for _, apk := range apks {
-			if filepath.Base(apk) == universalAPKBase {
-				log.Debugf("Universal APK pair: %s", apk)
-
-				aabAPKPairs[aab] = apk
-				break
-			}
-		}
-
-		if _, ok := aabAPKPairs[aab]; !ok {
+		universalAPKPair := findUniversalAPKPair(aab, apks)
+		if len(universalAPKPair) == 0 {
 			log.Debugf("Does not have universal APK pair, generating...")
 
-			universalAPKPth, err := GenerateUniversalAPK(aab)
+			var err error
+			universalAPKPair, err = GenerateUniversalAPK(aab)
 			if err != nil {
 				return nil, nil, err
 			}
 
-			log.Debugf("Generated universal APK pair: %s", universalAPKPth)
+			log.Debugf("Generated universal APK pair: %s", universalAPKPair)
 
-			aabAPKPairs[aab] = universalAPKPth
-			apks = append(apks, universalAPKPth)
+			apks = append(apks, universalAPKPair)
+		} else {
+			log.Debugf("Universal APK pair: %s", universalAPKPair)
 		}
+
+		aabAPKPairs[aab] = universalAPKPair
 	}
 	return apks, aabAPKPairs, nil
 }

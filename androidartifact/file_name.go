@@ -153,6 +153,20 @@ type Artifact struct {
 	UniversalApk string
 }
 
+// FindSameArtifact ...
+func FindSameArtifact(pth string, pths []string) string {
+	for _, suffix := range []string{"", unsignedSuffix, bitriseSignedSuffix} {
+		_, base := parseSigningInfo(pth)
+		artifactPth := filepath.Join(filepath.Dir(pth), base+suffix+filepath.Ext(pth))
+
+		idx := sliceutil.IndexOfStringInSlice(artifactPth, pths)
+		if idx > -1 {
+			return pths[idx]
+		}
+	}
+	return ""
+}
+
 // mapBuildArtifacts returns map[module]map[buildType]map[productFlavour]path.
 func mapBuildArtifacts(pths []string) ArtifactMap {
 	buildArtifacts := map[string]map[string]map[string]Artifact{}
@@ -201,18 +215,8 @@ func mapBuildArtifacts(pths []string) ArtifactMap {
 		}
 
 		// might -unsigned and -bitrise-signed versions of the same apk is listed
-		added := false
-		for _, suffix := range []string{"", "-unsigned", "-bitrise-signed"} {
-			_, base := parseSigningInfo(pth)
-			artifactPth := filepath.Join(filepath.Dir(pth), base+suffix+filepath.Ext(pth))
-
-			if sliceutil.IsStringInSlice(artifactPth, artifact.Split) {
-				added = true
-				break
-			}
-		}
-
-		if !added {
+		pairPth := FindSameArtifact(pth, artifact.Split)
+		if len(pairPth) == 0 {
 			artifact.Split = append(artifact.Split, pth)
 			buildTypeArtifacts[info.ProductFlavour] = artifact
 		}
