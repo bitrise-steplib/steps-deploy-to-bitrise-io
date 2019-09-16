@@ -150,7 +150,7 @@ func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 
 		defer func() {
 			if err := resp.Body.Close(); err != nil {
-				log.TErrorf("Failed to close response body, error: %s", err)
+				log.Errorf("Failed to close response body, error: %s", err)
 			}
 		}()
 

@@ -17,21 +17,21 @@ func Test_uploadArtifact(t *testing.T) {
 
 	file, err := ioutil.TempFile("", "")
 	if err != nil {
-		t.Errorf("setup: failed to create file, error: %s", err)
+		t.Fatalf("setup: failed to create file, error: %s", err)
 	}
 	testFilePath, err := filepath.Abs(file.Name())
 	if err != nil {
-		t.Errorf("setup: failed to get file path, error: %s", err)
+		t.Fatalf("setup: failed to get file path, error: %s", err)
 	}
 
 	img := image.NewRGBA(image.Rectangle{image.Point{0, 0}, image.Point{rand.Intn(1000) + 1, rand.Intn(1000) + 1}})
 	if err := png.Encode(file, img); err != nil {
-		t.Errorf("setup: failed to write file, error: %s", err)
+		t.Fatalf("setup: failed to write file, error: %s", err)
 	}
 
 	fileInfo, err := file.Stat()
 	if err != nil {
-		t.Errorf("setup: failed to get file info, error: %s", err)
+		t.Fatalf("setup: failed to get file info, error: %s", err)
 	}
 	wantFileSize := fileInfo.Size()
 
