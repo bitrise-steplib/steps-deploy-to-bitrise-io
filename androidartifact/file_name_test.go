@@ -393,6 +393,23 @@ func TestCreateSplitArtifactMeta(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "aab with -bitrise-signed and simple apks",
+			pth:  "app-minApi24-full-release-bitrise-signed.aab",
+			pths: []string{
+				"app-minApi24-full-release-bitrise-signed.aab",
+				"app-minApi24-full-universal-release-bitrise-signed.apk",
+				"app-minApi24-full-universal-release.apk",
+			},
+			want: SplitArtifactMeta{
+				Split: []string{
+					"app-minApi24-full-universal-release-bitrise-signed.apk",
+				},
+				UniversalApk: "app-minApi24-full-universal-release-bitrise-signed.apk",
+				AAB:          "app-minApi24-full-release-bitrise-signed.aab",
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
