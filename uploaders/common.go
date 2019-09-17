@@ -160,7 +160,7 @@ func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 		}
 
 		if resp.StatusCode != http.StatusOK {
-			return fmt.Errorf("invalid status code: %d, headers: %s, body: %s", resp.StatusCode, resp.Header, body)
+			return fmt.Errorf("non success status code: %d, headers: %s, body: %s", resp.StatusCode, resp.Header, body)
 		}
 
 		return nil

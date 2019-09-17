@@ -9,7 +9,6 @@ import (
 	"net/http/httptest"
 	"path/filepath"
 	"testing"
-	"time"
 )
 
 func Test_uploadArtifact(t *testing.T) {
@@ -67,47 +66,6 @@ func Test_uploadArtifact(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	storageSlow := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPut {
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-
-		if r.ContentLength != wantFileSize {
-			t.Errorf("httptest: Content-length got %d want %d", r.ContentLength, wantFileSize)
-		}
-
-		if r.Header.Get("Content-Type") != contentType {
-			t.Errorf("httptest: content type got: %s want: %s", r.Header.Get("Content-Type"), contentType)
-		}
-
-		var data []byte
-
-		buf := make([]byte, 5)
-		for i := 0; i < 2; i++ {
-			n, err := r.Body.Read(data)
-			if err != nil {
-				t.Errorf("httptest: failed to read body, error: %s", err)
-			}
-			data = append(data, buf[:n]...)
-			time.Sleep(5 * time.Second)
-		}
-
-		bytes, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			t.Errorf("httptest: failed to read request, error: %s", err)
-			return
-		}
-		data = append(data, bytes...)
-
-		if int64(len(data)) != wantFileSize {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		w.WriteHeader(http.StatusOK)
-	}))
-
 	tests := []struct {
 		name        string
 		uploadURL   string
@@ -118,12 +76,6 @@ func Test_uploadArtifact(t *testing.T) {
 		{
 			name:        "Happy path",
 			uploadURL:   storage.URL,
-			artifactPth: testFilePath,
-			contentType: contentType,
-		},
-		{
-			name:        "Slow server",
-			uploadURL:   storageSlow.URL,
 			artifactPth: testFilePath,
 			contentType: contentType,
 		},
