@@ -1,6 +1,7 @@
 package uploaders
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -11,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-io/go-utils/urlutil"
@@ -110,32 +110,60 @@ func createArtifact(buildURL, token, artifactPth, artifactType string) (string, 
 func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 	log.Printf("uploading artifact")
 
-	data, err := os.Open(artifactPth)
-	if err != nil {
-		return fmt.Errorf("failed to open artifact, error: %s", err)
+	netClient := &http.Client{
+		Timeout: 10 * time.Minute,
 	}
-	defer func() {
-		if err := data.Close(); err != nil {
-			log.Errorf("Failed to close file, error: %s", err)
-		}
-	}()
 
-	args := []string{"curl", "--fail", "--tlsv1", "--globoff"}
-	if contentType != "" {
-		args = append(args, "-H", fmt.Sprintf("Content-Type: %s", contentType))
-	}
-	args = append(args, "-T", artifactPth, "-X", "PUT", uploadURL)
-
-	return retry.Times(3).Wait(5 * time.Second).Try(func(attempt uint) error {
-		if attempt > 0 {
-			log.Warnf("%d attempt failed", attempt)
-		}
-		cmd, err := command.NewFromSlice(args)
+	return retry.Times(3).Wait(5).Try(func(attempt uint) error {
+		file, err := os.Open(artifactPth)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to open artifact, error: %s", err)
 		}
-		cmd.SetStdout(os.Stdout).SetStderr(os.Stderr)
-		return cmd.Run()
+		defer func() {
+			if err := file.Close(); err != nil {
+				log.Warnf("failed to close file, error: %s", err)
+			}
+		}()
+
+		request, err := http.NewRequest(http.MethodPut, uploadURL, ioutil.NopCloser(file))
+		if err != nil {
+			return fmt.Errorf("failed to create request, error: %s", err)
+		}
+
+		request.Header.Add("Content-Type", contentType)
+
+		// Set Content Length manually (https://stackoverflow.com/a/39764726), as it is part of signature in signed URL
+		fileInfo, err := file.Stat()
+		if err != nil {
+			return fmt.Errorf("failed to get file info for %s, error: %s", artifactPth, err)
+		}
+		request.ContentLength = fileInfo.Size()
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+		defer cancel()
+		request = request.WithContext(ctx)
+
+		resp, err := netClient.Do(request)
+		if err != nil {
+			return fmt.Errorf("failed to upload artifact, error: %s", err)
+		}
+
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				log.Errorf("Failed to close response body, error: %s", err)
+			}
+		}()
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("failed to read response body, error: %s", err)
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("non success status code: %d, headers: %s, body: %s", resp.StatusCode, resp.Header, body)
+		}
+
+		return nil
 	})
 }
 
