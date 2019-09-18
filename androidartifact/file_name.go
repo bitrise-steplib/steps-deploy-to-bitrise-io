@@ -14,7 +14,7 @@ import (
 const universalSplitParam = "universal"
 
 // The order of split params matter, while the artifact path parsing is done, we remove the split params in this order.
-// If we would remove `xhdpi` from app-xxxhdpi-debug.apk, the remaining part would be: app-xx-debug.apk
+// If we would remove `xhdpi` from app-xxxhdpi-debug.apk, the remaining part would be: app-xx-debug.apk.
 var (
 	// based on: https://developer.android.com/ndk/guides/abis.html#sa
 	abis            = []string{"armeabi-v7a", "arm64-v8a", "x86_64", "x86", universalSplitParam}
@@ -33,6 +33,8 @@ type ArtifactSigningInfo struct {
 const bitriseSignedSuffix = "-bitrise-signed"
 const unsignedSuffix = "-unsigned"
 
+// parseSigningInfo parses android artifact path
+// and returns codesigning info and the artifact's base name without signing params.
 func parseSigningInfo(pth string) (ArtifactSigningInfo, string) {
 	info := ArtifactSigningInfo{}
 
@@ -63,6 +65,7 @@ type ArtifactSplitInfo struct {
 	Universal   bool
 }
 
+// firstLetterUpper makes the given string's first letter uppercase.
 func firstLetterUpper(str string) string {
 	for i, v := range str {
 		return string(unicode.ToUpper(v)) + str[i+1:]
@@ -70,6 +73,8 @@ func firstLetterUpper(str string) string {
 	return ""
 }
 
+// parseSplitInfo parses the flavour candidate part of the artifact's base name
+// and returns APK split info and the flavour without split params.
 func parseSplitInfo(flavour string) (ArtifactSplitInfo, string) {
 	// 2 flavours + density split: minApi21-full-hdpi
 	// density and abi split: hdpiArmeabi
@@ -112,7 +117,7 @@ type ArtifactInfo struct {
 	SplitInfo   ArtifactSplitInfo
 }
 
-// ParseArtifactPath ...
+// ParseArtifactPath parses an android artifact path.
 func ParseArtifactPath(pth string) ArtifactInfo {
 	info := ArtifactInfo{}
 
@@ -146,14 +151,15 @@ type ArtifactMap map[string]map[string]map[string]Artifact
 
 // Artifact ...
 type Artifact struct {
-	APK string
+	APK string // set if a single APK represents the app
 
 	AAB          string
-	Split        []string
+	Split        []string // split apk paths including the universal apk path, excluding the bundle path
 	UniversalApk string
 }
 
-// FindSameArtifact ...
+// FindSameArtifact returns the first artifact which is the same variant as the reference artifact,
+// code signing differences does not matter.
 func FindSameArtifact(pth string, pths []string) string {
 	for _, suffix := range []string{"", unsignedSuffix, bitriseSignedSuffix} {
 		_, base := parseSigningInfo(pth)
@@ -167,7 +173,7 @@ func FindSameArtifact(pth string, pths []string) string {
 	return ""
 }
 
-// mapBuildArtifacts returns map[module]map[buildType]map[productFlavour]path.
+// mapBuildArtifacts creates a module/buildType/productFlavour[artifactPaths] mapping.
 func mapBuildArtifacts(pths []string) ArtifactMap {
 	buildArtifacts := map[string]map[string]map[string]Artifact{}
 	for _, pth := range pths {
@@ -228,6 +234,7 @@ func mapBuildArtifacts(pths []string) ArtifactMap {
 	return buildArtifacts
 }
 
+// remove deletes an element of an array.
 func remove(slice []string, i int) []string {
 	return append(slice[:i], slice[i+1:]...)
 }
@@ -258,9 +265,9 @@ func CreateSplitArtifactMeta(pth string, pths []string) (SplitArtifactMeta, erro
 	return SplitArtifactMeta(artifact), nil
 }
 
-// UniversalAPKBase ...
+// UniversalAPKBase returns the aab's universal apk pair's base name.
 func UniversalAPKBase(basedOnAAB string) string {
-	// rename universal.apk to <module>-<product_flavor>?-universal-<build type>-<unsigned|bitrise-signed>?.apk
+	// <module>-<product_flavor>?-universal-<build type>-<unsigned|bitrise-signed>?.apk
 	info := ParseArtifactPath(basedOnAAB)
 
 	nameParts := []string{info.Module}
@@ -276,6 +283,5 @@ func UniversalAPKBase(basedOnAAB string) string {
 		name = name + bitriseSignedSuffix
 	}
 	name += ".apk"
-
 	return name
 }

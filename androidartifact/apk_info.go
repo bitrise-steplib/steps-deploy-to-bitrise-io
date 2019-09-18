@@ -21,25 +21,8 @@ type ApkInfo struct {
 	RawPackageContent string
 }
 
-func packageField(data, key string) string {
-	pattern := fmt.Sprintf(`%s=['"](.*?)['"]`, key)
-
-	re := regexp.MustCompile(pattern)
-	if matches := re.FindStringSubmatch(data); len(matches) == 2 {
-		return matches[1]
-	}
-
-	return ""
-}
-
-// ParsePackageInfos ...
-func ParsePackageInfos(aaptOut string) (string, string, string) {
-	return packageField(aaptOut, "name"),
-		packageField(aaptOut, "versionCode"),
-		packageField(aaptOut, "versionName")
-}
-
-func filterAppLable(aaptOut string) string {
+// parseAppName parses the application name from `aapt dump badging` command output.
+func parseAppName(aaptOut string) string {
 	pattern := `application: label=\'(?P<label>.+)\' icon=`
 	re := regexp.MustCompile(pattern)
 	if matches := re.FindStringSubmatch(aaptOut); len(matches) == 2 {
@@ -55,7 +38,8 @@ func filterAppLable(aaptOut string) string {
 	return ""
 }
 
-func filterMinSDKVersion(aaptOut string) string {
+// parseMinSDKVersion parses the min sdk version from `aapt dump badging` command output.
+func parseMinSDKVersion(aaptOut string) string {
 	pattern := `sdkVersion:\'(?P<min_sdk_version>.*)\'`
 	re := regexp.MustCompile(pattern)
 	if matches := re.FindStringSubmatch(aaptOut); len(matches) == 2 {
@@ -64,7 +48,26 @@ func filterMinSDKVersion(aaptOut string) string {
 	return ""
 }
 
-// GetAPKInfo ...
+// parsePackageField parses fields from `aapt dump badging` command output.
+func parsePackageField(aaptOut, key string) string {
+	pattern := fmt.Sprintf(`%s=['"](.*?)['"]`, key)
+
+	re := regexp.MustCompile(pattern)
+	if matches := re.FindStringSubmatch(aaptOut); len(matches) == 2 {
+		return matches[1]
+	}
+
+	return ""
+}
+
+// ParsePackageInfos parses package name, version code and name from `aapt dump badging` command output.
+func ParsePackageInfos(aaptOut string) (string, string, string) {
+	return parsePackageField(aaptOut, "name"),
+		parsePackageField(aaptOut, "versionCode"),
+		parsePackageField(aaptOut, "versionName")
+}
+
+// GetAPKInfo returns infos about the APK.
 func GetAPKInfo(apkPth string) (ApkInfo, error) {
 	androidHome := os.Getenv("ANDROID_HOME")
 	if androidHome == "" {
@@ -86,9 +89,9 @@ func GetAPKInfo(apkPth string) (ApkInfo, error) {
 		return ApkInfo{}, fmt.Errorf("failed to get apk infos, output: %s, error: %s", aaptOut, err)
 	}
 
-	appName := filterAppLable(aaptOut)
+	appName := parseAppName(aaptOut)
 	packageName, versionCode, versionName := ParsePackageInfos(aaptOut)
-	minSDKVersion := filterMinSDKVersion(aaptOut)
+	minSDKVersion := parseMinSDKVersion(aaptOut)
 
 	packageContent := ""
 	for _, line := range strings.Split(aaptOut, "\n") {
