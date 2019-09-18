@@ -259,18 +259,13 @@ func ensureAABsHasUniversalAPKPair(aabs, apks []string) ([]string, map[string]st
 	return apks, aabAPKPairs, nil
 }
 
-const (
-	apkExt = ".apk"
-	aabExt = ".aab"
-)
-
 func findAPKsAndAABs(pths []string) (apks []string, aabs []string, others []string) {
 	for _, pth := range pths {
 		t := getFileType(pth)
 		switch t {
-		case apkExt:
+		case ".apk":
 			apks = append(apks, pth)
-		case aabExt:
+		case ".aab":
 			aabs = append(aabs, pth)
 		default:
 			others = append(others, pth)
@@ -287,6 +282,7 @@ func deploy(clearedFilesToDeploy []string, config Config) (map[string]string, er
 	}
 	androidArtifacts := append(apks, aabs...)
 
+	// deploy the apks first, as the universal apk's public install page will be used for aabs.
 	publicInstallPages := map[string]string{}
 	apkInstallPages := map[string]string{}
 	for _, apk := range apks {
@@ -303,7 +299,7 @@ func deploy(clearedFilesToDeploy []string, config Config) (map[string]string, er
 		}
 	}
 
-	for _, pth := range append(androidArtifacts, others...) {
+	for _, pth := range append(aabs, others...) {
 		fileType := getFileType(pth)
 		fmt.Println()
 
