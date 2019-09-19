@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/androidartifact"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/bundletool"
@@ -16,11 +17,12 @@ func DeployAAB(pth string, artifacts []string, buildURL, token, notifyUserGroups
 	// get aab manifest dump
 	log.Printf("- fetching info")
 
-	r, err := bundletool.NewRunner()
+	r, err := bundletool.New()
 	if err != nil {
 		return err
 	}
-	cmd := r.Command("dump", "manifest", "--bundle", pth)
+	tool, args := r.Command("dump", "manifest", "--bundle", pth)
+	cmd := command.New(tool, args...)
 
 	log.Donef("$ %s", cmd.PrintableCommandArgs())
 

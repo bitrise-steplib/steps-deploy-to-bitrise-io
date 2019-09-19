@@ -40,9 +40,9 @@ func generateKeystore(tmpPth string) (string, error) {
 }
 
 // buildApksArchive generates universal apks from an aab file.
-func buildApksArchive(r bundletool.Runner, tmpPth, aabPth, keystorePath string) (string, error) {
+func buildApksArchive(bundleTool bundletool.BundleTool, tmpPth, aabPth, keystorePath string) (string, error) {
 	pth := filepath.Join(tmpPth, "universal.apks")
-	return pth, run("build-apks", "--mode=universal",
+	tool, args := bundleTool.Command("build-apks", "--mode=universal",
 		"--bundle", aabPth,
 		"--output", pth,
 		"--ks", keystorePath,
@@ -50,6 +50,7 @@ func buildApksArchive(r bundletool.Runner, tmpPth, aabPth, keystorePath string) 
 		"--ks-key-alias", "androiddebugkey",
 		"--key-pass", "pass:android",
 	)
+	return pth, run(tool, args...)
 }
 
 // unzipUniversalAPKsArchive unzips an universal apks archive.
@@ -59,7 +60,7 @@ func unzipUniversalAPKsArchive(archive, destDir string) (string, error) {
 
 // GenerateUniversalAPK generates universal apks from an aab file.
 func GenerateUniversalAPK(aabPth string) (string, error) {
-	r, err := bundletool.NewRunner()
+	r, err := bundletool.New()
 	if err != nil {
 		return "", err
 	}

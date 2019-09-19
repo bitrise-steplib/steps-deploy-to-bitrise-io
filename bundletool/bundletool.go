@@ -5,44 +5,41 @@ import (
 	"net/http"
 	"path/filepath"
 
-	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/pathutil"
 )
 
-// Runner ...
-type Runner struct {
-	localPath string
-}
+// BundleTool ...
+type BundleTool string
 
-// NewRunner ...
-func NewRunner() (Runner, error) {
+// New ...
+func New() (BundleTool, error) {
 	const downloadURL = "https://github.com/google/bundletool/releases/download/0.9.0/bundletool-all-0.9.0.jar"
 
 	tmpPth, err := pathutil.NormalizedOSTempDirPath("tool")
 	if err != nil {
-		return Runner{}, err
+		return "", err
 	}
 
 	resp, err := http.Get(downloadURL)
 	if err != nil {
-		return Runner{}, err
+		return "", err
 	}
 
 	d, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return Runner{}, err
+		return "", err
 	}
 
 	if err := resp.Body.Close(); err != nil {
-		return Runner{}, err
+		return "", err
 	}
 
 	toolPath := filepath.Join(tmpPth, filepath.Base(downloadURL))
 
-	return Runner{toolPath}, ioutil.WriteFile(toolPath, d, 0777)
+	return BundleTool(toolPath), ioutil.WriteFile(toolPath, d, 0777)
 }
 
 // Command ...
-func (r Runner) Command(cmd string, args ...string) *command.Model {
-	return command.New("java", append([]string{"-jar", r.localPath, cmd}, args...)...)
+func (r BundleTool) Command(cmd string, args ...string) (string, []string) {
+	return "java", append([]string{"-jar", string(r), cmd}, args...)
 }
