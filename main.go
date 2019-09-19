@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/androidartifact"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test"
 
 	"github.com/bitrise-io/go-steputils/stepconf"
@@ -226,10 +227,78 @@ func deployTestResults(config Config) {
 	}
 }
 
-func deploy(clearedFilesToDeploy []string, config Config) (map[string]string, error) {
-	publicInstallPages := make(map[string]string)
-	for _, pth := range clearedFilesToDeploy {
+func findUniversalAPKPair(aab string, apks []string) string {
+	universalAPKBase := androidartifact.UniversalAPKBase(aab)
+	return androidartifact.FindSameArtifact(universalAPKBase, apks)
+}
 
+func ensureAABsHasUniversalAPKPair(aabs, apks []string) ([]string, map[string]string, error) {
+	aabAPKPairs := map[string]string{}
+	for _, aab := range aabs {
+		log.Debugf("Looking for universal APK pair for: %s", aab)
+
+		universalAPKPair := findUniversalAPKPair(aab, apks)
+		if len(universalAPKPair) == 0 {
+			log.Debugf("Does not have universal APK pair, generating...")
+
+			var err error
+			universalAPKPair, err = GenerateUniversalAPK(aab)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			log.Debugf("Generated universal APK pair: %s", universalAPKPair)
+
+			apks = append(apks, universalAPKPair)
+		} else {
+			log.Debugf("Universal APK pair: %s", universalAPKPair)
+		}
+
+		aabAPKPairs[aab] = universalAPKPair
+	}
+	return apks, aabAPKPairs, nil
+}
+
+func findAPKsAndAABs(pths []string) (apks []string, aabs []string, others []string) {
+	for _, pth := range pths {
+		switch getFileType(pth) {
+		case ".apk":
+			apks = append(apks, pth)
+		case ".aab":
+			aabs = append(aabs, pth)
+		default:
+			others = append(others, pth)
+		}
+	}
+	return
+}
+
+func deploy(clearedFilesToDeploy []string, config Config) (map[string]string, error) {
+	apks, aabs, others := findAPKsAndAABs(clearedFilesToDeploy)
+	apks, aabAPKPairs, err := ensureAABsHasUniversalAPKPair(aabs, apks)
+	if err != nil {
+		return nil, err
+	}
+	androidArtifacts := append(apks, aabs...)
+
+	// deploy the apks first, as the universal apk's public install page will be used for aabs.
+	publicInstallPages := map[string]string{}
+	apkInstallPages := map[string]string{}
+	for _, apk := range apks {
+		log.Donef("Uploading apk file: %s", apk)
+
+		installPage, err := uploaders.DeployAPK(apk, androidArtifacts, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
+		if err != nil {
+			return nil, fmt.Errorf("deploy failed, error: %s", err)
+		}
+
+		if installPage != "" {
+			publicInstallPages[filepath.Base(apk)] = installPage
+			apkInstallPages[filepath.Base(apk)] = installPage
+		}
+	}
+
+	for _, pth := range append(aabs, others...) {
 		fileType := getFileType(pth)
 		fmt.Println()
 
@@ -245,27 +314,21 @@ func deploy(clearedFilesToDeploy []string, config Config) (map[string]string, er
 			if installPage != "" {
 				publicInstallPages[filepath.Base(pth)] = installPage
 			}
-		case ".apk":
-			log.Donef("Uploading apk file: %s", pth)
-
-			installPage, err := uploaders.DeployAPK(pth, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
-			if err != nil {
-				return nil, fmt.Errorf("deploy failed, error: %s", err)
-			}
-
-			if installPage != "" {
-				publicInstallPages[filepath.Base(pth)] = installPage
-			}
 		case ".aab":
 			log.Donef("Uploading aab file: %s", pth)
 
-			installPage, err := uploaders.DeployAAB(pth, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
-			if err != nil {
+			if err := uploaders.DeployAAB(pth, androidArtifacts, config.BuildURL, config.APIToken,
+				config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled); err != nil {
 				return nil, fmt.Errorf("deploy failed, error: %s", err)
 			}
 
-			if installPage != "" {
-				publicInstallPages[filepath.Base(pth)] = installPage
+			universalAPKPair, ok := aabAPKPairs[pth]
+			if !ok {
+				return nil, fmt.Errorf("no iniversal apk pair found for aab: %s", pth)
+			}
+
+			if universalAPKInstallPage := apkInstallPages[filepath.Base(universalAPKPair)]; universalAPKInstallPage != "" {
+				publicInstallPages[filepath.Base(pth)] = universalAPKInstallPage
 			}
 		case zippedXcarchiveExt:
 			log.Donef("Uploading xcarchive file: %s", pth)
