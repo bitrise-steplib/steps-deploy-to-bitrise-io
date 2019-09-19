@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/androidartifact"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/bundletool"
@@ -21,8 +20,7 @@ func DeployAAB(pth string, artifacts []string, buildURL, token, notifyUserGroups
 	if err != nil {
 		return err
 	}
-	tool, args := r.Command("dump", "manifest", "--bundle", pth)
-	cmd := command.New(tool, args...)
+	cmd := r.Command("dump", "manifest", "--bundle", pth)
 
 	log.Donef("$ %s", cmd.PrintableCommandArgs())
 

@@ -261,8 +261,7 @@ func ensureAABsHasUniversalAPKPair(aabs, apks []string) ([]string, map[string]st
 
 func findAPKsAndAABs(pths []string) (apks []string, aabs []string, others []string) {
 	for _, pth := range pths {
-		t := getFileType(pth)
-		switch t {
+		switch getFileType(pth) {
 		case ".apk":
 			apks = append(apks, pth)
 		case ".aab":
@@ -328,8 +327,7 @@ func deploy(clearedFilesToDeploy []string, config Config) (map[string]string, er
 				return nil, fmt.Errorf("no iniversal apk pair found for aab: %s", pth)
 			}
 
-			universalAPKInstallPage, ok := apkInstallPages[filepath.Base(universalAPKPair)]
-			if universalAPKInstallPage != "" {
+			if universalAPKInstallPage := apkInstallPages[filepath.Base(universalAPKPair)]; universalAPKInstallPage != "" {
 				publicInstallPages[filepath.Base(pth)] = universalAPKInstallPage
 			}
 		case zippedXcarchiveExt:

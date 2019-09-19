@@ -79,7 +79,7 @@ func parseSplitInfo(flavour string) (ArtifactSplitInfo, string) {
 	// 2 flavours + density split: minApi21-full-hdpi
 	// density and abi split: hdpiArmeabi
 	// flavour + density and abi split: demo-hdpiArm64-v8a
-	info := ArtifactSplitInfo{}
+	var info ArtifactSplitInfo
 
 	var splitParams []string
 	splitParams = append(splitParams, abis...)
@@ -165,8 +165,7 @@ func FindSameArtifact(pth string, pths []string) string {
 		_, base := parseSigningInfo(pth)
 		artifactPth := filepath.Join(filepath.Dir(pth), base+suffix+filepath.Ext(pth))
 
-		idx := sliceutil.IndexOfStringInSlice(artifactPth, pths)
-		if idx > -1 {
+		if idx := sliceutil.IndexOfStringInSlice(artifactPth, pths); idx > -1 {
 			return pths[idx]
 		}
 	}
@@ -235,7 +234,10 @@ func mapBuildArtifacts(pths []string) ArtifactMap {
 }
 
 // remove deletes an element of an array.
-func remove(slice []string, i int) []string {
+func remove(slice []string, i uint) []string {
+	if int(i) > len(slice)-1 {
+		return slice
+	}
 	return append(slice[:i], slice[i+1:]...)
 }
 

@@ -5,14 +5,15 @@ import (
 	"net/http"
 	"path/filepath"
 
+	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/pathutil"
 )
 
-// BundleTool ...
-type BundleTool string
+// Path ...
+type Path string
 
 // New ...
-func New() (BundleTool, error) {
+func New() (Path, error) {
 	const downloadURL = "https://github.com/google/bundletool/releases/download/0.9.0/bundletool-all-0.9.0.jar"
 
 	tmpPth, err := pathutil.NormalizedOSTempDirPath("tool")
@@ -36,10 +37,10 @@ func New() (BundleTool, error) {
 
 	toolPath := filepath.Join(tmpPth, filepath.Base(downloadURL))
 
-	return BundleTool(toolPath), ioutil.WriteFile(toolPath, d, 0777)
+	return Path(toolPath), ioutil.WriteFile(toolPath, d, 0777)
 }
 
 // Command ...
-func (r BundleTool) Command(cmd string, args ...string) (string, []string) {
-	return "java", append([]string{"-jar", string(r), cmd}, args...)
+func (p Path) Command(cmd string, args ...string) *command.Model {
+	return command.New("java", append([]string{"-jar", string(p), cmd}, args...)...)
 }

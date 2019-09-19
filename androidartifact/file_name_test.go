@@ -494,3 +494,69 @@ func TestFindSameArtifact(t *testing.T) {
 		})
 	}
 }
+
+func Test_firstLetterUpper(t *testing.T) {
+	tests := []struct {
+		name string
+		str  string
+		want string
+	}{
+		{
+			name: "empty test",
+			str:  "",
+			want: "",
+		},
+		{
+			name: "char test",
+			str:  "t",
+			want: "T",
+		},
+		{
+			name: "simple test",
+			str:  "arm64-v8a",
+			want: "Arm64-v8a",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := firstLetterUpper(tt.str); got != tt.want {
+				t.Errorf("firstLetterUpper() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_remove(t *testing.T) {
+	tests := []struct {
+		name  string
+		slice []string
+		i     uint
+		want  []string
+	}{
+		{
+			name:  "empty test",
+			slice: []string{},
+			i:     0,
+			want:  []string{},
+		},
+		{
+			name:  "simple test",
+			slice: []string{"a", "b"},
+			i:     0,
+			want:  []string{"b"},
+		},
+		{
+			name:  "out of range test",
+			slice: []string{"a", "b"},
+			i:     2,
+			want:  []string{"a", "b"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := remove(tt.slice, tt.i); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("remove() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

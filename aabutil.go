@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,22 +13,32 @@ import (
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/bundletool"
 )
 
-// run executes a given command.
-func run(tool string, args ...string) error {
-	cmd := command.New(tool, args...)
-	if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
-		if errorutil.IsExitStatusError(err) {
-			return fmt.Errorf("%s failed: %s", cmd.PrintableCommandArgs(), out)
-		}
-		return fmt.Errorf("%s failed: %s", cmd.PrintableCommandArgs(), err)
+// handleError creates error with layout: `<cmd> failed (status: <status_code>): <cmd output>`.
+func handleError(cmd, out string, err error) error {
+	if err == nil {
+		return nil
 	}
-	return nil
+
+	msg := fmt.Sprintf("%s failed", cmd)
+	if status, exitCodeErr := errorutil.CmdExitCodeFromError(err); exitCodeErr == nil {
+		msg += fmt.Sprintf(" (status: %d)", status)
+	}
+	if len(out) > 0 {
+		msg += fmt.Sprintf(": %s", out)
+	}
+	return errors.New(msg)
+}
+
+// run executes a given command.
+func run(cmd *command.Model) error {
+	out, err := cmd.RunAndReturnTrimmedCombinedOutput()
+	return handleError(cmd.PrintableCommandArgs(), out, err)
 }
 
 // generateKeystore creates a debug keystore.
 func generateKeystore(tmpPth string) (string, error) {
 	pth := filepath.Join(tmpPth, "debug.keystore")
-	return pth, run("keytool", "-genkey", "-v",
+	return pth, run(command.New("keytool", "-genkey", "-v",
 		"-keystore", pth,
 		"-storepass", "android",
 		"-alias", "androiddebugkey",
@@ -36,26 +47,25 @@ func generateKeystore(tmpPth string) (string, error) {
 		"-keysize", "2048",
 		"-validity", "10000",
 		"-dname", "C=US, O=Android, CN=Android Debug",
-	)
+	))
 }
 
 // buildApksArchive generates universal apks from an aab file.
-func buildApksArchive(bundleTool bundletool.BundleTool, tmpPth, aabPth, keystorePath string) (string, error) {
+func buildApksArchive(bundleTool bundletool.Path, tmpPth, aabPth, keystorePath string) (string, error) {
 	pth := filepath.Join(tmpPth, "universal.apks")
-	tool, args := bundleTool.Command("build-apks", "--mode=universal",
+	return pth, run(bundleTool.Command("build-apks", "--mode=universal",
 		"--bundle", aabPth,
 		"--output", pth,
 		"--ks", keystorePath,
 		"--ks-pass", "pass:android",
 		"--ks-key-alias", "androiddebugkey",
 		"--key-pass", "pass:android",
-	)
-	return pth, run(tool, args...)
+	))
 }
 
 // unzipUniversalAPKsArchive unzips an universal apks archive.
 func unzipUniversalAPKsArchive(archive, destDir string) (string, error) {
-	return filepath.Join(destDir, "universal.apk"), run("unzip", archive, "-d", destDir)
+	return filepath.Join(destDir, "universal.apk"), run(command.New("unzip", archive, "-d", destDir))
 }
 
 // GenerateUniversalAPK generates universal apks from an aab file.
@@ -86,9 +96,5 @@ func GenerateUniversalAPK(aabPth string) (string, error) {
 	}
 
 	renamedUniversalAPKPath := filepath.Join(tmpPth, androidartifact.UniversalAPKBase(aabPth))
-	if err := os.Rename(universalAPKPath, renamedUniversalAPKPath); err != nil {
-		return "", err
-	}
-
-	return renamedUniversalAPKPath, nil
+	return renamedUniversalAPKPath, os.Rename(universalAPKPath, renamedUniversalAPKPath)
 }
