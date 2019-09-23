@@ -30,7 +30,8 @@ func (h *Converter) Detect(files []string) bool {
 // the two newlines applied only if there is a failur emessage already
 func regroupErrors(suites []junit.TestSuite) {
 	for testSuiteIndex := range suites {
-		for testCaseIndex := range suites[testSuiteIndex].TestCases {
+		ts := suites[testSuiteIndex]
+		for testCaseIndex := range ts.TestCases {
 			tc := suites[testSuiteIndex].TestCases[testCaseIndex]
 
 			var messages []string
@@ -51,9 +52,11 @@ func regroupErrors(suites []junit.TestSuite) {
 				messages = append(messages, "System Error:\n"+tc.SystemErr)
 			}
 
-			tc.Failure, tc.Error.Message, tc.Error.Value, tc.SystemErr = strings.Join(messages, "\n\n"), "", "", ""
+			ts.Failures += ts.Errors
 
 			suites[testSuiteIndex].TestCases[testCaseIndex] = tc
+
+			tc.Failure, tc.Error.Message, tc.Error.Value, tc.SystemErr, ts.Errors = strings.Join(messages, "\n\n"), "", "", "", 0
 		}
 	}
 }
