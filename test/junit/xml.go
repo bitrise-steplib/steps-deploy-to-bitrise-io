@@ -32,7 +32,7 @@ type TestCase struct {
 
 // Error ...
 type Error struct {
-	XMLName xml.Name `xml:"error"`
-	Message string   `xml:"message,attr"`
+	XMLName xml.Name `xml:"error,omitempty"`
+	Message string   `xml:"message,attr,omitempty"`
 	Value   string   `xml:",chardata"`
 }
