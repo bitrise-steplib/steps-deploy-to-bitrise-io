@@ -20,7 +20,7 @@ const (
 	StepRunStatusCodeSkippedWithRunIf = 4
 
 	// Version ...
-	Version = "8"
+	Version = "9"
 )
 
 // StepListItemModel ...
@@ -44,6 +44,7 @@ type AppModel struct {
 	Summary      string                              `json:"summary,omitempty" yaml:"summary,omitempty"`
 	Description  string                              `json:"description,omitempty" yaml:"description,omitempty"`
 	Environments []envmanModels.EnvironmentItemModel `json:"envs,omitempty" yaml:"envs,omitempty"`
+	Meta         map[string]interface{}              `json:"meta,omitempty" yaml:"meta,omitempty"`
 }
 
 // TriggerEventType ...

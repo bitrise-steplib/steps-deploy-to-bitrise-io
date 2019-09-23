@@ -1,8 +1,8 @@
-package uploaders
+package androidartifact
 
 import "testing"
 
-func Test_filterPackageInfos(t *testing.T) {
+func TestParsePackageInfos(t *testing.T) {
 
 	tests := []struct {
 		name    string
@@ -63,15 +63,15 @@ func Test_filterPackageInfos(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, got1, got2 := filterPackageInfos(tt.aaptOut)
+			got, got1, got2 := ParsePackageInfos(tt.aaptOut)
 			if got != tt.want {
-				t.Errorf("filterPackageInfos() got = %v, want %v", got, tt.want)
+				t.Errorf("ParsePackageInfos() got = %v, want %v", got, tt.want)
 			}
 			if got1 != tt.want1 {
-				t.Errorf("filterPackageInfos() got1 = %v, want %v", got1, tt.want1)
+				t.Errorf("ParsePackageInfos() got1 = %v, want %v", got1, tt.want1)
 			}
 			if got2 != tt.want2 {
-				t.Errorf("filterPackageInfos() got2 = %v, want %v", got2, tt.want2)
+				t.Errorf("ParsePackageInfos() got2 = %v, want %v", got2, tt.want2)
 			}
 		})
 	}
