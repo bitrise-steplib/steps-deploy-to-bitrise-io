@@ -34,5 +34,5 @@ type TestCase struct {
 type Error struct {
 	XMLName xml.Name `xml:"error,omitempty"`
 	Message string   `xml:"message,attr,omitempty"`
-	Value   string   `xml:",chardata,omitempty"`
+	Value   string   `xml:",chardata"`
 }
