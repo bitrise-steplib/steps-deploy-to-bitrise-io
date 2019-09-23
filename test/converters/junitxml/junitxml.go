@@ -25,6 +25,39 @@ func (h *Converter) Detect(files []string) bool {
 	return len(h.files) > 0
 }
 
+// merges Suites->Cases->Error and Suites->Cases->SystemErr field values into Suites->Cases->Failure field
+// with 2 newlines and error category prefix
+// the two newlines applied only if there is a failur emessage already
+func regroupErrors(suites []junit.TestSuite) {
+	for testSuiteIndex := range suites {
+		for testCaseIndex := range suites[testSuiteIndex].TestCases {
+			tc := suites[testSuiteIndex].TestCases[testCaseIndex]
+
+			var messages []string
+
+			if len(tc.Failure) > 0 {
+				messages = append(messages, tc.Failure)
+			}
+
+			if len(tc.Error.Message) > 0 {
+				messages = append(messages, "Error message:\n"+tc.Error.Message)
+			}
+
+			if len(tc.Error.Value) > 0 {
+				messages = append(messages, "Error value:\n"+tc.Error.Value)
+			}
+
+			if len(tc.SystemErr) > 0 {
+				messages = append(messages, "System Error:\n"+tc.SystemErr)
+			}
+
+			tc.Failure, tc.Error.Message, tc.Error.Value, tc.SystemErr = strings.Join(messages, "\n\n"), "", "", ""
+
+			suites[testSuiteIndex].TestCases[testCaseIndex] = tc
+		}
+	}
+}
+
 func parseTestSuites(filePath string) ([]junit.TestSuite, error) {
 	data, err := fileutil.ReadBytesFromFile(filePath)
 	if err != nil {
@@ -34,6 +67,7 @@ func parseTestSuites(filePath string) ([]junit.TestSuite, error) {
 	var testSuites junit.XML
 	testSuitesError := xml.Unmarshal(data, &testSuites)
 	if testSuitesError == nil {
+		regroupErrors(testSuites.TestSuites)
 		return testSuites.TestSuites, nil
 	}
 
@@ -42,7 +76,9 @@ func parseTestSuites(filePath string) ([]junit.TestSuite, error) {
 		return nil, errors.Wrap(errors.Wrap(err, string(data)), testSuitesError.Error())
 	}
 
-	return []junit.TestSuite{testSuite}, nil
+	ts := []junit.TestSuite{testSuite}
+	regroupErrors(ts)
+	return ts, nil
 }
 
 // XML returns the xml content bytes
