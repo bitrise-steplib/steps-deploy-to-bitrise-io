@@ -39,19 +39,21 @@ func regroupErrors(suites []junit.TestSuite) {
 				messages = append(messages, tc.Failure)
 			}
 
-			if len(tc.Error.Message) > 0 {
-				messages = append(messages, "Error message:\n"+tc.Error.Message)
-			}
+			if tc.Error != nil {
+				if len(tc.Error.Message) > 0 {
+					messages = append(messages, "Error message:\n"+tc.Error.Message)
+				}
 
-			if len(tc.Error.Value) > 0 {
-				messages = append(messages, "Error value:\n"+tc.Error.Value)
+				if len(tc.Error.Value) > 0 {
+					messages = append(messages, "Error value:\n"+tc.Error.Value)
+				}
 			}
 
 			if len(tc.SystemErr) > 0 {
 				messages = append(messages, "System Error:\n"+tc.SystemErr)
 			}
 
-			tc.Failure, tc.Error.Message, tc.Error.Value, tc.SystemErr = strings.Join(messages, "\n\n"), "", "", ""
+			tc.Failure, tc.Error, tc.SystemErr = strings.Join(messages, "\n\n"), nil, ""
 
 			suites[testSuiteIndex].Failures += suites[testSuiteIndex].Errors
 			suites[testSuiteIndex].Errors = 0
