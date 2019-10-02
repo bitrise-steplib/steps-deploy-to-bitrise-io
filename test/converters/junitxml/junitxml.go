@@ -30,8 +30,8 @@ func (h *Converter) Detect(files []string) bool {
 // the two newlines applied only if there is a failure message already
 // this is required because our testing addon currently handles failure field properly
 func regroupErrors(suites []junit.TestSuite) []junit.TestSuite {
-	for testSuiteIndex := range suites {
-		for testCaseIndex, tc := range suites[testSuiteIndex].TestCases {
+	for testSuiteIndex, suite := range suites {
+		for testCaseIndex, tc := range suite.TestCases {
 			var messages []string
 
 			if len(tc.Failure) > 0 {
