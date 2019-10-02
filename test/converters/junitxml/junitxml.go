@@ -28,6 +28,7 @@ func (h *Converter) Detect(files []string) bool {
 // merges Suites->Cases->Error and Suites->Cases->SystemErr field values into Suites->Cases->Failure field
 // with 2 newlines and error category prefix
 // the two newlines applied only if there is a failure message already
+// this is required because our testing addon currently handles failure field properly
 func regroupErrors(suites []junit.TestSuite) []junit.TestSuite {
 	for testSuiteIndex := range suites {
 		for testCaseIndex := range suites[testSuiteIndex].TestCases {
