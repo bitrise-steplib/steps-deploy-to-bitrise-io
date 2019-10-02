@@ -27,7 +27,7 @@ func (h *Converter) Detect(files []string) bool {
 
 // merges Suites->Cases->Error and Suites->Cases->SystemErr field values into Suites->Cases->Failure field
 // with 2 newlines and error category prefix
-// the two newlines applied only if there is a failur emessage already
+// the two newlines applied only if there is a failure message already
 func regroupErrors(suites []junit.TestSuite) []junit.TestSuite {
 	for testSuiteIndex := range suites {
 		for testCaseIndex := range suites[testSuiteIndex].TestCases {
@@ -50,7 +50,7 @@ func regroupErrors(suites []junit.TestSuite) []junit.TestSuite {
 			}
 
 			if len(tc.SystemErr) > 0 {
-				messages = append(messages, "System Error:\n"+tc.SystemErr)
+				messages = append(messages, "System error:\n"+tc.SystemErr)
 			}
 
 			tc.Failure, tc.Error, tc.SystemErr = strings.Join(messages, "\n\n"), nil, ""
