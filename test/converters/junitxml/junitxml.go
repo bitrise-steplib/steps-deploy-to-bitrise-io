@@ -25,6 +25,43 @@ func (h *Converter) Detect(files []string) bool {
 	return len(h.files) > 0
 }
 
+// merges Suites->Cases->Error and Suites->Cases->SystemErr field values into Suites->Cases->Failure field
+// with 2 newlines and error category prefix
+// the two newlines applied only if there is a failure message already
+// this is required because our testing addon currently handles failure field properly
+func regroupErrors(suites []junit.TestSuite) []junit.TestSuite {
+	for testSuiteIndex, suite := range suites {
+		for testCaseIndex, tc := range suite.TestCases {
+			var messages []string
+
+			if len(tc.Failure) > 0 {
+				messages = append(messages, tc.Failure)
+			}
+
+			if tc.Error != nil {
+				if len(tc.Error.Message) > 0 {
+					messages = append(messages, "Error message:\n"+tc.Error.Message)
+				}
+
+				if len(tc.Error.Value) > 0 {
+					messages = append(messages, "Error value:\n"+tc.Error.Value)
+				}
+			}
+
+			if len(tc.SystemErr) > 0 {
+				messages = append(messages, "System error:\n"+tc.SystemErr)
+			}
+
+			tc.Failure, tc.Error, tc.SystemErr = strings.Join(messages, "\n\n"), nil, ""
+
+			suites[testSuiteIndex].Failures += suites[testSuiteIndex].Errors
+			suites[testSuiteIndex].Errors = 0
+			suites[testSuiteIndex].TestCases[testCaseIndex] = tc
+		}
+	}
+	return suites
+}
+
 func parseTestSuites(filePath string) ([]junit.TestSuite, error) {
 	data, err := fileutil.ReadBytesFromFile(filePath)
 	if err != nil {
@@ -34,7 +71,7 @@ func parseTestSuites(filePath string) ([]junit.TestSuite, error) {
 	var testSuites junit.XML
 	testSuitesError := xml.Unmarshal(data, &testSuites)
 	if testSuitesError == nil {
-		return testSuites.TestSuites, nil
+		return regroupErrors(testSuites.TestSuites), nil
 	}
 
 	var testSuite junit.TestSuite
@@ -42,7 +79,7 @@ func parseTestSuites(filePath string) ([]junit.TestSuite, error) {
 		return nil, errors.Wrap(errors.Wrap(err, string(data)), testSuitesError.Error())
 	}
 
-	return []junit.TestSuite{testSuite}, nil
+	return regroupErrors([]junit.TestSuite{testSuite}), nil
 }
 
 // XML returns the xml content bytes
