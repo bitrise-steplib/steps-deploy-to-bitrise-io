@@ -30,9 +30,7 @@ func (h *Converter) Detect(files []string) bool {
 // the two newlines applied only if there is a failure message already
 func regroupErrors(suites []junit.TestSuite) []junit.TestSuite {
 	for testSuiteIndex := range suites {
-		for testCaseIndex := range suites[testSuiteIndex].TestCases {
-			tc := suites[testSuiteIndex].TestCases[testCaseIndex]
-
+		for testCaseIndex, tc := range suites[testSuiteIndex].TestCases {
 			var messages []string
 
 			if len(tc.Failure) > 0 {
