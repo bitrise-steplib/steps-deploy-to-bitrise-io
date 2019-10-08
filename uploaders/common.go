@@ -130,7 +130,9 @@ func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 			return fmt.Errorf("failed to create request, error: %s", err)
 		}
 
-		request.Header.Add("Content-Type", contentType)
+		if contentType != "" {
+			request.Header.Add("Content-Type", contentType)
+		}
 
 		// Set Content Length manually (https://stackoverflow.com/a/39764726), as it is part of signature in signed URL
 		fileInfo, err := file.Stat()
