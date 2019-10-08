@@ -12,7 +12,7 @@ app:
   - NOTIFY_USER_GROUPS: $NOTIFY_USER_GROUPS
   - NOTIFY_EMAIL_LIST: $NOTIFY_EMAIL_LIST
   #
-  - SAMPLE_ARTIFACTS_GIT_CLONE_URL: https://github.com/bitrise-samples/sample-artifacts.git
+  - SAMPLE_ARTIFACTS_GIT_CLONE_URL: https://github.com/bitrise-io/sample-artifacts.git
 
 workflows:
   # ----------------------------------------------------------------

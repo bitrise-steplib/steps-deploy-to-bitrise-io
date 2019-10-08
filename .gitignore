@@ -1,3 +1,5 @@
 .bitrise*
 _tmp
 .bundle/
+# built executable
+steps-deploy-to-bitrise-io
