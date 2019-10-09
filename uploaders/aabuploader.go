@@ -90,7 +90,7 @@ func DeployAAB(pth string, artifacts []string, buildURL, token, notifyUserGroups
 		return fmt.Errorf("failed to create apk artifact, error: %s", err)
 	}
 
-	if err := uploadArtifact(uploadURL, pth, ""); err != nil {
+	if err := uploadArtifact(uploadURL, pth, "application/octet-stream aab"); err != nil {
 		return fmt.Errorf("failed to upload apk artifact, error: %s", err)
 	}
 
