@@ -127,6 +127,7 @@ func GetAPKInfo(apkPth string) (ApkInfo, error) {
 	parsedInfo, err := parseAPKInfo(apkPth)
 	if err != nil {
 		log.Warnf("Failed to parse APK info: %s", err)
+		log.RWarnf("deploy-to-bitrise-io", "apk-parse", nil, "apkparser package failed to parse APK, error: %s", err)
 	} else {
 		return parsedInfo, nil
 	}
