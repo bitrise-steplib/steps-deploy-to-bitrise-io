@@ -3,6 +3,14 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:044a9a52a1484169c47b6d2c359a593eccdba22667a08aa294ac7baed7c653e4"
+  name = "github.com/avast/apkparser"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "5ea4c23a90d9b14ec2d3fb6cb06aeff57eda2d32"
+
+[[projects]]
+  branch = "master"
   digest = "1:5e3bbc74fb2d9b11f52377c6cf4310c084aa8f3dc1995a16f46da52862651ccd"
   name = "github.com/bitrise-io/bitrise"
   packages = ["models"]
@@ -38,11 +46,12 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:16fce352370acaddbf2e658b37ed0870b9490310bed5b55bbd6b47a546f5ca93"
+  digest = "1:c78f8220c2e1accab171ec2ec899f7ce011f351619feee5de11f079336ae54c0"
   name = "github.com/bitrise-io/go-utils"
   packages = [
     "colorstring",
     "command",
+    "command/git",
     "errorutil",
     "fileutil",
     "log",
@@ -74,7 +83,7 @@
     "xcarchive",
   ]
   pruneopts = "UT"
-  revision = "07ccf582b6b1afa2c33e133447a3e22c811ffd90"
+  revision = "39758b99f466fbd5271280a29e55d6982e0de8bd"
 
 [[projects]]
   branch = "master"
@@ -90,15 +99,15 @@
   name = "github.com/bitrise-io/xcode-project"
   packages = ["serialized"]
   pruneopts = "UT"
-  revision = "e74e748ca5af39e2bd2b24ed4e9476bc4abd1a50"
+  revision = "a4e01d69cacc7dd9acbe8fb987dba69c9ce01b1c"
 
 [[projects]]
+  branch = "master"
   digest = "1:26e714e21bef4fc07640fb796ccce6d4f9423e15b2d660e131a8e61a0ee576d5"
   name = "github.com/bitrise-steplib/steps-xcode-test"
   packages = ["pretty"]
   pruneopts = "UT"
-  revision = "c05bd3a50ee36040bd047cf4618615083a9d0b2c"
-  version = "2.3.2"
+  revision = "a88a70f7d32aff4f89e2f0366ee6dfcbf881bfc0"
 
 [[projects]]
   branch = "master"
@@ -125,12 +134,12 @@
   version = "v1.2.0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:deff41c4160cc5b487a1d1a69a58925f2d3ac11befa0692b50e76940594e20f5"
+  digest = "1:cf31692c14422fa27c83a05292eb5cbe0fb2775972e8f1f8446a71549bd8980b"
   name = "github.com/pkg/errors"
   packages = ["."]
   pruneopts = "UT"
-  revision = "27936f6d90f9c8e1145f11ed52ffffbfdb9e0af7"
+  revision = "ba968bfe8b2f7e042a574c888954fccecfa385b4"
+  version = "v0.8.1"
 
 [[projects]]
   digest = "1:6baa565fe16f8657cf93469b2b8a6c61a277827734400d27e44d589547297279"
@@ -152,12 +161,14 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/avast/apkparser",
     "github.com/bitrise-io/bitrise/models",
     "github.com/bitrise-io/go-android/sdk",
     "github.com/bitrise-io/go-steputils/stepconf",
     "github.com/bitrise-io/go-steputils/tools",
     "github.com/bitrise-io/go-utils/colorstring",
     "github.com/bitrise-io/go-utils/command",
+    "github.com/bitrise-io/go-utils/command/git",
     "github.com/bitrise-io/go-utils/errorutil",
     "github.com/bitrise-io/go-utils/fileutil",
     "github.com/bitrise-io/go-utils/log",

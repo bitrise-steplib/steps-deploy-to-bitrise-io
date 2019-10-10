@@ -1,14 +1,18 @@
 package androidartifact
 
 import (
+	"bytes"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"os"
 	"regexp"
 	"strings"
 
+	"github.com/avast/apkparser"
 	"github.com/bitrise-io/go-android/sdk"
 	"github.com/bitrise-io/go-utils/command"
+	"github.com/bitrise-io/go-utils/log"
 )
 
 // ApkInfo ...
@@ -67,8 +71,58 @@ func ParsePackageInfos(aaptOut string) (string, string, string) {
 		parsePackageField(aaptOut, "versionName")
 }
 
-// GetAPKInfo returns infos about the APK.
-func GetAPKInfo(apkPth string) (ApkInfo, error) {
+type manifest struct {
+	XMLName     xml.Name `xml:"manifest"`
+	VersionCode string   `xml:"versionCode,attr"`
+	VersionName string   `xml:"versionName,attr"`
+	PackageName string   `xml:"package,attr"`
+	Application application
+	UsesSdk     usesSdk
+}
+
+type application struct {
+	XMLName     xml.Name `xml:"application"`
+	PackageName string   `xml:"name,attr"`
+	AppName     string   `xml:"label,attr"`
+}
+
+type usesSdk struct {
+	XMLName       xml.Name `xml:"uses-sdk"`
+	MinSDKVersion string   `xml:"minSdkVersion,attr"`
+}
+
+func parseAPKInfo(apkPath string) (ApkInfo, error) {
+	var manifestContent bytes.Buffer
+	enc := xml.NewEncoder(&manifestContent)
+	enc.Indent("", "\t")
+
+	zipErr, resErr, manErr := apkparser.ParseApk(apkPath, enc)
+	if zipErr != nil {
+		return ApkInfo{}, fmt.Errorf("failed to unzip the APK, error: %s", zipErr)
+	}
+	if resErr != nil {
+		return ApkInfo{}, fmt.Errorf("failed to parse resources, error: %s", zipErr)
+	}
+	if manErr != nil {
+		return ApkInfo{}, fmt.Errorf("failed to parse AndroidManifest.xml, error: %s", zipErr)
+	}
+
+	var manifest manifest
+	if err := xml.Unmarshal(manifestContent.Bytes(), &manifest); err != nil {
+		return ApkInfo{}, fmt.Errorf("failed to unmarshal AndroidManifest.xml, error: %s", err)
+	}
+
+	return ApkInfo{
+		AppName:           manifest.Application.AppName,
+		PackageName:       manifest.PackageName,
+		VersionCode:       manifest.VersionCode,
+		VersionName:       manifest.VersionName,
+		MinSDKVersion:     manifest.UsesSdk.MinSDKVersion,
+		RawPackageContent: string(manifestContent.Bytes()),
+	}, nil
+}
+
+func getAPKInfoWithAapt(apkPth string) (ApkInfo, error) {
 	androidHome := os.Getenv("ANDROID_HOME")
 	if androidHome == "" {
 		return ApkInfo{}, errors.New("ANDROID_HOME environment not set")
@@ -108,4 +162,17 @@ func GetAPKInfo(apkPth string) (ApkInfo, error) {
 		MinSDKVersion:     minSDKVersion,
 		RawPackageContent: packageContent,
 	}, nil
+}
+
+// GetAPKInfo returns infos about the APK.
+func GetAPKInfo(apkPth string) (ApkInfo, error) {
+	parsedInfo, err := parseAPKInfo(apkPth)
+	if err == nil {
+		return parsedInfo, nil
+	}
+	// err != nil
+	log.Warnf("Failed to parse APK info: %s", err)
+	log.RWarnf("deploy-to-bitrise-io", "apk-parse", nil, "apkparser package failed to parse APK, error: %s", err)
+
+	return getAPKInfoWithAapt(apkPth)
 }
