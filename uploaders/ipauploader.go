@@ -104,7 +104,7 @@ func DeployIPA(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 		return "", fmt.Errorf("failed to create ipa artifact, error: %s", err)
 	}
 
-	if err := uploadArtifact(uploadURL, pth, ""); err != nil {
+	if err := uploadArtifact(uploadURL, pth, "application/octet-stream ipa"); err != nil {
 		return "", fmt.Errorf("failed to upload ipa artifact, error: %s", err)
 	}
 

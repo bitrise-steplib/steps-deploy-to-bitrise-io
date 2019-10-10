@@ -130,7 +130,9 @@ func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 			return fmt.Errorf("failed to create request, error: %s", err)
 		}
 
-		request.Header.Add("Content-Type", contentType)
+		if contentType != "" {
+			request.Header.Add("Content-Type", contentType)
+		}
 
 		// Set Content Length manually (https://stackoverflow.com/a/39764726), as it is part of signature in signed URL
 		fileInfo, err := file.Stat()
@@ -138,6 +140,15 @@ func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 			return fmt.Errorf("failed to get file info for %s, error: %s", artifactPth, err)
 		}
 		request.ContentLength = fileInfo.Size()
+
+		// The go http library will switch the TransferEncoding to 'chunked' if
+		// it sees a Content-Length of 0 and a TransferEncoding
+		// hasn't been set to "identity", but AWS doesn't support the 'chunked'
+		// TransferEncoding!
+		// https://github.com/golang/go/blob/141b09726dcfc1fa9f04ee9e08e6fa4af00fa57b/src/net/http/request.go#L520
+		if request.ContentLength == 0 {
+			request.TransferEncoding = []string{"identity"}
+		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 		defer cancel()

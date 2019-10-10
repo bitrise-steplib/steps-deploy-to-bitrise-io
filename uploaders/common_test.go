@@ -44,18 +44,20 @@ func Test_uploadArtifact(t *testing.T) {
 			return
 		}
 
+		t.Logf("Content type: %s", r.Header.Get("Content-Type"))
+
 		bytes, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			t.Errorf("httptest: failed to read request, error: %s", err)
+			t.Fatalf("httptest: failed to read request, error: %s", err)
 			return
 		}
 
 		if r.ContentLength != wantFileSize {
-			t.Errorf("httptest: Content-length got %d want %d", r.ContentLength, wantFileSize)
+			t.Fatalf("httptest: Content-length got %d want %d", r.ContentLength, wantFileSize)
 		}
 
 		if r.Header.Get("Content-Type") != contentType {
-			t.Errorf("httptest: content type got: %s want: %s", r.Header.Get("Content-Type"), contentType)
+			t.Fatalf("httptest: content type got: %s want: %s", r.Header.Get("Content-Type"), contentType)
 		}
 
 		if int64(len(bytes)) != wantFileSize {
