@@ -145,20 +145,20 @@ func Test_parseAPKInfo(t *testing.T) {
 				return
 			}
 			// Check all fields, exluding RawPackageContent, which is used for debugging only
-			if !reflect.DeepEqual(gotFallback.AppName, tt.want.AppName) {
-				t.Errorf("parseAPKInfo().AppName = %+v, want %+v", got, tt.want)
+			if gotFallback.AppName != tt.want.AppName {
+				t.Errorf("getAPKInfoWithAapt().AppName = %+v, want %+v", gotFallback.AppName, tt.want)
 			}
-			if !reflect.DeepEqual(gotFallback.PackageName, tt.want.PackageName) {
-				t.Errorf("parseAPKInfo().PackageName = %+v, want %+v", got, tt.want)
+			if gotFallback.PackageName != tt.want.PackageName {
+				t.Errorf("getAPKInfoWithAapt().PackageName = %+v, want %+v", gotFallback.PackageName, tt.want)
 			}
-			if !reflect.DeepEqual(gotFallback.VersionCode, tt.want.VersionCode) {
-				t.Errorf("parseAPKInfo().VersionCode = %+v, want %+v", got, tt.want)
+			if gotFallback.VersionCode != tt.want.VersionCode {
+				t.Errorf("getAPKInfoWithAapt().VersionCode = %+v, want %+v", gotFallback.VersionCode, tt.want)
 			}
-			if !reflect.DeepEqual(gotFallback.VersionName, tt.want.VersionName) {
-				t.Errorf("parseAPKInfo().VersionName = %+v, want %+v", got, tt.want)
+			if gotFallback.VersionName != tt.want.VersionName {
+				t.Errorf("getAPKInfoWithAapt().VersionName = %+v, want %+v", gotFallback.VersionName, tt.want)
 			}
-			if !reflect.DeepEqual(gotFallback.MinSDKVersion, tt.want.MinSDKVersion) {
-				t.Errorf("parseAPKInfo().MinSDKVersion = %+v, want %+v", got, tt.want)
+			if gotFallback.MinSDKVersion != tt.want.MinSDKVersion {
+				t.Errorf("getAPKInfoWithAapt().MinSDKVersion = %+v, want %+v", gotFallback.MinSDKVersion, tt.want)
 			}
 		})
 	}
