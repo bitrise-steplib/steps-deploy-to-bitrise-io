@@ -10,6 +10,7 @@ description: |-
 
   1. Set the value for the Deploy directory of file path. The default is the $BITRISE_DEPLOY_DIR environment variable which is exposed by the Bitrise CLI.
   2. Set the **Notify: User Roles** and the **Notify: Emails** inputs to configure notifications for the users. Note that the **Notify: Emails** input is only used if a public install page is created and you must use a Secret to set it.
+  3. Optionally, you can create a zip file for all your build artifacts by setting the **Compress the artifacts into one file?** input to `true`. 
 
   Get a public install page that allows testers to install the app on their devices:
 
