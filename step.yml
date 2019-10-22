@@ -1,33 +1,33 @@
 title: "Deploy to Bitrise.io - Apps, Logs, Artifacts"
 summary: |-
-  Generic artifacts deployer, attaches the artifacts to bitrise.io builds.
+  Deploys build artifacts to make them available for the user. Sends test results to the Test Reports add-on.
 description: |-
-The Step collects artifacts from previous Steps in the Workflow and places them in a specified deploy directory or compresses them into a single .zip file in the deploy directory. These artifacts are then available on the **APPS & ARTIFACTS** tab of any given build. For installable artifacts, such as IPAs or APKs, the Step can create a public install page that allows testers to install the app on their devices. You can also use the Step to notify users about the build.
+  The Step collects artifacts from previous Steps in the Workflow and places them in a specified deploy directory or compresses them into a single .zip file in the deploy directory. These artifacts are then available on the **APPS & ARTIFACTS** tab of any given build. For installable artifacts, such as IPAs or APKs, the Step can create a public install page that allows testers to install the app on their devices. You can also use the Step to notify users about the build.
 
-This Step is required in order to use the Test Reports add-on. It converts the test results to the right format and sends them to the add-on.
+  This Step is required in order to use the Test Reports add-on. It converts the test results to the right format and sends them to the add-on.
 
-### Configuring the Step
+  ### Configuring the Step
 
-1. Set the value for the Deploy directory of file path. The default is the $BITRISE_DEPLOY_DIR environment variable which is exposed by the Bitrise CLI.
-2. Set the **Notify: User Roles** and the **Notify: Emails** inputs to configure notifications for the users. Note that the **Notify: Emails** input is only used if a public install page is created and you must use a Secret to set it.
+  1. Set the value for the Deploy directory of file path. The default is the $BITRISE_DEPLOY_DIR environment variable which is exposed by the Bitrise CLI.
+  2. Set the **Notify: User Roles** and the **Notify: Emails** inputs to configure notifications for the users. Note that the **Notify: Emails** input is only used if a public install page is created and you must use a Secret to set it.
 
-Get a public install page that allows testers to install the app on their devices:
+  Get a public install page that allows testers to install the app on their devices:
 
-1. Set the **Enable public page for the App?** input to `true`.
-2. Set the **Compress the artifacts into one file?** input to `false`. If all the contents of the deploy directory are compressed into a single zip file, there won't be a public install page.
+  1. Set the **Enable public page for the App?** input to `true`.
+  2. Set the **Compress the artifacts into one file?** input to `false`. If all the contents of the deploy directory are compressed into a single zip file, there won't be a public install page.
 
-### Troubleshooting
+  ### Troubleshooting
 
-If your users did not get notified via email, check the **Enable public page for the App?** input. If it is set to `false`, no email notifications will be sent.
+  If your users did not get notified via email, check the **Enable public page for the App?** input. If it is set to `false`, no email notifications will be sent.
 
-If you can't find the artifacts on the **APPS & ARTIFACTS** tab, check the **Deploy directory or file path** input. You can use remote access to check if your artifacts are available at the specified location.
+  If you can't find the artifacts on the **APPS & ARTIFACTS** tab, check the **Deploy directory or file path** input. You can use remote access to check if your artifacts are available at the specified location.
 
-### Useful links
-[Deployment on Bitrise](https://devcenter.bitrise.io/deploy/deployment-index/)
+  ### Useful links
+  [Deployment on Bitrise](https://devcenter.bitrise.io/deploy/deployment-index/)
 
-### Related Steps
-Deploy to Google Play
-Deploy to iTunesConnect
+  ### Related Steps
+  Deploy to Google Play
+  Deploy to iTunesConnect
 website: https://github.com/bitrise-steplib/steps-deploy-to-bitrise-io
 source_code_url: https://github.com/bitrise-steplib/steps-deploy-to-bitrise-io
 support_url: https://github.com/bitrise-steplib/steps-deploy-to-bitrise-io/issues
