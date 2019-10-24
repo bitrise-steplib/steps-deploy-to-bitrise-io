@@ -3,6 +3,7 @@ package uploaders
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-xcode/exportoptions"
@@ -31,6 +32,10 @@ func DeployIPA(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 	buildNumber, _ := infoPlistData.GetString("CFBundleVersion")
 	minOSVersion, _ := infoPlistData.GetString("MinimumOSVersion")
 	deviceFamilyList, _ := infoPlistData.GetUInt64Array("UIDeviceFamily")
+
+	if at := os.Getenv("APP_TITLE"); len(at) > 0 {
+		appTitle = at
+	}
 
 	appInfo := map[string]interface{}{
 		"app_title":          appTitle,
