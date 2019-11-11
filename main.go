@@ -322,14 +322,14 @@ func deploy(clearedFilesToDeploy []string, config Config) (map[string]string, er
 				return nil, fmt.Errorf("deploy failed, error: %s", err)
 			}
 
-			universalAPKPair, ok := aabAPKPairs[pth]
-			if !ok {
-				return nil, fmt.Errorf("no iniversal apk pair found for aab: %s", pth)
-			}
+			// universalAPKPair, ok := aabAPKPairs[pth]
+			// if !ok {
+			// 	return nil, fmt.Errorf("no iniversal apk pair found for aab: %s", pth)
+			// }
 
-			if universalAPKInstallPage := apkInstallPages[filepath.Base(universalAPKPair)]; universalAPKInstallPage != "" {
-				publicInstallPages[filepath.Base(pth)] = universalAPKInstallPage
-			}
+			// if universalAPKInstallPage := apkInstallPages[filepath.Base(universalAPKPair)]; universalAPKInstallPage != "" {
+			// 	publicInstallPages[filepath.Base(pth)] = universalAPKInstallPage
+			// }
 		case zippedXcarchiveExt:
 			log.Donef("Uploading xcarchive file: %s", pth)
 			if err := uploaders.DeployXcarchive(pth, config.BuildURL, config.APIToken); err != nil {
