@@ -318,7 +318,7 @@ func deploy(clearedFilesToDeploy []string, config Config) (map[string]string, er
 			log.Donef("Uploading aab file: %s", pth)
 
 			if err := uploaders.DeployAAB(pth, androidArtifacts, config.BuildURL, config.APIToken,
-				config.NotifyUserGroups, config.NotifyEmailList, "false"); err != nil {
+				config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled); err != nil {
 				return nil, fmt.Errorf("deploy failed, error: %s", err)
 			}
 
