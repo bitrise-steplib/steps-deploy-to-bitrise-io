@@ -275,7 +275,7 @@ func findAPKsAndAABs(pths []string) (apks []string, aabs []string, others []stri
 
 func deploy(clearedFilesToDeploy []string, config Config) (map[string]string, error) {
 	apks, aabs, others := findAPKsAndAABs(clearedFilesToDeploy)
-	apks, aabAPKPairs, err := ensureAABsHasUniversalAPKPair(aabs, apks)
+	apks, _, err := ensureAABsHasUniversalAPKPair(aabs, apks)
 	if err != nil {
 		return nil, err
 	}
@@ -320,15 +320,6 @@ func deploy(clearedFilesToDeploy []string, config Config) (map[string]string, er
 			if err := uploaders.DeployAAB(pth, androidArtifacts, config.BuildURL, config.APIToken,
 				config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled); err != nil {
 				return nil, fmt.Errorf("deploy failed, error: %s", err)
-			}
-
-			universalAPKPair, ok := aabAPKPairs[pth]
-			if !ok {
-				return nil, fmt.Errorf("no iniversal apk pair found for aab: %s", pth)
-			}
-
-			if universalAPKInstallPage := apkInstallPages[filepath.Base(universalAPKPair)]; universalAPKInstallPage != "" {
-				publicInstallPages[filepath.Base(pth)] = universalAPKInstallPage
 			}
 		case zippedXcarchiveExt:
 			log.Donef("Uploading xcarchive file: %s", pth)
