@@ -275,7 +275,7 @@ func findAPKsAndAABs(pths []string) (apks []string, aabs []string, others []stri
 
 func deploy(clearedFilesToDeploy []string, config Config) (map[string]string, error) {
 	apks, aabs, others := findAPKsAndAABs(clearedFilesToDeploy)
-	apks, aabAPKPairs, err := ensureAABsHasUniversalAPKPair(aabs, apks)
+	apks, _, err := ensureAABsHasUniversalAPKPair(aabs, apks)
 	if err != nil {
 		return nil, err
 	}
