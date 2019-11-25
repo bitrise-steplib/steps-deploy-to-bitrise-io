@@ -9,11 +9,13 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
 )
 
 func TestXCresult3Converters(t *testing.T) {
+	log.SetEnableDebugLog(true)
 	want := junit.XML{
 		TestSuites: []junit.TestSuite{
 			{
