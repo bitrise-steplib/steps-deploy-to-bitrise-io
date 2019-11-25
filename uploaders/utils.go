@@ -22,7 +22,7 @@ func fileSizeInBytes(pth string) (float64, error) {
 		return 0, err
 	}
 	if !exist {
-		return 0, fmt.Errorf("file not exist, error: %s", err)
+		return 0, fmt.Errorf("file not exist")
 	}
 
 	bytes := float64(info.Size())
