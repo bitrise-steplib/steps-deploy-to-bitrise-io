@@ -3,6 +3,8 @@ package xcresult3
 import (
 	"fmt"
 	"strings"
+
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
 )
 
 // ActionsInvocationRecord ...
@@ -66,10 +68,11 @@ type Message struct {
 }
 
 // failure returns the ActionTestSummaryGroup's failure reason from the ActionsInvocationRecord.
-func (r ActionsInvocationRecord) failure(test ActionTestSummaryGroup) string {
-	target, testCase := test.producingTargetAndTestCaseName()
+func (r ActionsInvocationRecord) failure(test ActionTestSummaryGroup, testSuit junit.TestSuite) string {
+	testCase := test.producingTestCaseName()
+
 	for _, failureSummary := range r.Issues.TestFailureSummaries.Values {
-		if failureSummary.ProducingTarget.Value == target && failureSummary.TestCaseName.Value == testCase {
+		if failureSummary.ProducingTarget.Value == testSuit.Name && failureSummary.TestCaseName.Value == testCase {
 			file, line := failureSummary.fileAndLineNumber()
 			return fmt.Sprintf("%s:%s - %s", file, line, failureSummary.Message.Value)
 		}
