@@ -5,24 +5,24 @@ import (
 	"testing"
 )
 
-func TestActionTestSummaryGroup_producingTargetAndTestCaseName(t *testing.T) {
+func TestActionTestSummaryGroup_producingTestCaseName(t *testing.T) {
 	tests := []struct {
-		name         string
-		identifier   string
-		wantTarget   string
-		wantTestCase string
+		name       string
+		identifier string
+		wantClass  string
+		wantMethod string
 	}{
 		{
-			name:         "simple test",
-			identifier:   "Xcode11TestUITests2/testFail()",
-			wantTarget:   "Xcode11TestUITests2",
-			wantTestCase: "Xcode11TestUITests2.testFail()",
+			name:       "simple test",
+			identifier: "Xcode11TestUITests2/testFail()",
+			wantClass:  "Xcode11TestUITests2",
+			wantMethod: "testFail()",
 		},
 		{
-			name:         "invalid format",
-			identifier:   "Xcode11TestUITests2testFail()",
-			wantTarget:   "",
-			wantTestCase: "",
+			name:       "invalid format",
+			identifier: "Xcode11TestUITests2testFail()",
+			wantMethod: "",
+			wantClass:  "",
 		},
 	}
 	for _, tt := range tests {
@@ -30,12 +30,12 @@ func TestActionTestSummaryGroup_producingTargetAndTestCaseName(t *testing.T) {
 			g := ActionTestSummaryGroup{}
 			g.Identifier.Value = tt.identifier
 
-			gotTarget, gotTestCase := g.producingTargetAndTestCaseName()
-			if gotTarget != tt.wantTarget {
-				t.Errorf("ActionTestSummaryGroup.producingTargetAndTestCaseName() gotTarget = %v, want %v", gotTarget, tt.wantTarget)
+			gotClass, gotMethod := g.references()
+			if gotClass != tt.wantClass {
+				t.Errorf("ActionTestSummaryGroup.references() gotClass = %v, want %v", gotClass, tt.wantClass)
 			}
-			if gotTestCase != tt.wantTestCase {
-				t.Errorf("ActionTestSummaryGroup.producingTargetAndTestCaseName() gotTestCase = %v, want %v", gotTestCase, tt.wantTestCase)
+			if gotMethod != tt.wantMethod {
+				t.Errorf("ActionTestSummaryGroup.references() gotMethod = %v, want %v", gotMethod, tt.wantMethod)
 			}
 		})
 	}

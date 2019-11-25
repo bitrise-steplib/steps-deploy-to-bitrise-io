@@ -3,6 +3,3 @@ _tmp
 .bundle/
 # built executable
 steps-deploy-to-bitrise-io
-converters_test.go
-ios_xcresult3_2.xcresult
-ios_xcresult3.xcresult
