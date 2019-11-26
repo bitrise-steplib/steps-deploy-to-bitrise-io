@@ -21,10 +21,6 @@ workflows:
     before_run:
     - audit-this-step
     steps:
-    - go-list:
-    - golint:
-    - errcheck:
-    - go-test:
     - script:
         inputs:
         - content: |-
@@ -32,14 +28,18 @@ workflows:
             set -e
             set -v
             rm -rf ./_tmp
+    - script:
+        inputs:
+        - content: git clone $SAMPLE_ARTIFACTS_GIT_CLONE_URL ./_tmp
+    - go-list:
+    - golint:
+    - errcheck:
+    - go-test:
     - change-workdir:
         run_if: true
         inputs:
         - path: ./_tmp
         - is_create_path: true
-    - script:
-        inputs:
-        - content: git clone $SAMPLE_ARTIFACTS_GIT_CLONE_URL .
     - path::./:
         title: IOS Test uncompressed
         run_if: true
