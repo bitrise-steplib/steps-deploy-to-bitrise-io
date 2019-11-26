@@ -6,6 +6,8 @@
 package converters
 
 import (
+	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 
@@ -141,7 +143,7 @@ func TestXCresult3Converters(t *testing.T) {
 		{
 			name:          "xcresult3",
 			converter:     &xcresult3.Converter{},
-			testFilePaths: []string{"../testdata/ios_xcresult3_repro.xcresult"},
+			testFilePaths: []string{filepath.Join(os.Getenv("BITRISE_SOURCE_DIR"), "xcresults/xcresult3_multi_level_UI_tests.xcresult")},
 			wantDetect:    true,
 			wantXMLError:  false,
 			wantXML:       want,
