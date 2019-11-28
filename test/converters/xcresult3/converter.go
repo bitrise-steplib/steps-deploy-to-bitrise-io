@@ -116,7 +116,7 @@ func (c *Converter) XML() (junit.XML, error) {
 				testSuit.TestCases = append(testSuit.TestCases, junit.TestCase{
 					Name:      test.Name.Value,
 					ClassName: strings.Split(test.Identifier.Value, "/")[0],
-					Failure:   record.failure(test),
+					Failure:   record.failure(test, testSuit),
 					Time:      duartion,
 				})
 

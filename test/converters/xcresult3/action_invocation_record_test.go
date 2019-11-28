@@ -1,6 +1,10 @@
 package xcresult3
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
+)
 
 func TestTestFailureSummary_fileAndLineNumber(t *testing.T) {
 	tests := []struct {
@@ -63,10 +67,56 @@ func TestActionsInvocationRecord_failure(t *testing.T) {
 			},
 			want: `file:/Xcode11TestUITests2.swift:CharacterRangeLen=0&EndingLineNumber=33&StartingLineNumber=33 - XCTAssertEqual failed: ("1") is not equal to ("0")`,
 		},
+		{
+			name: "class inherited test",
+			record: ActionsInvocationRecord{
+				Issues: Issues{
+					TestFailureSummaries: TestFailureSummaries{
+						Values: []TestFailureSummary{
+							TestFailureSummary{
+								ProducingTarget: ProducingTarget{Value: "Xcode11TestUITests2"},
+								TestCaseName:    TestCaseName{Value: "SomethingDifferentClass.testFail()"},
+								Message:         Message{Value: "XCTAssertEqual failed: (\"1\") is not equal to (\"0\")"},
+								DocumentLocationInCreatingWorkspace: DocumentLocationInCreatingWorkspace{
+									URL: URL{Value: "file:/Xcode11TestUITests2.swift#CharacterRangeLen=0&EndingLineNumber=33&StartingLineNumber=33"},
+								},
+							},
+						},
+					},
+				},
+			},
+			test: ActionTestSummaryGroup{
+				Identifier: Identifier{Value: "SomethingDifferentClass/testFail()"},
+			},
+			want: `file:/Xcode11TestUITests2.swift:CharacterRangeLen=0&EndingLineNumber=33&StartingLineNumber=33 - XCTAssertEqual failed: ("1") is not equal to ("0")`,
+		},
+		{
+			name: "inner class test",
+			record: ActionsInvocationRecord{
+				Issues: Issues{
+					TestFailureSummaries: TestFailureSummaries{
+						Values: []TestFailureSummary{
+							TestFailureSummary{
+								ProducingTarget: ProducingTarget{Value: "Xcode11TestUITests2"},
+								TestCaseName:    TestCaseName{Value: "-[SomethingDifferentClass testFail]"},
+								Message:         Message{Value: "XCTAssertEqual failed: (\"1\") is not equal to (\"0\")"},
+								DocumentLocationInCreatingWorkspace: DocumentLocationInCreatingWorkspace{
+									URL: URL{Value: "file:/Xcode11TestUITests2.swift#CharacterRangeLen=0&EndingLineNumber=33&StartingLineNumber=33"},
+								},
+							},
+						},
+					},
+				},
+			},
+			test: ActionTestSummaryGroup{
+				Identifier: Identifier{Value: "SomethingDifferentClass/testFail"},
+			},
+			want: `file:/Xcode11TestUITests2.swift:CharacterRangeLen=0&EndingLineNumber=33&StartingLineNumber=33 - XCTAssertEqual failed: ("1") is not equal to ("0")`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.record.failure(tt.test); got != tt.want {
+			if got := tt.record.failure(tt.test, junit.TestSuite{Name: "Xcode11TestUITests2"}); got != tt.want {
 				t.Errorf("ActionsInvocationRecord.failure() = %v, want %v", got, tt.want)
 			}
 		})

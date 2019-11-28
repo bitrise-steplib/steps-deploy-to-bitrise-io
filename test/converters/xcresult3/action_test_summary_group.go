@@ -45,13 +45,12 @@ type Identifier struct {
 	Value string `json:"_value"`
 }
 
-// producingTargetAndTestCaseName unwraps the target and test case name from a given ActionTestSummaryGroup's Identifier.
-func (g ActionTestSummaryGroup) producingTargetAndTestCaseName() (target string, testCase string) {
+func (g ActionTestSummaryGroup) references() (class, method string) {
 	// Xcode11TestUITests2/testFail()
 	if g.Identifier.Value != "" {
 		s := strings.Split(g.Identifier.Value, "/")
 		if len(s) == 2 {
-			target, testCase = s[0], s[0]+"."+s[1]
+			return s[0], s[1]
 		}
 	}
 	return
