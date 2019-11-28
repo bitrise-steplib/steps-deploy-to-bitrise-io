@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestActionTestSummaryGroup_producingTestCaseName(t *testing.T) {
+func TestActionTestSummaryGroup_references(t *testing.T) {
 	tests := []struct {
 		name       string
 		identifier string

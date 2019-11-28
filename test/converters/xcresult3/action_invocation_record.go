@@ -70,11 +70,8 @@ type Message struct {
 func testCaseMatching(test ActionTestSummaryGroup, testCaseName string) bool {
 	class, method := test.references()
 
-	if testCaseName == class+"."+method ||
-		testCaseName == fmt.Sprintf("-[%s %s]", class, method) {
-		return true
-	}
-	return false
+	return testCaseName == class+"."+method ||
+		testCaseName == fmt.Sprintf("-[%s %s]", class, method)
 }
 
 // failure returns the ActionTestSummaryGroup's failure reason from the ActionsInvocationRecord.

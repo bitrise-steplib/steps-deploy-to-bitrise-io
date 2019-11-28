@@ -20,32 +20,33 @@ func TestXCresult3Converters(t *testing.T) {
 	log.SetEnableDebugLog(true)
 	want := junit.XML{
 		TestSuites: []junit.TestSuite{
-			{
+			{ // unit test
 				Name:     "rtgtrghtrgTests",
 				Tests:    2,
 				Failures: 0,
 				Errors:   0,
 				Time:     0.26388001441955566,
 				TestCases: []junit.TestCase{
-					{
+					{ // plain test case
 						Name:      "testExample()",
 						ClassName: "rtgtrghtrgTests",
 						Time:      0.0006339550018310547,
 					},
-					{
+					{ // plain test case
 						Name:      "testPerformanceExample()",
 						ClassName: "rtgtrghtrgTests",
 						Time:      0.2632460594177246,
 					},
 				},
 			},
-			{
+			{ // ui test
 				Name:     "rtgtrghtrgUITests",
 				Tests:    15,
 				Failures: 3,
 				Errors:   0,
 				Time:     0.7596049308776855,
 				TestCases: []junit.TestCase{
+					// class rtgtrghtrg3UITests: XCTestCase inside rtgtrghtrgUITests class
 					{
 						Name:      "testExample",
 						ClassName: "_TtCC17rtgtrghtrgUITests17rtgtrghtrgUITests18rtgtrghtrg3UITests",
@@ -63,6 +64,7 @@ func TestXCresult3Converters(t *testing.T) {
 						Time:      0.036438941955566406,
 					},
 
+					// class rtgtrghtrg2UITests: XCTestCase
 					{
 						Name:      "testExample()",
 						ClassName: "rtgtrghtrg2UITests",
@@ -80,6 +82,7 @@ func TestXCresult3Converters(t *testing.T) {
 						Time:      0.041545987129211426,
 					},
 
+					// class rtgtrghtrg4UITests: rtgtrghtrgUITests (so rtgtrghtrg4UITests inherits rtgtrghtrgUITests -> test cases merged and the base class name is rtgtrghtrg4UITests)
 					{
 						Name:      "testExample()",
 						ClassName: "rtgtrghtrg4UITests",
@@ -112,6 +115,7 @@ func TestXCresult3Converters(t *testing.T) {
 						Time:      0.030627012252807617,
 					},
 
+					// class rtgtrghtrgUITests: XCTestCase
 					{
 						Name:      "testExample()",
 						ClassName: "rtgtrghtrgUITests",
