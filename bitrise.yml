@@ -20,6 +20,8 @@ workflows:
   ci:
     before_run:
     - audit-this-step
+    after_run:
+    - _zero_length_file_upload
     steps:
     - script:
         inputs:
@@ -157,6 +159,25 @@ workflows:
         - content: |-
             echo "-> BITRISE_PUBLIC_INSTALL_PAGE_URL: ${BITRISE_PUBLIC_INSTALL_PAGE_URL}"
             echo "-> BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP: ${BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP}"
+
+  _zero_length_file_upload:
+    steps:
+    - script:
+        inputs:
+        - content: touch 0_length_file.txt
+    - path::./:
+        title: Zero length file upload test
+        run_if: true
+        inputs:
+        - build_url: $BITRISE_BUILD_URL
+        - build_api_token: $BITRISE_BUILD_API_TOKEN
+        - is_compress: "true"
+        - zip_name: zip-name-test
+        - deploy_path: 0_length_file.txt
+        - notify_user_groups: $NOTIFY_USER_GROUPS
+        - notify_email_list: $NOTIFY_EMAIL_LIST
+        - is_enable_public_page: "true"
+        - debug_mode: "true"
 
   # ----------------------------------------------------------------
   # --- Utility workflows
