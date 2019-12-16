@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -125,7 +126,19 @@ func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 			}
 		}()
 
-		request, err := http.NewRequest(http.MethodPut, uploadURL, ioutil.NopCloser(file))
+		// Set Content Length manually (https://stackoverflow.com/a/39764726), as it is part of signature in signed URL
+		fileInfo, err := file.Stat()
+		if err != nil {
+			return fmt.Errorf("failed to get file info for %s, error: %s", artifactPth, err)
+		}
+
+		// Initializes request body to nil to send a Content-Length of 0: https://github.com/golang/go/issues/20257#issuecomment-299509391
+		var reqBody io.Reader
+		if fileInfo.Size() > 0 {
+			reqBody = ioutil.NopCloser(file)
+		}
+
+		request, err := http.NewRequest(http.MethodPut, uploadURL, reqBody)
 		if err != nil {
 			return fmt.Errorf("failed to create request, error: %s", err)
 		}
@@ -134,11 +147,6 @@ func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 			request.Header.Add("Content-Type", contentType)
 		}
 
-		// Set Content Length manually (https://stackoverflow.com/a/39764726), as it is part of signature in signed URL
-		fileInfo, err := file.Stat()
-		if err != nil {
-			return fmt.Errorf("failed to get file info for %s, error: %s", artifactPth, err)
-		}
 		request.ContentLength = fileInfo.Size()
 
 		// The go http library will switch the TransferEncoding to 'chunked' if
