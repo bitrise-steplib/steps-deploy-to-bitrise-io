@@ -171,12 +171,7 @@ workflows:
         inputs:
         - build_url: $BITRISE_BUILD_URL
         - build_api_token: $BITRISE_BUILD_API_TOKEN
-        - is_compress: "true"
-        - zip_name: zip-name-test
         - deploy_path: 0_length_file.txt
-        - notify_user_groups: $NOTIFY_USER_GROUPS
-        - notify_email_list: $NOTIFY_EMAIL_LIST
-        - is_enable_public_page: "true"
         - debug_mode: "true"
 
   # ----------------------------------------------------------------
