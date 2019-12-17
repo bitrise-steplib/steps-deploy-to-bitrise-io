@@ -8,7 +8,6 @@ package converters
 import (
 	"os"
 	"path/filepath"
-	"reflect"
 	"testing"
 
 	"github.com/bitrise-io/go-utils/log"
@@ -162,7 +161,7 @@ func TestXCresult3Converters(t *testing.T) {
 			if test.wantXMLError && err == nil {
 				t.Fatalf("xml error want: %v, got: %v", test.wantXMLError, got)
 			}
-			if !reflect.DeepEqual(got, test.wantXML) {
+			if !equivalentJunitXML(got, test.wantXML) {
 				t.Fatalf("xml want: %+v, got: %+v", test.wantXML, got)
 			}
 		})
