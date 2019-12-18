@@ -161,7 +161,7 @@ func TestXCresult3Converters(t *testing.T) {
 			if test.wantXMLError && err == nil {
 				t.Fatalf("xml error want: %v, got: %v", test.wantXMLError, got)
 			}
-			if !equivalentJunitXML(got, test.wantXML) {
+			if !got.Equal(test.wantXML) {
 				t.Fatalf("xml want: %+v, got: %+v", test.wantXML, got)
 			}
 		})
