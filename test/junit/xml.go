@@ -1,6 +1,8 @@
 package junit
 
-import "encoding/xml"
+import (
+	"encoding/xml"
+)
 
 // XML ...
 type XML struct {

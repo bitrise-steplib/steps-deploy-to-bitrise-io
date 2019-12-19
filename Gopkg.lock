@@ -3,19 +3,19 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:044a9a52a1484169c47b6d2c359a593eccdba22667a08aa294ac7baed7c653e4"
+  digest = "1:8211c518f0f1765321cdc4fc7d6e14a8c5a7dfea6581a2bcd28b7f144d044cc8"
   name = "github.com/avast/apkparser"
   packages = ["."]
   pruneopts = "UT"
-  revision = "5ea4c23a90d9b14ec2d3fb6cb06aeff57eda2d32"
+  revision = "4e4b6d27fd93ff814dd0b470dcb1d4cd537250be"
 
 [[projects]]
   branch = "master"
-  digest = "1:5e3bbc74fb2d9b11f52377c6cf4310c084aa8f3dc1995a16f46da52862651ccd"
+  digest = "1:d74e68bd9cae05e1f05104b3f80703f8874574df289de8ff9c61432a288370a0"
   name = "github.com/bitrise-io/bitrise"
   packages = ["models"]
   pruneopts = "UT"
-  revision = "099ec60f02cc67ebd8b086e71abe0c2bd6a58c03"
+  revision = "5994bb8076a9559dfcb207bcdd07a0cf531009eb"
 
 [[projects]]
   branch = "master"
@@ -23,7 +23,7 @@
   name = "github.com/bitrise-io/envman"
   packages = ["models"]
   pruneopts = "UT"
-  revision = "7698fc58b190e022c2a8ca667b539ce48c3ed1c9"
+  revision = "62a9103972b53f03bd80d7a391eb15733495b7a0"
 
 [[projects]]
   branch = "master"
@@ -31,22 +31,22 @@
   name = "github.com/bitrise-io/go-android"
   packages = ["sdk"]
   pruneopts = "UT"
-  revision = "34d6f20488bf0e2256c034c03a2a589a4a608e3f"
+  revision = "a28433b493561a6575fcec699f93f124d22150d1"
 
 [[projects]]
   branch = "master"
-  digest = "1:8f5fdb79a7a38f6b7dafbc47f620322f384a0cb06858cb28df0e5635e5bb4df4"
+  digest = "1:89562e1ecde606efbc12f60b41582279cccea8f4d39b31290e2d64bd1f08ee29"
   name = "github.com/bitrise-io/go-steputils"
   packages = [
     "stepconf",
     "tools",
   ]
   pruneopts = "UT"
-  revision = "f540824d77dfd382ce84fd0ee0a9da2fba1cce0a"
+  revision = "3c98d95a94d51624a26e99419d0fc03d2aab0055"
 
 [[projects]]
   branch = "master"
-  digest = "1:c78f8220c2e1accab171ec2ec899f7ce011f351619feee5de11f079336ae54c0"
+  digest = "1:f54ec8f857f2236c6794fba42c39ba5e5ca21e1ca92a7af05cfa2c42d441e0c6"
   name = "github.com/bitrise-io/go-utils"
   packages = [
     "colorstring",
@@ -66,11 +66,11 @@
     "ziputil",
   ]
   pruneopts = "UT"
-  revision = "ad86bf775472ce1934affb9d3cb7d5ea3dffd16f"
+  revision = "5067a2a682f21030f379f88e853b9e0734a24516"
 
 [[projects]]
   branch = "master"
-  digest = "1:b56f4c1e2f6834da9549215c3c56b0e590cf04e8a400928a2e079ac4c0322187"
+  digest = "1:234d1f0d35469bfeacbaf43f8646ca143ad14b22d0599e4403867db24b57a274"
   name = "github.com/bitrise-io/go-xcode"
   packages = [
     "certificateutil",
@@ -83,7 +83,7 @@
     "xcarchive",
   ]
   pruneopts = "UT"
-  revision = "39758b99f466fbd5271280a29e55d6982e0de8bd"
+  revision = "95bf1e5fb205f81972e2450d227fa80748a5b322"
 
 [[projects]]
   branch = "master"
@@ -91,7 +91,7 @@
   name = "github.com/bitrise-io/stepman"
   packages = ["models"]
   pruneopts = "UT"
-  revision = "8138843b694ce731d58a1754b57ac250a9dec9e6"
+  revision = "bc5d7f8692c3ef82b67d4c103554bf8e8a521e3d"
 
 [[projects]]
   branch = "master"
@@ -99,7 +99,7 @@
   name = "github.com/bitrise-io/xcode-project"
   packages = ["serialized"]
   pruneopts = "UT"
-  revision = "a4e01d69cacc7dd9acbe8fb987dba69c9ce01b1c"
+  revision = "389cf29e41c71dc02c83959c6fac72e8d476766a"
 
 [[projects]]
   branch = "master"
@@ -107,7 +107,7 @@
   name = "github.com/bitrise-steplib/steps-xcode-test"
   packages = ["pretty"]
   pruneopts = "UT"
-  revision = "a88a70f7d32aff4f89e2f0366ee6dfcbf881bfc0"
+  revision = "b103484d0955ecd24008835b907e6f30ee602cf9"
 
 [[projects]]
   branch = "master"
@@ -116,6 +116,20 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "d7302db945fa6ea264fb79d8e13e931ea514a602"
+
+[[projects]]
+  digest = "1:1d1cbf539d9ac35eb3148129f96be5537f1a1330cadcc7e3a83b4e72a59672a3"
+  name = "github.com/google/go-cmp"
+  packages = [
+    "cmp",
+    "cmp/internal/diff",
+    "cmp/internal/flags",
+    "cmp/internal/function",
+    "cmp/internal/value",
+  ]
+  pruneopts = "UT"
+  revision = "2d0692c2e9617365a95b295612ac0d4415ba4627"
+  version = "v0.3.1"
 
 [[projects]]
   digest = "1:cbec35fe4d5a4fba369a656a8cd65e244ea2c743007d8f6c1ccb132acf9d1296"
@@ -185,6 +199,7 @@
     "github.com/bitrise-io/go-xcode/xcarchive",
     "github.com/bitrise-io/xcode-project/serialized",
     "github.com/bitrise-steplib/steps-xcode-test/pretty",
+    "github.com/google/go-cmp/cmp",
     "github.com/gorilla/mux",
     "github.com/pkg/errors",
     "howett.net/plist",

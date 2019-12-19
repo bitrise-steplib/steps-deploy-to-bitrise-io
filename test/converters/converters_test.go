@@ -8,12 +8,13 @@ package converters
 import (
 	"os"
 	"path/filepath"
-	"reflect"
+	"sort"
 	"testing"
 
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestXCresult3Converters(t *testing.T) {
@@ -162,7 +163,25 @@ func TestXCresult3Converters(t *testing.T) {
 			if test.wantXMLError && err == nil {
 				t.Fatalf("xml error want: %v, got: %v", test.wantXMLError, got)
 			}
-			if !reflect.DeepEqual(got, test.wantXML) {
+
+			opts := []cmp.Option{
+				cmp.Transformer("SortTestSuites", func(in []junit.TestSuite) []junit.TestSuite {
+					s := append([]junit.TestSuite{}, in...)
+					sort.Slice(s, func(i, j int) bool {
+						return s[i].Time > s[j].Time
+					})
+					return s
+				}),
+				cmp.Transformer("SortTestCases", func(in []junit.TestCase) []junit.TestCase {
+					s := append([]junit.TestCase{}, in...)
+					sort.Slice(s, func(i, j int) bool {
+						return s[i].Time > s[j].Time
+					})
+					return s
+				}),
+			}
+
+			if !cmp.Equal(got, test.wantXML, opts...) {
 				t.Fatalf("xml want: %+v, got: %+v", test.wantXML, got)
 			}
 		})
