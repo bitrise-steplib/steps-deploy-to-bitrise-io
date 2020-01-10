@@ -24,11 +24,11 @@ description: |-
   If you can't find the artifacts on the **APPS & ARTIFACTS** tab, check the **Deploy directory or file path** input. You can use [remote access](https://devcenter.bitrise.io/builds/remote-access/) to check if your artifacts are available at the specified location.
 
   ### Useful links
-  [Deployment on Bitrise](https://devcenter.bitrise.io/deploy/deployment-index/)
+  - [Deployment on Bitrise](https://devcenter.bitrise.io/deploy/deployment-index/)
 
   ### Related Steps
-  Deploy to Google Play
-  Deploy to iTunesConnect
+  - [Deploy to Google Play](https://www.bitrise.io/integrations/steps/google-play-deploy)
+  - [Deploy to iTunesConnect](https://www.bitrise.io/integrations/steps/deploy-to-itunesconnect-deliver)
 website: https://github.com/bitrise-steplib/steps-deploy-to-bitrise-io
 source_code_url: https://github.com/bitrise-steplib/steps-deploy-to-bitrise-io
 support_url: https://github.com/bitrise-steplib/steps-deploy-to-bitrise-io/issues
