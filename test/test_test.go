@@ -2,6 +2,7 @@ package test
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -228,7 +229,7 @@ func Test_ParseTestResults(t *testing.T) {
 		}
 
 		if len(bundle[0].XMLContent) != len(sampleIOSXmlOutput) {
-			t.Fatal("wrong xml content")
+			t.Fatal(fmt.Sprintf("wrong xml content: %s", bundle[0].XMLContent))
 		}
 	}
 

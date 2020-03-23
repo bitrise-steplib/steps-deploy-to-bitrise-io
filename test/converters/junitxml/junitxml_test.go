@@ -33,152 +33,265 @@ func Test_regroupErrors(t *testing.T) {
 		suites []junit.TestSuite
 		want   []junit.TestSuite
 	}{
-		{"regroup error message", []junit.TestSuite{
-			{TestCases: []junit.TestCase{
-				{Error: &junit.Error{Message: "error message"}},
-			}},
+		{
+			name: "regroup error message",
+			suites: []junit.TestSuite{{TestCases: []junit.TestCase{
+				{
+					Error: &junit.Error{
+						Message: "error message",
+					},
+				},
+			}}},
+			want: []junit.TestSuite{{TestCases: []junit.TestCase{
+				{
+					Failure: &junit.Failure{
+						Value: "Error message:\nerror message",
+					},
+				},
+			}}},
 		},
-			[]junit.TestSuite{
-				{TestCases: []junit.TestCase{
-					{Failure: "Error message:\nerror message"},
-				}},
-			},
+		{
+			name: "regroup error body",
+			suites: []junit.TestSuite{{TestCases: []junit.TestCase{
+				{
+					Error: &junit.Error{
+						Value: "error message",
+					},
+				},
+			}}},
+			want: []junit.TestSuite{{TestCases: []junit.TestCase{
+				{
+					Failure: &junit.Failure{
+						Value: "Error value:\nerror message",
+					},
+				},
+			}}},
 		},
-
-		{"regroup error body", []junit.TestSuite{
-			{TestCases: []junit.TestCase{
-				{Error: &junit.Error{Value: "error message"}},
-			}},
-		},
-			[]junit.TestSuite{
-				{TestCases: []junit.TestCase{
-					{Failure: "Error value:\nerror message"},
-				}},
-			},
-		},
-
-		{"regroup system err", []junit.TestSuite{
-			{TestCases: []junit.TestCase{
-				{SystemErr: "error message"},
-			}},
-		},
-			[]junit.TestSuite{
-				{TestCases: []junit.TestCase{
-					{Failure: "System error:\nerror message"},
-				}},
-			},
-		},
-
-		{"regroup error message - multiple test cases", []junit.TestSuite{
-			{TestCases: []junit.TestCase{
-				{Error: &junit.Error{Message: "error message"}},
-				{Error: &junit.Error{Message: "error message2"}},
-			}},
-		},
-			[]junit.TestSuite{
-				{TestCases: []junit.TestCase{
-					{Failure: "Error message:\nerror message"},
-					{Failure: "Error message:\nerror message2"},
-				}},
-			},
-		},
-
-		{"regroup error body - multiple test cases", []junit.TestSuite{
-			{TestCases: []junit.TestCase{
-				{Error: &junit.Error{Value: "error message"}},
-				{Error: &junit.Error{Value: "error message2"}},
-			}},
-		},
-			[]junit.TestSuite{
-				{TestCases: []junit.TestCase{
-					{Failure: "Error value:\nerror message"},
-					{Failure: "Error value:\nerror message2"},
-				}},
-			},
+		{
+			name: "regroup system err",
+			suites: []junit.TestSuite{{TestCases: []junit.TestCase{
+				{
+					SystemErr: "error message",
+				},
+			}}},
+			want: []junit.TestSuite{{TestCases: []junit.TestCase{
+				{
+					Failure: &junit.Failure{
+						Value: "System error:\nerror message",
+					},
+				},
+			}}},
 		},
 
-		{"regroup system err - multiple test cases", []junit.TestSuite{
-			{TestCases: []junit.TestCase{
-				{SystemErr: "error message"},
-				{SystemErr: "error message2"},
-			}},
+		{
+			name: "regroup error message - multiple test cases",
+			suites: []junit.TestSuite{{TestCases: []junit.TestCase{
+				{
+					Error: &junit.Error{
+						Message: "error message",
+					},
+				},
+				{
+					Error: &junit.Error{
+						Message: "error message2",
+					},
+				},
+			}}},
+			want: []junit.TestSuite{{TestCases: []junit.TestCase{
+				{
+					Failure: &junit.Failure{
+						Value: "Error message:\nerror message",
+					},
+				},
+				{
+					Failure: &junit.Failure{
+						Value: "Error message:\nerror message2",
+					},
+				},
+			}}},
 		},
-			[]junit.TestSuite{
-				{TestCases: []junit.TestCase{
-					{Failure: "System error:\nerror message"},
-					{Failure: "System error:\nerror message2"},
-				}},
-			},
+		{
+			name: "regroup error body - multiple test cases",
+			suites: []junit.TestSuite{{TestCases: []junit.TestCase{
+				{
+					Error: &junit.Error{
+						Value: "error message",
+					},
+				},
+				{
+					Error: &junit.Error{
+						Value: "error message2",
+					},
+				},
+			}}},
+			want: []junit.TestSuite{{TestCases: []junit.TestCase{
+				{
+					Failure: &junit.Failure{
+						Value: "Error value:\nerror message",
+					},
+				},
+				{
+					Failure: &junit.Failure{
+						Value: "Error value:\nerror message2",
+					},
+				},
+			}}},
 		},
-
-		{"should not touch failure", []junit.TestSuite{
-			{TestCases: []junit.TestCase{
-				{Failure: "error message"},
-			}},
+		{
+			name: "regroup system err - multiple test cases",
+			suites: []junit.TestSuite{{TestCases: []junit.TestCase{
+				{
+					SystemErr: "error message",
+				},
+				{
+					SystemErr: "error message2",
+				},
+			}}},
+			want: []junit.TestSuite{{TestCases: []junit.TestCase{
+				{
+					Failure: &junit.Failure{
+						Value: "System error:\nerror message",
+					},
+				},
+				{
+					Failure: &junit.Failure{
+						Value: "System error:\nerror message2",
+					},
+				},
+			}}},
 		},
-			[]junit.TestSuite{
-				{TestCases: []junit.TestCase{
-					{Failure: "error message"},
-				}},
-			},
+		{
+			name: "should not touch failure",
+			suites: []junit.TestSuite{{TestCases: []junit.TestCase{
+				{
+					Failure: &junit.Failure{
+						Value: "error message",
+					},
+				},
+			}}},
+			want: []junit.TestSuite{{TestCases: []junit.TestCase{
+				{
+					Failure: &junit.Failure{
+						Value: "error message",
+					},
+				},
+			}}},
 		},
-
-		{"should append error body to failure", []junit.TestSuite{
-			{TestCases: []junit.TestCase{
-				{Failure: "failure message", Error: &junit.Error{Value: "error value"}},
-			}},
+		{
+			name: "should append error body to failure",
+			suites: []junit.TestSuite{{TestCases: []junit.TestCase{
+				{
+					Failure: &junit.Failure{
+						Value: "failure message",
+					},
+					Error: &junit.Error{
+						Value: "error value",
+					},
+				},
+			}}},
+			want: []junit.TestSuite{{TestCases: []junit.TestCase{
+				{
+					Failure: &junit.Failure{
+						Value: "failure message\n\nError value:\nerror value",
+					},
+				},
+			}}},
 		},
-			[]junit.TestSuite{
-				{TestCases: []junit.TestCase{
-					{Failure: "failure message\n\nError value:\nerror value"},
-				}},
-			},
+		{
+			name: "should append error message to failure",
+			suites: []junit.TestSuite{{TestCases: []junit.TestCase{
+				{
+					Failure: &junit.Failure{
+						Value: "Failure message",
+					},
+					Error: &junit.Error{
+						Message: "error value",
+					},
+				},
+			}}},
+			want: []junit.TestSuite{{TestCases: []junit.TestCase{
+				{
+					Failure: &junit.Failure{
+						Value: "Failure message\n\nError message:\nerror value",
+					},
+				},
+			}}},
 		},
-
-		{"should append error message to failure", []junit.TestSuite{
-			{TestCases: []junit.TestCase{
-				{Failure: "failure message", Error: &junit.Error{Message: "error value"}},
-			}},
+		{
+			name: "should append system error to failure",
+			suites: []junit.TestSuite{{TestCases: []junit.TestCase{
+				{
+					Failure: &junit.Failure{
+						Value: "failure message",
+					},
+					SystemErr: "error value",
+				},
+			}}},
+			want: []junit.TestSuite{{TestCases: []junit.TestCase{
+				{
+					Failure: &junit.Failure{
+						Value: "failure message\n\nSystem error:\nerror value",
+					},
+				},
+			}}},
 		},
-			[]junit.TestSuite{
-				{TestCases: []junit.TestCase{
-					{Failure: "failure message\n\nError message:\nerror value"},
-				}},
-			},
+		{
+			name: "should append system error, error message, error body to failure",
+			suites: []junit.TestSuite{{TestCases: []junit.TestCase{
+				{
+					Failure: &junit.Failure{
+						Value: "failure message",
+					},
+					SystemErr: "error value",
+				},
+			}}},
+			want: []junit.TestSuite{{TestCases: []junit.TestCase{
+				{
+					Failure: &junit.Failure{
+						Value: "failure message\n\nSystem error:\nerror value",
+					},
+				},
+			}}},
 		},
-
-		{"should append system error to failure", []junit.TestSuite{
-			{TestCases: []junit.TestCase{
-				{Failure: "failure message", SystemErr: "error value"},
-			}},
+		{
+			name: "should append system error, error message, error body to failure",
+			suites: []junit.TestSuite{{TestCases: []junit.TestCase{
+				{
+					Failure: &junit.Failure{
+						Message: "failure message",
+						Value:   "failure content",
+					},
+					SystemErr: "error value",
+					Error: &junit.Error{
+						Message: "message",
+						Value:   "value",
+					},
+				},
+			}}},
+			want: []junit.TestSuite{{TestCases: []junit.TestCase{
+				{
+					Failure: &junit.Failure{
+						Value: "failure message\n\nfailure content\n\nError message:\nmessage\n\nError value:\nvalue\n\nSystem error:\nerror value",
+					},
+				},
+			}}},
 		},
-			[]junit.TestSuite{
-				{TestCases: []junit.TestCase{
-					{Failure: "failure message\n\nSystem error:\nerror value"},
-				}},
-			},
-		},
-		{"should append system error, error message, error body to failure", []junit.TestSuite{
-			{TestCases: []junit.TestCase{
-				{Failure: "failure message", SystemErr: "error value"},
-			}},
-		},
-			[]junit.TestSuite{
-				{TestCases: []junit.TestCase{
-					{Failure: "failure message\n\nSystem error:\nerror value"},
-				}},
-			},
-		},
-		{"should append system error, error message, error body to failure", []junit.TestSuite{
-			{TestCases: []junit.TestCase{
-				{Failure: "failure message", SystemErr: "error value", Error: &junit.Error{Message: "message", Value: "value"}},
-			}},
-		},
-			[]junit.TestSuite{
-				{TestCases: []junit.TestCase{
-					{Failure: "failure message\n\nError message:\nmessage\n\nError value:\nvalue\n\nSystem error:\nerror value"},
-				}},
-			},
+		{
+			name: "Should convert Message attribute of Failure element to the value of a Failure element",
+			suites: []junit.TestSuite{{TestCases: []junit.TestCase{
+				{
+					Failure: &junit.Failure{
+						Message: "ErrorMsg",
+					},
+				},
+			}}},
+			want: []junit.TestSuite{{TestCases: []junit.TestCase{
+				{
+					Failure: &junit.Failure{
+						Value: "ErrorMsg",
+					},
+				},
+			}}},
 		},
 	}
 	for _, tt := range tests {

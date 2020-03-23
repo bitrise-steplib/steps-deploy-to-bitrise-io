@@ -57,7 +57,9 @@ func TestXCresult3Converters(t *testing.T) {
 						Name:      "testFailMe",
 						ClassName: "_TtCC17rtgtrghtrgUITests17rtgtrghtrgUITests18rtgtrghtrg3UITests",
 						Time:      0.09049093723297119,
-						Failure:   "file:///Users/tamaspapik/Develop/ios/rtgtrghtrg/rtgtrghtrgUITests/rtgtrghtrgUITests.swift:CharacterRangeLen=0&EndingLineNumber=67&StartingLineNumber=67 - XCTAssertTrue failed",
+						Failure: &junit.Failure{
+							Value: "file:///Users/tamaspapik/Develop/ios/rtgtrghtrg/rtgtrghtrgUITests/rtgtrghtrgUITests.swift:CharacterRangeLen=0&EndingLineNumber=67&StartingLineNumber=67 - XCTAssertTrue failed",
+						},
 					},
 					{
 						Name:      "testLaunchPerformance",
@@ -75,7 +77,9 @@ func TestXCresult3Converters(t *testing.T) {
 						Name:      "testFailMe()",
 						ClassName: "rtgtrghtrg2UITests",
 						Time:      0.08525991439819336,
-						Failure:   "file:///Users/tamaspapik/Develop/ios/rtgtrghtrg/rtgtrghtrgUITests/rtgtrghtrgUITests.swift:CharacterRangeLen=0&EndingLineNumber=104&StartingLineNumber=104 - XCTAssertTrue failed",
+						Failure: &junit.Failure{
+							Value: "file:///Users/tamaspapik/Develop/ios/rtgtrghtrg/rtgtrghtrgUITests/rtgtrghtrgUITests.swift:CharacterRangeLen=0&EndingLineNumber=104&StartingLineNumber=104 - XCTAssertTrue failed",
+						},
 					},
 					{
 						Name:      "testLaunchPerformance()",
@@ -103,7 +107,9 @@ func TestXCresult3Converters(t *testing.T) {
 						Name:      "testFailMe2()",
 						ClassName: "rtgtrghtrg4UITests",
 						Time:      0.08395206928253174,
-						Failure:   "file:///Users/tamaspapik/Develop/ios/rtgtrghtrg/rtgtrghtrgUITests/rtgtrghtrgUITests.swift:CharacterRangeLen=0&EndingLineNumber=129&StartingLineNumber=129 - XCTAssertTrue failed",
+						Failure: &junit.Failure{
+							Value: "file:///Users/tamaspapik/Develop/ios/rtgtrghtrg/rtgtrghtrgUITests/rtgtrghtrgUITests.swift:CharacterRangeLen=0&EndingLineNumber=129&StartingLineNumber=129 - XCTAssertTrue failed",
+						},
 					},
 					{
 						Name:      "testLaunchPerformance()",

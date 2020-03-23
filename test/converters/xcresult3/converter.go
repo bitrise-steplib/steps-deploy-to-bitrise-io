@@ -113,10 +113,19 @@ func (c *Converter) XML() (junit.XML, error) {
 					}
 				}
 
+				failureMessage := record.failure(test, testSuit)
+
+				var failure *junit.Failure
+				if len(failureMessage) > 0 {
+					failure = &junit.Failure{
+						Value: failureMessage,
+					}
+				}
+
 				testSuit.TestCases = append(testSuit.TestCases, junit.TestCase{
 					Name:      test.Name.Value,
 					ClassName: strings.Split(test.Identifier.Value, "/")[0],
-					Failure:   record.failure(test, testSuit),
+					Failure:   failure,
 					Time:      duartion,
 				})
 

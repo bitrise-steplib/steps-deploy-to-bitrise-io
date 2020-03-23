@@ -22,6 +22,7 @@ func (h *Converter) Detect(files []string) bool {
 			h.files = append(h.files, file)
 		}
 	}
+
 	return len(h.files) > 0
 }
 
@@ -34,8 +35,14 @@ func regroupErrors(suites []junit.TestSuite) []junit.TestSuite {
 		for testCaseIndex, tc := range suite.TestCases {
 			var messages []string
 
-			if len(tc.Failure) > 0 {
-				messages = append(messages, tc.Failure)
+			if tc.Failure != nil {
+				if len(tc.Failure.Message) > 0 {
+					messages = append(messages, tc.Failure.Message)
+				}
+
+				if len(tc.Failure.Value) > 0 {
+					messages = append(messages, tc.Failure.Value)
+				}
 			}
 
 			if tc.Error != nil {
@@ -52,13 +59,19 @@ func regroupErrors(suites []junit.TestSuite) []junit.TestSuite {
 				messages = append(messages, "System error:\n"+tc.SystemErr)
 			}
 
-			tc.Failure, tc.Error, tc.SystemErr = strings.Join(messages, "\n\n"), nil, ""
+			tc.Error, tc.SystemErr = nil, ""
+			if messages != nil {
+				tc.Failure = &junit.Failure{
+					Value: strings.Join(messages, "\n\n"),
+				}
+			}
 
 			suites[testSuiteIndex].Failures += suites[testSuiteIndex].Errors
 			suites[testSuiteIndex].Errors = 0
 			suites[testSuiteIndex].TestCases[testCaseIndex] = tc
 		}
 	}
+
 	return suites
 }
 
