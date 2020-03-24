@@ -2,6 +2,7 @@ package junitxml
 
 import (
 	"encoding/xml"
+	"io/ioutil"
 	"reflect"
 	"testing"
 
@@ -20,7 +21,9 @@ func Test_parseTestSuites(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := parseTestSuites(&fileReader{Filename: tt.path})
+			_, err := parseTestSuites(func() ([]byte, error) {
+				return ioutil.ReadFile(tt.path)
+			})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("parseTestSuites() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -308,14 +311,13 @@ func Test_regroupErrors(t *testing.T) {
 func TestConverter_XML(t *testing.T) {
 	tests := []struct {
 		name    string
-		results []resultReader
+		results []string
 		want    junit.XML
 		wantErr bool
 	}{
 		{
 			name: "Error message in Message atttribute of Failure element",
-			results: []resultReader{&stringReader{
-				Contents: `<?xml version="1.0" encoding="UTF-8"?>
+			results: []string{`<?xml version="1.0" encoding="UTF-8"?>
 <testsuites tests="2" failures="1">
 	<testsuite name="MyApp-Unit-Tests" tests="2" failures="0" time="0.398617148399353">
 		<testcase classname="PaymentContextTests" name="testPaymentSuccessShowsTooltip()" time="0.19384193420410156">
@@ -325,8 +327,7 @@ func TestConverter_XML(t *testing.T) {
 			</failure>
 		</testcase>
 	</testsuite>
-</testsuites>`,
-			}},
+</testsuites>`},
 			want: junit.XML{
 				TestSuites: []junit.TestSuite{
 					{
@@ -361,8 +362,15 @@ func TestConverter_XML(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			h := &Converter{
-				results: tt.results,
+				results: []resultReader{},
 			}
+
+			for _, result := range tt.results {
+				h.results = append(h.results, func() ([]byte, error) {
+					return []byte(result), nil
+				})
+			}
+
 			got, err := h.XML()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Converter.XML() error = %v, wantErr %v", err, tt.wantErr)

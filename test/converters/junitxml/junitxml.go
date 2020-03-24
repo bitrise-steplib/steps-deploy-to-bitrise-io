@@ -9,25 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-type resultReader interface {
-	ReadAll() ([]byte, error)
-}
-
-type fileReader struct {
-	Filename string
-}
-
-func (r *fileReader) ReadAll() ([]byte, error) {
-	return ioutil.ReadFile(r.Filename)
-}
-
-type stringReader struct {
-	Contents string
-}
-
-func (r *stringReader) ReadAll() ([]byte, error) {
-	return []byte(r.Contents), nil
-}
+type resultReader func() ([]byte, error)
 
 // Converter holds data of the converter
 type Converter struct {
@@ -39,7 +21,9 @@ func (h *Converter) Detect(files []string) bool {
 	h.results = nil
 	for _, file := range files {
 		if strings.HasSuffix(file, ".xml") {
-			h.results = append(h.results, &fileReader{Filename: file})
+			h.results = append(h.results, func() ([]byte, error) {
+				return ioutil.ReadFile(file)
+			})
 		}
 	}
 
@@ -95,8 +79,8 @@ func regroupErrors(suites []junit.TestSuite) []junit.TestSuite {
 	return suites
 }
 
-func parseTestSuites(result resultReader) ([]junit.TestSuite, error) {
-	data, err := result.ReadAll()
+func parseTestSuites(readResult resultReader) ([]junit.TestSuite, error) {
+	data, err := readResult()
 	if err != nil {
 		return nil, err
 	}
