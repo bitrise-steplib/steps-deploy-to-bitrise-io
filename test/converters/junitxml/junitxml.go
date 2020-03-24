@@ -2,28 +2,48 @@ package junitxml
 
 import (
 	"encoding/xml"
+	"io/ioutil"
 	"strings"
 
-	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
 	"github.com/pkg/errors"
 )
 
+type resultReader interface {
+	ReadAll() ([]byte, error)
+}
+
+type fileReader struct {
+	Filename string
+}
+
+func (r *fileReader) ReadAll() ([]byte, error) {
+	return ioutil.ReadFile(r.Filename)
+}
+
+type stringReader struct {
+	Contents string
+}
+
+func (r *stringReader) ReadAll() ([]byte, error) {
+	return []byte(r.Contents), nil
+}
+
 // Converter holds data of the converter
 type Converter struct {
-	files []string
+	results []resultReader
 }
 
 // Detect return true if the test results a Juni4 XML file
 func (h *Converter) Detect(files []string) bool {
-	h.files = nil
+	h.results = nil
 	for _, file := range files {
 		if strings.HasSuffix(file, ".xml") {
-			h.files = append(h.files, file)
+			h.results = append(h.results, &fileReader{Filename: file})
 		}
 	}
 
-	return len(h.files) > 0
+	return len(h.results) > 0
 }
 
 // merges Suites->Cases->Error and Suites->Cases->SystemErr field values into Suites->Cases->Failure field
@@ -36,21 +56,21 @@ func regroupErrors(suites []junit.TestSuite) []junit.TestSuite {
 			var messages []string
 
 			if tc.Failure != nil {
-				if len(tc.Failure.Message) > 0 {
+				if len(strings.TrimSpace(tc.Failure.Message)) > 0 {
 					messages = append(messages, tc.Failure.Message)
 				}
 
-				if len(tc.Failure.Value) > 0 {
+				if len(strings.TrimSpace(tc.Failure.Value)) > 0 {
 					messages = append(messages, tc.Failure.Value)
 				}
 			}
 
 			if tc.Error != nil {
-				if len(tc.Error.Message) > 0 {
+				if len(strings.TrimSpace(tc.Error.Message)) > 0 {
 					messages = append(messages, "Error message:\n"+tc.Error.Message)
 				}
 
-				if len(tc.Error.Value) > 0 {
+				if len(strings.TrimSpace(tc.Error.Value)) > 0 {
 					messages = append(messages, "Error value:\n"+tc.Error.Value)
 				}
 			}
@@ -75,13 +95,14 @@ func regroupErrors(suites []junit.TestSuite) []junit.TestSuite {
 	return suites
 }
 
-func parseTestSuites(filePath string) ([]junit.TestSuite, error) {
-	data, err := fileutil.ReadBytesFromFile(filePath)
+func parseTestSuites(result resultReader) ([]junit.TestSuite, error) {
+	data, err := result.ReadAll()
 	if err != nil {
 		return nil, err
 	}
 
 	var testSuites junit.XML
+
 	testSuitesError := xml.Unmarshal(data, &testSuites)
 	if testSuitesError == nil {
 		return regroupErrors(testSuites.TestSuites), nil
@@ -99,8 +120,8 @@ func parseTestSuites(filePath string) ([]junit.TestSuite, error) {
 func (h *Converter) XML() (junit.XML, error) {
 	var xmlContent junit.XML
 
-	for _, file := range h.files {
-		testSuites, err := parseTestSuites(file)
+	for _, result := range h.results {
+		testSuites, err := parseTestSuites(result)
 		if err != nil {
 			return junit.XML{}, err
 		}

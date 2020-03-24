@@ -1,10 +1,12 @@
 package junitxml
 
 import (
+	"encoding/xml"
 	"reflect"
 	"testing"
 
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
+	"github.com/google/go-cmp/cmp"
 )
 
 func Test_parseTestSuites(t *testing.T) {
@@ -18,7 +20,7 @@ func Test_parseTestSuites(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := parseTestSuites(tt.path)
+			_, err := parseTestSuites(&fileReader{Filename: tt.path})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("parseTestSuites() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -298,6 +300,76 @@ func Test_regroupErrors(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := regroupErrors(tt.suites); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("regroupErrors() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestConverter_XML(t *testing.T) {
+	tests := []struct {
+		name    string
+		results []resultReader
+		want    junit.XML
+		wantErr bool
+	}{
+		{
+			name: "Error message in Message atttribute of Failure element",
+			results: []resultReader{&stringReader{
+				Contents: `<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="2" failures="1">
+	<testsuite name="MyApp-Unit-Tests" tests="2" failures="0" time="0.398617148399353">
+		<testcase classname="PaymentContextTests" name="testPaymentSuccessShowsTooltip()" time="0.19384193420410156">
+		</testcase>
+		<testcase classname="PaymentContextTests" name="testCannotCheckoutIfPaymentIsActive()" time="0.17543494701385498">
+			<failure message="XCTAssertTrue failed">
+			</failure>
+		</testcase>
+	</testsuite>
+</testsuites>`,
+			}},
+			want: junit.XML{
+				TestSuites: []junit.TestSuite{
+					{
+						XMLName:  xml.Name{Local: "testsuite"},
+						Name:     "MyApp-Unit-Tests",
+						Tests:    2,
+						Failures: 0,
+						Time:     0.398617148399353,
+						TestCases: []junit.TestCase{
+							junit.TestCase{
+								XMLName:   xml.Name{Local: "testcase"},
+								Name:      "testPaymentSuccessShowsTooltip()",
+								ClassName: "PaymentContextTests",
+								Time:      0.19384193420410156,
+								Failure:   nil,
+							},
+							junit.TestCase{
+								XMLName:   xml.Name{Local: "testcase"},
+								Name:      "testCannotCheckoutIfPaymentIsActive()",
+								ClassName: "PaymentContextTests",
+								Time:      0.17543494701385498,
+								Failure: &junit.Failure{
+									Value: "XCTAssertTrue failed",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := &Converter{
+				results: tt.results,
+			}
+			got, err := h.XML()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Converter.XML() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !cmp.Equal(got, tt.want) {
+				t.Errorf("Converter.XML() = %v, want %v, \n Diff: %s", got, tt.want, cmp.Diff(got, tt.want))
 			}
 		})
 	}
