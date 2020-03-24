@@ -85,10 +85,19 @@ func (h *Converter) XML() (junit.XML, error) {
 		}
 
 		for _, test := range tests {
+			failureMessage := test.Failure()
+
+			var failure *junit.Failure
+			if len(failureMessage) > 0 {
+				failure = &junit.Failure{
+					Value: failureMessage,
+				}
+			}
+
 			testSuite.TestCases = append(testSuite.TestCases, junit.TestCase{
 				Name:      test.TestName,
 				ClassName: testID,
-				Failure:   test.Failure(),
+				Failure:   failure,
 				Time:      test.Duration,
 			})
 		}

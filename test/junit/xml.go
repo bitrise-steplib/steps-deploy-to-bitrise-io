@@ -27,9 +27,16 @@ type TestCase struct {
 	Name      string   `xml:"name,attr"`
 	ClassName string   `xml:"classname,attr"`
 	Time      float64  `xml:"time,attr"`
-	Failure   string   `xml:"failure,omitempty"`
+	Failure   *Failure `xml:"failure,omitempty"`
 	Error     *Error   `xml:"error,omitempty"`
 	SystemErr string   `xml:"system-err,omitempty"`
+}
+
+// Failure ...
+type Failure struct {
+	XMLName xml.Name `xml:"failure,omitempty"`
+	Message string   `xml:"message,attr,omitempty"`
+	Value   string   `xml:",chardata"`
 }
 
 // Error ...
