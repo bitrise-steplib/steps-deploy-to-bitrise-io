@@ -14,7 +14,7 @@ type Path string
 
 // New ...
 func New() (Path, error) {
-	const downloadURL = "https://github.com/google/bundletool/releases/download/0.12.0/bundletool-all-0.12.0.jar"
+	const downloadURL = "https://github.com/google/bundletool/releases/download/0.13.4/bundletool-all.jar"
 
 	tmpPth, err := pathutil.NormalizedOSTempDirPath("tool")
 	if err != nil {
