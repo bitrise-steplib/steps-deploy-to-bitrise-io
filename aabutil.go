@@ -69,8 +69,8 @@ func unzipUniversalAPKsArchive(archive, destDir string) (string, error) {
 }
 
 // GenerateUniversalAPK generates universal apks from an aab file.
-func GenerateUniversalAPK(aabPth string) (string, error) {
-	r, err := bundletool.New()
+func GenerateUniversalAPK(aabPth, bundletoolVersion string) (string, error) {
+	r, err := bundletool.New(bundletoolVersion)
 	if err != nil {
 		return "", err
 	}
