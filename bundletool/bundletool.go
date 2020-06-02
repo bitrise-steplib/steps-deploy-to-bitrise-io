@@ -2,8 +2,9 @@ package bundletool
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
+	"os"
 	"path/filepath"
 
 	"github.com/bitrise-io/go-utils/command"
@@ -28,18 +29,27 @@ func New(version string) (Path, error) {
 		return "", err
 	}
 
-	d, err := ioutil.ReadAll(resp.Body)
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			fmt.Println("Failed to close body, error:", err)
+		}
+	}()
+
+	toolPath := filepath.Join(tmpPth, "bundletool-all.jar")
+
+	f, err := os.Create(toolPath)
 	if err != nil {
 		return "", err
 	}
 
-	if err := resp.Body.Close(); err != nil {
-		return "", err
-	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			fmt.Println("Failed to close file, error:", err)
+		}
+	}()
 
-	toolPath := filepath.Join(tmpPth, "bundletool-all.jar")
-
-	return Path(toolPath), ioutil.WriteFile(toolPath, d, 0777)
+	_, err = io.Copy(f, resp.Body)
+	return Path(toolPath), err
 }
 
 // Command ...
