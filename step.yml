@@ -196,6 +196,16 @@ inputs:
       value_options:
         - "false"
         - "true"
+  - bundletool_version: "0.13.4"
+    opts: 
+      category: Debug
+      title: "Bundletool version"
+      summary: The version of bundletool you want to use.
+      description: |-
+        The version you specify will be installed.
+
+        Versions are available here: https://github.com/google/bundletool/releases
+      is_required: true
 outputs:
   - BITRISE_PUBLIC_INSTALL_PAGE_URL:
     opts:

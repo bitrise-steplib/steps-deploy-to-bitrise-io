@@ -38,6 +38,7 @@ type Config struct {
 	AddonAPIBaseURL            string `env:"addon_api_base_url,required"`
 	AddonAPIToken              string `env:"addon_api_token"`
 	DebugMode                  bool   `env:"debug_mode,opt[true,false]"`
+	BundletoolVersion          string `env:"bundletool_version,required"`
 }
 
 // PublicInstallPage ...
@@ -232,7 +233,7 @@ func findUniversalAPKPair(aab string, apks []string) string {
 	return androidartifact.FindSameArtifact(universalAPKBase, apks)
 }
 
-func ensureAABsHasUniversalAPKPair(aabs, apks []string) ([]string, map[string]string, error) {
+func ensureAABsHasUniversalAPKPair(aabs, apks []string, bundletoolVersion string) ([]string, map[string]string, error) {
 	aabAPKPairs := map[string]string{}
 	for _, aab := range aabs {
 		log.Debugf("Looking for universal APK pair for: %s", aab)
@@ -242,7 +243,7 @@ func ensureAABsHasUniversalAPKPair(aabs, apks []string) ([]string, map[string]st
 			log.Debugf("Does not have universal APK pair, generating...")
 
 			var err error
-			universalAPKPair, err = GenerateUniversalAPK(aab)
+			universalAPKPair, err = GenerateUniversalAPK(aab, bundletoolVersion)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -275,7 +276,7 @@ func findAPKsAndAABs(pths []string) (apks []string, aabs []string, others []stri
 
 func deploy(clearedFilesToDeploy []string, config Config) (map[string]string, error) {
 	apks, aabs, others := findAPKsAndAABs(clearedFilesToDeploy)
-	apks, _, err := ensureAABsHasUniversalAPKPair(aabs, apks)
+	apks, _, err := ensureAABsHasUniversalAPKPair(aabs, apks, config.BundletoolVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -318,7 +319,7 @@ func deploy(clearedFilesToDeploy []string, config Config) (map[string]string, er
 			log.Donef("Uploading aab file: %s", pth)
 
 			if err := uploaders.DeployAAB(pth, androidArtifacts, config.BuildURL, config.APIToken,
-				config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled); err != nil {
+				config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled, config.BundletoolVersion); err != nil {
 				return nil, fmt.Errorf("deploy failed, error: %s", err)
 			}
 		case zippedXcarchiveExt:

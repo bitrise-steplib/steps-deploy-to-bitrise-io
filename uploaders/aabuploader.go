@@ -10,13 +10,13 @@ import (
 )
 
 // DeployAAB ...
-func DeployAAB(pth string, artifacts []string, buildURL, token, notifyUserGroups, notifyEmails, isEnablePublicPage string) error {
+func DeployAAB(pth string, artifacts []string, buildURL, token, notifyUserGroups, notifyEmails, isEnablePublicPage, bundletoolVersion string) error {
 	log.Printf("- analyzing aab")
 
 	// get aab manifest dump
 	log.Printf("- fetching info")
 
-	r, err := bundletool.New()
+	r, err := bundletool.New(bundletoolVersion)
 	if err != nil {
 		return err
 	}
