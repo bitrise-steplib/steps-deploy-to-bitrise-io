@@ -38,7 +38,7 @@ type Config struct {
 	AddonAPIBaseURL            string `env:"addon_api_base_url,required"`
 	AddonAPIToken              string `env:"addon_api_token"`
 	DebugMode                  bool   `env:"debug_mode,opt[true,false]"`
-	BundletoolVersion          string `env:"bundletool_version"`
+	BundletoolVersion          string `env:"bundletool_version,required"`
 }
 
 // PublicInstallPage ...
