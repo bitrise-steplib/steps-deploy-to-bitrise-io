@@ -167,7 +167,7 @@ func Test_parseAPKInfo(t *testing.T) {
 const testArtifactAndroidManifest string = `<manifest xmlns:android="http://schemas.android.com/apk/res/android" android:versionCode="1" android:versionName="1.0" package="com.example.birmachera.myapplication">
 	<uses-sdk android:minSdkVersion="17" android:targetSdkVersion="28"></uses-sdk>
 	<uses-permission android:name="android.permission.INTERNET"></uses-permission>
-	<application android:theme="null" android:label="My Application" android:icon="res/mipmap-xxxhdpi-v4/ic_launcher.png" android:debuggable="true" android:allowBackup="true" android:supportsRtl="true" android:roundIcon="res/mipmap-anydpi-v26/ic_launcher_round.xml" android:appComponentFactory="android.support.v4.app.CoreComponentFactory">
+	<application android:theme="null" android:label="My Application" android:icon="res/mipmap-xxxhdpi-v4/ic_launcher.png" android:debuggable="true" android:allowBackup="true" android:supportsRtl="true" android:roundIcon="res/mipmap-xxxhdpi-v4/ic_launcher_round.png" android:appComponentFactory="android.support.v4.app.CoreComponentFactory">
 		<activity android:name="com.example.birmachera.myapplication.MainActivity">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN"></action>
