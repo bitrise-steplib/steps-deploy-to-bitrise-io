@@ -186,6 +186,13 @@ inputs:
         The token required to authenticate with the API.
       is_dont_change_value: true
       is_sensitive: true
+  - generate_universal_apk_if_none: "false"
+    opts:
+      title: "Force generate universal APK for AABs"
+      description: |
+        When building an AAB artifact, check for a corresponding universal APK.
+        If none is found, generate the corresponding locally signed universal
+        APK for ease of debugging.
   - debug_mode: "false"
     opts: 
       category: Debug
