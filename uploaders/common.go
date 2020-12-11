@@ -253,8 +253,6 @@ func finishArtifact(buildURL, token, artifactID, artifactInfo, notifyUserGroups,
 		log.Warnf("Invalid e-mail addresses: %s", strings.Join(artifactResponse.InvalidEmails, ", "))
 	}
 
-	log.Warnf("Artifact's permanent url: %s.", artifactResponse.PermanentDownloadURL)
-
 	if isEnablePublicPage == "true" {
 		if artifactResponse.PublicInstallPageURL == "" {
 			return ArtifactURLs{}, fmt.Errorf("public install page was enabled, but no public install page generated")
