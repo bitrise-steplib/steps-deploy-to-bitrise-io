@@ -136,7 +136,15 @@ inputs:
       description: |-
         Specify the output pattern with golang template: [https://golang.org/pkg/text/template](https://golang.org/pkg/text/template)
       is_required: true
-      is_expand: false                    
+      is_expand: false
+  - permanent_download_url_map_format: "{{range $index, $element := .}}{{if $index}}|{{end}}{{$element.File}}=>{{$element.URL}}{{end}}"
+    opts:
+      title: Format for the BITRISE_PERMANENT_DOWNLOAD_URL_MAP output
+      summary: You can change the format of the BITRISE_PERMANENT_DOWNLOAD_URL_MAP output
+      description: |-
+        Specify the output pattern with golang template: [https://golang.org/pkg/text/template](https://golang.org/pkg/text/template)
+      is_required: true
+      is_expand: false
   - zip_name:
     opts:
       category: Debug
@@ -226,3 +234,15 @@ outputs:
 
         - $BITRISE_DEPLOY_DIR/ios_app.ipa=>https://ios_app/public/install/page
         - $BITRISE_DEPLOY_DIR/android_app.apk=>https://android_app/public/install/page|$BITRISE_DEPLOY_DIR/ios_app.ipa=>https://ios_app/public/install/page
+  - BITRISE_PERMANENT_DOWNLOAD_URL_MAP:
+      opts:
+        title: Map of filenames and Permanent Download URLs
+        description: |-
+          Permanent Download URLs by the artifact's file path.
+
+          The default format is `KEY1=>VALUE|KEY2=>VALUE` but is controlled by the `permanent_download_url_map_format` input
+
+          Examples:
+
+          - $BITRISE_DEPLOY_DIR/ios_app.ipa=>https://app.bitrise.io/artifacts/ipa-slug/download
+          - $BITRISE_DEPLOY_DIR/android_app.apk=>https://app.bitrise.io/artifacts/apk-slug/download|$BITRISE_DEPLOY_DIR/ios_app.ipa=>https://app.bitrise.io/artifacts/ipa-slug/download

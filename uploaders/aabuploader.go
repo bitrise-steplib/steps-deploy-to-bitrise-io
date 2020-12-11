@@ -10,7 +10,7 @@ import (
 )
 
 // DeployAAB ...
-func DeployAAB(pth string, artifacts []string, buildURL, token, notifyUserGroups, notifyEmails, isEnablePublicPage, bundletoolVersion string) error {
+func DeployAAB(pth string, artifacts []string, buildURL, token, bundletoolVersion string) (ArtifactURLs, error) {
 	log.Printf("- analyzing aab")
 
 	// get aab manifest dump
@@ -18,7 +18,7 @@ func DeployAAB(pth string, artifacts []string, buildURL, token, notifyUserGroups
 
 	r, err := bundletool.New(bundletoolVersion)
 	if err != nil {
-		return err
+		return ArtifactURLs{}, err
 	}
 	cmd := r.Command("dump", "manifest", "--bundle", pth)
 
@@ -26,7 +26,7 @@ func DeployAAB(pth string, artifacts []string, buildURL, token, notifyUserGroups
 
 	out, err := cmd.RunAndReturnTrimmedCombinedOutput()
 	if err != nil {
-		return err
+		return ArtifactURLs{}, err
 	}
 
 	packageName, versionCode, versionName := androidartifact.ParsePackageInfos(out)
@@ -55,7 +55,7 @@ func DeployAAB(pth string, artifacts []string, buildURL, token, notifyUserGroups
 
 	fileSize, err := fileSizeInBytes(pth)
 	if err != nil {
-		return fmt.Errorf("failed to get apk size, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to get apk size, error: %s", err)
 	}
 
 	info := androidartifact.ParseArtifactPath(pth)
@@ -80,23 +80,23 @@ func DeployAAB(pth string, artifacts []string, buildURL, token, notifyUserGroups
 
 	artifactInfoBytes, err := json.Marshal(aabInfoMap)
 	if err != nil {
-		return fmt.Errorf("failed to marshal apk infos, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to marshal apk infos, error: %s", err)
 	}
 
 	// ---
 
 	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "android-apk")
 	if err != nil {
-		return fmt.Errorf("failed to create apk artifact, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to create apk artifact, error: %s", err)
 	}
 
 	if err := uploadArtifact(uploadURL, pth, "application/octet-stream aab"); err != nil {
-		return fmt.Errorf("failed to upload apk artifact, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to upload apk artifact, error: %s", err)
+	}
+	artifactURLs, err := finishArtifact(buildURL, token, artifactID, string(artifactInfoBytes), "", "", "false")
+	if err != nil {
+		return ArtifactURLs{}, fmt.Errorf("failed to finish apk artifact, error: %s", err)
 	}
 
-	if _, err = finishArtifact(buildURL, token, artifactID, string(artifactInfoBytes), "", "", "false"); err != nil {
-		return fmt.Errorf("failed to finish apk artifact, error: %s", err)
-	}
-
-	return nil
+	return artifactURLs, nil
 }

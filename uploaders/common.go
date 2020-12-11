@@ -18,6 +18,11 @@ import (
 	"github.com/bitrise-io/go-utils/urlutil"
 )
 
+type ArtifactURLs struct {
+	PublicInstallPageURL string
+	PermanentDownloadURL string
+}
+
 func createArtifact(buildURL, token, artifactPth, artifactType string) (string, string, error) {
 	log.Printf("creating artifact")
 
@@ -177,7 +182,7 @@ func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 	})
 }
 
-func finishArtifact(buildURL, token, artifactID, artifactInfo, notifyUserGroups, notifyEmails, isEnablePublicPage string) (string, error) {
+func finishArtifact(buildURL, token, artifactID, artifactInfo, notifyUserGroups, notifyEmails, isEnablePublicPage string) (ArtifactURLs, error) {
 	log.Printf("finishing artifact")
 
 	// create form data
@@ -199,13 +204,14 @@ func finishArtifact(buildURL, token, artifactID, artifactInfo, notifyUserGroups,
 	// perform request
 	uri, err := urlutil.Join(buildURL, "artifacts", artifactID, "finish_upload.json")
 	if err != nil {
-		return "", fmt.Errorf("failed to generate finish artifact url, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to generate finish artifact url, error: %s", err)
 	}
 
 	var response *http.Response
 
 	type finishArtifactResponse struct {
 		PublicInstallPageURL string   `json:"public_install_page_url"`
+		PermanentDownloadURL string   `json:"permanent_download_url"`
 		InvalidEmails        []string `json:"invalid_emails"`
 	}
 
@@ -239,7 +245,7 @@ func finishArtifact(buildURL, token, artifactID, artifactInfo, notifyUserGroups,
 
 		return nil
 	}); err != nil {
-		return "", err
+		return ArtifactURLs{}, err
 	}
 
 	if len(artifactResponse.InvalidEmails) > 0 {
@@ -248,11 +254,14 @@ func finishArtifact(buildURL, token, artifactID, artifactInfo, notifyUserGroups,
 
 	if isEnablePublicPage == "true" {
 		if artifactResponse.PublicInstallPageURL == "" {
-			return "", fmt.Errorf("public install page was enabled, but no public install page generated")
+			return ArtifactURLs{}, fmt.Errorf("public install page was enabled, but no public install page generated")
 		}
 
-		return artifactResponse.PublicInstallPageURL, nil
+		return ArtifactURLs{
+			PublicInstallPageURL: artifactResponse.PublicInstallPageURL,
+			PermanentDownloadURL: artifactResponse.PermanentDownloadURL,
+		}, nil
 	}
 
-	return "", nil
+	return ArtifactURLs{}, nil
 }
