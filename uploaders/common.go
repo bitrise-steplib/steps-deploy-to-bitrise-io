@@ -253,7 +253,7 @@ func finishArtifact(buildURL, token, artifactID, artifactInfo, notifyUserGroups,
 		log.Warnf("Invalid e-mail addresses: %s", strings.Join(artifactResponse.InvalidEmails, ", "))
 	}
 
-	log.Warnf("Artifact's permanent url: %s", artifactResponse.PermanentDownloadURL)
+	log.Warnf("Artifact's permanent url: %s.", artifactResponse.PermanentDownloadURL)
 
 	if isEnablePublicPage == "true" {
 		if artifactResponse.PublicInstallPageURL == "" {
