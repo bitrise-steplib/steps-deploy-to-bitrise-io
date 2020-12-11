@@ -48,6 +48,7 @@ type PublicInstallPage struct {
 	URL  string
 }
 
+// ArtifactURLCollection ...
 type ArtifactURLCollection struct {
 	PublicInstallPageURLs map[string]string
 	PermanentDownloadURLs map[string]string

@@ -18,6 +18,7 @@ import (
 	"github.com/bitrise-io/go-utils/urlutil"
 )
 
+// ArtifactURLs ...
 type ArtifactURLs struct {
 	PublicInstallPageURL string
 	PermanentDownloadURL string
