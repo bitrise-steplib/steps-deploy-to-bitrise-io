@@ -235,14 +235,15 @@ outputs:
         - $BITRISE_DEPLOY_DIR/ios_app.ipa=>https://ios_app/public/install/page
         - $BITRISE_DEPLOY_DIR/android_app.apk=>https://android_app/public/install/page|$BITRISE_DEPLOY_DIR/ios_app.ipa=>https://ios_app/public/install/page
   - BITRISE_PERMANENT_DOWNLOAD_URL_MAP:
-      opts:
-        title: Map of filenames and Permanent Download URLs
-        description: |-
-          Permanent Download URLs by the artifact's file path.
+    opts:
+      title: Map of filenames and Permanent Download URLs
+      description: |-
+        Permanent Download URLs by the artifact's file path.
 
-          The default format is `KEY1=>VALUE|KEY2=>VALUE` but is controlled by the `permanent_download_url_map_format` input
+        The default format is `KEY1=>VALUE|KEY2=>VALUE` but is controlled by the `permanent_download_url_map_format` input
 
-          Examples:
+        Examples:
 
-          - $BITRISE_DEPLOY_DIR/ios_app.ipa=>https://app.bitrise.io/artifacts/ipa-slug/download
-          - $BITRISE_DEPLOY_DIR/android_app.apk=>https://app.bitrise.io/artifacts/apk-slug/download|$BITRISE_DEPLOY_DIR/ios_app.ipa=>https://app.bitrise.io/artifacts/ipa-slug/download
+        - $BITRISE_DEPLOY_DIR/ios_app.ipa=>https://app.bitrise.io/artifacts/ipa-slug/download
+        - $BITRISE_DEPLOY_DIR/android_app.apk=>https://app.bitrise.io/artifacts/apk-slug/download|$BITRISE_DEPLOY_DIR/ios_app.ipa=>https://app.bitrise.io/artifacts/ipa-slug/download
+          
