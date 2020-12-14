@@ -347,7 +347,7 @@ func deploy(clearedFilesToDeploy []string, config Config) (ArtifactURLCollection
 				return ArtifactURLCollection{}, fmt.Errorf("deploy failed, error: %s", err)
 			}
 
-			fillURLMaps(artifactURLCollection, artifactURLs, pth, isPublic)
+			fillURLMaps(artifactURLCollection, artifactURLs, pth, false)
 		case zippedXcarchiveExt:
 			log.Donef("Uploading xcarchive file: %s", pth)
 
@@ -355,7 +355,7 @@ func deploy(clearedFilesToDeploy []string, config Config) (ArtifactURLCollection
 			if err != nil {
 				return ArtifactURLCollection{}, fmt.Errorf("deploy failed, error: %s", err)
 			}
-			fillURLMaps(artifactURLCollection, artifactURLs, pth, isPublic)
+			fillURLMaps(artifactURLCollection, artifactURLs, pth, false)
 		default:
 			log.Donef("Uploading file: %s", pth)
 
@@ -370,11 +370,9 @@ func deploy(clearedFilesToDeploy []string, config Config) (ArtifactURLCollection
 	return artifactURLCollection, nil
 }
 
-func fillURLMaps(artifactURLCollection ArtifactURLCollection, artifactURLs uploaders.ArtifactURLs, apk string, isPublic bool) {
-	if artifactURLs.PublicInstallPageURL != "" {
+func fillURLMaps(artifactURLCollection ArtifactURLCollection, artifactURLs uploaders.ArtifactURLs, apk string, tryPublic bool) {
+	if tryPublic && artifactURLs.PublicInstallPageURL != "" {
 		artifactURLCollection.PublicInstallPageURLs[filepath.Base(apk)] = artifactURLs.PublicInstallPageURL
-	} else if isPublic {
-		log.Warnf("is_enable_public_page is set, but public download isn't allowed for this type of file")
 	}
 	if artifactURLs.PermanentDownloadURL != "" {
 		artifactURLCollection.PermanentDownloadURLs[filepath.Base(apk)] = artifactURLs.PermanentDownloadURL

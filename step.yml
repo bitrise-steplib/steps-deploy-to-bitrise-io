@@ -228,7 +228,7 @@ outputs:
         Public Install Page URLs by the artifact's file path.
         Only set it if the *Enable public page for the App?* option was *enabled*.
 
-        The format is `KEY1=>VALUE|KEY2=>VALUE`
+        The default format is `KEY1=>VALUE|KEY2=>VALUE` but is controlled by the `public_install_page_url_map_format` input
 
         Examples:
 
