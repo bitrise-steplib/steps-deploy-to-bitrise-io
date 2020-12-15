@@ -23,28 +23,35 @@ var fileBaseNamesToSkip = []string{".DS_Store"}
 
 // Config ...
 type Config struct {
-	BuildURL                   string `env:"build_url,required"`
-	APIToken                   string `env:"build_api_token,required"`
-	IsCompress                 string `env:"is_compress,opt[true,false]"`
-	ZipName                    string `env:"zip_name"`
-	DeployPath                 string `env:"deploy_path,required"`
-	NotifyUserGroups           string `env:"notify_user_groups"`
-	NotifyEmailList            string `env:"notify_email_list"`
-	IsPublicPageEnabled        string `env:"is_enable_public_page,opt[true,false]"`
-	PublicInstallPageMapFormat string `env:"public_install_page_url_map_format,required"`
-	BuildSlug                  string `env:"BITRISE_BUILD_SLUG,required"`
-	TestDeployDir              string `env:"BITRISE_TEST_DEPLOY_DIR,required"`
-	AppSlug                    string `env:"BITRISE_APP_SLUG,required"`
-	AddonAPIBaseURL            string `env:"addon_api_base_url,required"`
-	AddonAPIToken              string `env:"addon_api_token"`
-	DebugMode                  bool   `env:"debug_mode,opt[true,false]"`
-	BundletoolVersion          string `env:"bundletool_version,required"`
+	BuildURL                      string `env:"build_url,required"`
+	APIToken                      string `env:"build_api_token,required"`
+	IsCompress                    string `env:"is_compress,opt[true,false]"`
+	ZipName                       string `env:"zip_name"`
+	DeployPath                    string `env:"deploy_path,required"`
+	NotifyUserGroups              string `env:"notify_user_groups"`
+	NotifyEmailList               string `env:"notify_email_list"`
+	IsPublicPageEnabled           string `env:"is_enable_public_page,opt[true,false]"`
+	PublicInstallPageMapFormat    string `env:"public_install_page_url_map_format,required"`
+	PermanentDownloadURLMapFormat string `env:"permanent_download_url_map_format,required"`
+	BuildSlug                     string `env:"BITRISE_BUILD_SLUG,required"`
+	TestDeployDir                 string `env:"BITRISE_TEST_DEPLOY_DIR,required"`
+	AppSlug                       string `env:"BITRISE_APP_SLUG,required"`
+	AddonAPIBaseURL               string `env:"addon_api_base_url,required"`
+	AddonAPIToken                 string `env:"addon_api_token"`
+	DebugMode                     bool   `env:"debug_mode,opt[true,false]"`
+	BundletoolVersion             string `env:"bundletool_version,required"`
 }
 
 // PublicInstallPage ...
 type PublicInstallPage struct {
 	File string
 	URL  string
+}
+
+// ArtifactURLCollection ...
+type ArtifactURLCollection struct {
+	PublicInstallPageURLs map[string]string
+	PermanentDownloadURLs map[string]string
 }
 
 const zippedXcarchiveExt = ".xcarchive.zip"
@@ -90,7 +97,7 @@ func main() {
 	fmt.Println()
 	log.Infof("Deploying files")
 
-	publicInstallPages, err := deploy(clearedFilesToDeploy, config)
+	artifactURLCollection, err := deploy(clearedFilesToDeploy, config)
 	if err != nil {
 		fail("%s", err)
 	}
@@ -98,45 +105,64 @@ func main() {
 	log.Donef("Success")
 	log.Printf("You can find the Artifact on Bitrise, on the Build's page: %s", config.BuildURL)
 
-	if err := exportInstallPages(publicInstallPages, config); err != nil {
+	if err := exportInstallPages(artifactURLCollection, config); err != nil {
 		fail("%s", err)
 	}
 	deployTestResults(config)
 }
 
-func exportInstallPages(publicInstallPages map[string]string, config Config) error {
-	if len(publicInstallPages) > 0 {
-		temp := template.New("Public Install Page template")
-		var pages []PublicInstallPage
-		for file, url := range publicInstallPages {
-			pages = append(pages, PublicInstallPage{
-				File: file,
-				URL:  url,
-			})
-		}
+func exportInstallPages(artifactURLCollection ArtifactURLCollection, config Config) error {
+	if len(artifactURLCollection.PublicInstallPageURLs) > 0 {
+		pages := mapURLsToInstallPages(artifactURLCollection.PublicInstallPageURLs)
 
 		if err := tools.ExportEnvironmentWithEnvman("BITRISE_PUBLIC_INSTALL_PAGE_URL", pages[0].URL); err != nil {
-			return fmt.Errorf("failed to export BITRISE_PUBLIC_INSTALL_PAGE_URL, error: %s", err)
+			return fmt.Errorf("failed to export BITRISE_PUBLIC_INSTALL_PAGE_URL: %s", err)
 		}
 		log.Printf("The public install page url is now available in the Environment Variable: BITRISE_PUBLIC_INSTALL_PAGE_URL (value: %s)\n", pages[0].URL)
 
-		temp, err := temp.Parse(config.PublicInstallPageMapFormat)
+		value, err := exportMapEnvironment("Public Install Page template", config.PublicInstallPageMapFormat, "PublicInstallPageMap", "BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP", pages)
 		if err != nil {
-			return fmt.Errorf("error during parsing PublicInstallPageMap: %s", err)
-		}
-
-		buf := new(bytes.Buffer)
-		if err := temp.Execute(buf, pages); err != nil {
-			return fmt.Errorf("execute: %s", err)
-		}
-
-		if err := tools.ExportEnvironmentWithEnvman("BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP", buf.String()); err != nil {
 			return fmt.Errorf("failed to export BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP, error: %s", err)
 		}
-		log.Printf("A map of deployed files and their public install page urls is now available in the Environment Variable: BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP (value: %s)", buf.String())
+		log.Printf("A map of deployed files and their public install page urls is now available in the Environment Variable: BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP (value: %s)", value)
+		log.Printf("")
+	}
+	if len(artifactURLCollection.PermanentDownloadURLs) > 0 {
+		pages := mapURLsToInstallPages(artifactURLCollection.PermanentDownloadURLs)
+		value, err := exportMapEnvironment("Permanent Download URL template", config.PermanentDownloadURLMapFormat, "PermanentDownloadURLMap", "BITRISE_PERMANENT_DOWNLOAD_URL_MAP", pages)
+		if err != nil {
+			return fmt.Errorf("failed to export BITRISE_PERMANENT_DOWNLOAD_URL_MAP: %s", err)
+		}
+		log.Printf("A map of deployed files and their permanent download urls is now available in the Environment Variable: BITRISE_PERMANENT_DOWNLOAD_URL_MAP (value: %s)", value)
 		log.Printf("")
 	}
 	return nil
+}
+
+func mapURLsToInstallPages(URLs map[string]string) []PublicInstallPage {
+	var pages []PublicInstallPage
+	for file, url := range URLs {
+		pages = append(pages, PublicInstallPage{
+			File: file,
+			URL:  url,
+		})
+	}
+	return pages
+}
+
+func exportMapEnvironment(templateName string, format string, formatName string, outputKey string, pages []PublicInstallPage) (string, error) {
+	temp := template.New(templateName)
+	temp, err := temp.Parse(format)
+	if err != nil {
+		return "", fmt.Errorf("error during parsing %s: %s", formatName, err)
+	}
+
+	buf := new(bytes.Buffer)
+	if err := temp.Execute(buf, pages); err != nil {
+		return "", fmt.Errorf("execute: %s", err)
+	}
+	value := buf.String()
+	return value, tools.ExportEnvironmentWithEnvman(outputKey, value)
 }
 
 func logDeployFiles(clearedFilesToDeploy []string) {
@@ -274,29 +300,29 @@ func findAPKsAndAABs(pths []string) (apks []string, aabs []string, others []stri
 	return
 }
 
-func deploy(clearedFilesToDeploy []string, config Config) (map[string]string, error) {
+func deploy(clearedFilesToDeploy []string, config Config) (ArtifactURLCollection, error) {
 	apks, aabs, others := findAPKsAndAABs(clearedFilesToDeploy)
 	apks, _, err := ensureAABsHasUniversalAPKPair(aabs, apks, config.BundletoolVersion)
 	if err != nil {
-		return nil, err
+		return ArtifactURLCollection{}, err
 	}
 	androidArtifacts := append(apks, aabs...)
 
 	// deploy the apks first, as the universal apk's public install page will be used for aabs.
-	publicInstallPages := map[string]string{}
-	apkInstallPages := map[string]string{}
+	artifactURLCollection := ArtifactURLCollection{
+		PublicInstallPageURLs: map[string]string{},
+		PermanentDownloadURLs: map[string]string{},
+	}
+	isPublic := config.IsPublicPageEnabled == "true"
 	for _, apk := range apks {
 		log.Donef("Uploading apk file: %s", apk)
 
-		installPage, err := uploaders.DeployAPK(apk, androidArtifacts, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
+		artifactURLs, err := uploaders.DeployAPK(apk, androidArtifacts, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
 		if err != nil {
-			return nil, fmt.Errorf("deploy failed, error: %s", err)
+			return ArtifactURLCollection{}, fmt.Errorf("deploy failed, error: %s", err)
 		}
 
-		if installPage != "" {
-			publicInstallPages[filepath.Base(apk)] = installPage
-			apkInstallPages[filepath.Base(apk)] = installPage
-		}
+		fillURLMaps(artifactURLCollection, artifactURLs, apk, isPublic)
 	}
 
 	for _, pth := range append(aabs, others...) {
@@ -307,42 +333,50 @@ func deploy(clearedFilesToDeploy []string, config Config) (map[string]string, er
 		case ".ipa":
 			log.Donef("Uploading ipa file: %s", pth)
 
-			installPage, err := uploaders.DeployIPA(pth, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
+			artifactURLs, err := uploaders.DeployIPA(pth, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
 			if err != nil {
-				return nil, fmt.Errorf("deploy failed, error: %s", err)
+				return ArtifactURLCollection{}, fmt.Errorf("deploy failed, error: %s", err)
 			}
 
-			if installPage != "" {
-				publicInstallPages[filepath.Base(pth)] = installPage
-			}
+			fillURLMaps(artifactURLCollection, artifactURLs, pth, isPublic)
 		case ".aab":
 			log.Donef("Uploading aab file: %s", pth)
 
-			if err := uploaders.DeployAAB(pth, androidArtifacts, config.BuildURL, config.APIToken,
-				config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled, config.BundletoolVersion); err != nil {
-				return nil, fmt.Errorf("deploy failed, error: %s", err)
+			artifactURLs, err := uploaders.DeployAAB(pth, androidArtifacts, config.BuildURL, config.APIToken, config.BundletoolVersion)
+			if err != nil {
+				return ArtifactURLCollection{}, fmt.Errorf("deploy failed, error: %s", err)
 			}
+
+			fillURLMaps(artifactURLCollection, artifactURLs, pth, false)
 		case zippedXcarchiveExt:
 			log.Donef("Uploading xcarchive file: %s", pth)
-			if err := uploaders.DeployXcarchive(pth, config.BuildURL, config.APIToken); err != nil {
-				return nil, fmt.Errorf("deploy failed, error: %s", err)
+
+			artifactURLs, err := uploaders.DeployXcarchive(pth, config.BuildURL, config.APIToken)
+			if err != nil {
+				return ArtifactURLCollection{}, fmt.Errorf("deploy failed, error: %s", err)
 			}
+			fillURLMaps(artifactURLCollection, artifactURLs, pth, false)
 		default:
 			log.Donef("Uploading file: %s", pth)
 
-			installPage, err := uploaders.DeployFile(pth, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
+			artifactURLs, err := uploaders.DeployFile(pth, config.BuildURL, config.APIToken)
 			if err != nil {
-				return nil, fmt.Errorf("deploy failed, error: %s", err)
+				return ArtifactURLCollection{}, fmt.Errorf("deploy failed, error: %s", err)
 			}
 
-			if installPage != "" {
-				publicInstallPages[filepath.Base(pth)] = installPage
-			} else if config.IsPublicPageEnabled == "true" {
-				log.Warnf("is_enable_public_page is set, but public download isn't allowed for this type of file")
-			}
+			fillURLMaps(artifactURLCollection, artifactURLs, pth, isPublic)
 		}
 	}
-	return publicInstallPages, nil
+	return artifactURLCollection, nil
+}
+
+func fillURLMaps(artifactURLCollection ArtifactURLCollection, artifactURLs uploaders.ArtifactURLs, apk string, tryPublic bool) {
+	if tryPublic && artifactURLs.PublicInstallPageURL != "" {
+		artifactURLCollection.PublicInstallPageURLs[filepath.Base(apk)] = artifactURLs.PublicInstallPageURL
+	}
+	if artifactURLs.PermanentDownloadURL != "" {
+		artifactURLCollection.PermanentDownloadURLs[filepath.Base(apk)] = artifactURLs.PermanentDownloadURL
+	}
 }
 
 func getFileType(pth string) string {

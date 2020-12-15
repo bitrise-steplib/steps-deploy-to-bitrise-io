@@ -3,19 +3,19 @@ package uploaders
 import "fmt"
 
 // DeployFile ...
-func DeployFile(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePublicPage string) (string, error) {
+func DeployFile(pth, buildURL, token string) (ArtifactURLs, error) {
 	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "file")
 	if err != nil {
-		return "", fmt.Errorf("failed to create file artifact, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to create file artifact, error: %s", err)
 	}
 
 	if err := uploadArtifact(uploadURL, pth, ""); err != nil {
-		return "", fmt.Errorf("failed to upload file artifact, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to upload file artifact, error: %s", err)
 	}
 
-	publicInstallPage, err := finishArtifact(buildURL, token, artifactID, "", "", "", "no")
+	artifactURLs, err := finishArtifact(buildURL, token, artifactID, "", "", "", "no")
 	if err != nil {
-		return "", fmt.Errorf("failed to finish file artifact, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to finish file artifact, error: %s", err)
 	}
-	return publicInstallPage, nil
+	return artifactURLs, nil
 }

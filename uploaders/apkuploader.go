@@ -9,12 +9,12 @@ import (
 )
 
 // DeployAPK ...
-func DeployAPK(pth string, artifacts []string, buildURL, token, notifyUserGroups, notifyEmails, isEnablePublicPage string) (string, error) {
+func DeployAPK(pth string, artifacts []string, buildURL, token, notifyUserGroups, notifyEmails, isEnablePublicPage string) (ArtifactURLs, error) {
 	log.Printf("analyzing apk")
 
 	apkInfo, err := androidartifact.GetAPKInfo(pth)
 	if err != nil {
-		return "", err
+		return ArtifactURLs{}, err
 	}
 
 	appInfo := map[string]interface{}{
@@ -43,7 +43,7 @@ func DeployAPK(pth string, artifacts []string, buildURL, token, notifyUserGroups
 
 	fileSize, err := fileSizeInBytes(pth)
 	if err != nil {
-		return "", fmt.Errorf("failed to get apk size, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to get apk size, error: %s", err)
 	}
 
 	info := androidartifact.ParseArtifactPath(pth)
@@ -67,24 +67,24 @@ func DeployAPK(pth string, artifacts []string, buildURL, token, notifyUserGroups
 
 	artifactInfoBytes, err := json.Marshal(apkInfoMap)
 	if err != nil {
-		return "", fmt.Errorf("failed to marshal apk infos, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to marshal apk infos, error: %s", err)
 	}
 
 	// ---
 
 	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "android-apk")
 	if err != nil {
-		return "", fmt.Errorf("failed to create apk artifact, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to create apk artifact, error: %s", err)
 	}
 
 	if err := uploadArtifact(uploadURL, pth, "application/vnd.android.package-archive"); err != nil {
-		return "", fmt.Errorf("failed to upload apk artifact, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to upload apk artifact, error: %s", err)
 	}
 
-	publicInstallPage, err := finishArtifact(buildURL, token, artifactID, string(artifactInfoBytes), notifyUserGroups, notifyEmails, isEnablePublicPage)
+	artifactURLs, err := finishArtifact(buildURL, token, artifactID, string(artifactInfoBytes), notifyUserGroups, notifyEmails, isEnablePublicPage)
 	if err != nil {
-		return "", fmt.Errorf("failed to finish apk artifact, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to finish apk artifact, error: %s", err)
 	}
 
-	return publicInstallPage, nil
+	return artifactURLs, nil
 }

@@ -136,7 +136,15 @@ inputs:
       description: |-
         Specify the output pattern with golang template: [https://golang.org/pkg/text/template](https://golang.org/pkg/text/template)
       is_required: true
-      is_expand: false                    
+      is_expand: false
+  - permanent_download_url_map_format: "{{range $index, $element := .}}{{if $index}}|{{end}}{{$element.File}}=>{{$element.URL}}{{end}}"
+    opts:
+      title: Format for the BITRISE_PERMANENT_DOWNLOAD_URL_MAP output
+      summary: You can customize the format of the BITRISE_PERMANENT_DOWNLOAD_URL_MAP output so that it fits the next Step you wish to use the output with.
+      description: |-
+        Customize the output pattern with this golang template: [https://golang.org/pkg/text/template](https://golang.org/pkg/text/template)
+      is_required: true
+      is_expand: false
   - zip_name:
     opts:
       category: Debug
@@ -220,9 +228,23 @@ outputs:
         Public Install Page URLs by the artifact's file path.
         Only set it if the *Enable public page for the App?* option was *enabled*.
 
-        The format is `KEY1=>VALUE|KEY2=>VALUE`
+        The default format is `KEY1=>VALUE|KEY2=>VALUE` but is controlled by the `public_install_page_url_map_format` input
 
         Examples:
 
         - $BITRISE_DEPLOY_DIR/ios_app.ipa=>https://ios_app/public/install/page
         - $BITRISE_DEPLOY_DIR/android_app.apk=>https://android_app/public/install/page|$BITRISE_DEPLOY_DIR/ios_app.ipa=>https://ios_app/public/install/page
+  - BITRISE_PERMANENT_DOWNLOAD_URL_MAP:
+    opts:
+      title: Map of filenames and Permanent Download URLs
+      description: |-
+        This input creates a permanent Download URL for artifacts. The URL can be shared in any communication channel and it will not expire.
+
+        If there are multiple artifact URLs, you can customize their format.
+        The default format is `KEY1=>VALUE|KEY2=>VALUE` where key is the filename and the value is the URL.
+        If you change `permanent_download_url_map_format` input then that will modify the format of this environment variable.
+
+        Examples:
+
+        - $BITRISE_DEPLOY_DIR/ios_app.ipa=>https://app.bitrise.io/artifacts/ipa-slug/download
+        - $BITRISE_DEPLOY_DIR/android_app.apk=>https://app.bitrise.io/artifacts/apk-slug/download|$BITRISE_DEPLOY_DIR/ios_app.ipa=>https://app.bitrise.io/artifacts/ipa-slug/download
