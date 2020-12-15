@@ -116,7 +116,7 @@ func exportInstallPages(artifactURLCollection ArtifactURLCollection, config Conf
 		pages := mapURLsToInstallPages(artifactURLCollection.PublicInstallPageURLs)
 
 		if err := tools.ExportEnvironmentWithEnvman("BITRISE_PUBLIC_INSTALL_PAGE_URL", pages[0].URL); err != nil {
-			return fmt.Errorf("failed to export BITRISE_PUBLIC_INSTALL_PAGE_URL, error: %s", err)
+			return fmt.Errorf("failed to export BITRISE_PUBLIC_INSTALL_PAGE_URL: %s", err)
 		}
 		log.Printf("The public install page url is now available in the Environment Variable: BITRISE_PUBLIC_INSTALL_PAGE_URL (value: %s)\n", pages[0].URL)
 
@@ -131,7 +131,7 @@ func exportInstallPages(artifactURLCollection ArtifactURLCollection, config Conf
 		pages := mapURLsToInstallPages(artifactURLCollection.PermanentDownloadURLs)
 		value, err := exportMapEnvironment("Permanent Download URL template", config.PermanentDownloadURLMapFormat, "PermanentDownloadURLMap", "BITRISE_PERMANENT_DOWNLOAD_URL_MAP", pages)
 		if err != nil {
-			return fmt.Errorf("failed to export BITRISE_PERMANENT_DOWNLOAD_URL_MAP, error: %s", err)
+			return fmt.Errorf("failed to export BITRISE_PERMANENT_DOWNLOAD_URL_MAP: %s", err)
 		}
 		log.Printf("A map of deployed files and their permanent download urls is now available in the Environment Variable: BITRISE_PERMANENT_DOWNLOAD_URL_MAP (value: %s)", value)
 		log.Printf("")
