@@ -140,9 +140,9 @@ inputs:
   - permanent_download_url_map_format: "{{range $index, $element := .}}{{if $index}}|{{end}}{{$element.File}}=>{{$element.URL}}{{end}}"
     opts:
       title: Format for the BITRISE_PERMANENT_DOWNLOAD_URL_MAP output
-      summary: You can change the format of the BITRISE_PERMANENT_DOWNLOAD_URL_MAP output
+      summary: You can customize the format of the BITRISE_PERMANENT_DOWNLOAD_URL_MAP output so that it fits the next Step you wish to use the output with.
       description: |-
-        Specify the output pattern with golang template: [https://golang.org/pkg/text/template](https://golang.org/pkg/text/template)
+        Customize the output pattern with this golang template: [https://golang.org/pkg/text/template](https://golang.org/pkg/text/template)
       is_required: true
       is_expand: false
   - zip_name:
@@ -238,9 +238,11 @@ outputs:
     opts:
       title: Map of filenames and Permanent Download URLs
       description: |-
-        Permanent Download URLs by the artifact's file path.
+        This input creates a permanent Download URL for artifacts. The URL can be shared in any communication channel and it will not expire.
 
-        The default format is `KEY1=>VALUE|KEY2=>VALUE` but is controlled by the `permanent_download_url_map_format` input
+        If there are multiple artifact URLs, you can customize their format.
+        The default format is `KEY1=>VALUE|KEY2=>VALUE` where key is the filename and the value is the URL.
+        If you change `permanent_download_url_map_format` input then that will modify the format of this environment variable.
 
         Examples:
 
