@@ -166,12 +166,25 @@ func exportMapEnvironment(templateName string, format string, formatName string,
 		return "", fmt.Errorf("error during parsing %s: %s", formatName, err)
 	}
 
+	value, logWarning, s, err := applyTemplateWithMaxSize(temp, pages, maxEnvLength)
+	if err != nil {
+		return s, err
+	}
+
+	if logWarning {
+		log.Warnf("too many artifacts, not all urls has been written to output: %s", outputKey)
+	}
+
+	return value, tools.ExportEnvironmentWithEnvman(outputKey, value)
+}
+
+func applyTemplateWithMaxSize(temp *template.Template, pages []PublicInstallPage, maxEnvLength int) (string, bool, string, error) {
 	var value string
 	var logWarning bool
 	for {
 		buf := new(bytes.Buffer)
 		if err := temp.Execute(buf, pages); err != nil {
-			return "", fmt.Errorf("execute: %s", err)
+			return "", false, "", fmt.Errorf("execute: %s", err)
 		}
 		value = buf.String()
 		if len(value) <= maxEnvLength || len(pages) < 1 {
@@ -180,12 +193,7 @@ func exportMapEnvironment(templateName string, format string, formatName string,
 		logWarning = true
 		pages = pages[:len(pages)-1]
 	}
-
-	if logWarning {
-		log.Warnf("too many artifacts, not all urls has been written to output: %s", outputKey)
-	}
-
-	return value, tools.ExportEnvironmentWithEnvman(outputKey, value)
+	return value, logWarning, "", nil
 }
 
 func logDeployFiles(clearedFilesToDeploy []string) {
