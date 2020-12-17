@@ -8,8 +8,11 @@ description: |-
 
   ### Configuring the Step
 
-  1. Set the value for the **Deploy directory or file path** required input. It can be a path to a directory or a file. If you provide a directory, everything in that directory gets uploaded recursively. 
-  If you provide only a file, then only that file gets uploaded. The default value is the `$BITRISE_DEPLOY_DIR` Env Var which is exposed by the Bitrise CLI.
+  1. Set the value for the **Deploy directory or file path** required input. The default value is the `$BITRISE_DEPLOY_DIR` Env Var which is exposed by the Bitrise CLI.
+  It can be a path to a directory or a file. 
+  If you provide a directory, everything in that directory, excluding sub-directories, gets uploaded recursively. 
+  If you provide only a file, then only that file gets uploaded. 
+  To upload a directory's content recursively, you should use the **Compress the artifacts into one file?** which will compress the whole directory, with every sub-directory included.
   2. Set the value of the **Notify: User Roles** input. It sends an email with the [public install URL](https://devcenter.bitrise.io/deploy/bitrise-app-deployment/) to those Bitrise users whose roles are included in this field. 
   The default value is `everyone`. If you wish to notify based on user roles, add one or more roles and separate them with commas, for example, `developers`, `admins`. If you don't want to notify anyone, set the input to `none`.
   3. Set the **Notify: Emails** sensitive input. It sends the public install URL in an email to the email addresses provided here. If you’re adding multiple email address, make sure to separate them with commas. 
@@ -17,12 +20,12 @@ description: |-
   4. The **Enable public page for the App?** required input is set to `true` by default. It creates a long and random URL which can be shared with those who do not have a Bitrise account. 
   If you set this input to `false`, the **Notify: Emails** input will be ignored and the **Notify: User Roles** will receive the build URL instead of the public install URL.
   5. With the **Compress the artifacts into one file?** required input set to `true`, you can compress the artifacts found in the Deploy directory into a single file.
-  You can specify a custom name for the zip file with the `zip_name` option. Otherwise the default Deploy directory will be used. 
+  You can specify a custom name for the zip file with the `zip_name` option. If you don't specify one, the default Deploy directory will be used. 
   If the **Compress the artifacts into one file?** is set to `false`, the artifacts in the Deploy directory will be deployed separately.
   6. With the **Format for the BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP output** required input field, you can customize the output format of the public install page’s multiple artifact URLs so that the next Step can render the output (for example, our **Send a Slack message** Step). 
   Provide a language template description using [https://golang.org/pkg/text/template]([https://golang.org/pkg/text/template) so that the **Deploy to Bitrise.io** Step can build the required custom output.
-  7. With the **Format for the BITRISE_PERMANENT_DOWNLOAD_URL_MAP output** required input, you can customize the output format of the `BITRISE_PERMANENT_DOWNLOAD_URL_MAP` so that the next Step can render the output. 
-  This input creates a permanent URL containing all the artifacts the build has generated.
+  7. With the **Format for the BITRISE_PERMANENT_DOWNLOAD_URL_MAP output** required input, you can customize the output format of the `BITRISE_PERMANENT_DOWNLOAD_URL_MAP` so that the next Step can render the output.
+  The next Steps will use this input to generate the related output in the specified format. The output contains multiple permanent URLs for multiple artifacts.
   Provide a language template description using [https://golang.org/pkg/text/template]([https://golang.org/pkg/text/template) so that the **Deploy to Bitrise.io** Step can build the required custom output.
   8. The **Test API's base URL** and the **API Token** input fields are automatically populated for you.
   
@@ -33,7 +36,8 @@ description: |-
   Please note that this input only works if you set the **Compress the artifacts into one file?** input to `true`.
   2. The **Bitrise Build URL** and the **Bitrise Build API Token** inputs are automatically populated.
   3. If **The Enable Debug Mode** required input is set to `true`, the Step prints more verbose logs. It is `false` by default. 
-  4. If you wish to generate an Android App Bundle and an APK which you can test, set a specific [bundletool version]((https://github.com/google/bundletool/releases) in the **Bundletool version** required input.  
+  4. If you need a specific [bundletool version]((https://github.com/google/bundletool/releases) other than the default value, you can modify the value of the **Bundletool version** required input. 
+  This input generates an APK from an Android App Bundle so that you can test the APK.
 
   ### Troubleshooting
   
@@ -73,9 +77,7 @@ inputs:
         Specify the directory or file path which will be deployed.
         
         If the specified path is a directory, then every file
-        in the specified directory will be deployed. If, however,
-        the specified path is a sub-directory, it
-        won't be uploaded. 
+        in the specified directory, excluding sub-directories, will be deployed.
         
         To upload the directory's content
         recursively, you should use the **Compress the artifacts into one file?** option
@@ -170,17 +172,7 @@ inputs:
       summary: You can customize the format of the `BITRISE_PERMANENT_DOWNLOAD_URL_MAP` output so that the next Step can render the output.
       description: |-
         Provide a language template description using [https://golang.org/pkg/text/template]([https://golang.org/pkg/text/template)
-        so that the **Deploy to Bitrise.io** Step can build the required custom output for the permanent download URL. 
-        This URL can be shared in any communication channel and it will not expire.
-
-        If there are multiple artifact URLs, you can customize their format.
-        The default format is `KEY1=>VALUE|KEY2=>VALUE` where key is the filename and the value is the URL.
-        If you change `permanent_download_url_map_format` input then that will modify the format of this environment variable.
-        
-        Examples:
-
-        - $BITRISE_DEPLOY_DIR/ios_app.ipa=>https://app.bitrise.io/artifacts/ipa-slug/download
-        - $BITRISE_DEPLOY_DIR/android_app.apk=>https://app.bitrise.io/artifacts/apk-slug/download|$BITRISE_DEPLOY_DIR/ios_app.ipa=>https://app.bitrise.io/artifacts/ipa-slug/download
+        so that the **Deploy to Bitrise.io** Step can build the required custom output for the permanent download URL.  
       is_required: true
       is_expand: false
   - zip_name:
@@ -248,9 +240,9 @@ inputs:
       title: "Bundletool version"
       summary: The specific bundletool version you want to use.
       description: |-
-        If you wish to generate an Android App Bundle and an APK which you can test,
-        set a specific [bundletool version]((https://github.com/google/bundletool/releases) 
-        in the **Bundletool version** required input. 
+        If you need a specific [bundletool version]((https://github.com/google/bundletool/releases) other than the default version,
+        you can modify the value of the **Bundletool version** required input. 
+        This input generates an APK from an Android App Bundle so that you can test the APK. 
       is_required: true
 outputs:
   - BITRISE_PUBLIC_INSTALL_PAGE_URL:
@@ -276,11 +268,10 @@ outputs:
     opts:
       title: Map of filenames and Permanent Download URLs
       description: |-
-        This input creates a permanent Download URL for all artifacts. The URL can be shared in any communication channel and it will not expire.
-
-        If there are multiple artifact URLs, you can customize their format.
+        The output contains multiple permanent Download URL for all artifacts. The URLs can be shared in any communication channel and they won't expire.
         The default format is `KEY1=>VALUE|KEY2=>VALUE` where key is the filename and the value is the URL.
-        If you change `permanent_download_url_map_format` input then that will modify the format of this environment variable.
+        If you change `permanent_download_url_map_format` input then that will modify the format of this Env Var.
+        You can customize the format of the multiple URLs.
 
         Examples:
 
