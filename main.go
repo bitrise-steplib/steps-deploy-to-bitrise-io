@@ -11,6 +11,7 @@ import (
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/androidartifact"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test"
 
+	"github.com/bitrise-io/envman/envman"
 	"github.com/bitrise-io/go-steputils/stepconf"
 	"github.com/bitrise-io/go-steputils/tools"
 	"github.com/bitrise-io/go-utils/log"
@@ -151,18 +152,48 @@ func mapURLsToInstallPages(URLs map[string]string) []PublicInstallPage {
 }
 
 func exportMapEnvironment(templateName string, format string, formatName string, outputKey string, pages []PublicInstallPage) (string, error) {
+	var maxEnvLength int
+
+	if configs, err := envman.GetConfigs(); err != nil {
+		maxEnvLength = 20 * 1024
+	} else {
+		maxEnvLength = configs.EnvBytesLimitInKB * 1024
+	}
+
 	temp := template.New(templateName)
 	temp, err := temp.Parse(format)
 	if err != nil {
 		return "", fmt.Errorf("error during parsing %s: %s", formatName, err)
 	}
 
-	buf := new(bytes.Buffer)
-	if err := temp.Execute(buf, pages); err != nil {
-		return "", fmt.Errorf("execute: %s", err)
+	value, logWarning, err := applyTemplateWithMaxSize(temp, pages, maxEnvLength)
+	if err != nil {
+		return "", err
 	}
-	value := buf.String()
+
+	if logWarning {
+		log.Warnf("too many artifacts, not all urls has been written to output: %s", outputKey)
+	}
+
 	return value, tools.ExportEnvironmentWithEnvman(outputKey, value)
+}
+
+func applyTemplateWithMaxSize(temp *template.Template, pages []PublicInstallPage, maxEnvLength int) (string, bool, error) {
+	var value string
+	var logWarning bool
+	for {
+		buf := new(bytes.Buffer)
+		if err := temp.Execute(buf, pages); err != nil {
+			return "", false, fmt.Errorf("execute: %s", err)
+		}
+		value = buf.String()
+		if len(value) <= maxEnvLength || len(pages) < 1 {
+			break
+		}
+		logWarning = true
+		pages = pages[:len(pages)-1]
+	}
+	return value, logWarning, nil
 }
 
 func logDeployFiles(clearedFilesToDeploy []string) {
