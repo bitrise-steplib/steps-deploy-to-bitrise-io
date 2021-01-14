@@ -12,17 +12,17 @@ import (
 )
 
 // DeployIPA ...
-func DeployIPA(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePublicPage string) (string, error) {
+func DeployIPA(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePublicPage string) (ArtifactURLs, error) {
 	log.Printf("analyzing ipa")
 
 	infoPlistPth, err := ipa.UnwrapEmbeddedInfoPlist(pth)
 	if err != nil {
-		return "", fmt.Errorf("failed to unwrap Info.plist from ipa, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to unwrap Info.plist from ipa, error: %s", err)
 	}
 
 	infoPlistData, err := plistutil.NewPlistDataFromFile(infoPlistPth)
 	if err != nil {
-		return "", fmt.Errorf("failed to parse Info.plist, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to parse Info.plist, error: %s", err)
 	}
 
 	appTitle, _ := infoPlistData.GetString("CFBundleName")
@@ -47,12 +47,12 @@ func DeployIPA(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 
 	provisioningProfilePth, err := ipa.UnwrapEmbeddedMobileProvision(pth)
 	if err != nil {
-		return "", fmt.Errorf("failed to unwrap embedded.mobilprovision from ipa, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to unwrap embedded.mobilprovision from ipa, error: %s", err)
 	}
 
 	provisioningProfileInfo, err := profileutil.NewProvisioningProfileInfoFromFile(provisioningProfilePth)
 	if err != nil {
-		return "", fmt.Errorf("failed to parse embedded.mobilprovision, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to parse embedded.mobilprovision, error: %s", err)
 	}
 
 	teamName := provisioningProfileInfo.TeamName
@@ -83,7 +83,7 @@ func DeployIPA(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 
 	fileSize, err := fileSizeInBytes(pth)
 	if err != nil {
-		return "", fmt.Errorf("failed to get ipa size, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to get ipa size, error: %s", err)
 	}
 
 	ipaInfoMap := map[string]interface{}{
@@ -94,24 +94,24 @@ func DeployIPA(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 
 	artifactInfoBytes, err := json.Marshal(ipaInfoMap)
 	if err != nil {
-		return "", fmt.Errorf("failed to marshal ipa infos, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to marshal ipa infos, error: %s", err)
 	}
 
 	// ---
 
 	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "ios-ipa")
 	if err != nil {
-		return "", fmt.Errorf("failed to create ipa artifact, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to create ipa artifact, error: %s", err)
 	}
 
 	if err := uploadArtifact(uploadURL, pth, "application/octet-stream ipa"); err != nil {
-		return "", fmt.Errorf("failed to upload ipa artifact, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to upload ipa artifact, error: %s", err)
 	}
 
-	publicInstallPage, err := finishArtifact(buildURL, token, artifactID, string(artifactInfoBytes), notifyUserGroups, notifyEmails, isEnablePublicPage)
+	artifactURLs, err := finishArtifact(buildURL, token, artifactID, string(artifactInfoBytes), notifyUserGroups, notifyEmails, isEnablePublicPage)
 	if err != nil {
-		return "", fmt.Errorf("failed to finish ipa artifact, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to finish ipa artifact, error: %s", err)
 	}
 
-	return publicInstallPage, nil
+	return artifactURLs, nil
 }

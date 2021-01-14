@@ -19,9 +19,12 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:4e1c0cc22c53c5ebda9bd380afd5b56a2f1fc9e6fd2eed59ab8ba0c1522eee19"
+  digest = "1:774a30075d61df0eb252ff2a1d49b932496bffefc999d79208a9f71b7f9f799a"
   name = "github.com/bitrise-io/envman"
-  packages = ["models"]
+  packages = [
+    "envman",
+    "models",
+  ]
   pruneopts = "UT"
   revision = "919e33f391ee97e87193ae604967f02707a64e37"
 
@@ -84,6 +87,14 @@
   ]
   pruneopts = "UT"
   revision = "95bf1e5fb205f81972e2450d227fa80748a5b322"
+
+[[projects]]
+  branch = "master"
+  digest = "1:980e760f25b82cb4ffe32b146956029f1f5c8bea3c39f9f973cc023d4ae965b1"
+  name = "github.com/bitrise-io/goinp"
+  packages = ["goinp"]
+  pruneopts = "UT"
+  revision = "bd18a8681e272db4696c50152b288f722d08b914"
 
 [[projects]]
   branch = "master"
@@ -188,6 +199,43 @@
   version = "v1.6.0"
 
 [[projects]]
+  branch = "master"
+  digest = "1:c9d0c7346c55bc13efdb3dbf13938e909d22a7a7bf115af69a79e25553513bd0"
+  name = "golang.org/x/crypto"
+  packages = ["ssh/terminal"]
+  pruneopts = "UT"
+  revision = "9d1352758620574fd6fc23c31c59c4333b4b3fff"
+
+[[projects]]
+  branch = "master"
+  digest = "1:efa3cccf7ebcdc757fb0901d0d6a8e9fcd55f7d54b230a5e1bb3dc5dbb6e1ae5"
+  name = "golang.org/x/sys"
+  packages = [
+    "internal/unsafeheader",
+    "plan9",
+    "unix",
+    "windows",
+  ]
+  pruneopts = "UT"
+  revision = "f9fddec55a1e5ebe479d5259f4982995b3194ebc"
+
+[[projects]]
+  branch = "master"
+  digest = "1:aff3723b8ec6c06bb52b62cf492783ae041e137534714289acb6625c031d1b24"
+  name = "golang.org/x/term"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "2321bbc49cbf8303ea9834c419750e793e31be73"
+
+[[projects]]
+  digest = "1:5054a1f394226de9e6ddc47b0ba77e35092a4112f4a1cd9cb94aba1f5bdc3ec6"
+  name = "gopkg.in/yaml.v2"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "7649d4548cb53a614db133b2a8ac1f31859dda8c"
+  version = "v2.4.0"
+
+[[projects]]
   branch = "v3"
   digest = "1:1c95a70bae9e9fc609342f9ab469ee2559d04b09770e5fea836b6789df4ec44a"
   name = "gopkg.in/yaml.v3"
@@ -209,6 +257,7 @@
   input-imports = [
     "github.com/avast/apkparser",
     "github.com/bitrise-io/bitrise/models",
+    "github.com/bitrise-io/envman/envman",
     "github.com/bitrise-io/go-android/sdk",
     "github.com/bitrise-io/go-steputils/stepconf",
     "github.com/bitrise-io/go-steputils/tools",

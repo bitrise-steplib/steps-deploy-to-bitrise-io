@@ -12,24 +12,24 @@ import (
 )
 
 // DeployXcarchive ...
-func DeployXcarchive(pth, buildURL, token string) error {
+func DeployXcarchive(pth, buildURL, token string) (ArtifactURLs, error) {
 	log.Printf("analyzing xcarchive")
 	unzippedPth, err := xcarchive.UnzipXcarchive(pth)
 	if err != nil {
-		return err
+		return ArtifactURLs{}, err
 	}
 
 	archivePth := filepath.Join(unzippedPth, pathutil.GetFileName(pth))
 	isMacos, err := xcarchive.IsMacOS(archivePth)
 	if err != nil {
-		return fmt.Errorf("could not check if given project is macOS or not, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("could not check if given project is macOS or not, error: %s", err)
 	} else if isMacos {
-		return nil // MacOS project is not supported, so won't be deployed.
+		return ArtifactURLs{}, nil // MacOS project is not supported, so won't be deployed.
 	}
 
 	iosArchive, err := xcarchive.NewIosArchive(archivePth)
 	if err != nil {
-		return fmt.Errorf("failed to parse iOS XcArchive from %s. Error: %s", archivePth, err)
+		return ArtifactURLs{}, fmt.Errorf("failed to parse iOS XcArchive from %s. Error: %s", archivePth, err)
 	}
 
 	appTitle, _ := iosArchive.Application.InfoPlist.GetString("CFBundleName")
@@ -53,7 +53,7 @@ func DeployXcarchive(pth, buildURL, token string) error {
 
 	fileSize, err := fileSizeInBytes(pth)
 	if err != nil {
-		return fmt.Errorf("failed to get xcarchive size, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to get xcarchive size, error: %s", err)
 	}
 
 	xcarchiveInfoMap := map[string]interface{}{
@@ -64,23 +64,23 @@ func DeployXcarchive(pth, buildURL, token string) error {
 
 	artifactInfoBytes, err := json.Marshal(xcarchiveInfoMap)
 	if err != nil {
-		return fmt.Errorf("failed to marshal xcarchive infos, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to marshal xcarchive infos, error: %s", err)
 	}
 
 	log.Printf("  xcarchive infos: %v", appInfo)
 
 	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "ios-xcarchive")
 	if err != nil {
-		return fmt.Errorf("failed to create xcarchive artifact, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to create xcarchive artifact, error: %s", err)
 	}
 
 	if err := uploadArtifact(uploadURL, pth, ""); err != nil {
-		return fmt.Errorf("failed to upload xcarchive artifact, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to upload xcarchive artifact, error: %s", err)
 	}
 
-	_, err = finishArtifact(buildURL, token, artifactID, string(artifactInfoBytes), "", "", "false")
+	artifactURLs, err := finishArtifact(buildURL, token, artifactID, string(artifactInfoBytes), "", "", "false")
 	if err != nil {
-		return fmt.Errorf("failed to finish xcarchive artifact, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to finish xcarchive artifact, error: %s", err)
 	}
-	return nil
+	return artifactURLs, nil
 }
