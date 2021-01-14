@@ -39,6 +39,7 @@ type Config struct {
 	AppSlug                       string `env:"BITRISE_APP_SLUG,required"`
 	AddonAPIBaseURL               string `env:"addon_api_base_url,required"`
 	AddonAPIToken                 string `env:"addon_api_token"`
+	GenerateUniversalApkIfNone    bool   `env:"generate_universal_apk_if_none,opt[true,false]"`
 	DebugMode                     bool   `env:"debug_mode,opt[true,false]"`
 	BundletoolVersion             string `env:"bundletool_version,required"`
 }
@@ -333,10 +334,17 @@ func findAPKsAndAABs(pths []string) (apks []string, aabs []string, others []stri
 
 func deploy(clearedFilesToDeploy []string, config Config) (ArtifactURLCollection, error) {
 	apks, aabs, others := findAPKsAndAABs(clearedFilesToDeploy)
-	apks, _, err := ensureAABsHasUniversalAPKPair(aabs, apks, config.BundletoolVersion)
-	if err != nil {
-		return ArtifactURLCollection{}, err
+
+	if config.GenerateUniversalApkIfNone {
+		var err error
+		apks, _, err = ensureAABsHasUniversalAPKPair(aabs, apks, config.BundletoolVersion)
+		if err != nil {
+			return ArtifactURLCollection{}, err
+		}
+	} else {
+		log.Printf("Does not have universal APK pair but ignoring generation.")
 	}
+
 	androidArtifacts := append(apks, aabs...)
 
 	// deploy the apks first, as the universal apk's public install page will be used for aabs.
