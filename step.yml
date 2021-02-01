@@ -22,10 +22,10 @@ description: |-
   You can specify a custom name for the zip file with the `zip_name` option. If you don't specify one, the default `Deploy directory` name will be used. 
   If the **Compress the artifacts into one file?** is set to `false`, the artifacts in the Deploy directory will be deployed separately.
   6. With the **Format for the BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP output** required input field, you can customize the output format of the public install page’s multiple artifact URLs so that the next Step can render the output (for example, our **Send a Slack message** Step). 
-  Provide a language template description using [https://golang.org/pkg/text/template]([https://golang.org/pkg/text/template) so that the **Deploy to Bitrise.io** Step can build the required custom output.
+  Provide a language template description using [https://golang.org/pkg/text/template](https://golang.org/pkg/text/template) so that the **Deploy to Bitrise.io** Step can build the required custom output.
   7. With the **Format for the BITRISE_PERMANENT_DOWNLOAD_URL_MAP output** required input, you can customize the output format of the `BITRISE_PERMANENT_DOWNLOAD_URL_MAP` so that the next Step can render the output.
   The next Steps will use this input to generate the related output in the specified format. The output contains multiple permanent URLs for multiple artifacts.
-  Provide a language template description using [https://golang.org/pkg/text/template]([https://golang.org/pkg/text/template) so that the **Deploy to Bitrise.io** Step can build the required custom output.
+  Provide a language template description using [https://golang.org/pkg/text/template](https://golang.org/pkg/text/template) so that the **Deploy to Bitrise.io** Step can build the required custom output.
   8. The **Test API's base URL** and the **API Token** input fields are automatically populated for you.
   
   #### Configuring the Debug section of the Step
@@ -35,7 +35,7 @@ description: |-
   Please note that this input only works if you set the **Compress the artifacts into one file?** input to `true`.
   2. The **Bitrise Build URL** and the **Bitrise Build API Token** inputs are automatically populated.
   3. If **The Enable Debug Mode** required input is set to `true`, the Step prints more verbose logs. It is `false` by default. 
-  4. If you need a specific [bundletool version]((https://github.com/google/bundletool/releases) other than the default value, you can modify the value of the **Bundletool version** required input. 
+  4. If you need a specific [bundletool version](https://github.com/google/bundletool/releases) other than the default value, you can modify the value of the **Bundletool version** required input. 
   Bundletool generates an APK from an Android App Bundle so that you can test the APK.
 
   ### Troubleshooting
