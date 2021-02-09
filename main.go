@@ -39,7 +39,6 @@ type Config struct {
 	AppSlug                       string `env:"BITRISE_APP_SLUG,required"`
 	AddonAPIBaseURL               string `env:"addon_api_base_url,required"`
 	AddonAPIToken                 string `env:"addon_api_token"`
-	GenerateUniversalApkIfNone    bool   `env:"generate_universal_apk_if_none,opt[true,false]"`
 	DebugMode                     bool   `env:"debug_mode,opt[true,false]"`
 	BundletoolVersion             string `env:"bundletool_version,required"`
 }
