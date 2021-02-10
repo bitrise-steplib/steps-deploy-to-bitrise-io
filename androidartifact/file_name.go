@@ -266,24 +266,3 @@ func CreateSplitArtifactMeta(pth string, pths []string) (SplitArtifactMeta, erro
 
 	return SplitArtifactMeta(artifact), nil
 }
-
-// UniversalAPKBase returns the aab's universal apk pair's base name.
-func UniversalAPKBase(basedOnAAB string) string {
-	// <module>-<product_flavor>?-universal-<build type>-<unsigned|bitrise-signed>?.apk
-	info := ParseArtifactPath(basedOnAAB)
-
-	nameParts := []string{info.Module}
-	if len(info.ProductFlavour) > 0 {
-		nameParts = append(nameParts, info.ProductFlavour)
-	}
-	nameParts = append(nameParts, "universal", info.BuildType)
-
-	name := strings.Join(nameParts, "-")
-	if info.SigningInfo.Unsigned {
-		name = name + unsignedSuffix
-	} else if info.SigningInfo.BitriseSigned {
-		name = name + bitriseSignedSuffix
-	}
-	name += ".apk"
-	return name
-}
