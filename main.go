@@ -335,7 +335,8 @@ func findAPKsAndAABs(pths []string) (apks []string, aabs []string, others []stri
 func deploy(clearedFilesToDeploy []string, config Config) (ArtifactURLCollection, error) {
 	apks, aabs, others := findAPKsAndAABs(clearedFilesToDeploy)
 
-	log.Warnf(`Universal APK generation is going to be DEPRECATED with the next major release! Please use the Export Universal APK Step instead!
+	log.Warnf(`Universal APK generation is going to be DEPRECATED with the next major release! In case you build a bundle and you would like to
+export a universal APK, please use the Export Universal APK Step instead!
 You may find further information about the Step here (https://devcenter.bitrise.io/deploy/android-deploy/exporting-a-universal-apk-from-an-aab/).`)
 
 	if config.GenerateUniversalApkIfNone {
