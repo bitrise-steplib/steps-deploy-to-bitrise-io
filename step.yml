@@ -225,7 +225,7 @@ inputs:
       is_sensitive: true
   - generate_universal_apk_if_none: "true"
     opts:
-      title: "Force generate universal APK for AABs"
+      title: "Force generate universal APK for AABs (DEPRECATED)"
       description: |
         Universal APK generation is going to be  **DEPRECATED** with the next
         major release! Please use the _Export Universal APK_ Step instead! You 
