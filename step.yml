@@ -227,6 +227,10 @@ inputs:
     opts:
       title: "Force generate universal APK for AABs"
       description: |
+        Universal APK generation is going to be  **DEPRECATED** with the next
+        major release! Please use the _Export Universal APK_ Step instead! You 
+        may find further information about the Step [here](https://devcenter.bitrise.io/deploy/android-deploy/exporting-a-universal-apk-from-an-aab/).
+
         When building an AAB artifact, check for a corresponding universal APK.
         If none is found, generate the corresponding locally (debug) signed
         universal APK for ease of debugging.
