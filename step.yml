@@ -161,7 +161,7 @@ inputs:
       title: Format for the BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP output
       summary: You can customize the format of the `BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP` output so that the next Step can render the output.
       description: |-
-        Provide a language template description using [https://golang.org/pkg/text/template]([https://golang.org/pkg/text/template)
+        Provide a language template description using [Golang templates](https://golang.org/pkg/text/template)
         so that the **Deploy to Bitrise.io** Step can build the required custom output.
       is_required: true
       is_expand: false
@@ -170,7 +170,7 @@ inputs:
       title: Format for the BITRISE_PERMANENT_DOWNLOAD_URL_MAP output
       summary: You can customize the format of the `BITRISE_PERMANENT_DOWNLOAD_URL_MAP` output so that the next Step can render the output.
       description: |-
-        Provide a language template description using [https://golang.org/pkg/text/template]([https://golang.org/pkg/text/template)
+        Provide a language template description using [Golang templates](https://golang.org/pkg/text/template)
         so that the **Deploy to Bitrise.io** Step can build the required custom output for the permanent download URL.  
       is_required: true
       is_expand: false
