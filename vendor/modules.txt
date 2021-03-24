@@ -1,0 +1,106 @@
+# github.com/avast/apkparser v0.0.0-20200416105821-64ac289075cf
+## explicit
+github.com/avast/apkparser
+# github.com/bitrise-io/bitrise v0.0.0-20200520141334-d380a19c20fa
+## explicit
+github.com/bitrise-io/bitrise/models
+# github.com/bitrise-io/envman v0.0.0-20200512105748-919e33f391ee
+## explicit
+github.com/bitrise-io/envman/envman
+github.com/bitrise-io/envman/models
+# github.com/bitrise-io/go-android v0.0.0-20200424120931-a765b1761418
+## explicit
+github.com/bitrise-io/go-android/sdk
+# github.com/bitrise-io/go-steputils v0.0.0-20200227150459-94490ca44ddb
+## explicit
+github.com/bitrise-io/go-steputils/stepconf
+github.com/bitrise-io/go-steputils/tools
+# github.com/bitrise-io/go-utils v0.0.0-20200224122728-e212188d99b4
+## explicit
+github.com/bitrise-io/go-utils/colorstring
+github.com/bitrise-io/go-utils/command
+github.com/bitrise-io/go-utils/command/git
+github.com/bitrise-io/go-utils/errorutil
+github.com/bitrise-io/go-utils/fileutil
+github.com/bitrise-io/go-utils/log
+github.com/bitrise-io/go-utils/parseutil
+github.com/bitrise-io/go-utils/pathutil
+github.com/bitrise-io/go-utils/pkcs12
+github.com/bitrise-io/go-utils/pkcs12/internal/rc2
+github.com/bitrise-io/go-utils/pointers
+github.com/bitrise-io/go-utils/retry
+github.com/bitrise-io/go-utils/sliceutil
+github.com/bitrise-io/go-utils/urlutil
+github.com/bitrise-io/go-utils/ziputil
+# github.com/bitrise-io/go-xcode v0.0.0-20191209085152-95bf1e5fb205
+## explicit
+github.com/bitrise-io/go-xcode/certificateutil
+github.com/bitrise-io/go-xcode/exportoptions
+github.com/bitrise-io/go-xcode/ipa
+github.com/bitrise-io/go-xcode/models
+github.com/bitrise-io/go-xcode/plistutil
+github.com/bitrise-io/go-xcode/profileutil
+github.com/bitrise-io/go-xcode/utility
+github.com/bitrise-io/go-xcode/xcarchive
+# github.com/bitrise-io/goinp v0.0.0-20190611131639-bd18a8681e27
+## explicit
+github.com/bitrise-io/goinp/goinp
+# github.com/bitrise-io/stepman v0.0.0-20200512105824-83b3b9f43348
+## explicit
+github.com/bitrise-io/stepman/models
+# github.com/bitrise-io/xcode-project v0.0.0-20200519074540-09e5737e052d
+## explicit
+github.com/bitrise-io/xcode-project/serialized
+# github.com/bitrise-steplib/steps-xcode-test v0.0.0-20200310132827-2f36e5fc43f2
+## explicit
+github.com/bitrise-steplib/steps-xcode-test/pretty
+# github.com/davecgh/go-spew v1.1.1
+github.com/davecgh/go-spew/spew
+# github.com/fullsailor/pkcs7 v0.0.0-20190404230743-d7302db945fa
+## explicit
+github.com/fullsailor/pkcs7
+# github.com/google/go-cmp v0.4.1
+## explicit
+github.com/google/go-cmp/cmp
+github.com/google/go-cmp/cmp/internal/diff
+github.com/google/go-cmp/cmp/internal/flags
+github.com/google/go-cmp/cmp/internal/function
+github.com/google/go-cmp/cmp/internal/value
+# github.com/gorilla/mux v1.7.4
+## explicit
+github.com/gorilla/mux
+# github.com/hashicorp/go-version v1.2.0
+## explicit
+github.com/hashicorp/go-version
+# github.com/pkg/errors v0.8.1
+## explicit
+github.com/pkg/errors
+# github.com/pmezard/go-difflib v1.0.0
+github.com/pmezard/go-difflib/difflib
+# github.com/ryanuber/go-glob v1.0.0
+## explicit
+github.com/ryanuber/go-glob
+# github.com/stretchr/testify v1.6.0
+## explicit
+github.com/stretchr/testify/assert
+# golang.org/x/crypto v0.0.0-20201217014255-9d1352758620
+## explicit
+golang.org/x/crypto/ssh/terminal
+# golang.org/x/sys v0.0.0-20201214210602-f9fddec55a1e
+## explicit
+golang.org/x/sys/internal/unsafeheader
+golang.org/x/sys/plan9
+golang.org/x/sys/unix
+golang.org/x/sys/windows
+# golang.org/x/term v0.0.0-20201210144234-2321bbc49cbf
+## explicit
+golang.org/x/term
+# gopkg.in/yaml.v2 v2.4.0
+## explicit
+gopkg.in/yaml.v2
+# gopkg.in/yaml.v3 v3.0.0-20200601152816-913338de1bd2
+## explicit
+gopkg.in/yaml.v3
+# howett.net/plist v0.0.0-20200419221736-3b63eb3a43b5
+## explicit
+howett.net/plist
