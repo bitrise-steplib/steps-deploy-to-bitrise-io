@@ -199,22 +199,6 @@ workflows:
         - deploy_path: 0_length_file.txt
         - debug_mode: "true"
 
-  # ----------------------------------------------------------------
-  # --- Utility workflows
-  dep-update:
-    title: Dep update
-    description: |
-      Used for updating bitrise dependencies with dep
-    steps:
-    - script:
-        title: Dependency update
-        inputs:
-        - content: |-
-            #!/bin/bash
-            set -ex
-            dep ensure -v
-            dep ensure -v -update
-
 
   # ----------------------------------------------------------------
   # --- workflow to Share this step into a Step Library
