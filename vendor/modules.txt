@@ -52,6 +52,9 @@ github.com/bitrise-io/stepman/models
 # github.com/bitrise-io/xcode-project v0.0.0-20210302080829-f3e0bfbcd5cb
 ## explicit
 github.com/bitrise-io/xcode-project/serialized
+# github.com/bitrise-steplib/bitrise-step-export-universal-apk v0.0.0-20210505160226-751d4bb4627c
+## explicit
+github.com/bitrise-steplib/bitrise-step-export-universal-apk/filedownloader
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/fullsailor/pkcs7 v0.0.0-20190404230743-d7302db945fa
@@ -66,6 +69,11 @@ github.com/google/go-cmp/cmp/internal/value
 # github.com/gorilla/mux v1.8.0
 ## explicit
 github.com/gorilla/mux
+# github.com/hashicorp/go-cleanhttp v0.5.1
+github.com/hashicorp/go-cleanhttp
+# github.com/hashicorp/go-retryablehttp v0.6.6
+## explicit
+github.com/hashicorp/go-retryablehttp
 # github.com/hashicorp/go-version v1.3.0
 ## explicit
 github.com/hashicorp/go-version

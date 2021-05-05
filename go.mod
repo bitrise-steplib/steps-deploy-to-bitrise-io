@@ -12,8 +12,10 @@ require (
 	github.com/bitrise-io/go-xcode v0.0.0-20210503072731-80097817b002
 	github.com/bitrise-io/stepman v0.0.0-20210505110307-5c2296bcc558 // indirect
 	github.com/bitrise-io/xcode-project v0.0.0-20210302080829-f3e0bfbcd5cb
+	github.com/bitrise-steplib/bitrise-step-export-universal-apk v0.0.0-20210505160226-751d4bb4627c
 	github.com/google/go-cmp v0.5.5
 	github.com/gorilla/mux v1.8.0
+	github.com/hashicorp/go-retryablehttp v0.6.6
 	github.com/hashicorp/go-version v1.3.0 // indirect
 	github.com/klauspost/compress v1.12.2 // indirect
 	github.com/pkg/errors v0.9.1
