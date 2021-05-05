@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/bitrise-io/go-utils/pretty"
 	"github.com/bitrise-io/go-utils/sliceutil"
-	"github.com/bitrise-steplib/steps-xcode-test/pretty"
 )
 
 func TestParseArtifactPath(t *testing.T) {

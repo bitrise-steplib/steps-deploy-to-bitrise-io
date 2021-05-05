@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/bitrise-steplib/steps-xcode-test/pretty"
+	"github.com/bitrise-io/go-utils/pretty"
 )
 
 func TestActionTestPlanRunSummaries_tests(t *testing.T) {
