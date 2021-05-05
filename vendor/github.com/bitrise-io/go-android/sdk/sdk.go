@@ -64,7 +64,7 @@ func (model *Model) LatestBuildToolsDir() (string, error) {
 		}
 	}
 
-	if latestVersion.String() == "" {
+	if latestVersion == nil || latestVersion.String() == "" {
 		return "", errors.New("failed to find latest build-tools dir")
 	}
 
