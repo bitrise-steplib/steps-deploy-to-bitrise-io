@@ -7,8 +7,8 @@ import (
 	"unicode"
 
 	"github.com/bitrise-io/go-utils/log"
+	"github.com/bitrise-io/go-utils/pretty"
 	"github.com/bitrise-io/go-utils/sliceutil"
-	"github.com/bitrise-steplib/steps-xcode-test/pretty"
 )
 
 const universalSplitParam = "universal"

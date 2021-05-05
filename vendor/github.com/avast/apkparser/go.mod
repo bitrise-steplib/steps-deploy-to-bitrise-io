@@ -2,4 +2,7 @@ module github.com/avast/apkparser
 
 go 1.10
 
-require github.com/avast/apkverifier v0.0.0-20200416105355-97c5338f32f0
+require (
+	github.com/avast/apkverifier v0.0.0-20210301101718-290c8f7fccf7
+	github.com/klauspost/compress v1.11.8
+)
