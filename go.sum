@@ -25,8 +25,8 @@ github.com/bitrise-io/go-steputils v0.0.0-20210505101226-8536c460c5c1/go.mod h1:
 github.com/bitrise-io/go-utils v0.0.0-20201019131314-6cc2aa4d248a/go.mod h1:tTEsKvbz1LbzuN/KpVFHXnLtcAPdEgIdM41s0lL407s=
 github.com/bitrise-io/go-utils v0.0.0-20210323091856-00429d8e1e87/go.mod h1:tTEsKvbz1LbzuN/KpVFHXnLtcAPdEgIdM41s0lL407s=
 github.com/bitrise-io/go-utils v0.0.0-20210505091801-98b7dc39ee61/go.mod h1:nhdaDQFvaMny1CugVV6KjK92/q97ENo0RuKSW5I4fbA=
-github.com/bitrise-io/go-utils v0.0.0-20210505130606-6269c7fd64f3 h1:3FuE7AhshWPDc/jJ37+AE6UFBhIQM7cGjf86nS6+uaU=
-github.com/bitrise-io/go-utils v0.0.0-20210505130606-6269c7fd64f3/go.mod h1:nhdaDQFvaMny1CugVV6KjK92/q97ENo0RuKSW5I4fbA=
+github.com/bitrise-io/go-utils v0.0.0-20210507100250-37de47dfa6ce h1:z9t020cBpCZdwO4teTXbj7XyLwQDvMcMmfnhHe36mWc=
+github.com/bitrise-io/go-utils v0.0.0-20210507100250-37de47dfa6ce/go.mod h1:15EZZf02noI5nWFqXMZEoyb1CyqYRXTMz5Fyu4CWFzI=
 github.com/bitrise-io/go-xcode v0.0.0-20210503072731-80097817b002 h1:71GnvlyNVks230Rva4UAAvmIaf35gsIX8ZM8ozEQZ0A=
 github.com/bitrise-io/go-xcode v0.0.0-20210503072731-80097817b002/go.mod h1:JTKSSfWhzJ133FvMfd6gCeAO2G/ZsA4Qs7ntB9cjfyc=
 github.com/bitrise-io/goinp v0.0.0-20210504152833-8559b0680ab1 h1:iQZl/dKHp14xol7ye4e9FaSrw8o27TF5/nv3aUDfdD0=
@@ -38,9 +38,6 @@ github.com/bitrise-io/stepman v0.0.0-20210505110307-5c2296bcc558/go.mod h1:WLh58
 github.com/bitrise-io/xcode-project v0.0.0-20201203153351-7ad13a1dd021/go.mod h1:R2iDrjJlNQtVwIdXT+F9bcx/YTNJPdd0tXfFRJsxHaM=
 github.com/bitrise-io/xcode-project v0.0.0-20210302080829-f3e0bfbcd5cb h1:aEkFx1qj8Qty6oN9zcOFoMDX8jQ+M24aKwhdABG5tcA=
 github.com/bitrise-io/xcode-project v0.0.0-20210302080829-f3e0bfbcd5cb/go.mod h1:t9Gj5Pe/FBDTUrkFmw2lK6PbzESB6o27eE97ukZj8Rs=
-github.com/bitrise-steplib/bitrise-step-export-universal-apk v0.0.0-20210505160226-751d4bb4627c h1:vHSmb/hVIGG48UQfVJBc7G8bGvEUQeq2SpXe5zb7O64=
-github.com/bitrise-steplib/bitrise-step-export-universal-apk v0.0.0-20210505160226-751d4bb4627c/go.mod h1:cDoKMWlE09mtRHUTOAmV501PYRkbRFTZkMlVubiy7fA=
-github.com/bitrise-steplib/steps-xcode-test v0.0.0-20210504122558-8d13146f093c/go.mod h1:3vjk5RND3jeCH21LVxe9Fdp/BzlLHYD2G2PsiRgtMws=
 github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d/go.mod h1:maD7wRr/U5Z6m/iR4s+kqSMx2CaBsrgA7czyZG/E6dU=
 github.com/cpuguy83/go-md2man/v2 v2.0.0/go.mod h1:maD7wRr/U5Z6m/iR4s+kqSMx2CaBsrgA7czyZG/E6dU=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

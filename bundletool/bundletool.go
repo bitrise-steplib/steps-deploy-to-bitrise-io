@@ -4,8 +4,9 @@ import (
 	"path/filepath"
 
 	"github.com/bitrise-io/go-utils/command"
+	"github.com/bitrise-io/go-utils/filedownloader"
 	"github.com/bitrise-io/go-utils/pathutil"
-	"github.com/bitrise-steplib/bitrise-step-export-universal-apk/filedownloader"
+	"github.com/bitrise-io/go-utils/retry"
 )
 
 // Path ...
@@ -25,7 +26,7 @@ func fetchAny(source string, fallbackSources ...string) (Path, error) {
 		return "", err
 	}
 
-	downloader := filedownloader.New(NewRetryableClient())
+	downloader := filedownloader.New(retry.NewHTTPClient())
 
 	toolPath := filepath.Join(tmpPth, "bundletool-all.jar")
 	if err := downloader.GetWithFallback(toolPath, source, fallbackSources...); err != nil {
