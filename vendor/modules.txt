@@ -15,12 +15,13 @@ github.com/bitrise-io/go-android/sdk
 ## explicit
 github.com/bitrise-io/go-steputils/stepconf
 github.com/bitrise-io/go-steputils/tools
-# github.com/bitrise-io/go-utils v0.0.0-20210505130606-6269c7fd64f3
+# github.com/bitrise-io/go-utils v0.0.0-20210507100250-37de47dfa6ce
 ## explicit
 github.com/bitrise-io/go-utils/colorstring
 github.com/bitrise-io/go-utils/command
 github.com/bitrise-io/go-utils/command/git
 github.com/bitrise-io/go-utils/errorutil
+github.com/bitrise-io/go-utils/filedownloader
 github.com/bitrise-io/go-utils/fileutil
 github.com/bitrise-io/go-utils/log
 github.com/bitrise-io/go-utils/parseutil
@@ -66,6 +67,10 @@ github.com/google/go-cmp/cmp/internal/value
 # github.com/gorilla/mux v1.8.0
 ## explicit
 github.com/gorilla/mux
+# github.com/hashicorp/go-cleanhttp v0.5.1
+github.com/hashicorp/go-cleanhttp
+# github.com/hashicorp/go-retryablehttp v0.6.6
+github.com/hashicorp/go-retryablehttp
 # github.com/hashicorp/go-version v1.3.0
 ## explicit
 github.com/hashicorp/go-version

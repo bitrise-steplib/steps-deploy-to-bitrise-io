@@ -8,7 +8,7 @@ require (
 	github.com/bitrise-io/envman v0.0.0-20200512105748-919e33f391ee
 	github.com/bitrise-io/go-android v0.0.0-20210301151701-791fb4b5216b
 	github.com/bitrise-io/go-steputils v0.0.0-20210505101226-8536c460c5c1
-	github.com/bitrise-io/go-utils v0.0.0-20210505130606-6269c7fd64f3
+	github.com/bitrise-io/go-utils v0.0.0-20210507100250-37de47dfa6ce
 	github.com/bitrise-io/go-xcode v0.0.0-20210503072731-80097817b002
 	github.com/bitrise-io/stepman v0.0.0-20210505110307-5c2296bcc558 // indirect
 	github.com/bitrise-io/xcode-project v0.0.0-20210302080829-f3e0bfbcd5cb
