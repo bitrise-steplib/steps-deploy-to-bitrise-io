@@ -1,21 +1,21 @@
 # github.com/avast/apkparser v0.0.0-20210301101811-6256c76f738e
 ## explicit
 github.com/avast/apkparser
-# github.com/bitrise-io/bitrise v0.0.0-20210401073821-4ed3f06d26ae
+# github.com/bitrise-io/bitrise v0.0.0-20210519130014-380842fb41c1
 ## explicit
 github.com/bitrise-io/bitrise/models
-# github.com/bitrise-io/envman v0.0.0-20200512105748-919e33f391ee
+# github.com/bitrise-io/envman v0.0.0-20210517135508-b2b4fe89eac5
 ## explicit
 github.com/bitrise-io/envman/envman
 github.com/bitrise-io/envman/models
-# github.com/bitrise-io/go-android v0.0.0-20210301151701-791fb4b5216b
+# github.com/bitrise-io/go-android v0.0.0-20210517091621-72f0eb7a5197
 ## explicit
 github.com/bitrise-io/go-android/sdk
-# github.com/bitrise-io/go-steputils v0.0.0-20210507072936-92fde382fb33
+# github.com/bitrise-io/go-steputils v0.0.0-20210514150206-5b6261447e77
 ## explicit
 github.com/bitrise-io/go-steputils/stepconf
 github.com/bitrise-io/go-steputils/tools
-# github.com/bitrise-io/go-utils v0.0.0-20210514083430-4d1fb0330dfe
+# github.com/bitrise-io/go-utils v0.0.0-20210520073355-367fa34178f5
 ## explicit
 github.com/bitrise-io/go-utils/colorstring
 github.com/bitrise-io/go-utils/command
@@ -48,7 +48,7 @@ github.com/bitrise-io/goinp/goinp
 # github.com/bitrise-io/pkcs12 v0.0.0-20210430063833-0da06eb56630
 github.com/bitrise-io/pkcs12
 github.com/bitrise-io/pkcs12/internal/rc2
-# github.com/bitrise-io/stepman v0.0.0-20210505110307-5c2296bcc558
+# github.com/bitrise-io/stepman v0.0.0-20210517135458-203f7a48d37a
 ## explicit
 github.com/bitrise-io/stepman/models
 # github.com/davecgh/go-spew v1.1.1
@@ -65,12 +65,13 @@ github.com/google/go-cmp/cmp/internal/value
 # github.com/gorilla/mux v1.8.0
 ## explicit
 github.com/gorilla/mux
-# github.com/hashicorp/go-cleanhttp v0.5.1
+# github.com/hashicorp/go-cleanhttp v0.5.2
+## explicit
 github.com/hashicorp/go-cleanhttp
-# github.com/hashicorp/go-retryablehttp v0.6.6
+# github.com/hashicorp/go-retryablehttp v0.7.0
+## explicit
 github.com/hashicorp/go-retryablehttp
 # github.com/hashicorp/go-version v1.3.0
-## explicit
 github.com/hashicorp/go-version
 # github.com/klauspost/compress v1.12.2
 ## explicit
@@ -87,7 +88,8 @@ github.com/ryanuber/go-glob
 github.com/stretchr/testify/assert
 # golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/sys v0.0.0-20210511113859-b0526f3d8744
+# golang.org/x/sys v0.0.0-20210514084401-e8d321eab015
+## explicit
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
