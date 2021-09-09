@@ -223,17 +223,6 @@ inputs:
         The token required to authenticate with the API.
       is_dont_change_value: true
       is_sensitive: true
-  - generate_universal_apk_if_none: "true"
-    opts:
-      title: "Force generate universal APK for AABs (DEPRECATED)"
-      description: |
-        Universal APK generation is scheduled to be **DEPRECATED** in the next
-        major release. Please use the **Export Universal APK** Step instead! You 
-        may find further information about the Step in our [Exporting a universal APK from an AAB](https://devcenter.bitrise.io/deploy/android-deploy/exporting-a-universal-apk-from-an-aab/) article.
-
-        When building an AAB artifact, check for a corresponding universal APK.
-        If none is found, generate the corresponding locally (debug) signed
-        universal APK for easier debugging.
   - debug_mode: "false"
     opts: 
       category: Debug
@@ -245,14 +234,13 @@ inputs:
         - "false"
         - "true"
   - bundletool_version: "0.13.4"
-    opts: 
+    opts:
       category: Debug
       title: "Bundletool version"
       summary: The specific bundletool version you want to use.
       description: |-
         If you need a specific [bundletool version]((https://github.com/google/bundletool/releases) other than the default version,
-        you can modify the value of the **Bundletool version** required input. 
-        Bundletool generates an APK from an Android App Bundle so that you can test the APK. 
+        you can modify the value of the **Bundletool version** required input.
       is_required: true
 outputs:
   - BITRISE_PUBLIC_INSTALL_PAGE_URL:
