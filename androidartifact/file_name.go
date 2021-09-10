@@ -192,7 +192,7 @@ func mapBuildArtifacts(pths []string) ArtifactMap {
 
 		if filepath.Ext(pth) == ".aab" {
 			if len(artifact.AAB) != 0 {
-				log.Warnf("Multple AAB generated for module: %s, productFlavour: %s, buildType: %s: %s", info.Module, info.ProductFlavour, info.BuildType, pth)
+				log.Warnf("Multiple AAB generated for module: %s, productFlavour: %s, buildType: %s: %s", info.Module, info.ProductFlavour, info.BuildType, pth)
 			}
 			artifact.AAB = pth
 			buildTypeArtifacts[info.ProductFlavour] = artifact
@@ -214,7 +214,7 @@ func mapBuildArtifacts(pths []string) ArtifactMap {
 
 		if info.SplitInfo.Universal {
 			if len(artifact.UniversalApk) != 0 {
-				log.Warnf("Multple universal APK generated for module: %s, productFlavour: %s, buildType: %s: %s", info.Module, info.ProductFlavour, info.BuildType, pth)
+				log.Warnf("Multiple universal APK generated for module: %s, productFlavour: %s, buildType: %s: %s", info.Module, info.ProductFlavour, info.BuildType, pth)
 			}
 			artifact.UniversalApk = pth
 		}
