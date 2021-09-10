@@ -3,3 +3,4 @@ _tmp
 .bundle/
 # built executable
 steps-deploy-to-bitrise-io
+/.idea/

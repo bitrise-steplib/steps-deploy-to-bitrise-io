@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/androidartifact"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test"
 
 	"github.com/bitrise-io/envman/envman"
@@ -39,7 +38,6 @@ type Config struct {
 	AppSlug                       string `env:"BITRISE_APP_SLUG,required"`
 	AddonAPIBaseURL               string `env:"addon_api_base_url,required"`
 	AddonAPIToken                 string `env:"addon_api_token"`
-	GenerateUniversalApkIfNone    bool   `env:"generate_universal_apk_if_none,opt[true,false]"`
 	DebugMode                     bool   `env:"debug_mode,opt[true,false]"`
 	BundletoolVersion             string `env:"bundletool_version,required"`
 }
@@ -286,38 +284,6 @@ func deployTestResults(config Config) {
 	}
 }
 
-func findUniversalAPKPair(aab string, apks []string) string {
-	universalAPKBase := androidartifact.UniversalAPKBase(aab)
-	return androidartifact.FindSameArtifact(universalAPKBase, apks)
-}
-
-func ensureAABsHasUniversalAPKPair(aabs, apks []string, bundletoolVersion string) ([]string, map[string]string, error) {
-	aabAPKPairs := map[string]string{}
-	for _, aab := range aabs {
-		log.Debugf("Looking for universal APK pair for: %s", aab)
-
-		universalAPKPair := findUniversalAPKPair(aab, apks)
-		if len(universalAPKPair) == 0 {
-			log.Debugf("Does not have universal APK pair, generating...")
-
-			var err error
-			universalAPKPair, err = GenerateUniversalAPK(aab, bundletoolVersion)
-			if err != nil {
-				return nil, nil, err
-			}
-
-			log.Debugf("Generated universal APK pair: %s", universalAPKPair)
-
-			apks = append(apks, universalAPKPair)
-		} else {
-			log.Debugf("Universal APK pair: %s", universalAPKPair)
-		}
-
-		aabAPKPairs[aab] = universalAPKPair
-	}
-	return apks, aabAPKPairs, nil
-}
-
 func findAPKsAndAABs(pths []string) (apks []string, aabs []string, others []string) {
 	for _, pth := range pths {
 		switch getFileType(pth) {
@@ -335,23 +301,8 @@ func findAPKsAndAABs(pths []string) (apks []string, aabs []string, others []stri
 func deploy(clearedFilesToDeploy []string, config Config) (ArtifactURLCollection, error) {
 	apks, aabs, others := findAPKsAndAABs(clearedFilesToDeploy)
 
-	log.Warnf(`Universal APK generation is going to be DEPRECATED with the next major release! In case you build a bundle and you would like to
-export a universal APK to distribute it for testing (by Public install page or Ship Add-on), please use the Export Universal APK Step instead!
-You may find further information about the Step here (https://devcenter.bitrise.io/deploy/android-deploy/exporting-a-universal-apk-from-an-aab/).`)
-
-	if config.GenerateUniversalApkIfNone {
-		var err error
-		apks, _, err = ensureAABsHasUniversalAPKPair(aabs, apks, config.BundletoolVersion)
-		if err != nil {
-			return ArtifactURLCollection{}, err
-		}
-	} else {
-		log.Printf("Does not have universal APK pair but ignoring generation.")
-	}
-
 	androidArtifacts := append(apks, aabs...)
 
-	// deploy the apks first, as the universal apk's public install page will be used for aabs.
 	artifactURLCollection := ArtifactURLCollection{
 		PublicInstallPageURLs: map[string]string{},
 		PermanentDownloadURLs: map[string]string{},
