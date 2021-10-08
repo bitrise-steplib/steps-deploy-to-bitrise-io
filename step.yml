@@ -233,7 +233,7 @@ inputs:
       value_options:
         - "false"
         - "true"
-  - bundletool_version: "0.13.4"
+  - bundletool_version: "1.8.1"
     opts:
       category: Debug
       title: "Bundletool version"
