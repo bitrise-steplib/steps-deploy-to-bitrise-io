@@ -94,10 +94,16 @@ func (h *Converter) XML() (junit.XML, error) {
 				}
 			}
 
+			var skipped *junit.Skipped
+			if test.Skipped() {
+				skipped = &junit.Skipped{}
+			}
+
 			testSuite.TestCases = append(testSuite.TestCases, junit.TestCase{
 				Name:      test.TestName,
 				ClassName: testID,
 				Failure:   failure,
+				Skipped:   skipped,
 				Time:      test.Duration,
 			})
 		}
