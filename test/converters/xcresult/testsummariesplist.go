@@ -83,7 +83,7 @@ func (st Subtest) Failure() (message string) {
 	return
 }
 
-// Failure ...
+// Skipped ...
 func (st Subtest) Skipped() bool {
 	return st.TestStatus == "Skipped"
 }
