@@ -86,6 +86,7 @@ github.com/ryanuber/go-glob
 # github.com/stretchr/testify v1.7.0
 ## explicit
 github.com/stretchr/testify/assert
+github.com/stretchr/testify/require
 # golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
 golang.org/x/crypto/ssh/terminal
 # golang.org/x/sys v0.0.0-20210521090106-6ca3eb03dfc2

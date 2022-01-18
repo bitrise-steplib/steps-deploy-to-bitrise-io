@@ -70,6 +70,17 @@ func (s ActionTestPlanRunSummaries) failuresCount(testableSummaryName string) (f
 	return
 }
 
+func (s ActionTestPlanRunSummaries) skippedCount(testableSummaryName string) (skipped int) {
+	testsByCase := s.tests()
+	tests := testsByCase[testableSummaryName]
+	for _, test := range tests {
+		if test.TestStatus.Value == "Skipped" {
+			skipped++
+		}
+	}
+	return
+}
+
 func (s ActionTestPlanRunSummaries) totalTime(testableSummaryName string) (time float64) {
 	testsByCase := s.tests()
 	tests := testsByCase[testableSummaryName]

@@ -83,6 +83,11 @@ func (st Subtest) Failure() (message string) {
 	return
 }
 
+// Skipped ...
+func (st Subtest) Skipped() bool {
+	return st.TestStatus == "Skipped"
+}
+
 // Subtests ...
 type Subtests []Subtest
 
@@ -90,6 +95,16 @@ type Subtests []Subtest
 func (sts Subtests) FailuresCount() (count int) {
 	for _, test := range sts {
 		if len(test.FailureSummaries) > 0 {
+			count++
+		}
+	}
+	return count
+}
+
+// SkippedCount ...
+func (sts Subtests) SkippedCount() (count int) {
+	for _, test := range sts {
+		if test.Skipped() {
 			count++
 		}
 	}

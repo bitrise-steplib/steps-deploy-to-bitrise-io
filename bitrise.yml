@@ -20,23 +20,10 @@ workflows:
   ci:
     before_run:
     - audit-this-step
+    - test
     after_run:
     - _zero_length_file_upload
     steps:
-    - script:
-        inputs:
-        - content: |-
-            #!/bin/bash
-            set -e
-            set -v
-            rm -rf ./_tmp
-    - script:
-        inputs:
-        - content: git clone $SAMPLE_ARTIFACTS_GIT_CLONE_URL ./_tmp
-    - go-list:
-    - golint:
-    - errcheck:
-    - go-test:
     - change-workdir:
         run_if: true
         inputs:
@@ -184,7 +171,22 @@ workflows:
             echo "-> BITRISE_PUBLIC_INSTALL_PAGE_URL: ${BITRISE_PUBLIC_INSTALL_PAGE_URL}"
             echo "-> BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP: ${BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP}"
             echo "-> BITRISE_PERMANENT_DOWNLOAD_URL_MAP: ${BITRISE_PERMANENT_DOWNLOAD_URL_MAP}"
-
+  test:
+    steps:
+    - script:
+        inputs:
+        - content: |-
+            #!/bin/bash
+            set -e
+            set -v
+            rm -rf ./_tmp
+    - script:
+        inputs:
+        - content: git clone --depth 1 $SAMPLE_ARTIFACTS_GIT_CLONE_URL ./_tmp
+    - go-list:
+    - golint:
+    - errcheck:
+    - go-test:
   _zero_length_file_upload:
     steps:
     - script:

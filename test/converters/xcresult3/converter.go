@@ -101,6 +101,7 @@ func (c *Converter) XML() (junit.XML, error) {
 				Name:     name,
 				Tests:    len(tests),
 				Failures: summary.failuresCount(name),
+				Skipped:  summary.skippedCount(name),
 				Time:     summary.totalTime(name),
 			}
 

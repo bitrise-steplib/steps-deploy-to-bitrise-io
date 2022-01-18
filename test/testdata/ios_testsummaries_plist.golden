@@ -4593,7 +4593,7 @@
 											<key>TestObjectClass</key>
 											<string>IDESchemeActionTestSummary</string>
 											<key>TestStatus</key>
-											<string>Success</string>
+											<string>Skipped</string>
 											<key>TestSummaryGUID</key>
 											<string>564D74F8-E1D7-41EA-A629-0ED0B79E6A39</string>
 										</dict>
