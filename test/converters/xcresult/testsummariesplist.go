@@ -101,6 +101,16 @@ func (sts Subtests) FailuresCount() (count int) {
 	return count
 }
 
+// SkippedCount ...
+func (sts Subtests) SkippedCount() (count int) {
+	for _, test := range sts {
+		if test.Skipped() {
+			count++
+		}
+	}
+	return count
+}
+
 // TotalTime ...
 func (sts Subtests) TotalTime() (time float64) {
 	for _, test := range sts {

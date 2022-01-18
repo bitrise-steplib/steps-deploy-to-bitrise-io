@@ -8,7 +8,7 @@
  </testsuite>
  <testsuite name="BitriseCommanderUITests" tests="1" failures="0" skipped="1" errors="0" time="40.58690905570984">
   <testcase name="testCommanderUpdate()" classname="BitriseCommanderUITests" time="40.58690905570984">
-   <skipped />
+   <skipped></skipped>
   </testcase>
  </testsuite>
  <testsuite name="BitriseComponentUITest" tests="2" failures="0" skipped="0" errors="0" time="33.92029893398285">

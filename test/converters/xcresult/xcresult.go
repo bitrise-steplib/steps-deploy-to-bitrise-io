@@ -81,6 +81,7 @@ func (h *Converter) XML() (junit.XML, error) {
 			Name:     testID,
 			Tests:    len(tests),
 			Failures: tests.FailuresCount(),
+			Skipped:  tests.SkippedCount(),
 			Time:     tests.TotalTime(),
 		}
 

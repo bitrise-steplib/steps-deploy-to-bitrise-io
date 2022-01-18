@@ -2,7 +2,6 @@ package test
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -15,6 +14,7 @@ import (
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 )
 
 func createDummyFilesInDirWithContent(dir, content string, fileNames []string) error {
@@ -228,9 +228,7 @@ func Test_ParseTestResults(t *testing.T) {
 			t.Fatalf("should be 1 test asset pack: %#v", bundle)
 		}
 
-		if len(bundle[0].XMLContent) != len(sampleIOSXmlOutput) {
-			t.Fatal(fmt.Sprintf("wrong xml content: %s", bundle[0].XMLContent))
-		}
+		assert.Equal(t, sampleIOSXmlOutput, string(bundle[0].XMLContent))
 	}
 
 	// creating ios test results
@@ -269,8 +267,6 @@ func Test_ParseTestResults(t *testing.T) {
 			t.Fatal("should be 1 test asset pack")
 		}
 
-		if len(string(bundle[0].XMLContent)) != len(sampleIOSXmlOutput) {
-			t.Fatal("wrong xml content\n" + string(bundle[0].XMLContent) + "\n\n" + sampleIOSXmlOutput)
-		}
+		assert.Equal(t, sampleIOSXmlOutput, string(bundle[0].XMLContent))
 	}
 }
