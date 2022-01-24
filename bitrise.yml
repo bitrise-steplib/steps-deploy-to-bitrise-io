@@ -171,18 +171,24 @@ workflows:
             echo "-> BITRISE_PUBLIC_INSTALL_PAGE_URL: ${BITRISE_PUBLIC_INSTALL_PAGE_URL}"
             echo "-> BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP: ${BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP}"
             echo "-> BITRISE_PERMANENT_DOWNLOAD_URL_MAP: ${BITRISE_PERMANENT_DOWNLOAD_URL_MAP}"
-  test:
+  download_sample_artifacts:
     steps:
     - script:
         inputs:
         - content: |-
             #!/bin/bash
-            set -e
-            set -v
+            set -ex
             rm -rf ./_tmp
     - script:
         inputs:
-        - content: git clone --depth 1 $SAMPLE_ARTIFACTS_GIT_CLONE_URL ./_tmp
+        - content: |
+            #!/bin/bash
+            set -ex
+            git clone --depth 1 $SAMPLE_ARTIFACTS_GIT_CLONE_URL ./_tmp
+  test:
+    before_run:
+    - download_sample_artifacts
+    steps:
     - go-list:
     - golint:
     - errcheck:

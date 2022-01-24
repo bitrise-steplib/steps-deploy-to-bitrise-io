@@ -123,10 +123,16 @@ func (c *Converter) XML() (junit.XML, error) {
 					}
 				}
 
+				var skipped *junit.Skipped
+				if test.TestStatus.Value == "Skipped" {
+					skipped = &junit.Skipped{}
+				}
+
 				testSuit.TestCases = append(testSuit.TestCases, junit.TestCase{
 					Name:      test.Name.Value,
 					ClassName: strings.Split(test.Identifier.Value, "/")[0],
 					Failure:   failure,
+					Skipped:   skipped,
 					Time:      duartion,
 				})
 
