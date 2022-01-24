@@ -11,14 +11,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// copyTestdataToDir ...
+// To populate the _tmp dir with sample data
+// run `bitrise run download_sample_artifacts` before running tests here,
+// which will download https://github.com/bitrise-io/sample-artifacts
+// into the _tmp dir.
 func copyTestdataToDir(t *testing.T, pathInTestdataDir, dirPathToCopyInto string) string {
 	err := command.CopyDir(
-		filepath.Join("../../testdata/", pathInTestdataDir),
+		filepath.Join("../../../_tmp/", pathInTestdataDir),
 		dirPathToCopyInto,
-		false,
+		true,
 	)
 	require.NoError(t, err)
-	return filepath.Join(dirPathToCopyInto, pathInTestdataDir)
+	return dirPathToCopyInto
 }
 
 func TestConverter_XML(t *testing.T) {
@@ -31,8 +36,8 @@ func TestConverter_XML(t *testing.T) {
 		defer func() {
 			require.NoError(t, os.RemoveAll(tempTestdataDir))
 		}()
-		tempXCResultPath := copyTestdataToDir(t, "./success-failed-skipped-tests.xcresult", tempTestdataDir)
-		t.Log("tempXCResultPath: ", tempXCResultPath)
+		t.Log("tempTestdataDir: ", tempTestdataDir)
+		tempXCResultPath := copyTestdataToDir(t, "./xcresults/xcresult3-success-failed-skipped-tests.xcresult", tempTestdataDir)
 
 		c := Converter{
 			xcresultPth: tempXCResultPath,
