@@ -1,6 +1,7 @@
 package xcresult3
 
 import (
+	"fmt"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -87,7 +88,7 @@ func (c *Converter) Detect(files []string) bool {
 func (c *Converter) XML() (junit.XML, error) {
 	testResultDir := filepath.Dir(c.xcresultPth)
 
-	record, summaries, err := Parse(c.xcresultPth)
+	_, summaries, err := Parse(c.xcresultPth)
 	if err != nil {
 		return junit.XML{}, err
 	}
@@ -114,17 +115,28 @@ func (c *Converter) XML() (junit.XML, error) {
 					}
 				}
 
-				failureMessage := record.failure(test, testSuit)
-
 				var failure *junit.Failure
-				if len(failureMessage) > 0 {
+				var skipped *junit.Skipped
+				switch test.TestStatus.Value {
+				case "Failure":
+					testSummary, err := test.loadActionTestSummary(c.xcresultPth)
+					if err != nil {
+						return junit.XML{}, err
+					}
+
+					failureMessage := ""
+					for _, aTestFailureSummary := range testSummary.FailureSummaries.Values {
+						file := aTestFailureSummary.FileName.Value
+						line := aTestFailureSummary.LineNumber.Value
+						message := aTestFailureSummary.Message.Value
+
+						failureMessage += fmt.Sprintf("%s:%s - %s\n", file, line, message)
+					}
+
 					failure = &junit.Failure{
 						Value: failureMessage,
 					}
-				}
-
-				var skipped *junit.Skipped
-				if test.TestStatus.Value == "Skipped" {
+				case "Skipped":
 					skipped = &junit.Skipped{}
 				}
 
