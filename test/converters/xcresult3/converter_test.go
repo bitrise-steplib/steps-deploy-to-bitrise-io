@@ -98,7 +98,7 @@ func TestConverter_XML(t *testing.T) {
 					{
 						Name: "testFlakyFeature()", ClassName: "BullsEyeFlakyTests", Time: 0.1958599090576172,
 						Failure: &junit.Failure{
-							Value: "/Users/vagrant/git/BullsEyeFlakyTests/BullsEyeFlakyTests.swift:43 - XCTAssertEqual failed: (\"1\") is not equal to (\"0\") - Number is not even\n",
+							Value: "/Users/vagrant/git/BullsEyeFlakyTests/BullsEyeFlakyTests.swift:43 - XCTAssertEqual failed: (\"1\") is not equal to (\"0\") - Number is not even",
 						},
 					},
 					{
@@ -144,7 +144,7 @@ func TestConverter_XML(t *testing.T) {
 						ClassName: "testProjectUITests",
 						Time:      0.2580660581588745,
 						Failure: &junit.Failure{
-							Value: "/Users/alexeysomov/Library/Autosave Information/testProject/testProjectUITests/testProjectUITests.swift:30 - XCTAssertTrue failed\n",
+							Value: "/Users/alexeysomov/Library/Autosave Information/testProject/testProjectUITests/testProjectUITests.swift:30 - XCTAssertTrue failed",
 						},
 					},
 					{

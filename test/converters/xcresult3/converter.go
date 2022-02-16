@@ -130,7 +130,10 @@ func (c *Converter) XML() (junit.XML, error) {
 						line := aTestFailureSummary.LineNumber.Value
 						message := aTestFailureSummary.Message.Value
 
-						failureMessage += fmt.Sprintf("%s:%s - %s\n", file, line, message)
+						if len(failureMessage) > 0 {
+							failureMessage += "\n"
+						}
+						failureMessage += fmt.Sprintf("%s:%s - %s", file, line, message)
 					}
 
 					failure = &junit.Failure{
