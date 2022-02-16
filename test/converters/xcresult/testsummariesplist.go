@@ -24,7 +24,8 @@ func collapseSubtestTree(data Subtests) (tests Subtests) {
 }
 
 // Tests returns the collapsed tree of tests
-func (summaryPlist TestSummaryPlist) Tests() map[string]Subtests {
+func (summaryPlist TestSummaryPlist) Tests() ([]string, map[string]Subtests) {
+	keyOrder := []string{}
 	tests := map[string]Subtests{}
 	var subTests Subtests
 	for _, testableSummary := range summaryPlist.TestableSummaries {
@@ -35,9 +36,12 @@ func (summaryPlist TestSummaryPlist) Tests() map[string]Subtests {
 	for _, test := range subTests {
 		// TestIdentifier is in a format of testID/testCase
 		testID := strings.Split(test.TestIdentifier, "/")[0]
+		if _, found := tests[testID]; !found {
+			keyOrder = append(keyOrder, testID)
+		}
 		tests[testID] = append(tests[testID], test)
 	}
-	return tests
+	return keyOrder, tests
 }
 
 // Test ...
