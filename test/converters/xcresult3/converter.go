@@ -95,9 +95,11 @@ func (c *Converter) XML() (junit.XML, error) {
 
 	var xmlData junit.XML
 	for _, summary := range summaries {
-		testsByName := summary.tests()
+		testSuiteOrder, testsByName := summary.tests()
 
-		for name, tests := range testsByName {
+		for _, name := range testSuiteOrder {
+			tests := testsByName[name]
+
 			testSuit := junit.TestSuite{
 				Name:     name,
 				Tests:    len(tests),

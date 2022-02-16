@@ -101,7 +101,7 @@ func TestActionTestPlanRunSummaries_tests(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.summaries.tests(); !reflect.DeepEqual(got, tt.want) {
+			if _, got := tt.summaries.tests(); !reflect.DeepEqual(got, tt.want) {
 				fmt.Println("want: ", pretty.Object(tt.want))
 				fmt.Println("got: ", pretty.Object(got))
 				t.Errorf("ActionTestPlanRunSummaries.tests() = %v, want %v", got, tt.want)

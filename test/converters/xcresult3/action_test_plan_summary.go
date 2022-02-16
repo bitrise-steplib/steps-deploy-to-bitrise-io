@@ -39,9 +39,10 @@ type Name struct {
 }
 
 // tests returns ActionTestSummaryGroup mapped by the container TestableSummary name.
-func (s ActionTestPlanRunSummaries) tests() map[string][]ActionTestSummaryGroup {
+func (s ActionTestPlanRunSummaries) tests() ([]string, map[string][]ActionTestSummaryGroup) {
 	summaryGroupsByName := map[string][]ActionTestSummaryGroup{}
 
+	testSuiteOrdering := []string{}
 	for _, summary := range s.Summaries.Values {
 		for _, testableSummary := range summary.TestableSummaries.Values {
 			// test suit
@@ -53,14 +54,15 @@ func (s ActionTestPlanRunSummaries) tests() map[string][]ActionTestSummaryGroup 
 			}
 
 			summaryGroupsByName[name] = tests
+			testSuiteOrdering = append(testSuiteOrdering, name)
 		}
 	}
 
-	return summaryGroupsByName
+	return testSuiteOrdering, summaryGroupsByName
 }
 
 func (s ActionTestPlanRunSummaries) failuresCount(testableSummaryName string) (failure int) {
-	testsByCase := s.tests()
+	_, testsByCase := s.tests()
 	tests := testsByCase[testableSummaryName]
 	for _, test := range tests {
 		if test.TestStatus.Value == "Failure" {
@@ -71,7 +73,7 @@ func (s ActionTestPlanRunSummaries) failuresCount(testableSummaryName string) (f
 }
 
 func (s ActionTestPlanRunSummaries) skippedCount(testableSummaryName string) (skipped int) {
-	testsByCase := s.tests()
+	_, testsByCase := s.tests()
 	tests := testsByCase[testableSummaryName]
 	for _, test := range tests {
 		if test.TestStatus.Value == "Skipped" {
@@ -82,7 +84,7 @@ func (s ActionTestPlanRunSummaries) skippedCount(testableSummaryName string) (sk
 }
 
 func (s ActionTestPlanRunSummaries) totalTime(testableSummaryName string) (time float64) {
-	testsByCase := s.tests()
+	_, testsByCase := s.tests()
 	tests := testsByCase[testableSummaryName]
 	for _, test := range tests {
 		if test.Duration.Value != "" {
