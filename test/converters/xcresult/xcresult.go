@@ -76,7 +76,9 @@ func (h *Converter) XML() (junit.XML, error) {
 	}
 
 	var xmlData junit.XML
-	for testID, tests := range plistData.Tests() {
+	keyOrder, tests := plistData.Tests()
+	for _, testID := range keyOrder {
+		tests := tests[testID]
 		testSuite := junit.TestSuite{
 			Name:     testID,
 			Tests:    len(tests),

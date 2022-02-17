@@ -28,7 +28,28 @@ type ActivitySummaries struct {
 	Values []ActionTestActivitySummary `json:"_values"`
 }
 
+// ActionTestFailureSummary ...
+type ActionTestFailureSummary struct {
+	Message struct {
+		Value string `json:"_value"`
+	} `json:"message"`
+
+	FileName struct {
+		Value string `json:"_value"`
+	} `json:"fileName"`
+
+	LineNumber struct {
+		Value string `json:"_value"`
+	} `json:"lineNumber"`
+}
+
+// FailureSummaries ...
+type FailureSummaries struct {
+	Values []ActionTestFailureSummary `json:"_values"`
+}
+
 // ActionTestSummary ...
 type ActionTestSummary struct {
 	ActivitySummaries ActivitySummaries `json:"activitySummaries"`
+	FailureSummaries  FailureSummaries  `json:"failureSummaries"`
 }

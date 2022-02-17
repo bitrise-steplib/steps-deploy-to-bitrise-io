@@ -58,7 +58,7 @@ func TestXCresult3Converters(t *testing.T) {
 						ClassName: "_TtCC17rtgtrghtrgUITests17rtgtrghtrgUITests18rtgtrghtrg3UITests",
 						Time:      0.09049093723297119,
 						Failure: &junit.Failure{
-							Value: "file:///Users/tamaspapik/Develop/ios/rtgtrghtrg/rtgtrghtrgUITests/rtgtrghtrgUITests.swift:CharacterRangeLen=0&EndingLineNumber=67&StartingLineNumber=67 - XCTAssertTrue failed",
+							Value: "/Users/tamaspapik/Develop/ios/rtgtrghtrg/rtgtrghtrgUITests/rtgtrghtrgUITests.swift:68 - XCTAssertTrue failed",
 						},
 					},
 					{
@@ -78,7 +78,7 @@ func TestXCresult3Converters(t *testing.T) {
 						ClassName: "rtgtrghtrg2UITests",
 						Time:      0.08525991439819336,
 						Failure: &junit.Failure{
-							Value: "file:///Users/tamaspapik/Develop/ios/rtgtrghtrg/rtgtrghtrgUITests/rtgtrghtrgUITests.swift:CharacterRangeLen=0&EndingLineNumber=104&StartingLineNumber=104 - XCTAssertTrue failed",
+							Value: "/Users/tamaspapik/Develop/ios/rtgtrghtrg/rtgtrghtrgUITests/rtgtrghtrgUITests.swift:105 - XCTAssertTrue failed",
 						},
 					},
 					{
@@ -108,7 +108,7 @@ func TestXCresult3Converters(t *testing.T) {
 						ClassName: "rtgtrghtrg4UITests",
 						Time:      0.08395206928253174,
 						Failure: &junit.Failure{
-							Value: "file:///Users/tamaspapik/Develop/ios/rtgtrghtrg/rtgtrghtrgUITests/rtgtrghtrgUITests.swift:CharacterRangeLen=0&EndingLineNumber=129&StartingLineNumber=129 - XCTAssertTrue failed",
+							Value: "/Users/tamaspapik/Develop/ios/rtgtrghtrg/rtgtrghtrgUITests/rtgtrghtrgUITests.swift:130 - XCTAssertTrue failed",
 						},
 					},
 					{

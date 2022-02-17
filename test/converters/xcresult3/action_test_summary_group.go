@@ -1,6 +1,8 @@
 package xcresult3
 
 import (
+	"errors"
+	"fmt"
 	"path/filepath"
 	"strings"
 )
@@ -10,8 +12,8 @@ type ActionTestSummaryGroup struct {
 	Name       Name       `json:"name"`
 	Identifier Identifier `json:"identifier"`
 	Duration   Duration   `json:"duration"`
-	TestStatus TestStatus `json:"testStatus"`
-	SummaryRef SummaryRef `json:"summaryRef"`
+	TestStatus TestStatus `json:"testStatus"` // only the inner-most tests will have a status, the ones which don't have "subtests"
+	SummaryRef SummaryRef `json:"summaryRef"` // only the inner-most tests will have a summaryRef, the ones which don't have "subtests"
 	Subtests   Subtests   `json:"subtests"`
 }
 
@@ -66,6 +68,19 @@ func (g ActionTestSummaryGroup) testsWithStatus() (tests []ActionTestSummaryGrou
 		tests = append(tests, subtest.testsWithStatus()...)
 	}
 	return
+}
+
+// loadActionTestSummary ...
+func (g ActionTestSummaryGroup) loadActionTestSummary(xcresultPath string) (ActionTestSummary, error) {
+	if g.SummaryRef.ID.Value == "" {
+		return ActionTestSummary{}, errors.New("no summaryRef.ID.Value found for test case")
+	}
+
+	var summary ActionTestSummary
+	if err := xcresulttoolGet(xcresultPath, g.SummaryRef.ID.Value, &summary); err != nil {
+		return ActionTestSummary{}, fmt.Errorf("failed to load ActionTestSummary: %w", err)
+	}
+	return summary, nil
 }
 
 // exportScreenshots ...
