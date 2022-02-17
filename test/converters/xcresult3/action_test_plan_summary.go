@@ -42,11 +42,14 @@ type Name struct {
 func (s ActionTestPlanRunSummaries) tests() ([]string, map[string][]ActionTestSummaryGroup) {
 	summaryGroupsByName := map[string][]ActionTestSummaryGroup{}
 
-	testSuiteOrdering := []string{}
+	var testSuiteOrder []string
 	for _, summary := range s.Summaries.Values {
 		for _, testableSummary := range summary.TestableSummaries.Values {
 			// test suit
 			name := testableSummary.Name.Value
+			if _, found := summaryGroupsByName[name]; !found {
+				testSuiteOrder = append(testSuiteOrder, name)
+			}
 
 			var tests []ActionTestSummaryGroup
 			for _, test := range testableSummary.Tests.Values {
@@ -54,11 +57,10 @@ func (s ActionTestPlanRunSummaries) tests() ([]string, map[string][]ActionTestSu
 			}
 
 			summaryGroupsByName[name] = tests
-			testSuiteOrdering = append(testSuiteOrdering, name)
 		}
 	}
 
-	return testSuiteOrdering, summaryGroupsByName
+	return testSuiteOrder, summaryGroupsByName
 }
 
 func (s ActionTestPlanRunSummaries) failuresCount(testableSummaryName string) (failure int) {

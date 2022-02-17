@@ -1,10 +1,10 @@
 package xcresult3
 
 import (
+	"errors"
+	"fmt"
 	"path/filepath"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 // ActionTestSummaryGroup ...
@@ -73,12 +73,12 @@ func (g ActionTestSummaryGroup) testsWithStatus() (tests []ActionTestSummaryGrou
 // loadActionTestSummary ...
 func (g ActionTestSummaryGroup) loadActionTestSummary(xcresultPath string) (ActionTestSummary, error) {
 	if g.SummaryRef.ID.Value == "" {
-		return ActionTestSummary{}, errors.Errorf("no summaryRef.ID.Value found for test case")
+		return ActionTestSummary{}, errors.New("no summaryRef.ID.Value found for test case")
 	}
 
 	var summary ActionTestSummary
 	if err := xcresulttoolGet(xcresultPath, g.SummaryRef.ID.Value, &summary); err != nil {
-		return ActionTestSummary{}, errors.Wrap(err, "failed to load ActionTestSummary")
+		return ActionTestSummary{}, fmt.Errorf("failed to load ActionTestSummary: %w", err)
 	}
 	return summary, nil
 }
