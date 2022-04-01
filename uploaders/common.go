@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -156,6 +157,7 @@ func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 		}
 
 		request.ContentLength = fileInfo.Size()
+		request.Header.Add("Content-Length", strconv.FormatInt(fileInfo.Size(), 10))
 
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 		defer cancel()
