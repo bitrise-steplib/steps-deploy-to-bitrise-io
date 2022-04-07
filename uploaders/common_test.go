@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"strconv"
 	"testing"
 )
 
@@ -54,6 +55,10 @@ func Test_uploadArtifact(t *testing.T) {
 
 		if r.ContentLength != wantFileSize {
 			t.Fatalf("httptest: Content-length got %d want %d", r.ContentLength, wantFileSize)
+		}
+
+		if r.Header.Get("X-Upload-Content-Length") != strconv.FormatInt(wantFileSize, 10) {
+			t.Fatalf("httptest: X-Upload-Content-Length got %s want %d", r.Header.Get("X-Upload-Content-Length"), wantFileSize)
 		}
 
 		if r.Header.Get("Content-Type") != contentType {
