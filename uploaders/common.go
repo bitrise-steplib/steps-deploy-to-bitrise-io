@@ -163,6 +163,11 @@ func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 		defer cancel()
 		request = request.WithContext(ctx)
 		log.Printf("upload url: %s%s", request.URL.Host, request.URL.RequestURI())
+		for name, values := range request.Header {
+			for _, value := range values {
+				log.Printf("%s: %s", name, value)
+			}
+		}
 
 		resp, err := netClient.Do(request)
 		if err != nil {
