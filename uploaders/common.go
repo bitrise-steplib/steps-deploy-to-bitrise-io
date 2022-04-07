@@ -155,7 +155,7 @@ func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 			request.Header.Add("Content-Type", contentType)
 		}
 
-		request.Header.Add("X-Upload-Content-Length", strconv.FormatInt(fileInfo.Size()-10000, 10))
+		request.Header.Add("X-Upload-Content-Length", strconv.FormatInt(fileInfo.Size(), 10))
 		request.ContentLength = fileInfo.Size()
 		log.Printf("content length %d", fileInfo.Size())
 
