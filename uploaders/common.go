@@ -154,19 +154,12 @@ func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 			request.Header.Add("Content-Type", contentType)
 		}
 
-		request.Header.Add("X-Upload-Content-Length", strconv.FormatInt(fileInfo.Size(), 10))
+		request.Header.Add("X-Upload-Content-Length", strconv.FormatInt(fileInfo.Size(), 10)) // header used by Google Cloud Storage signed URLs
 		request.ContentLength = fileInfo.Size()
-		log.Printf("content length %d", fileInfo.Size())
 
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 		defer cancel()
 		request = request.WithContext(ctx)
-		log.Printf("upload url: %s%s", request.URL.Host, request.URL.RequestURI())
-		for name, values := range request.Header {
-			for _, value := range values {
-				log.Printf("%s: %s", name, value)
-			}
-		}
 
 		resp, err := netClient.Do(request)
 		if err != nil {
