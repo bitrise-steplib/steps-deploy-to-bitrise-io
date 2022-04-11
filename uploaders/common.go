@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -24,7 +25,7 @@ type ArtifactURLs struct {
 	PermanentDownloadURL string
 }
 
-func createArtifact(buildURL, token, artifactPth, artifactType string) (string, string, error) {
+func createArtifact(buildURL, token, artifactPth, artifactType, contentType string) (string, string, error) {
 	log.Printf("creating artifact")
 
 	// create form data
@@ -49,6 +50,7 @@ func createArtifact(buildURL, token, artifactPth, artifactType string) (string, 
 		"filename":        {artifactName},
 		"artifact_type":   {artifactType},
 		"file_size_bytes": {fmt.Sprintf("%d", int(fileSize))},
+		"content_type":    {contentType},
 	}
 	// ---
 
@@ -132,7 +134,6 @@ func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 			}
 		}()
 
-		// Set Content Length manually (https://stackoverflow.com/a/39764726), as it is part of signature in signed URL
 		fileInfo, err := file.Stat()
 		if err != nil {
 			return fmt.Errorf("failed to get file info for %s, error: %s", artifactPth, err)
@@ -153,6 +154,7 @@ func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 			request.Header.Add("Content-Type", contentType)
 		}
 
+		request.Header.Add("X-Upload-Content-Length", strconv.FormatInt(fileInfo.Size(), 10)) // header used by Google Cloud Storage signed URLs
 		request.ContentLength = fileInfo.Size()
 
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
