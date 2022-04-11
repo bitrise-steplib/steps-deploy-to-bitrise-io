@@ -133,7 +133,6 @@ func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 			}
 		}()
 
-		// Set Content Length manually (https://stackoverflow.com/a/39764726), as it is part of signature in signed URL
 		fileInfo, err := file.Stat()
 		if err != nil {
 			return fmt.Errorf("failed to get file info for %s, error: %s", artifactPth, err)
