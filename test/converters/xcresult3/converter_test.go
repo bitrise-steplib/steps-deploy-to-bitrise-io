@@ -163,3 +163,55 @@ func TestConverter_XML(t *testing.T) {
 		}, junitXML.TestSuites)
 	})
 }
+
+func TestConverter_XML_Large_Tests_xcresult(t *testing.T) {
+	t.Run("Large-Tests.xcresult", func(t *testing.T) {
+		// copy test data to tmp dir
+		tempTestdataDir, err := pathutil.NormalizedOSTempDirPath("test")
+		if err != nil {
+			t.Fatal("failed to create temp dir, error:", err)
+		}
+		defer func() {
+			require.NoError(t, os.RemoveAll(tempTestdataDir))
+		}()
+		t.Log("tempTestdataDir: ", tempTestdataDir)
+		tempXCResultPath := copyTestdataToDir(t, "./xcresults/Large-Tests.xcresult", tempTestdataDir)
+
+		c := Converter{
+			xcresultPth: tempXCResultPath,
+		}
+		junitXML, err := c.XML()
+		require.NoError(t, err)
+		require.Equal(t, []junit.TestSuite{
+			{
+				Name:     "testProjectUITests",
+				Tests:    3,
+				Failures: 1,
+				Skipped:  1,
+				Errors:   0,
+				Time:     0.43262600898742676,
+				TestCases: []junit.TestCase{
+					{
+						Name:      "testFailure()",
+						ClassName: "testProjectUITests",
+						Time:      0.2580660581588745,
+						Failure: &junit.Failure{
+							Value: "/Users/alexeysomov/Library/Autosave Information/testProject/testProjectUITests/testProjectUITests.swift:30 - XCTAssertTrue failed",
+						},
+					},
+					{
+						Name:      "testSkip()",
+						ClassName: "testProjectUITests",
+						Time:      0.08595001697540283,
+						Skipped:   &junit.Skipped{},
+					},
+					{
+						Name:      "testSuccess()",
+						ClassName: "testProjectUITests",
+						Time:      0.08860993385314941,
+					},
+				},
+			},
+		}, junitXML.TestSuites)
+	})
+}
