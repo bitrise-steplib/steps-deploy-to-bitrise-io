@@ -16,7 +16,7 @@ import (
 // run `bitrise run download_sample_artifacts` before running tests here,
 // which will download https://github.com/bitrise-io/sample-artifacts
 // into the _tmp dir.
-func copyTestdataToDir(t *testing.T, pathInTestdataDir, dirPathToCopyInto string) string {
+func copyTestdataToDir(t require.TestingT, pathInTestdataDir, dirPathToCopyInto string) string {
 	err := command.CopyDir(
 		filepath.Join("../../../_tmp/", pathInTestdataDir),
 		dirPathToCopyInto,
@@ -164,54 +164,52 @@ func TestConverter_XML(t *testing.T) {
 	})
 }
 
-func TestConverter_XML_Large_Tests_xcresult(t *testing.T) {
-	t.Run("Large-Tests.xcresult", func(t *testing.T) {
-		// copy test data to tmp dir
-		tempTestdataDir, err := pathutil.NormalizedOSTempDirPath("test")
-		if err != nil {
-			t.Fatal("failed to create temp dir, error:", err)
-		}
-		defer func() {
-			require.NoError(t, os.RemoveAll(tempTestdataDir))
-		}()
-		t.Log("tempTestdataDir: ", tempTestdataDir)
-		tempXCResultPath := copyTestdataToDir(t, "./xcresults/Large-Tests.xcresult", tempTestdataDir)
+func BenchmarkConverter_XML_Large_Tests_xcresult(b *testing.B) {
+	// copy test data to tmp dir
+	tempTestdataDir, err := pathutil.NormalizedOSTempDirPath("test")
+	if err != nil {
+		b.Fatal("failed to create temp dir, error:", err)
+	}
+	defer func() {
+		require.NoError(b, os.RemoveAll(tempTestdataDir))
+	}()
+	b.Log("tempTestdataDir: ", tempTestdataDir)
+	tempXCResultPath := copyTestdataToDir(b, "./xcresults/Large-Tests.xcresult", tempTestdataDir)
 
-		c := Converter{
-			xcresultPth: tempXCResultPath,
-		}
-		junitXML, err := c.XML()
-		require.NoError(t, err)
-		require.Equal(t, []junit.TestSuite{
-			{
-				Name:     "testProjectUITests",
-				Tests:    3,
-				Failures: 1,
-				Skipped:  1,
-				Errors:   0,
-				Time:     0.43262600898742676,
-				TestCases: []junit.TestCase{
-					{
-						Name:      "testFailure()",
-						ClassName: "testProjectUITests",
-						Time:      0.2580660581588745,
-						Failure: &junit.Failure{
-							Value: "/Users/alexeysomov/Library/Autosave Information/testProject/testProjectUITests/testProjectUITests.swift:30 - XCTAssertTrue failed",
-						},
-					},
-					{
-						Name:      "testSkip()",
-						ClassName: "testProjectUITests",
-						Time:      0.08595001697540283,
-						Skipped:   &junit.Skipped{},
-					},
-					{
-						Name:      "testSuccess()",
-						ClassName: "testProjectUITests",
-						Time:      0.08860993385314941,
-					},
-				},
-			},
-		}, junitXML.TestSuites)
-	})
+	c := Converter{
+		xcresultPth: tempXCResultPath,
+	}
+	_, err = c.XML()
+	require.NoError(b, err)
+	// require.Equal(b, []junit.TestSuite{
+	// 	{
+	// 		Name:     "testProjectUITests",
+	// 		Tests:    3,
+	// 		Failures: 1,
+	// 		Skipped:  1,
+	// 		Errors:   0,
+	// 		Time:     0.43262600898742676,
+	// 		TestCases: []junit.TestCase{
+	// 			{
+	// 				Name:      "testFailure()",
+	// 				ClassName: "testProjectUITests",
+	// 				Time:      0.2580660581588745,
+	// 				Failure: &junit.Failure{
+	// 					Value: "/Users/alexeysomov/Library/Autosave Information/testProject/testProjectUITests/testProjectUITests.swift:30 - XCTAssertTrue failed",
+	// 				},
+	// 			},
+	// 			{
+	// 				Name:      "testSkip()",
+	// 				ClassName: "testProjectUITests",
+	// 				Time:      0.08595001697540283,
+	// 				Skipped:   &junit.Skipped{},
+	// 			},
+	// 			{
+	// 				Name:      "testSuccess()",
+	// 				ClassName: "testProjectUITests",
+	// 				Time:      0.08860993385314941,
+	// 			},
+	// 		},
+	// 	},
+	// }, junitXML.TestSuites)
 }
