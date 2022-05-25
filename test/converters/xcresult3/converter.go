@@ -173,7 +173,7 @@ func genTestSuite(name string,
 				testSuite.TestCases[testIdx] = testCase
 			}(test, testIdx)
 
-			testIdx += 1
+			testIdx++
 		}
 
 		wg.Wait()
