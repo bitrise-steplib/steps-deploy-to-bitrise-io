@@ -164,7 +164,7 @@ func TestConverter_XML(t *testing.T) {
 	})
 }
 
-func BenchmarkConverter_XML_Large_Tests_xcresult(b *testing.B) {
+func BenchmarkConverter_XML(b *testing.B) {
 	// copy test data to tmp dir
 	tempTestdataDir, err := pathutil.NormalizedOSTempDirPath("test")
 	if err != nil {
@@ -174,7 +174,7 @@ func BenchmarkConverter_XML_Large_Tests_xcresult(b *testing.B) {
 		require.NoError(b, os.RemoveAll(tempTestdataDir))
 	}()
 	b.Log("tempTestdataDir: ", tempTestdataDir)
-	tempXCResultPath := copyTestdataToDir(b, "./xcresults/Large-Tests.xcresult", tempTestdataDir)
+	tempXCResultPath := copyTestdataToDir(b, "./xcresults/xcresult3-flaky-with-rerun.xcresult", tempTestdataDir)
 
 	c := Converter{
 		xcresultPth: tempXCResultPath,
