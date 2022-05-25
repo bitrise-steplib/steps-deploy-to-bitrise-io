@@ -1,7 +1,3 @@
-# TODO
-
-- Add timestamps to detection, conversion, upload - so we can tell from the logs where the time is spent the most
-
 # Bitrise Deploy Step
 
 Generic Bitrise deployer Step.
@@ -22,9 +18,7 @@ Step by step:
 3. `cd` into the directory of the step (the one which was just `git clone`d)
 5. Create a `.bitrise.secrets.yml` file in the same directory of `bitrise.yml` - the `.bitrise.secrets.yml` is a git ignored file, you can store your secrets in
 6. Check the `bitrise.yml` file for any secret you should set in `.bitrise.secrets.yml`
-
-- Best practice is to mark these options with something like `# define these in your .bitrise.secrets.yml`, in the `app:envs` section.
-
+  * Best practice is to mark these options with something like `# define these in your .bitrise.secrets.yml`, in the `app:envs` section.
 7. Once you have all the required secret parameters in your `.bitrise.secrets.yml` you can just run this step with the [bitrise CLI](https://github.com/bitrise-io/bitrise): `bitrise run test`
 
 An example `.bitrise.secrets.yml` file:
@@ -45,7 +39,7 @@ envs:
 6. Provide test values for the inputs in the `bitrise.yml`
 7. Run your step with `bitrise run test` - if it works, you're ready
 
-**For Step development guidelines & best practices** check this documentation: [https://github.com/bitrise-io/bitrise/blob/master/_docs/step-development-guideline.md](https://github.com/bitrise-io/bitrise/blob/master/_docs/step-development-guideline.md).
+__For Step development guidelines & best practices__ check this documentation: [https://github.com/bitrise-io/bitrise/blob/master/_docs/step-development-guideline.md](https://github.com/bitrise-io/bitrise/blob/master/_docs/step-development-guideline.md).
 
 **NOTE**
 
@@ -73,14 +67,13 @@ in the [bitrise CLI repository](https://github.com/bitrise-io/bitrise/blob/maste
 4. To use/test the step just follow the **How to use this Step** section
 5. Do the changes you want to do
 6. Run/test the step before sending your contribution
-
-- You can also test the step in your `bitrise` project, either on your Mac or on [bitrise.io](https://www.bitrise.io)
-- You just have to replace the step ID in your project's `bitrise.yml` with either a relative path, or with a git URL format
-- (relative) path format: instead of `- original-step-id:` use `- path::./relative/path/of/script/on/your/Mac:`
-- direct git URL format: instead of `- original-step-id:` use `- git::https://github.com/user/step.git@branch:`
-- You can find more example of alternative step referencing at: <https://github.com/bitrise-io/bitrise/blob/master/_examples/tutorials/steps-and-workflows/bitrise.yml>
-
+  * You can also test the step in your `bitrise` project, either on your Mac or on [bitrise.io](https://www.bitrise.io)
+  * You just have to replace the step ID in your project's `bitrise.yml` with either a relative path, or with a git URL format
+  * (relative) path format: instead of `- original-step-id:` use `- path::./relative/path/of/script/on/your/Mac:`
+  * direct git URL format: instead of `- original-step-id:` use `- git::https://github.com/user/step.git@branch:`
+  * You can find more example of alternative step referencing at: https://github.com/bitrise-io/bitrise/blob/master/_examples/tutorials/steps-and-workflows/bitrise.yml
 7. Once you're done, commit your changes & create a Pull Request
+
 
 ## Share your own Step
 
@@ -99,5 +92,5 @@ That's all ;)
 
 ## Trigger a new release
 
-- **merge every code changes** to the `master` branch
-- **push the new version tag** to the `master` branch
+- __merge every code changes__ to the `master` branch
+- __push the new version tag__ to the `master` branch
