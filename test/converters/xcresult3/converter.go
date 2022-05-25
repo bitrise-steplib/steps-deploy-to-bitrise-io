@@ -152,7 +152,7 @@ func genTestSuite(name string,
 	testSuite.TestCases = make([]junit.TestCase, len(tests))
 	log.Printf("--> len(tests): %v", len(tests))
 
-	maxParallel := runtime.NumCPU() * 10
+	maxParallel := runtime.NumCPU() * 2
 	log.Printf("maxParallel: %v", maxParallel)
 	testIdx := 0
 	for testIdx < len(tests) {
