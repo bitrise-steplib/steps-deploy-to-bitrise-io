@@ -181,35 +181,4 @@ func BenchmarkConverter_XML_Large_Tests_xcresult(b *testing.B) {
 	}
 	_, err = c.XML()
 	require.NoError(b, err)
-	// require.Equal(b, []junit.TestSuite{
-	// 	{
-	// 		Name:     "testProjectUITests",
-	// 		Tests:    3,
-	// 		Failures: 1,
-	// 		Skipped:  1,
-	// 		Errors:   0,
-	// 		Time:     0.43262600898742676,
-	// 		TestCases: []junit.TestCase{
-	// 			{
-	// 				Name:      "testFailure()",
-	// 				ClassName: "testProjectUITests",
-	// 				Time:      0.2580660581588745,
-	// 				Failure: &junit.Failure{
-	// 					Value: "/Users/alexeysomov/Library/Autosave Information/testProject/testProjectUITests/testProjectUITests.swift:30 - XCTAssertTrue failed",
-	// 				},
-	// 			},
-	// 			{
-	// 				Name:      "testSkip()",
-	// 				ClassName: "testProjectUITests",
-	// 				Time:      0.08595001697540283,
-	// 				Skipped:   &junit.Skipped{},
-	// 			},
-	// 			{
-	// 				Name:      "testSuccess()",
-	// 				ClassName: "testProjectUITests",
-	// 				Time:      0.08860993385314941,
-	// 			},
-	// 		},
-	// 	},
-	// }, junitXML.TestSuites)
 }
