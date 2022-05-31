@@ -3,7 +3,6 @@ package xcresult3
 import (
 	"fmt"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -103,10 +102,12 @@ func (c *Converter) XML() (junit.XML, error) {
 	}
 	summariesCount := len(summaries)
 	log.Printf("Summaries Count: %d", summariesCount)
-	for summaryIdx, summary := range summaries {
+
+	testSuiteIdx := 0
+	for _, summary := range summaries {
 		testSuiteOrder, testsByName := summary.tests()
 
-		for testSuiteIdx, name := range testSuiteOrder {
+		for _, name := range testSuiteOrder {
 			tests := testsByName[name]
 
 			testSuite, err := genTestSuite(name, summary, tests, testResultDir, c.xcresultPth)
@@ -114,7 +115,8 @@ func (c *Converter) XML() (junit.XML, error) {
 				return junit.XML{}, err
 			}
 
-			xmlData.TestSuites[summaryIdx*summariesCount+testSuiteIdx] = testSuite
+			xmlData.TestSuites[testSuiteIdx] = testSuite
+			testSuiteIdx++
 		}
 	}
 
@@ -152,7 +154,8 @@ func genTestSuite(name string,
 	testSuite.TestCases = make([]junit.TestCase, len(tests))
 	log.Printf("--> len(tests): %v", len(tests))
 
-	maxParallel := runtime.NumCPU() * 2
+	// maxParallel := runtime.NumCPU() * 2
+	maxParallel := 1
 	log.Printf("maxParallel: %v", maxParallel)
 	testIdx := 0
 	for testIdx < len(tests) {
