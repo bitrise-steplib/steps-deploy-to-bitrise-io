@@ -16,7 +16,7 @@ import (
 // run `bitrise run download_sample_artifacts` before running tests here,
 // which will download https://github.com/bitrise-io/sample-artifacts
 // into the _tmp dir.
-func copyTestdataToDir(t *testing.T, pathInTestdataDir, dirPathToCopyInto string) string {
+func copyTestdataToDir(t require.TestingT, pathInTestdataDir, dirPathToCopyInto string) string {
 	err := command.CopyDir(
 		filepath.Join("../../../_tmp/", pathInTestdataDir),
 		dirPathToCopyInto,
@@ -162,4 +162,23 @@ func TestConverter_XML(t *testing.T) {
 			},
 		}, junitXML.TestSuites)
 	})
+}
+
+func BenchmarkConverter_XML(b *testing.B) {
+	// copy test data to tmp dir
+	tempTestdataDir, err := pathutil.NormalizedOSTempDirPath("test")
+	if err != nil {
+		b.Fatal("failed to create temp dir, error:", err)
+	}
+	defer func() {
+		require.NoError(b, os.RemoveAll(tempTestdataDir))
+	}()
+	b.Log("tempTestdataDir: ", tempTestdataDir)
+	tempXCResultPath := copyTestdataToDir(b, "./xcresults/xcresult3-flaky-with-rerun.xcresult", tempTestdataDir)
+
+	c := Converter{
+		xcresultPth: tempXCResultPath,
+	}
+	_, err = c.XML()
+	require.NoError(b, err)
 }
