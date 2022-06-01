@@ -3,6 +3,7 @@ package xcresult3
 import (
 	"fmt"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -88,7 +89,12 @@ func (c *Converter) Detect(files []string) bool {
 
 // XML ...
 func (c *Converter) XML() (junit.XML, error) {
-	testResultDir := filepath.Dir(c.xcresultPth)
+	var (
+		testResultDir = filepath.Dir(c.xcresultPth)
+		maxParallel   = runtime.NumCPU() * 2
+	)
+
+	log.Printf("Maximum parallelism: %d.", maxParallel)
 
 	_, summaries, err := Parse(c.xcresultPth)
 	if err != nil {
@@ -98,25 +104,24 @@ func (c *Converter) XML() (junit.XML, error) {
 	var xmlData junit.XML
 	{
 		testSuiteCount := testSuiteCountInSummaries(summaries)
-		xmlData.TestSuites = make([]junit.TestSuite, testSuiteCount)
+		xmlData.TestSuites = make([]junit.TestSuite, 0, testSuiteCount)
 	}
+
 	summariesCount := len(summaries)
 	log.Printf("Summaries Count: %d", summariesCount)
 
-	testSuiteIdx := 0
 	for _, summary := range summaries {
 		testSuiteOrder, testsByName := summary.tests()
 
 		for _, name := range testSuiteOrder {
 			tests := testsByName[name]
 
-			testSuite, err := genTestSuite(name, summary, tests, testResultDir, c.xcresultPth)
+			testSuite, err := genTestSuite(name, summary, tests, testResultDir, c.xcresultPth, maxParallel)
 			if err != nil {
 				return junit.XML{}, err
 			}
 
-			xmlData.TestSuites[testSuiteIdx] = testSuite
-			testSuiteIdx++
+			xmlData.TestSuites = append(xmlData.TestSuites, testSuite)
 		}
 	}
 
@@ -137,26 +142,24 @@ func genTestSuite(name string,
 	tests []ActionTestSummaryGroup,
 	testResultDir string,
 	xcresultPath string,
+	maxParallel int,
 ) (junit.TestSuite, error) {
-	t1 := time.Now()
-	log.Printf("=> Generating test suite [%s] - started ...", name)
+	var (
+		start           = time.Now()
+		genTestSuiteErr error
+		wg              sync.WaitGroup
+		mtx             sync.RWMutex
+	)
+
 	testSuite := junit.TestSuite{
-		Name:     name,
-		Tests:    len(tests),
-		Failures: summary.failuresCount(name),
-		Skipped:  summary.skippedCount(name),
-		Time:     summary.totalTime(name),
+		Name:      name,
+		Tests:     len(tests),
+		Failures:  summary.failuresCount(name),
+		Skipped:   summary.skippedCount(name),
+		Time:      summary.totalTime(name),
+		TestCases: make([]junit.TestCase, len(tests)),
 	}
 
-	var genTestSuiteErr error
-	var wg sync.WaitGroup
-	var mtx sync.RWMutex
-	testSuite.TestCases = make([]junit.TestCase, len(tests))
-	log.Printf("--> len(tests): %v", len(tests))
-
-	// maxParallel := runtime.NumCPU() * 2
-	maxParallel := 1
-	log.Printf("maxParallel: %v", maxParallel)
 	testIdx := 0
 	for testIdx < len(tests) {
 		for i := 0; i < maxParallel && testIdx < len(tests); i++ {
@@ -182,8 +185,7 @@ func genTestSuite(name string,
 		wg.Wait()
 	}
 
-	t2 := time.Now()
-	log.Printf("-> Generating test suite [%s] - DONE %v", name, t2.Sub(t1))
+	log.TPrintf("Generating test suite [%s] (%d tests) - DONE %v", name, len(tests), time.Since(start))
 
 	return testSuite, genTestSuiteErr
 }
