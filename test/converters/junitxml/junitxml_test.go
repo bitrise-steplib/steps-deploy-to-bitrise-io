@@ -16,6 +16,7 @@ func Test_parseTestSuites(t *testing.T) {
 		wantErr bool
 	}{
 		{name: "root element is testsuites", path: "./testdata/testsuites.xml", wantErr: false},
+		{name: "root element is another testsuites", path: "./testdata/testsuites.junit", wantErr: false},
 		{name: "root element is testsuite", path: "./testdata/testsuite.xml", wantErr: false},
 	}
 	for _, tt := range tests {
