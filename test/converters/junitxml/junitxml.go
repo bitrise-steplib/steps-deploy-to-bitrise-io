@@ -38,7 +38,7 @@ type Converter struct {
 func (h *Converter) Detect(files []string) bool {
 	h.results = nil
 	for _, file := range files {
-		if strings.HasSuffix(file, ".xml") {
+		if strings.HasSuffix(file, ".xml") || strings.HasSuffix(file, ".junit") {
 			h.results = append(h.results, &fileReader{Filename: file})
 		}
 	}
