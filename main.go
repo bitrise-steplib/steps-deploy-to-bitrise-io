@@ -23,6 +23,7 @@ var fileBaseNamesToSkip = []string{".DS_Store"}
 
 // Config ...
 type Config struct {
+	PipelineIntermediateFiles     string `env:"pipeline_intermediate_files"`
 	BuildURL                      string `env:"build_url,required"`
 	APIToken                      string `env:"build_api_token,required"`
 	IsCompress                    string `env:"is_compress,opt[true,false]"`
