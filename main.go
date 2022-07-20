@@ -110,6 +110,14 @@ func main() {
 		fail("%s", err)
 	}
 	deployTestResults(config)
+
+	log.Infof("Pushing pipeline intermediate files")
+
+	pipelineUploader := uploaders.NewPipelineUploader(uploaders.DeployFileWithMetaData, uploaders.DefaultIsDirFunction, ziputil.ZipDir, tmpDir)
+
+	if err := pipelineUploader.UploadFiles(config.PipelineIntermediateFiles, config.BuildURL, config.APIToken); err != nil {
+		fail("Failed to push pipeline intermediate files: %s", err)
+	}
 }
 
 func exportInstallPages(artifactURLCollection ArtifactURLCollection, config Config) error {
