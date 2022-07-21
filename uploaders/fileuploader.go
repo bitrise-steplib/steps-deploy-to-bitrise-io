@@ -11,13 +11,7 @@ func DeployFile(pth, buildURL, token string) (ArtifactURLs, error) {
 }
 
 // TODO: handle files that are both Build Artifacts and Intermediate files at the same time
-func DeployFileWithMetaData(pth, buildURL, token string, metaData interface{}) (ArtifactURLs, error) {
-	// TODO: implement Intermediate File info upload
-	//artifactInfo, err := convertMetadata(metaData)
-	//if err != nil {
-	//	return ArtifactURLs{}, err
-	//}
-
+func DeployFileWithMetaData(pth, buildURL, token string, metaData *PipelineIntermediateFileMetaData) (ArtifactURLs, error) {
 	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "file", "")
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to create file artifact, error: %s", err)
@@ -27,7 +21,7 @@ func DeployFileWithMetaData(pth, buildURL, token string, metaData interface{}) (
 		return ArtifactURLs{}, fmt.Errorf("failed to upload file artifact, error: %s", err)
 	}
 
-	artifactURLs, err := finishArtifact(buildURL, token, artifactID, nil)
+	artifactURLs, err := finishArtifact(buildURL, token, artifactID, nil, metaData)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to finish file artifact, error: %s", err)
 	}

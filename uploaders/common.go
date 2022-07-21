@@ -192,7 +192,12 @@ type AppDeploymentMetaData struct {
 	IsEnablePublicPage string
 }
 
-func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDeploymentMetaData) (ArtifactURLs, error) {
+type PipelineIntermediateFileMetaData struct {
+	EnvKey string `json:"env_key"`
+	IsDir  bool   `json:"is_dir"`
+}
+
+func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDeploymentMetaData, pipelineMeta *PipelineIntermediateFileMetaData) (ArtifactURLs, error) {
 	log.Printf("finishing artifact")
 
 	// create form data
@@ -201,7 +206,7 @@ func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDe
 	if appDeploymentMeta != nil {
 		artifactInfoBytes, err := json.Marshal(appDeploymentMeta.ArtifactInfo)
 		if err != nil {
-			return ArtifactURLs{}, fmt.Errorf("failed to marshal ipa infos, error: %s", err)
+			return ArtifactURLs{}, fmt.Errorf("failed to marshal app deployment meta: %s", err)
 		}
 		artifactInfo := string(artifactInfoBytes)
 
@@ -218,6 +223,15 @@ func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDe
 			data["is_enable_public_page"] = []string{"yes"}
 			isEnablePublicPage = true
 		}
+	}
+
+	if pipelineMeta != nil {
+		pipelineInfoBytes, err := json.Marshal(pipelineMeta)
+		if err != nil {
+			return ArtifactURLs{}, fmt.Errorf("failed to marshal pipeline meta: %s", err)
+		}
+
+		data["intermediate_file_info"] = []string{string(pipelineInfoBytes)}
 	}
 
 	// ---

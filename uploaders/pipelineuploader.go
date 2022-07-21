@@ -16,7 +16,7 @@ type PipelineUploader interface {
 	UploadFiles(fileList, buildURL, buildAPIToken string) error
 }
 
-type PipelineFileUploadFunction func(path, buildURL, token string, metaData interface{}) (ArtifactURLs, error)
+type PipelineFileUploadFunction func(path, buildURL, token string, metaData *PipelineIntermediateFileMetaData) (ArtifactURLs, error)
 type IsDirFunction func(path string) (bool, error)
 type ZipDirFunction func(sourceDirPth, destinationZipPth string, isContentOnly bool) error
 
@@ -27,11 +27,6 @@ func DefaultIsDirFunction(path string) (bool, error) {
 	}
 
 	return fileInfo.IsDir(), nil
-}
-
-type metaData struct {
-	EnvKey string `json:"env_key"`
-	IsDir  bool   `json:"is_dir"`
 }
 
 type pipelineUploader struct {
@@ -70,7 +65,7 @@ func (p pipelineUploader) UploadFiles(fileList, buildURL, buildAPIToken string) 
 			return err
 		}
 
-		_, err = p.uploadFunction(filePath, buildURL, buildAPIToken, metaData)
+		_, err = p.uploadFunction(filePath, buildURL, buildAPIToken, &metaData)
 		if err != nil {
 			return fmt.Errorf("failed to push pipeline intermediate file (%s): %s", path, err)
 		}
@@ -115,31 +110,31 @@ func (p pipelineUploader) parsePipelineIntermediateFiles(s string) (map[string]s
 	return intermediateFiles, nil
 }
 
-func (p pipelineUploader) createFilePathAndMetaData(path, key string) (string, metaData, error) {
+func (p pipelineUploader) createFilePathAndMetaData(path, key string) (string, PipelineIntermediateFileMetaData, error) {
 	absolutePath, err := filepath.Abs(path)
 	if err != nil {
-		return "", metaData{}, fmt.Errorf("failed to push pipeline intermediate file (%s): %s", path, err)
+		return "", PipelineIntermediateFileMetaData{}, fmt.Errorf("failed to push pipeline intermediate file (%s): %s", path, err)
 	}
 
-	data := metaData{
+	meta := PipelineIntermediateFileMetaData{
 		EnvKey: key,
 	}
 
 	isDir, err := p.isDirFunction(absolutePath)
 	if err != nil {
-		return "", metaData{}, err
+		return "", PipelineIntermediateFileMetaData{}, err
 	}
 
 	if isDir {
 		absolutePath, err = p.zipDir(absolutePath)
 		if err != nil {
-			return "", metaData{}, err
+			return "", PipelineIntermediateFileMetaData{}, err
 		}
 
-		data.IsDir = true
+		meta.IsDir = true
 	}
 
-	return absolutePath, data, nil
+	return absolutePath, meta, nil
 }
 
 func (p pipelineUploader) zipDir(path string) (string, error) {

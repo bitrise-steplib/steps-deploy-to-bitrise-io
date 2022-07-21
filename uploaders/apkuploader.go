@@ -83,7 +83,7 @@ func DeployAPK(pth string, artifacts []string, buildURL, token, notifyUserGroups
 		IsEnablePublicPage: isEnablePublicPage,
 	}
 
-	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta)
+	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta, nil)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to finish apk artifact, error: %s", err)
 	}

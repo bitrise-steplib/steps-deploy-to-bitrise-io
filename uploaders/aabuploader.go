@@ -96,7 +96,7 @@ func DeployAAB(pth string, artifacts []string, buildURL, token, bundletoolVersio
 		IsEnablePublicPage: "false",
 	}
 
-	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta)
+	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta, nil)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to finish apk artifact, error: %s", err)
 	}

@@ -110,7 +110,7 @@ func DeployIPA(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 		IsEnablePublicPage: isEnablePublicPage,
 	}
 
-	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta)
+	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta, nil)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to finish ipa artifact, error: %s", err)
 	}
