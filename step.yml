@@ -86,7 +86,6 @@ inputs:
 
         If you specify a file path, then only the specified
         file will be deployed.
-      is_required: true
   - is_compress: "false"
     opts:
       category: Build Artifact Deployment
@@ -212,7 +211,7 @@ inputs:
         
         The value needs to be a newline separated list of colon separated items with the following structure: 
         
-        `<path>:<env_key>`
+        *<path>:<env_key>*
         
         The `path` is the path to the file or folder and the `env_key` is the name of the environment variable to which this value is associated.
   - addon_api_base_url: "https://vdt.bitrise.io/test"

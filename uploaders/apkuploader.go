@@ -5,12 +5,14 @@ import (
 
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/androidartifact"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
 
 // DeployAPK ...
-func DeployAPK(pth string, artifacts []string, buildURL, token, notifyUserGroups, notifyEmails, isEnablePublicPage string) (ArtifactURLs, error) {
+func DeployAPK(item deployment.DeployableItem, artifacts []string, buildURL, token, notifyUserGroups, notifyEmails string, isEnablePublicPage bool) (ArtifactURLs, error) {
 	log.Printf("analyzing apk")
 
+	pth := item.Path
 	apkInfo, err := androidartifact.GetAPKInfo(pth)
 	if err != nil {
 		return ArtifactURLs{}, err
@@ -83,7 +85,7 @@ func DeployAPK(pth string, artifacts []string, buildURL, token, notifyUserGroups
 		IsEnablePublicPage: isEnablePublicPage,
 	}
 
-	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta, nil)
+	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta, item.PipelineMeta)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to finish apk artifact, error: %s", err)
 	}

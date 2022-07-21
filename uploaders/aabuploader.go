@@ -6,15 +6,17 @@ import (
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/androidartifact"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/bundletool"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
 
 // DeployAAB ...
-func DeployAAB(pth string, artifacts []string, buildURL, token, bundletoolVersion string) (ArtifactURLs, error) {
+func DeployAAB(item deployment.DeployableItem, artifacts []string, buildURL, token, bundletoolVersion string) (ArtifactURLs, error) {
 	log.Printf("- analyzing aab")
 
 	// get aab manifest dump
 	log.Printf("- fetching info")
 
+	pth := item.Path
 	r, err := bundletool.New(bundletoolVersion)
 	if err != nil {
 		return ArtifactURLs{}, err
@@ -93,10 +95,10 @@ func DeployAAB(pth string, artifacts []string, buildURL, token, bundletoolVersio
 		ArtifactInfo:       aabInfoMap,
 		NotifyUserGroups:   "",
 		NotifyEmails:       "",
-		IsEnablePublicPage: "false",
+		IsEnablePublicPage: false,
 	}
 
-	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta, nil)
+	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta, item.PipelineMeta)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to finish apk artifact, error: %s", err)
 	}

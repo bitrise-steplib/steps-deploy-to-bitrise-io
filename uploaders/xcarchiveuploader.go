@@ -4,15 +4,17 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/bitrise-io/go-utils/pathutil"
-
 	"github.com/bitrise-io/go-utils/log"
+	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-xcode/xcarchive"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
 
 // DeployXcarchive ...
-func DeployXcarchive(pth, buildURL, token string) (ArtifactURLs, error) {
+func DeployXcarchive(item deployment.DeployableItem, buildURL, token string) (ArtifactURLs, error) {
 	log.Printf("analyzing xcarchive")
+
+	pth := item.Path
 	unzippedPth, err := xcarchive.UnzipXcarchive(pth)
 	if err != nil {
 		return ArtifactURLs{}, err
@@ -72,15 +74,14 @@ func DeployXcarchive(pth, buildURL, token string) (ArtifactURLs, error) {
 		return ArtifactURLs{}, fmt.Errorf("failed to upload xcarchive artifact, error: %s", err)
 	}
 
-	// TODO: use nature types for the fields
 	buildArtifactMeta := AppDeploymentMetaData{
 		ArtifactInfo:       xcarchiveInfoMap,
 		NotifyUserGroups:   "",
 		NotifyEmails:       "",
-		IsEnablePublicPage: "false",
+		IsEnablePublicPage: false,
 	}
 
-	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta, nil)
+	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta, item.PipelineMeta)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to finish xcarchive artifact, error: %s", err)
 	}
