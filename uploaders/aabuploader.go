@@ -1,7 +1,6 @@
 package uploaders
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/bitrise-io/go-utils/log"
@@ -78,11 +77,6 @@ func DeployAAB(pth string, artifacts []string, buildURL, token, bundletoolVersio
 		aabInfoMap["universal"] = splitMeta.UniversalApk
 	}
 
-	artifactInfoBytes, err := json.Marshal(aabInfoMap)
-	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to marshal apk infos, error: %s", err)
-	}
-
 	// ---
 
 	const AABContentType = "application/octet-stream aab"
@@ -94,7 +88,15 @@ func DeployAAB(pth string, artifacts []string, buildURL, token, bundletoolVersio
 	if err := uploadArtifact(uploadURL, pth, AABContentType); err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to upload apk artifact, error: %s", err)
 	}
-	artifactURLs, err := finishArtifact(buildURL, token, artifactID, string(artifactInfoBytes), "", "", "false")
+
+	buildArtifactMeta := AppDeploymentMetaData{
+		ArtifactInfo:       aabInfoMap,
+		NotifyUserGroups:   "",
+		NotifyEmails:       "",
+		IsEnablePublicPage: "false",
+	}
+
+	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to finish apk artifact, error: %s", err)
 	}

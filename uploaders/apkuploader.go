@@ -1,7 +1,6 @@
 package uploaders
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/bitrise-io/go-utils/log"
@@ -65,11 +64,6 @@ func DeployAPK(pth string, artifacts []string, buildURL, token, notifyUserGroups
 		apkInfoMap["universal"] = splitMeta.UniversalApk
 	}
 
-	artifactInfoBytes, err := json.Marshal(apkInfoMap)
-	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to marshal apk infos, error: %s", err)
-	}
-
 	// ---
 
 	const APKContentType = "application/vnd.android.package-archive"
@@ -82,7 +76,14 @@ func DeployAPK(pth string, artifacts []string, buildURL, token, notifyUserGroups
 		return ArtifactURLs{}, fmt.Errorf("failed to upload apk artifact, error: %s", err)
 	}
 
-	artifactURLs, err := finishArtifact(buildURL, token, artifactID, string(artifactInfoBytes), notifyUserGroups, notifyEmails, isEnablePublicPage)
+	buildArtifactMeta := AppDeploymentMetaData{
+		ArtifactInfo:       apkInfoMap,
+		NotifyUserGroups:   notifyUserGroups,
+		NotifyEmails:       notifyEmails,
+		IsEnablePublicPage: isEnablePublicPage,
+	}
+
+	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to finish apk artifact, error: %s", err)
 	}

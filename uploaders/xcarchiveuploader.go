@@ -1,7 +1,6 @@
 package uploaders
 
 import (
-	"encoding/json"
 	"fmt"
 	"path/filepath"
 
@@ -62,11 +61,6 @@ func DeployXcarchive(pth, buildURL, token string) (ArtifactURLs, error) {
 		"scheme":          scheme,
 	}
 
-	artifactInfoBytes, err := json.Marshal(xcarchiveInfoMap)
-	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to marshal xcarchive infos, error: %s", err)
-	}
-
 	log.Printf("  xcarchive infos: %v", appInfo)
 
 	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "ios-xcarchive", "")
@@ -78,7 +72,15 @@ func DeployXcarchive(pth, buildURL, token string) (ArtifactURLs, error) {
 		return ArtifactURLs{}, fmt.Errorf("failed to upload xcarchive artifact, error: %s", err)
 	}
 
-	artifactURLs, err := finishArtifact(buildURL, token, artifactID, string(artifactInfoBytes), "", "", "false")
+	// TODO: use nature types for the fields
+	buildArtifactMeta := AppDeploymentMetaData{
+		ArtifactInfo:       xcarchiveInfoMap,
+		NotifyUserGroups:   "",
+		NotifyEmails:       "",
+		IsEnablePublicPage: "false",
+	}
+
+	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to finish xcarchive artifact, error: %s", err)
 	}

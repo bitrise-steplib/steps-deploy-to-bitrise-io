@@ -185,23 +185,40 @@ func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 	})
 }
 
-func finishArtifact(buildURL, token, artifactID, artifactInfo, notifyUserGroups, notifyEmails, isEnablePublicPage string) (ArtifactURLs, error) {
+type AppDeploymentMetaData struct {
+	ArtifactInfo       map[string]interface{}
+	NotifyUserGroups   string
+	NotifyEmails       string
+	IsEnablePublicPage string
+}
+
+func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDeploymentMetaData) (ArtifactURLs, error) {
 	log.Printf("finishing artifact")
 
 	// create form data
 	data := url.Values{"api_token": {token}}
-	if artifactInfo != "" {
-		data["artifact_info"] = []string{artifactInfo}
+
+	if appDeploymentMeta != nil {
+		artifactInfoBytes, err := json.Marshal(appDeploymentMeta.ArtifactInfo)
+		if err != nil {
+			return ArtifactURLs{}, fmt.Errorf("failed to marshal ipa infos, error: %s", err)
+		}
+		artifactInfo := string(artifactInfoBytes)
+
+		if artifactInfo != "" {
+			data["artifact_info"] = []string{artifactInfo}
+		}
+		if appDeploymentMeta.NotifyUserGroups != "" {
+			data["notify_user_groups"] = []string{appDeploymentMeta.NotifyUserGroups}
+		}
+		if appDeploymentMeta.NotifyEmails != "" {
+			data["notify_emails"] = []string{appDeploymentMeta.NotifyEmails}
+		}
+		if appDeploymentMeta.IsEnablePublicPage == "true" {
+			data["is_enable_public_page"] = []string{"yes"}
+		}
 	}
-	if notifyUserGroups != "" {
-		data["notify_user_groups"] = []string{notifyUserGroups}
-	}
-	if notifyEmails != "" {
-		data["notify_emails"] = []string{notifyEmails}
-	}
-	if isEnablePublicPage == "true" {
-		data["is_enable_public_page"] = []string{"yes"}
-	}
+
 	// ---
 
 	// perform request
@@ -255,7 +272,7 @@ func finishArtifact(buildURL, token, artifactID, artifactInfo, notifyUserGroups,
 		log.Warnf("Invalid e-mail addresses: %s", strings.Join(artifactResponse.InvalidEmails, ", "))
 	}
 
-	if isEnablePublicPage == "true" {
+	if appDeploymentMeta.IsEnablePublicPage == "true" {
 		if artifactResponse.PublicInstallPageURL == "" {
 			return ArtifactURLs{}, fmt.Errorf("public install page was enabled, but no public install page generated")
 		}

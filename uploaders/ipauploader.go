@@ -1,7 +1,6 @@
 package uploaders
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/bitrise-io/go-utils/log"
@@ -92,11 +91,6 @@ func DeployIPA(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 		"provisioning_info": provisioningInfo,
 	}
 
-	artifactInfoBytes, err := json.Marshal(ipaInfoMap)
-	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to marshal ipa infos, error: %s", err)
-	}
-
 	// ---
 
 	const IPAContentType = "application/octet-stream ipa"
@@ -109,7 +103,14 @@ func DeployIPA(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 		return ArtifactURLs{}, fmt.Errorf("failed to upload ipa artifact, error: %s", err)
 	}
 
-	artifactURLs, err := finishArtifact(buildURL, token, artifactID, string(artifactInfoBytes), notifyUserGroups, notifyEmails, isEnablePublicPage)
+	buildArtifactMeta := AppDeploymentMetaData{
+		ArtifactInfo:       ipaInfoMap,
+		NotifyUserGroups:   notifyUserGroups,
+		NotifyEmails:       notifyEmails,
+		IsEnablePublicPage: isEnablePublicPage,
+	}
+
+	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to finish ipa artifact, error: %s", err)
 	}
