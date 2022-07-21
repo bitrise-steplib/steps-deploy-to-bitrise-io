@@ -28,7 +28,7 @@ type Config struct {
 	APIToken                      string `env:"build_api_token,required"`
 	IsCompress                    string `env:"is_compress,opt[true,false]"`
 	ZipName                       string `env:"zip_name"`
-	DeployPath                    string `env:"deploy_path,required"`
+	DeployPath                    string `env:"deploy_path,required"` // TODO: Shouldn't be required anymore
 	NotifyUserGroups              string `env:"notify_user_groups"`
 	NotifyEmailList               string `env:"notify_email_list"`
 	IsPublicPageEnabled           string `env:"is_enable_public_page,opt[true,false]"`
