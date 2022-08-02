@@ -72,8 +72,7 @@ func (c Collector) FinalListOfDeployableItems(paths []string, intermediateFileLi
 		return []DeployableItem{}, err
 	}
 
-	err = c.zipDirectories(&deployableItems)
-	if err != nil {
+	if err := c.zipDirectories(&deployableItems); err != nil {
 		return []DeployableItem{}, err
 	}
 
