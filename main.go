@@ -26,7 +26,7 @@ type Config struct {
 	PipelineIntermediateFiles     string `env:"pipeline_intermediate_files"`
 	BuildURL                      string `env:"build_url,required"`
 	APIToken                      string `env:"build_api_token,required"`
-	IsCompress                    string `env:"is_compress,opt[true,false]"`
+	IsCompress                    bool   `env:"is_compress,opt[true,false]"`
 	ZipName                       string `env:"zip_name"`
 	DeployPath                    string `env:"deploy_path"`
 	NotifyUserGroups              string `env:"notify_user_groups"`
@@ -216,7 +216,7 @@ func logDeployFiles(files []deployment.DeployableItem) {
 	for _, file := range files {
 		message := fmt.Sprintf("- %s", file.Path)
 
-		if file.PipelineMeta != nil {
+		if file.IntermediateFileMeta != nil {
 			message += " (pipeline intermediate file)"
 		}
 
@@ -250,7 +250,7 @@ func collectFilesToDeploy(absDeployPth string, config Config, tmpDir string) (fi
 		log.Infof("Deploying single file")
 
 		filesToDeploy = []string{absDeployPth}
-	} else if config.IsCompress == "true" {
+	} else if config.IsCompress {
 		fmt.Println()
 		log.Infof("Deploying compressed Deploy directory")
 

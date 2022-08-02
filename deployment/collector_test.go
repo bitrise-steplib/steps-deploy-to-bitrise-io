@@ -32,7 +32,7 @@ func Test_GivenIntermediateFiles_WhenProcessing_ThenConvertsCorrectly(t *testing
 			want: []DeployableItem{
 				{
 					Path: filepath.Join(currentDir, "$BITRISE_IPA_PATH"),
-					PipelineMeta: &IntermediateFileMetaData{
+					IntermediateFileMeta: &IntermediateFileMetaData{
 						EnvKey: "BITRISE_IPA_PATH",
 						IsDir:  false,
 					},
@@ -46,14 +46,14 @@ func Test_GivenIntermediateFiles_WhenProcessing_ThenConvertsCorrectly(t *testing
 			want: []DeployableItem{
 				{
 					Path: filepath.Join(currentDir, "test.txt"),
-					PipelineMeta: &IntermediateFileMetaData{
+					IntermediateFileMeta: &IntermediateFileMetaData{
 						EnvKey: "TEST_FILE",
 						IsDir:  false,
 					},
 				},
 				{
 					Path: filepath.Join(currentDir, "/a/folder/another_test.txt"),
-					PipelineMeta: &IntermediateFileMetaData{
+					IntermediateFileMeta: &IntermediateFileMetaData{
 						EnvKey: "ANOTHER_TEST_FILE",
 						IsDir:  false,
 					},
@@ -67,7 +67,7 @@ func Test_GivenIntermediateFiles_WhenProcessing_ThenConvertsCorrectly(t *testing
 			want: []DeployableItem{
 				{
 					Path: "/test.txt",
-					PipelineMeta: &IntermediateFileMetaData{
+					IntermediateFileMeta: &IntermediateFileMetaData{
 						EnvKey: "TEST_FILE",
 						IsDir:  false,
 					},
@@ -81,21 +81,21 @@ func Test_GivenIntermediateFiles_WhenProcessing_ThenConvertsCorrectly(t *testing
 			want: []DeployableItem{
 				{
 					Path: filepath.Join(tempDir, "output_folder.zip"),
-					PipelineMeta: &IntermediateFileMetaData{
+					IntermediateFileMeta: &IntermediateFileMetaData{
 						EnvKey: "OUTPUT_FOLDER",
 						IsDir:  true,
 					},
 				},
 				{
 					Path: filepath.Join(tempDir, "build.zip"),
-					PipelineMeta: &IntermediateFileMetaData{
+					IntermediateFileMeta: &IntermediateFileMetaData{
 						EnvKey: "BUILD_DIRECTORY",
 						IsDir:  true,
 					},
 				},
 				{
 					Path: filepath.Join(tempDir, "folder.zip"),
-					PipelineMeta: &IntermediateFileMetaData{
+					IntermediateFileMeta: &IntermediateFileMetaData{
 						EnvKey: "JUST_A_FOLDER",
 						IsDir:  true,
 					},
@@ -171,7 +171,7 @@ func Test_GivenDeployFiles_WhenIntermediateFilesSpecified_ThenMergesThem(t *test
 			want: []DeployableItem{
 				{
 					Path: "/ios-app.ipa",
-					PipelineMeta: &IntermediateFileMetaData{
+					IntermediateFileMeta: &IntermediateFileMetaData{
 						EnvKey: "IPA_PATH",
 						IsDir:  false,
 					},
@@ -181,13 +181,13 @@ func Test_GivenDeployFiles_WhenIntermediateFilesSpecified_ThenMergesThem(t *test
 		{
 			name: "Absolute and relative paths are compatible",
 			deployFiles: []string{
-				filepath.Join(currentDir, "/test.xcresult"),
+				filepath.Join(currentDir, "test.xcresult"),
 			},
 			intermediateFiles: "test.xcresult:RESULT_PATH",
 			want: []DeployableItem{
 				{
-					Path: filepath.Join(currentDir, "/test.xcresult"),
-					PipelineMeta: &IntermediateFileMetaData{
+					Path: filepath.Join(currentDir, "test.xcresult"),
+					IntermediateFileMeta: &IntermediateFileMetaData{
 						EnvKey: "RESULT_PATH",
 						IsDir:  false,
 					},
@@ -197,25 +197,25 @@ func Test_GivenDeployFiles_WhenIntermediateFilesSpecified_ThenMergesThem(t *test
 		{
 			name: "Deploy and intermediate file lists are merged",
 			deployFiles: []string{
-				filepath.Join(currentDir, "/test.ipa"),
-				filepath.Join(currentDir, "/test.xcresult"),
+				filepath.Join(currentDir, "test.ipa"),
+				filepath.Join(currentDir, "test.xcresult"),
 			},
 			intermediateFiles: "test.xcresult:RESULT_PATH" + "\n" + "./folder/secret.txt:SECRET_FILE",
 			want: []DeployableItem{
 				{
-					Path:         filepath.Join(currentDir, "/test.ipa"),
-					PipelineMeta: nil,
+					Path:                 filepath.Join(currentDir, "test.ipa"),
+					IntermediateFileMeta: nil,
 				},
 				{
-					Path: filepath.Join(currentDir, "/test.xcresult"),
-					PipelineMeta: &IntermediateFileMetaData{
+					Path: filepath.Join(currentDir, "test.xcresult"),
+					IntermediateFileMeta: &IntermediateFileMetaData{
 						EnvKey: "RESULT_PATH",
 						IsDir:  false,
 					},
 				},
 				{
 					Path: filepath.Join(currentDir, "/folder/secret.txt"),
-					PipelineMeta: &IntermediateFileMetaData{
+					IntermediateFileMeta: &IntermediateFileMetaData{
 						EnvKey: "SECRET_FILE",
 						IsDir:  false,
 					},
@@ -229,7 +229,7 @@ func Test_GivenDeployFiles_WhenIntermediateFilesSpecified_ThenMergesThem(t *test
 			want: []DeployableItem{
 				{
 					Path: "/test.xcresult",
-					PipelineMeta: &IntermediateFileMetaData{
+					IntermediateFileMeta: &IntermediateFileMetaData{
 						EnvKey: "RESULT_PATH",
 						IsDir:  false,
 					},
@@ -242,8 +242,8 @@ func Test_GivenDeployFiles_WhenIntermediateFilesSpecified_ThenMergesThem(t *test
 			intermediateFiles: "",
 			want: []DeployableItem{
 				{
-					Path:         "/test.xcresult",
-					PipelineMeta: nil,
+					Path:                 "/test.xcresult",
+					IntermediateFileMeta: nil,
 				},
 			},
 		},

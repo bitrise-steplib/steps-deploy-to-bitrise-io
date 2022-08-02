@@ -18,7 +18,7 @@ func DeployFile(item deployment.DeployableItem, buildURL, token string) (Artifac
 		return ArtifactURLs{}, fmt.Errorf("failed to upload file artifact, error: %s", err)
 	}
 
-	artifactURLs, err := finishArtifact(buildURL, token, artifactID, nil, item.PipelineMeta)
+	artifactURLs, err := finishArtifact(buildURL, token, artifactID, nil, item.IntermediateFileMeta)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to finish file artifact, error: %s", err)
 	}

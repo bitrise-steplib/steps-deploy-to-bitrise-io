@@ -81,7 +81,7 @@ func DeployXcarchive(item deployment.DeployableItem, buildURL, token string) (Ar
 		IsEnablePublicPage: false,
 	}
 
-	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta, item.PipelineMeta)
+	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta, item.IntermediateFileMeta)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to finish xcarchive artifact, error: %s", err)
 	}

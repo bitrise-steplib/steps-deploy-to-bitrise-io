@@ -19,8 +19,8 @@ type IntermediateFileMetaData struct {
 
 // DeployableItem ...
 type DeployableItem struct {
-	Path         string
-	PipelineMeta *IntermediateFileMetaData
+	Path                 string
+	IntermediateFileMeta *IntermediateFileMetaData
 }
 
 // ZipDirFunction ...
@@ -68,8 +68,7 @@ func (c Collector) FinalListOfDeployableItems(paths []string, intermediateFileLi
 		return []DeployableItem{}, err
 	}
 
-	err = c.mergeItems(&deployableItems, intermediateFiles)
-	if err != nil {
+	if err := c.mergeItems(&deployableItems, intermediateFiles); err != nil {
 		return []DeployableItem{}, err
 	}
 
@@ -89,8 +88,8 @@ func (c Collector) convertPaths(paths []string) []DeployableItem {
 	var items []DeployableItem
 	for _, path := range paths {
 		items = append(items, DeployableItem{
-			Path:         path,
-			PipelineMeta: nil,
+			Path:                 path,
+			IntermediateFileMeta: nil,
 		})
 	}
 
@@ -150,14 +149,14 @@ func (c Collector) mergeItems(items *[]DeployableItem, files map[string]string) 
 		if index == -1 {
 			item := DeployableItem{
 				Path: path,
-				PipelineMeta: &IntermediateFileMetaData{
+				IntermediateFileMeta: &IntermediateFileMetaData{
 					EnvKey: envKey,
 					IsDir:  isDirectory,
 				},
 			}
 			*items = append(*items, item)
 		} else {
-			(*items)[index].PipelineMeta = &IntermediateFileMetaData{
+			(*items)[index].IntermediateFileMeta = &IntermediateFileMetaData{
 				EnvKey: envKey,
 				IsDir:  isDirectory,
 			}
@@ -183,7 +182,7 @@ func (c Collector) indexOfItemWithPath(items *[]DeployableItem, path string) int
 
 func (c Collector) zipDirectories(items *[]DeployableItem) error {
 	for i, item := range *items {
-		if item.PipelineMeta != nil && item.PipelineMeta.IsDir {
+		if item.IntermediateFileMeta != nil && item.IntermediateFileMeta.IsDir {
 			path, err := c.zipDir(item.Path)
 			if err != nil {
 				return err
