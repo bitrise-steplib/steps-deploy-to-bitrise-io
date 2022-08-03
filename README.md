@@ -37,7 +37,7 @@ Provide a language template description using [https://golang.org/pkg/text/templ
 ### Configuring the Pipeline Intermediate File Sharing section of the Step
 
 The **Files to share between pipeline stages** input specifies the files meant to be intermediate files shared between the Pipeline Stages. When uploading the Pipeline intermediate files, you must assign environment variable keys to them in the **Files to share between pipeline stages** input.
-The inputs `path:env_key` values will be saved together with the file and later automatically reconstructed by the [Artifact pull Step](https://www.bitrise.io/integrations/steps/artifact-pull).
+The inputs `path:env_key` values will be saved together with the file and later automatically reconstructed by the [Pull Pipeline intermediate files Step](https://www.bitrise.io/integrations/steps/artifact-pull).
 The directories you specify will be archived and uploaded as a single file.
 
 #### Configuring the Debug section of the Step
@@ -103,7 +103,7 @@ The Step can handle multiple file uploads in one go. In this case the **deploy_p
         ./path/to/test.bundle:TEST_BUNDLE_PATH
 ```
 
-The Step supports sharing files between pipeline stages. The input needs to be a newline separated **value:env_key_name** list. This metadata will be saved with the individual files and restored by the [Artifact pull Step](https://www.bitrise.io/integrations/steps/artifact-pull).
+The Step supports sharing files between pipeline stages. The input needs to be a newline separated **value:env_key_name** list. This metadata will be saved with the individual files and restored by the [Pull Pipeline intermediate files Step](https://www.bitrise.io/integrations/steps/artifact-pull).
 
 ## ⚙️ Configuration
 
