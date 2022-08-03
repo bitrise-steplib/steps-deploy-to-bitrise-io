@@ -222,6 +222,11 @@ workflows:
         - deploy_path: 0_length_file.txt
         - debug_mode: "true"
 
+  generate_readme:
+    steps:
+      - git::https://github.com/bitrise-steplib/steps-readme-generator.git@main:
+          inputs:
+            - example_section: docs/examples.md
 
   # ----------------------------------------------------------------
   # --- workflow to Share this step into a Step Library
