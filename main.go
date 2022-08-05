@@ -76,56 +76,65 @@ func main() {
 	fmt.Println()
 	log.SetEnableDebugLog(config.DebugMode)
 
-	absDeployPth, err := pathutil.AbsPath(config.DeployPath)
-	if err != nil {
-		fail("Failed to expand path: %s, error: %s", config.DeployPath, err)
-	}
-
 	tmpDir, err := pathutil.NormalizedOSTempDirPath("__deploy-to-bitrise-io__")
 	if err != nil {
 		fail("Failed to create tmp dir, error: %s", err)
 	}
 
-	filesToDeploy, err := collectFilesToDeploy(absDeployPth, config, tmpDir)
-	if err != nil {
-		fail("%s", err)
-	}
-	clearedFilesToDeploy := clearDeployFiles(filesToDeploy)
+	var clearedFilesToDeploy []string
+	if strings.TrimSpace(config.DeployPath) != "" {
+		absDeployPth, err := pathutil.AbsPath(config.DeployPath)
+		if err != nil {
+			fail("Failed to expand path: %s, error: %s", config.DeployPath, err)
+		}
 
-	collector := deployment.NewCollector(deployment.DefaultIsDirFunction, ziputil.ZipDir, tmpDir)
-	finalDeployableItems, err := collector.FinalListOfDeployableItems(clearedFilesToDeploy, config.PipelineIntermediateFiles)
-	if err != nil {
-		fail("%s", err)
+		filesToDeploy, err := collectFilesToDeploy(absDeployPth, config, tmpDir)
+		if err != nil {
+			fail("%s", err)
+		}
+		clearedFilesToDeploy = clearDeployFiles(filesToDeploy)
+	}
+
+	var finalDeployableItems []deployment.DeployableItem
+	if strings.TrimSpace(config.PipelineIntermediateFiles) != "" {
+		collector := deployment.NewCollector(deployment.DefaultIsDirFunction, ziputil.ZipDir, tmpDir)
+		finalDeployableItems, err = collector.FinalListOfDeployableItems(clearedFilesToDeploy, config.PipelineIntermediateFiles)
+		if err != nil {
+			fail("%s", err)
+		}
 	}
 
 	if len(finalDeployableItems) == 0 {
 		fmt.Println()
-		log.Infof("No deployment files were defined. Please check the deploy_path and pipeline_intermediate_files inputs.")
+		log.Printf("No deployment files were defined. Please check the deploy_path and pipeline_intermediate_files inputs.")
+	} else {
+		fmt.Println()
+		log.Infof("List of files to deploy")
+
+		logDeployFiles(finalDeployableItems)
+
+		fmt.Println()
+		log.Infof("Deploying files")
+
+		artifactURLCollection, err := deploy(finalDeployableItems, config)
+		if err != nil {
+			fail("%s", err)
+		}
+
+		fmt.Println()
 		log.Donef("Success")
+		log.Printf("You can find the Artifact on Bitrise, on the Build's page: %s", config.BuildURL)
 
-		return
+		if err := exportInstallPages(artifactURLCollection, config); err != nil {
+			fail("%s", err)
+		}
 	}
 
-	fmt.Println()
-	log.Infof("List of files to deploy")
-
-	logDeployFiles(finalDeployableItems)
-
-	fmt.Println()
-	log.Infof("Deploying files")
-
-	artifactURLCollection, err := deploy(finalDeployableItems, config)
-	if err != nil {
-		fail("%s", err)
+	if config.AddonAPIToken != "" {
+		fmt.Println()
+		log.Infof("Uploading test results")
+		deployTestResults(config)
 	}
-	fmt.Println()
-	log.Donef("Success")
-	log.Printf("You can find the Artifact on Bitrise, on the Build's page: %s", config.BuildURL)
-
-	if err := exportInstallPages(artifactURLCollection, config); err != nil {
-		fail("%s", err)
-	}
-	deployTestResults(config)
 }
 
 func exportInstallPages(artifactURLCollection ArtifactURLCollection, config Config) error {
@@ -288,21 +297,16 @@ func collectFilesToDeploy(absDeployPth string, config Config, tmpDir string) (fi
 }
 
 func deployTestResults(config Config) {
-	if config.AddonAPIToken != "" {
-		fmt.Println()
-		log.Infof("Upload test results")
+	testResults, err := test.ParseTestResults(config.TestDeployDir)
+	if err != nil {
+		log.Warnf("error during parsing test results: ", err)
+	} else {
+		log.Printf("- uploading (%d) test results", len(testResults))
 
-		testResults, err := test.ParseTestResults(config.TestDeployDir)
-		if err != nil {
-			log.Warnf("error during parsing test results: ", err)
+		if err := testResults.Upload(config.AddonAPIToken, config.AddonAPIBaseURL, config.AppSlug, config.BuildSlug); err != nil {
+			log.Warnf("Failed to upload test results: ", err)
 		} else {
-			log.Printf("- uploading (%d) test results", len(testResults))
-
-			if err := testResults.Upload(config.AddonAPIToken, config.AddonAPIBaseURL, config.AppSlug, config.BuildSlug); err != nil {
-				log.Warnf("Failed to upload test results: ", err)
-			} else {
-				log.Donef("Success")
-			}
+			log.Donef("Success")
 		}
 	}
 }
