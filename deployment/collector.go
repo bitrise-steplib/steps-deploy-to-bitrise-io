@@ -23,6 +23,22 @@ type DeployableItem struct {
 	IntermediateFileMeta *IntermediateFileMetaData
 }
 
+func ConvertPaths(paths []string) []DeployableItem {
+	if len(paths) == 0 {
+		return []DeployableItem{}
+	}
+
+	var items []DeployableItem
+	for _, path := range paths {
+		items = append(items, DeployableItem{
+			Path:                 path,
+			IntermediateFileMeta: nil,
+		})
+	}
+
+	return items
+}
+
 // ZipDirFunction ...
 type ZipDirFunction func(sourceDirPth, destinationZipPth string, isContentOnly bool) error
 
@@ -59,40 +75,22 @@ func NewCollector(
 	}
 }
 
-// FinalListOfDeployableItems ...
-func (c Collector) FinalListOfDeployableItems(paths []string, intermediateFileList string) ([]DeployableItem, error) {
-	deployableItems := c.convertPaths(paths)
-
+// AddIntermediateFiles ...
+func (c Collector) AddIntermediateFiles(deployableItems *[]DeployableItem, intermediateFileList string) error {
 	intermediateFiles, err := c.processIntermediateFiles(intermediateFileList)
 	if err != nil {
-		return []DeployableItem{}, err
+		return err
 	}
 
-	if err := c.mergeItems(&deployableItems, intermediateFiles); err != nil {
-		return []DeployableItem{}, err
+	if err := c.mergeItems(deployableItems, intermediateFiles); err != nil {
+		return err
 	}
 
-	if err := c.zipDirectories(&deployableItems); err != nil {
-		return []DeployableItem{}, err
+	if err := c.zipDirectories(deployableItems); err != nil {
+		return err
 	}
 
-	return deployableItems, nil
-}
-
-func (c Collector) convertPaths(paths []string) []DeployableItem {
-	if len(paths) == 0 {
-		return []DeployableItem{}
-	}
-
-	var items []DeployableItem
-	for _, path := range paths {
-		items = append(items, DeployableItem{
-			Path:                 path,
-			IntermediateFileMeta: nil,
-		})
-	}
-
-	return items
+	return nil
 }
 
 func (c Collector) processIntermediateFiles(s string) (map[string]string, error) {

@@ -81,7 +81,7 @@ func main() {
 		fail("Failed to create tmp dir, error: %s", err)
 	}
 
-	var clearedFilesToDeploy []string
+	var deployableItems []deployment.DeployableItem
 	if strings.TrimSpace(config.DeployPath) != "" {
 		absDeployPth, err := pathutil.AbsPath(config.DeployPath)
 		if err != nil {
@@ -92,31 +92,31 @@ func main() {
 		if err != nil {
 			fail("%s", err)
 		}
-		clearedFilesToDeploy = clearDeployFiles(filesToDeploy)
+		clearedFilesToDeploy := clearDeployFiles(filesToDeploy)
+		deployableItems = deployment.ConvertPaths(clearedFilesToDeploy)
 	}
 
-	var finalDeployableItems []deployment.DeployableItem
 	if strings.TrimSpace(config.PipelineIntermediateFiles) != "" {
 		collector := deployment.NewCollector(deployment.DefaultIsDirFunction, ziputil.ZipDir, tmpDir)
-		finalDeployableItems, err = collector.FinalListOfDeployableItems(clearedFilesToDeploy, config.PipelineIntermediateFiles)
+		err = collector.AddIntermediateFiles(&deployableItems, config.PipelineIntermediateFiles)
 		if err != nil {
 			fail("%s", err)
 		}
 	}
 
-	if len(finalDeployableItems) == 0 {
+	if len(deployableItems) == 0 {
 		fmt.Println()
 		log.Printf("No deployment files were defined. Please check the deploy_path and pipeline_intermediate_files inputs.")
 	} else {
 		fmt.Println()
 		log.Infof("List of files to deploy")
 
-		logDeployFiles(finalDeployableItems)
+		logDeployFiles(deployableItems)
 
 		fmt.Println()
 		log.Infof("Deploying files")
 
-		artifactURLCollection, err := deploy(finalDeployableItems, config)
+		artifactURLCollection, err := deploy(deployableItems, config)
 		if err != nil {
 			fail("%s", err)
 		}

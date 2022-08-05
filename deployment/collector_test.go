@@ -106,7 +106,7 @@ func Test_GivenIntermediateFiles_WhenProcessing_ThenConvertsCorrectly(t *testing
 		{
 			name:    "Item is empty",
 			list:    "",
-			want:    []DeployableItem{},
+			want:    nil,
 			wantErr: false,
 		},
 		{
@@ -132,7 +132,9 @@ func Test_GivenIntermediateFiles_WhenProcessing_ThenConvertsCorrectly(t *testing
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			collector := NewCollector(isDirFunction(directories), emptyZipFunction(), tempDir)
-			deployableItems, err := collector.FinalListOfDeployableItems([]string{}, tt.list)
+
+			var deployableItems []DeployableItem
+			err := collector.AddIntermediateFiles(&deployableItems, tt.list)
 
 			if err != nil && tt.wantErr {
 				return
@@ -258,7 +260,8 @@ func Test_GivenDeployFiles_WhenIntermediateFilesSpecified_ThenMergesThem(t *test
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			collector := NewCollector(isDirFunction(directories), emptyZipFunction(), tempDir)
-			deployableItems, err := collector.FinalListOfDeployableItems(tt.deployFiles, tt.intermediateFiles)
+			deployableItems := ConvertPaths(tt.deployFiles)
+			err := collector.AddIntermediateFiles(&deployableItems, tt.intermediateFiles)
 
 			assert.NoError(t, err)
 
