@@ -32,7 +32,7 @@ description: |-
   ### Configuring the Pipeline Intermediate File Sharing section of the Step
   
   The **Files to share between pipeline stages** input specifies the files meant to be intermediate files shared between the Pipeline Stages. When uploading the Pipeline intermediate files, you must assign environment variable keys to them in the **Files to share between pipeline stages** input.
-  The inputs `path:env_key` values will be saved together with the file and later automatically reconstructed by the [Pull Pipeline intermediate files Step](https://www.bitrise.io/integrations/steps/artifact-pull).
+  The inputs `path:env_key` values will be saved together with the file and later automatically reconstructed by the [Pull Pipeline intermediate files Step](https://www.bitrise.io/integrations/steps/pull-intermediate-files).
   The directories you specify will be archived and uploaded as a single file.
   
   #### Configuring the Debug section of the Step
