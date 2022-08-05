@@ -195,7 +195,7 @@ func (c Collector) zipDirectories(items *[]DeployableItem) error {
 }
 
 func (c Collector) zipDir(path string) (string, error) {
-	name := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
+	name := filepath.Base(path)
 	targetPth := filepath.Join(c.temporaryFolder, name+".zip")
 
 	if err := c.zipDirFunction(path, targetPth, true); err != nil {
