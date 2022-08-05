@@ -134,7 +134,7 @@ func Test_GivenIntermediateFiles_WhenProcessing_ThenConvertsCorrectly(t *testing
 			collector := NewCollector(isDirFunction(directories), emptyZipFunction(), tempDir)
 
 			var deployableItems []DeployableItem
-			err := collector.AddIntermediateFiles(&deployableItems, tt.list)
+			deployableItems, err := collector.AddIntermediateFiles(deployableItems, tt.list)
 
 			if err != nil && tt.wantErr {
 				return
@@ -261,7 +261,7 @@ func Test_GivenDeployFiles_WhenIntermediateFilesSpecified_ThenMergesThem(t *test
 		t.Run(tt.name, func(t *testing.T) {
 			collector := NewCollector(isDirFunction(directories), emptyZipFunction(), tempDir)
 			deployableItems := ConvertPaths(tt.deployFiles)
-			err := collector.AddIntermediateFiles(&deployableItems, tt.intermediateFiles)
+			deployableItems, err := collector.AddIntermediateFiles(deployableItems, tt.intermediateFiles)
 
 			assert.NoError(t, err)
 

@@ -98,7 +98,7 @@ func main() {
 
 	if strings.TrimSpace(config.PipelineIntermediateFiles) != "" {
 		collector := deployment.NewCollector(deployment.DefaultIsDirFunction, ziputil.ZipDir, tmpDir)
-		err = collector.AddIntermediateFiles(&deployableItems, config.PipelineIntermediateFiles)
+		deployableItems, err = collector.AddIntermediateFiles(deployableItems, config.PipelineIntermediateFiles)
 		if err != nil {
 			fail("%s", err)
 		}
