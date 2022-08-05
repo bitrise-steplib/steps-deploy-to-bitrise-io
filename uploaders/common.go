@@ -17,12 +17,21 @@ import (
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-io/go-utils/urlutil"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
 
 // ArtifactURLs ...
 type ArtifactURLs struct {
 	PublicInstallPageURL string
 	PermanentDownloadURL string
+}
+
+// AppDeploymentMetaData ...
+type AppDeploymentMetaData struct {
+	ArtifactInfo       map[string]interface{}
+	NotifyUserGroups   string
+	NotifyEmails       string
+	IsEnablePublicPage bool
 }
 
 func createArtifact(buildURL, token, artifactPth, artifactType, contentType string) (string, string, error) {
@@ -185,23 +194,43 @@ func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 	})
 }
 
-func finishArtifact(buildURL, token, artifactID, artifactInfo, notifyUserGroups, notifyEmails, isEnablePublicPage string) (ArtifactURLs, error) {
+func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDeploymentMetaData, pipelineMeta *deployment.IntermediateFileMetaData) (ArtifactURLs, error) {
 	log.Printf("finishing artifact")
 
 	// create form data
 	data := url.Values{"api_token": {token}}
-	if artifactInfo != "" {
-		data["artifact_info"] = []string{artifactInfo}
+	isEnablePublicPage := false
+	if appDeploymentMeta != nil {
+		artifactInfoBytes, err := json.Marshal(appDeploymentMeta.ArtifactInfo)
+		if err != nil {
+			return ArtifactURLs{}, fmt.Errorf("failed to marshal app deployment meta: %s", err)
+		}
+		artifactInfo := string(artifactInfoBytes)
+
+		if artifactInfo != "" {
+			data["artifact_info"] = []string{artifactInfo}
+		}
+		if appDeploymentMeta.NotifyUserGroups != "" {
+			data["notify_user_groups"] = []string{appDeploymentMeta.NotifyUserGroups}
+		}
+		if appDeploymentMeta.NotifyEmails != "" {
+			data["notify_emails"] = []string{appDeploymentMeta.NotifyEmails}
+		}
+		if appDeploymentMeta.IsEnablePublicPage {
+			data["is_enable_public_page"] = []string{"yes"}
+			isEnablePublicPage = true
+		}
 	}
-	if notifyUserGroups != "" {
-		data["notify_user_groups"] = []string{notifyUserGroups}
+
+	if pipelineMeta != nil {
+		pipelineInfoBytes, err := json.Marshal(pipelineMeta)
+		if err != nil {
+			return ArtifactURLs{}, fmt.Errorf("failed to marshal deployment meta: %s", err)
+		}
+
+		data["intermediate_file_info"] = []string{string(pipelineInfoBytes)}
 	}
-	if notifyEmails != "" {
-		data["notify_emails"] = []string{notifyEmails}
-	}
-	if isEnablePublicPage == "true" {
-		data["is_enable_public_page"] = []string{"yes"}
-	}
+
 	// ---
 
 	// perform request
@@ -255,7 +284,7 @@ func finishArtifact(buildURL, token, artifactID, artifactInfo, notifyUserGroups,
 		log.Warnf("Invalid e-mail addresses: %s", strings.Join(artifactResponse.InvalidEmails, ", "))
 	}
 
-	if isEnablePublicPage == "true" {
+	if isEnablePublicPage {
 		if artifactResponse.PublicInstallPageURL == "" {
 			return ArtifactURLs{}, fmt.Errorf("public install page was enabled, but no public install page generated")
 		}

@@ -1,19 +1,20 @@
 package uploaders
 
 import (
-	"encoding/json"
 	"fmt"
 	"path/filepath"
 
-	"github.com/bitrise-io/go-utils/pathutil"
-
 	"github.com/bitrise-io/go-utils/log"
+	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-xcode/xcarchive"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
 
 // DeployXcarchive ...
-func DeployXcarchive(pth, buildURL, token string) (ArtifactURLs, error) {
+func DeployXcarchive(item deployment.DeployableItem, buildURL, token string) (ArtifactURLs, error) {
 	log.Printf("analyzing xcarchive")
+
+	pth := item.Path
 	unzippedPth, err := xcarchive.UnzipXcarchive(pth)
 	if err != nil {
 		return ArtifactURLs{}, err
@@ -62,11 +63,6 @@ func DeployXcarchive(pth, buildURL, token string) (ArtifactURLs, error) {
 		"scheme":          scheme,
 	}
 
-	artifactInfoBytes, err := json.Marshal(xcarchiveInfoMap)
-	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to marshal xcarchive infos, error: %s", err)
-	}
-
 	log.Printf("  xcarchive infos: %v", appInfo)
 
 	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "ios-xcarchive", "")
@@ -78,7 +74,14 @@ func DeployXcarchive(pth, buildURL, token string) (ArtifactURLs, error) {
 		return ArtifactURLs{}, fmt.Errorf("failed to upload xcarchive artifact, error: %s", err)
 	}
 
-	artifactURLs, err := finishArtifact(buildURL, token, artifactID, string(artifactInfoBytes), "", "", "false")
+	buildArtifactMeta := AppDeploymentMetaData{
+		ArtifactInfo:       xcarchiveInfoMap,
+		NotifyUserGroups:   "",
+		NotifyEmails:       "",
+		IsEnablePublicPage: false,
+	}
+
+	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta, item.IntermediateFileMeta)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to finish xcarchive artifact, error: %s", err)
 	}

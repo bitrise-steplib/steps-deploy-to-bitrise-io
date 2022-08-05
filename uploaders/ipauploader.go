@@ -1,7 +1,6 @@
 package uploaders
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/bitrise-io/go-utils/log"
@@ -9,12 +8,14 @@ import (
 	"github.com/bitrise-io/go-xcode/ipa"
 	"github.com/bitrise-io/go-xcode/plistutil"
 	"github.com/bitrise-io/go-xcode/profileutil"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
 
 // DeployIPA ...
-func DeployIPA(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePublicPage string) (ArtifactURLs, error) {
+func DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups, notifyEmails string, isEnablePublicPage bool) (ArtifactURLs, error) {
 	log.Printf("analyzing ipa")
 
+	pth := item.Path
 	infoPlistPth, err := ipa.UnwrapEmbeddedInfoPlist(pth)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to unwrap Info.plist from ipa, error: %s", err)
@@ -66,7 +67,7 @@ func DeployIPA(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 	if exportMethod == exportoptions.MethodAppStore {
 		log.Warnf("is_enable_public_page is set, but public download isn't allowed for app-store distributions")
 		log.Warnf("setting is_enable_public_page to false ...")
-		isEnablePublicPage = "false"
+		isEnablePublicPage = false
 	}
 
 	provisioningInfo := map[string]interface{}{
@@ -92,11 +93,6 @@ func DeployIPA(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 		"provisioning_info": provisioningInfo,
 	}
 
-	artifactInfoBytes, err := json.Marshal(ipaInfoMap)
-	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to marshal ipa infos, error: %s", err)
-	}
-
 	// ---
 
 	const IPAContentType = "application/octet-stream ipa"
@@ -109,7 +105,14 @@ func DeployIPA(pth, buildURL, token, notifyUserGroups, notifyEmails, isEnablePub
 		return ArtifactURLs{}, fmt.Errorf("failed to upload ipa artifact, error: %s", err)
 	}
 
-	artifactURLs, err := finishArtifact(buildURL, token, artifactID, string(artifactInfoBytes), notifyUserGroups, notifyEmails, isEnablePublicPage)
+	buildArtifactMeta := AppDeploymentMetaData{
+		ArtifactInfo:       ipaInfoMap,
+		NotifyUserGroups:   notifyUserGroups,
+		NotifyEmails:       notifyEmails,
+		IsEnablePublicPage: isEnablePublicPage,
+	}
+
+	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta, item.IntermediateFileMeta)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to finish ipa artifact, error: %s", err)
 	}

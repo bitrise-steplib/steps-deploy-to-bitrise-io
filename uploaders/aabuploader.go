@@ -1,21 +1,22 @@
 package uploaders
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/androidartifact"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/bundletool"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
 
 // DeployAAB ...
-func DeployAAB(pth string, artifacts []string, buildURL, token, bundletoolVersion string) (ArtifactURLs, error) {
+func DeployAAB(item deployment.DeployableItem, artifacts []string, buildURL, token, bundletoolVersion string) (ArtifactURLs, error) {
 	log.Printf("- analyzing aab")
 
 	// get aab manifest dump
 	log.Printf("- fetching info")
 
+	pth := item.Path
 	r, err := bundletool.New(bundletoolVersion)
 	if err != nil {
 		return ArtifactURLs{}, err
@@ -78,11 +79,6 @@ func DeployAAB(pth string, artifacts []string, buildURL, token, bundletoolVersio
 		aabInfoMap["universal"] = splitMeta.UniversalApk
 	}
 
-	artifactInfoBytes, err := json.Marshal(aabInfoMap)
-	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to marshal apk infos, error: %s", err)
-	}
-
 	// ---
 
 	const AABContentType = "application/octet-stream aab"
@@ -94,7 +90,15 @@ func DeployAAB(pth string, artifacts []string, buildURL, token, bundletoolVersio
 	if err := uploadArtifact(uploadURL, pth, AABContentType); err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to upload apk artifact, error: %s", err)
 	}
-	artifactURLs, err := finishArtifact(buildURL, token, artifactID, string(artifactInfoBytes), "", "", "false")
+
+	buildArtifactMeta := AppDeploymentMetaData{
+		ArtifactInfo:       aabInfoMap,
+		NotifyUserGroups:   "",
+		NotifyEmails:       "",
+		IsEnablePublicPage: false,
+	}
+
+	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta, item.IntermediateFileMeta)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to finish apk artifact, error: %s", err)
 	}
