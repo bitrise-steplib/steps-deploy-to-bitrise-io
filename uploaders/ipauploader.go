@@ -95,7 +95,7 @@ func DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups
 
 	// ---
 
-	const IPAContentType = "application/octet-stream ipa"
+	const IPAContentType = "application/octet-stream"
 	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "ios-ipa", IPAContentType)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to create ipa artifact, error: %s", err)

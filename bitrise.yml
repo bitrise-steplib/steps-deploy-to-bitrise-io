@@ -199,7 +199,7 @@ workflows:
         - content: |
             #!/bin/bash
             set -ex
-            git clone --depth 1 $SAMPLE_ARTIFACTS_GIT_CLONE_URL ./_tmp
+            git clone --branch test-xml --depth 1 $SAMPLE_ARTIFACTS_GIT_CLONE_URL ./_tmp
   test:
     before_run:
     - download_sample_artifacts
