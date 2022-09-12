@@ -53,7 +53,7 @@ func createArtifact(buildURL, token, artifactPth, artifactType, contentType stri
 		log.Printf("  file size: %dMB", roundedMegaBytes)
 	}
 
-	if token == "" {
+	if strings.TrimSpace(token) == "" {
 		return "", "", fmt.Errorf("provided API token is empty")
 	}
 
