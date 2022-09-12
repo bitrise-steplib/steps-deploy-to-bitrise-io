@@ -53,6 +53,10 @@ func createArtifact(buildURL, token, artifactPth, artifactType, contentType stri
 		log.Printf("  file size: %dMB", roundedMegaBytes)
 	}
 
+	if token == "" {
+		return "", "", fmt.Errorf("provided API token is empty")
+	}
+
 	data := url.Values{
 		"api_token":       {token},
 		"title":           {artifactName},
