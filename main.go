@@ -307,7 +307,7 @@ func compressAsTar(sourceDirPath, destinationTarPath string, isContentOnly bool)
 	cmd := command.New("/usr/bin/tar", " -cfz", destinationTarPath, sourceDirPath)
 
 	if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
-		fmt.Errorf("command: (%s) failed, output: %s, error: %s", cmd.PrintableCommandArgs(), out, err)
+		err = fmt.Errorf("command: (%s) failed, output: %s, error: %s", cmd.PrintableCommandArgs(), out, err)
 		return err
 	}
 
