@@ -301,7 +301,7 @@ func compressAsTar(sourceDirPath, destinationTarPath string, isContentOnly bool)
 	fmt.Println()
 	log.Infof("Compressing directory...")
 
-	destinationTarPathTemp := strings.TrimLeft('/')
+	destinationTarPathTemp := strings.TrimLeft(destinationTarPath, "/")
 
 	// -c - create a new archive
 	// -f - the next argument is the name of the output archive
