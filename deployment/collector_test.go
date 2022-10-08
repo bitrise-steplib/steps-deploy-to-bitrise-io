@@ -286,7 +286,7 @@ func isDirFunction(directoryEntries []string) IsDirFunction {
 	}
 }
 
-func emptyZipFunction() ZipDirFunction {
+func emptyZipFunction() CompressDirFunction {
 	return func(sourceDirPth, destinationZipPth string, isContentOnly bool) error {
 		return nil
 	}

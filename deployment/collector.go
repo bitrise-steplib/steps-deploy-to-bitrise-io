@@ -40,8 +40,8 @@ func ConvertPaths(paths []string) []DeployableItem {
 	return items
 }
 
-// ZipDirFunction ...
-type ZipDirFunction func(sourceDirPth, destinationZipPth string, isContentOnly bool) error
+// CompressDirFunction ...
+type CompressDirFunction func(sourceDirPath, outputPath string, isContentOnly bool) error
 
 // IsDirFunction ...
 type IsDirFunction func(path string) (bool, error)
@@ -58,21 +58,21 @@ func DefaultIsDirFunction(path string) (bool, error) {
 
 // Collector ...
 type Collector struct {
-	isDirFunction   IsDirFunction
-	zipDirFunction  ZipDirFunction
-	temporaryFolder string
+	isDirFunction       IsDirFunction
+	compressDirFunction CompressDirFunction
+	temporaryFolder     string
 }
 
 // NewCollector ...
 func NewCollector(
 	isDirFunction IsDirFunction,
-	zipDirFunction ZipDirFunction,
+	compressDirFunction CompressDirFunction,
 	temporaryFolder string,
 ) Collector {
 	return Collector{
-		isDirFunction:   isDirFunction,
-		zipDirFunction:  zipDirFunction,
-		temporaryFolder: temporaryFolder,
+		isDirFunction:       isDirFunction,
+		compressDirFunction: compressDirFunction,
+		temporaryFolder:     temporaryFolder,
 	}
 }
 
@@ -88,7 +88,7 @@ func (c Collector) AddIntermediateFiles(deployableItems []DeployableItem, interm
 		return []DeployableItem{}, err
 	}
 
-	deployableItems, err = c.zipDirectories(deployableItems)
+	deployableItems, err = c.compressDirectories(deployableItems)
 	if err != nil {
 		return []DeployableItem{}, err
 	}
@@ -180,10 +180,10 @@ func (c Collector) indexOfItemWithPath(items []DeployableItem, path string) int 
 	return -1
 }
 
-func (c Collector) zipDirectories(items []DeployableItem) ([]DeployableItem, error) {
+func (c Collector) compressDirectories(items []DeployableItem) ([]DeployableItem, error) {
 	for i, item := range items {
 		if item.IntermediateFileMeta != nil && item.IntermediateFileMeta.IsDir {
-			path, err := c.zipDir(item.Path)
+			path, err := c.compressDir(item.Path)
 			if err != nil {
 				return nil, err
 			}
@@ -195,13 +195,13 @@ func (c Collector) zipDirectories(items []DeployableItem) ([]DeployableItem, err
 	return items, nil
 }
 
-func (c Collector) zipDir(path string) (string, error) {
+func (c Collector) compressDir(path string) (string, error) {
 	name := filepath.Base(path)
-	targetPth := filepath.Join(c.temporaryFolder, name+".zip")
+	targetPath := filepath.Join(c.temporaryFolder, name+".zip")
 
-	if err := c.zipDirFunction(path, targetPth, true); err != nil {
-		return "", fmt.Errorf("failed to zip output dir, error: %s", err)
+	if err := c.compressDirFunction(path, targetPath, true); err != nil {
+		return "", fmt.Errorf("failed to compress output dir, error: %s", err)
 	}
 
-	return targetPth, nil
+	return targetPath, nil
 }
