@@ -14,7 +14,6 @@ import (
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
-	"github.com/bitrise-io/go-utils/v2/env"
 	"github.com/bitrise-io/go-utils/ziputil"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test"
@@ -300,24 +299,19 @@ func collectFilesToDeploy(absDeployPth string, config Config, tmpDir string) (fi
 
 func compressAsTar(sourceDirPath, destinationTarPath string, isContentOnly bool) error {
 	fmt.Println()
-	log.Infof("Deploying compressed Deploy directory")
-
-	// tarName := filepath.Base(sourceDirPath)
-	// tarOutputPath := filepath.Join(destinationTarPath, tarName+".tar.gz")
-
-	opts := &command.Opts{Dir: destinationTarPath}
-	factory := command.NewFactory(env.NewRepository())
+	log.Infof("Compressing directory...")
 
 	// -c - create a new archive
 	// -f - the next argument is the name of the output archive
 	// -z - filter the archive through gzip
-	cmd := factory.Create("/usr/bin/tar", []string{" -cfz", destinationTarPath, sourceDirPath}, opts)
+	cmd := command.New("/usr/bin/tar", " -cfz", destinationTarPath, sourceDirPath)
 
 	if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
-		return nil, fmt.Errorf("command: (%s) failed, output: %s, error: %s", cmd.PrintableCommandArgs(), out, err)
+		fmt.Errorf("command: (%s) failed, output: %s, error: %s", cmd.PrintableCommandArgs(), out, err)
+		return err
 	}
 
-	filesToDeploy = []string{tarOutputPath}
+	return nil
 }
 
 func deployTestResults(config Config) {
