@@ -301,10 +301,12 @@ func compressAsTar(sourceDirPath, destinationTarPath string, isContentOnly bool)
 	fmt.Println()
 	log.Infof("Compressing directory...")
 
+	destinationTarPathTemp := strings.TrimLeft('/')
+
 	// -c - create a new archive
 	// -f - the next argument is the name of the output archive
 	// -z - filter the archive through gzip
-	cmd := command.New("/usr/bin/tar", "-cfz", destinationTarPath, sourceDirPath)
+	cmd := command.New("/usr/bin/tar", "-cfz", destinationTarPathTemp, sourceDirPath)
 
 	if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
 		err = fmt.Errorf("command: (%s) failed, output: %s, error: %s", cmd.PrintableCommandArgs(), out, err)
