@@ -303,10 +303,8 @@ func compressAsTar(sourceDirPath, destinationTarPath string, isContentOnly bool)
 
 	// -c - create a new archive
 	// -f - the next argument is the name of the output archive
-	// -z - filter the archive through gzip
-	// -C - this changes the directory before adding the following files
 	// Note: recursive behavior is default in tar
-	cmd := command.New("/usr/bin/tar", "cfz", destinationTarPath, sourceDirPath)
+	cmd := command.New("/usr/bin/tar", "cf", destinationTarPath, sourceDirPath)
 
 	if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
 		err = fmt.Errorf("command: (%s) failed, output: %s, error: %s", cmd.PrintableCommandArgs(), out, err)
