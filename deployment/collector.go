@@ -197,7 +197,7 @@ func (c Collector) archiveDirectories(items []DeployableItem) ([]DeployableItem,
 
 func (c Collector) archiveDir(path string) (string, error) {
 	name := filepath.Base(path)
-	targetPath := filepath.Join(c.temporaryFolder, name+".zip")
+	targetPath := filepath.Join(c.temporaryFolder, name+".tar")
 
 	if err := c.archiveDirFunction(path, targetPath, true); err != nil {
 		return "", fmt.Errorf("failed to archive output dir, error: %s", err)
