@@ -197,7 +197,7 @@ func (c Collector) compressDirectories(items []DeployableItem) ([]DeployableItem
 
 func (c Collector) compressDir(path string) (string, error) {
 	name := filepath.Base(path)
-	targetPath := filepath.Join(c.temporaryFolder, name+".zip")
+	targetPath := filepath.Join(c.temporaryFolder, name+".tar")
 
 	if err := c.compressDirFunction(path, targetPath, true); err != nil {
 		return "", fmt.Errorf("failed to compress output dir, error: %s", err)
