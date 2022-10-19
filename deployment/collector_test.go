@@ -3,7 +3,6 @@ package deployment
 import (
 	"os"
 	"path/filepath"
-	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -142,7 +141,7 @@ func Test_GivenIntermediateFiles_WhenProcessing_ThenConvertsCorrectly(t *testing
 
 			assert.NoError(t, err)
 
-			if !reflect.DeepEqual(deployableItems, tt.want) {
+			if !assert.ElementsMatch(t, deployableItems, tt.want) {
 				t.Errorf("%s got = %v, want %v", t.Name(), deployableItems, tt.want)
 			}
 		})
@@ -265,7 +264,7 @@ func Test_GivenDeployFiles_WhenIntermediateFilesSpecified_ThenMergesThem(t *test
 
 			assert.NoError(t, err)
 
-			if !reflect.DeepEqual(deployableItems, tt.want) {
+			if !assert.ElementsMatch(t, deployableItems, tt.want) {
 				t.Errorf("%s got = %v, want %v", t.Name(), deployableItems, tt.want)
 			}
 		})
