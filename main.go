@@ -299,12 +299,22 @@ func collectFilesToDeploy(absDeployPth string, config Config, tmpDir string) (fi
 
 func archiveAsTar(sourceDirPath, destinationTarPath string, isContentOnly bool) error {
 	fmt.Println()
-	log.Infof("Compressing directory...")
+	log.Infof("Archiving directory...")
+
+	// Note: The tar command can't change the pathname of the files
+	// when unarchiving so we need to avoid using the absolute path
+	// of the directory. Hence we set the working directory as the
+	// parent directory of the directory we're archiving.
+	// https://docstore.mik.ua/orelly/unix/upt/ch20_10.htm
+	workDir := strings.TrimRight(sourceDirPath, "/")
+	workDir = filepath.Dir(workDir)           //get the parent
+	sourceDir := filepath.Base(sourceDirPath) //the directory we're going to archive
 
 	// -c - create a new archive
 	// -f - the next argument is the name of the output archive
-	// Note: recursive behavior is default in tar
-	cmd := command.New("tar", "cf", destinationTarPath, sourceDirPath)
+	// Note: Recursive behavior is default in tar.
+	cmd := command.New("tar", "cf", destinationTarPath, sourceDir)
+	cmd = cmd.SetDir(workDir)
 
 	if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
 		err = fmt.Errorf("command: (%s) failed, output: %s, error: %s", cmd.PrintableCommandArgs(), out, err)
