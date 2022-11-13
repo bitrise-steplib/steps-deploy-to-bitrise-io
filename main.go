@@ -302,12 +302,13 @@ func archiveAsTar(sourceDirPath, destinationTarPath string, isContentOnly bool) 
 	log.Infof("Archiving directory...")
 
 	// -c - Create a new archive
+	// -z - Compress the archive
 	// -f - The next argument is the name of the output archive
 	// -C - The `-C sourceDir` tells tar to change the current directory to sourceDir,
 	// and then . means "add the entire current directory". This allows us to avoid
 	// adding the directory itself to the archive and only include its contents.
 	// Note: Recursive behavior is default in tar.
-	cmd := command.New("tar", "cf", destinationTarPath, "-C", sourceDirPath, ".")
+	cmd := command.New("tar", "czf", destinationTarPath, "-C", sourceDirPath, ".")
 
 	if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
 		err = fmt.Errorf("command: (%s) failed, output: %s, error: %s", cmd.PrintableCommandArgs(), out, err)
