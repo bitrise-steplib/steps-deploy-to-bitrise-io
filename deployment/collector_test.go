@@ -79,21 +79,21 @@ func Test_GivenIntermediateFiles_WhenProcessing_ThenConvertsCorrectly(t *testing
 			list: "/output_folder:OUTPUT_FOLDER" + "\n" + "./local/build:BUILD_DIRECTORY" + "\n" + "folder:JUST_A_FOLDER",
 			want: []DeployableItem{
 				{
-					Path: filepath.Join(tempDir, "output_folder.tar"),
+					Path: filepath.Join(tempDir, "output_folder.tar.gz"),
 					IntermediateFileMeta: &IntermediateFileMetaData{
 						EnvKey: "OUTPUT_FOLDER",
 						IsDir:  true,
 					},
 				},
 				{
-					Path: filepath.Join(tempDir, "build.tar"),
+					Path: filepath.Join(tempDir, "build.tar.gz"),
 					IntermediateFileMeta: &IntermediateFileMetaData{
 						EnvKey: "BUILD_DIRECTORY",
 						IsDir:  true,
 					},
 				},
 				{
-					Path: filepath.Join(tempDir, "folder.tar"),
+					Path: filepath.Join(tempDir, "folder.tar.gz"),
 					IntermediateFileMeta: &IntermediateFileMetaData{
 						EnvKey: "JUST_A_FOLDER",
 						IsDir:  true,
