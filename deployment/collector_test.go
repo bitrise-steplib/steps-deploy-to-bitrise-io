@@ -3,6 +3,7 @@ package deployment
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -79,21 +80,21 @@ func Test_GivenIntermediateFiles_WhenProcessing_ThenConvertsCorrectly(t *testing
 			list: "/output_folder:OUTPUT_FOLDER" + "\n" + "./local/build:BUILD_DIRECTORY" + "\n" + "folder:JUST_A_FOLDER",
 			want: []DeployableItem{
 				{
-					Path: filepath.Join(tempDir, "output_folder.tar"),
+					Path: filepath.Join(tempDir, "output_folder.zip"),
 					IntermediateFileMeta: &IntermediateFileMetaData{
 						EnvKey: "OUTPUT_FOLDER",
 						IsDir:  true,
 					},
 				},
 				{
-					Path: filepath.Join(tempDir, "build.tar"),
+					Path: filepath.Join(tempDir, "build.zip"),
 					IntermediateFileMeta: &IntermediateFileMetaData{
 						EnvKey: "BUILD_DIRECTORY",
 						IsDir:  true,
 					},
 				},
 				{
-					Path: filepath.Join(tempDir, "folder.tar"),
+					Path: filepath.Join(tempDir, "folder.zip"),
 					IntermediateFileMeta: &IntermediateFileMetaData{
 						EnvKey: "JUST_A_FOLDER",
 						IsDir:  true,
@@ -141,7 +142,7 @@ func Test_GivenIntermediateFiles_WhenProcessing_ThenConvertsCorrectly(t *testing
 
 			assert.NoError(t, err)
 
-			if !assert.ElementsMatch(t, deployableItems, tt.want) {
+			if !reflect.DeepEqual(deployableItems, tt.want) {
 				t.Errorf("%s got = %v, want %v", t.Name(), deployableItems, tt.want)
 			}
 		})
@@ -264,7 +265,7 @@ func Test_GivenDeployFiles_WhenIntermediateFilesSpecified_ThenMergesThem(t *test
 
 			assert.NoError(t, err)
 
-			if !assert.ElementsMatch(t, deployableItems, tt.want) {
+			if !reflect.DeepEqual(deployableItems, tt.want) {
 				t.Errorf("%s got = %v, want %v", t.Name(), deployableItems, tt.want)
 			}
 		})
@@ -285,7 +286,7 @@ func isDirFunction(directoryEntries []string) IsDirFunction {
 	}
 }
 
-func emptyZipFunction() ArchiveDirFunction {
+func emptyZipFunction() ZipDirFunction {
 	return func(sourceDirPth, destinationZipPth string, isContentOnly bool) error {
 		return nil
 	}
