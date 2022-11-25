@@ -11,7 +11,6 @@ import (
 	"github.com/bitrise-io/envman/envman"
 	"github.com/bitrise-io/go-steputils/stepconf"
 	"github.com/bitrise-io/go-steputils/tools"
-	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/ziputil"
@@ -98,7 +97,7 @@ func main() {
 	}
 
 	if strings.TrimSpace(config.PipelineIntermediateFiles) != "" {
-		collector := deployment.NewCollector(deployment.DefaultIsDirFunction, archiveAsTar, tmpDir)
+		collector := deployment.NewCollector(deployment.DefaultIsDirFunction, ziputil.ZipDir, tmpDir)
 		deployableItems, err = collector.AddIntermediateFiles(deployableItems, config.PipelineIntermediateFiles)
 		if err != nil {
 			fail("%s", err)
@@ -295,26 +294,6 @@ func collectFilesToDeploy(absDeployPth string, config Config, tmpDir string) (fi
 	}
 
 	return filesToDeploy, nil
-}
-
-func archiveAsTar(sourceDirPath, destinationTarPath string, isContentOnly bool) error {
-	fmt.Println()
-	log.Infof("Archiving directory...")
-
-	// -c - Create a new archive
-	// -f - The next argument is the name of the output archive
-	// -C - The `-C sourceDir` tells tar to change the current directory to sourceDir,
-	// and then . means "add the entire current directory". This allows us to avoid
-	// adding the directory itself to the archive and only include its contents.
-	// Note: Recursive behavior is default in tar.
-	cmd := command.New("tar", "cf", destinationTarPath, "-C", sourceDirPath, ".")
-
-	if out, err := cmd.RunAndReturnTrimmedCombinedOutput(); err != nil {
-		err = fmt.Errorf("command: (%s) failed, output: %s, error: %s", cmd.PrintableCommandArgs(), out, err)
-		return err
-	}
-
-	return nil
 }
 
 func deployTestResults(config Config) {

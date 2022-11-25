@@ -40,8 +40,8 @@ func ConvertPaths(paths []string) []DeployableItem {
 	return items
 }
 
-// ArchiveDirFunction ...
-type ArchiveDirFunction func(sourceDirPath, outputPath string, isContentOnly bool) error
+// ZipDirFunction ...
+type ZipDirFunction func(sourceDirPth, destinationZipPth string, isContentOnly bool) error
 
 // IsDirFunction ...
 type IsDirFunction func(path string) (bool, error)
@@ -58,21 +58,21 @@ func DefaultIsDirFunction(path string) (bool, error) {
 
 // Collector ...
 type Collector struct {
-	isDirFunction      IsDirFunction
-	archiveDirFunction ArchiveDirFunction
-	temporaryFolder    string
+	isDirFunction   IsDirFunction
+	zipDirFunction  ZipDirFunction
+	temporaryFolder string
 }
 
 // NewCollector ...
 func NewCollector(
 	isDirFunction IsDirFunction,
-	archiveDirFunction ArchiveDirFunction,
+	zipDirFunction ZipDirFunction,
 	temporaryFolder string,
 ) Collector {
 	return Collector{
-		isDirFunction:      isDirFunction,
-		archiveDirFunction: archiveDirFunction,
-		temporaryFolder:    temporaryFolder,
+		isDirFunction:   isDirFunction,
+		zipDirFunction:  zipDirFunction,
+		temporaryFolder: temporaryFolder,
 	}
 }
 
@@ -88,7 +88,7 @@ func (c Collector) AddIntermediateFiles(deployableItems []DeployableItem, interm
 		return []DeployableItem{}, err
 	}
 
-	deployableItems, err = c.archiveDirectories(deployableItems)
+	deployableItems, err = c.zipDirectories(deployableItems)
 	if err != nil {
 		return []DeployableItem{}, err
 	}
@@ -180,10 +180,10 @@ func (c Collector) indexOfItemWithPath(items []DeployableItem, path string) int 
 	return -1
 }
 
-func (c Collector) archiveDirectories(items []DeployableItem) ([]DeployableItem, error) {
+func (c Collector) zipDirectories(items []DeployableItem) ([]DeployableItem, error) {
 	for i, item := range items {
 		if item.IntermediateFileMeta != nil && item.IntermediateFileMeta.IsDir {
-			path, err := c.archiveDir(item.Path)
+			path, err := c.zipDir(item.Path)
 			if err != nil {
 				return nil, err
 			}
@@ -195,13 +195,13 @@ func (c Collector) archiveDirectories(items []DeployableItem) ([]DeployableItem,
 	return items, nil
 }
 
-func (c Collector) archiveDir(path string) (string, error) {
+func (c Collector) zipDir(path string) (string, error) {
 	name := filepath.Base(path)
-	targetPath := filepath.Join(c.temporaryFolder, name+".tar")
+	targetPth := filepath.Join(c.temporaryFolder, name+".zip")
 
-	if err := c.archiveDirFunction(path, targetPath, true); err != nil {
-		return "", fmt.Errorf("failed to archive output dir, error: %s", err)
+	if err := c.zipDirFunction(path, targetPth, true); err != nil {
+		return "", fmt.Errorf("failed to zip output dir, error: %s", err)
 	}
 
-	return targetPath, nil
+	return targetPth, nil
 }
