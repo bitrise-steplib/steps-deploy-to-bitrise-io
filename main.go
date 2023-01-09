@@ -338,6 +338,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 		PermanentDownloadURLs: map[string]string{},
 	}
 	for _, apk := range apks {
+		checkFileSize(apk.Path)
 		log.Donef("Uploading apk file: %s", apk)
 
 		artifactURLs, err := uploaders.DeployAPK(apk, androidArtifacts, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
@@ -352,6 +353,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 		pth := item.Path
 		fileType := getFileType(pth)
 		fmt.Println()
+		checkFileSize(pth)
 
 		switch fileType {
 		case ".ipa":
@@ -392,6 +394,13 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 		}
 	}
 	return artifactURLCollection, nil
+}
+
+func checkFileSize(path string) {
+	fileInfo, err := os.Stat(path)
+	if err == nil && fileInfo.Size() > 2*1024*1024*1024 { // 2GB
+		log.Warnf("File's (%s) size is greater than the 2GB upload limit", path)
+	}
 }
 
 func fillURLMaps(artifactURLCollection ArtifactURLCollection, artifactURLs uploaders.ArtifactURLs, apk string, tryPublic bool) {
