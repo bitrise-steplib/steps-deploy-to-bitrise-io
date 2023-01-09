@@ -116,9 +116,9 @@ func main() {
 		fmt.Println()
 		log.Infof("Deploying files")
 
-		artifactURLCollection, fileUploadErrors := deploy(deployableItems, config)
-		if len(fileUploadErrors) > 0 {
-			fail("%s", fileUploadErrors)
+		artifactURLCollection, err := deploy(deployableItems, config)
+		if err != nil {
+			fail("%s", err)
 		}
 
 		fmt.Println()
@@ -325,7 +325,7 @@ func findAPKsAndAABs(items []deployment.DeployableItem) (apks []deployment.Deplo
 	return
 }
 
-func deploy(deployableItems []deployment.DeployableItem, config Config) (ArtifactURLCollection, []error) {
+func deploy(deployableItems []deployment.DeployableItem, config Config) (ArtifactURLCollection, error) {
 	apks, aabs, others := findAPKsAndAABs(deployableItems)
 
 	var androidArtifacts []string
@@ -339,12 +339,12 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 	}
 	errorCollection := []error{}
 	for _, apk := range apks {
-		checkFileSize(apk.Path)
 		log.Donef("Uploading apk file: %s", apk)
 
 		artifactURLs, err := uploaders.DeployAPK(apk, androidArtifacts, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
 		if err != nil {
 			errorCollection = append(errorCollection, fmt.Errorf("deploy failed, error: %s", err))
+			checkFileSize(apk.Path)
 			continue
 		}
 
@@ -355,7 +355,6 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 		pth := item.Path
 		fileType := getFileType(pth)
 		fmt.Println()
-		checkFileSize(pth)
 
 		switch fileType {
 		case ".ipa":
@@ -364,6 +363,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 			artifactURLs, err := uploaders.DeployIPA(item, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
 			if err != nil {
 				errorCollection = append(errorCollection, fmt.Errorf("deploy failed, error: %s", err))
+				checkFileSize(pth)
 				continue
 			}
 
@@ -374,6 +374,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 			artifactURLs, err := uploaders.DeployAAB(item, androidArtifacts, config.BuildURL, config.APIToken, config.BundletoolVersion)
 			if err != nil {
 				errorCollection = append(errorCollection, fmt.Errorf("deploy failed, error: %s", err))
+				checkFileSize(pth)
 				continue
 			}
 
@@ -384,6 +385,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 			artifactURLs, err := uploaders.DeployXcarchive(item, config.BuildURL, config.APIToken)
 			if err != nil {
 				errorCollection = append(errorCollection, fmt.Errorf("deploy failed, error: %s", err))
+				checkFileSize(pth)
 				continue
 			}
 			fillURLMaps(artifactURLCollection, artifactURLs, pth, false)
@@ -393,13 +395,21 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 			artifactURLs, err := uploaders.DeployFile(item, config.BuildURL, config.APIToken)
 			if err != nil {
 				errorCollection = append(errorCollection, fmt.Errorf("deploy failed, error: %s", err))
+				checkFileSize(pth)
 				continue
 			}
 
 			fillURLMaps(artifactURLCollection, artifactURLs, pth, config.IsPublicPageEnabled)
 		}
 	}
-	return artifactURLCollection, errorCollection
+
+	var errorToReturn error
+
+	if len(errorCollection) > 0 {
+		errorToReturn = errorCollection[0]
+	}
+
+	return artifactURLCollection, errorToReturn
 }
 
 func checkFileSize(path string) {
