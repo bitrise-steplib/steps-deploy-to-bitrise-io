@@ -11,7 +11,7 @@ func DeployFile(item deployment.DeployableItem, buildURL, token string) (Artifac
 	pth := item.Path
 	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "file", "")
 	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("Failed to create file artifact, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to create file artifact: %s%w", pth, err)
 	}
 
 	if err := uploadArtifact(uploadURL, pth, ""); err != nil {
