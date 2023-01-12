@@ -401,7 +401,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 			if err != nil {
 				err = fmt.Errorf("deploy failed, error: %w", err)
 				errorCollection = append(errorCollection, err)
-				log.Errorf("%s", err)
+				log.Errorf(errorutil.FormattedError(err))
 				continue
 			}
 
