@@ -13,6 +13,7 @@ import (
 	"github.com/bitrise-io/go-steputils/tools"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
+	"github.com/bitrise-io/go-utils/v2/errorutil"
 	"github.com/bitrise-io/go-utils/ziputil"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test"
@@ -118,7 +119,7 @@ func main() {
 
 		artifactURLCollection, err := deploy(deployableItems, config)
 		if err != nil {
-			fail("%s", err)
+			fail(errorutil.FormattedError(err))
 		}
 
 		fmt.Println()
@@ -343,8 +344,9 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 
 		artifactURLs, err := uploaders.DeployAPK(apk, androidArtifacts, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
 		if err != nil {
-			errorCollection = append(errorCollection, fmt.Errorf("deploy failed, error: %s", err))
-			checkFileSize(apk.Path)
+			err = fmt.Errorf("deploy failed, error: %s", err)
+			errorCollection = append(errorCollection, err)
+			log.Errorf("%s", err)
 			continue
 		}
 
@@ -362,8 +364,9 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 
 			artifactURLs, err := uploaders.DeployIPA(item, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
 			if err != nil {
-				errorCollection = append(errorCollection, fmt.Errorf("deploy failed, error: %s", err))
-				checkFileSize(pth)
+				err = fmt.Errorf("deploy failed, error: %s", err)
+				errorCollection = append(errorCollection, err)
+				log.Errorf("%s", err)
 				continue
 			}
 
@@ -373,8 +376,9 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 
 			artifactURLs, err := uploaders.DeployAAB(item, androidArtifacts, config.BuildURL, config.APIToken, config.BundletoolVersion)
 			if err != nil {
-				errorCollection = append(errorCollection, fmt.Errorf("deploy failed, error: %s", err))
-				checkFileSize(pth)
+				err = fmt.Errorf("deploy failed, error: %s", err)
+				errorCollection = append(errorCollection, err)
+				log.Errorf("%s", err)
 				continue
 			}
 
@@ -384,8 +388,9 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 
 			artifactURLs, err := uploaders.DeployXcarchive(item, config.BuildURL, config.APIToken)
 			if err != nil {
-				errorCollection = append(errorCollection, fmt.Errorf("deploy failed, error: %s", err))
-				checkFileSize(pth)
+				err = fmt.Errorf("deploy failed, error: %s", err)
+				errorCollection = append(errorCollection, err)
+				log.Errorf("%s", err)
 				continue
 			}
 			fillURLMaps(artifactURLCollection, artifactURLs, pth, false)
@@ -394,8 +399,9 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 
 			artifactURLs, err := uploaders.DeployFile(item, config.BuildURL, config.APIToken)
 			if err != nil {
-				errorCollection = append(errorCollection, fmt.Errorf("deploy failed, error: %s", err))
-				checkFileSize(pth)
+				err = fmt.Errorf("deploy failed, error: %s", err)
+				errorCollection = append(errorCollection, err)
+				log.Errorf("%s", err)
 				continue
 			}
 
@@ -410,13 +416,6 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 	}
 
 	return artifactURLCollection, errorToReturn
-}
-
-func checkFileSize(path string) {
-	fileInfo, err := os.Stat(path)
-	if err == nil && fileInfo.Size() > 2*1024*1024*1024 { // 2GB
-		log.Warnf("File's (%s) size is greater than the 2GB upload limit", path)
-	}
 }
 
 func fillURLMaps(artifactURLCollection ArtifactURLCollection, artifactURLs uploaders.ArtifactURLs, apk string, tryPublic bool) {

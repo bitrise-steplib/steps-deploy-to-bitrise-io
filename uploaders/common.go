@@ -104,7 +104,8 @@ func createArtifact(buildURL, token, artifactPth, artifactType, contentType stri
 			return fmt.Errorf("failed to read create artifact response, error: %s", err)
 		}
 		if response.StatusCode != http.StatusOK {
-			return fmt.Errorf("failed to create artifact on bitrise, status code: %d, response: %s", response.StatusCode, string(body))
+			log.Errorf("failed to create artifact on bitrise, status code: %d, response: %s", response.StatusCode, string(body))
+			return fmt.Errorf(string(body))
 		}
 
 		if err := json.Unmarshal(body, &artifactResponse); err != nil {
