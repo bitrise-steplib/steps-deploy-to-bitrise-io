@@ -112,7 +112,7 @@ func createArtifact(buildURL, token, artifactPth, artifactType, contentType stri
 			if unmarshalErr := json.Unmarshal(body, &createResponse); unmarshalErr != nil {
 				return errors.New(string(body))
 			}
-			
+
 			return errors.New(createResponse.ErrorMessage)
 		}
 
