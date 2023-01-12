@@ -399,7 +399,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 
 			artifactURLs, err := uploaders.DeployFile(item, config.BuildURL, config.APIToken)
 			if err != nil {
-				err = fmt.Errorf("deploy failed, error: %s", err)
+				err = fmt.Errorf("deploy failed, error: %w", err)
 				errorCollection = append(errorCollection, err)
 				log.Errorf("%s", err)
 				continue
