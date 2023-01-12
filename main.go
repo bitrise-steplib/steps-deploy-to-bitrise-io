@@ -344,9 +344,9 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 
 		artifactURLs, err := uploaders.DeployAPK(apk, androidArtifacts, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
 		if err != nil {
-			err = fmt.Errorf("deploy failed, error: %s", err)
+			err = fmt.Errorf("deploy failed, error: %w", err)
 			errorCollection = append(errorCollection, err)
-			log.Errorf("%s", err)
+			log.Errorf(errorutil.FormattedError(err))
 			continue
 		}
 
@@ -364,9 +364,9 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 
 			artifactURLs, err := uploaders.DeployIPA(item, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
 			if err != nil {
-				err = fmt.Errorf("deploy failed, error: %s", err)
+				err = fmt.Errorf("deploy failed, error: %w", err)
 				errorCollection = append(errorCollection, err)
-				log.Errorf("%s", err)
+				log.Errorf(errorutil.FormattedError(err))
 				continue
 			}
 
@@ -376,9 +376,9 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 
 			artifactURLs, err := uploaders.DeployAAB(item, androidArtifacts, config.BuildURL, config.APIToken, config.BundletoolVersion)
 			if err != nil {
-				err = fmt.Errorf("deploy failed, error: %s", err)
+				err = fmt.Errorf("deploy failed, error: %w", err)
 				errorCollection = append(errorCollection, err)
-				log.Errorf("%s", err)
+				log.Errorf(errorutil.FormattedError(err))
 				continue
 			}
 
@@ -388,9 +388,9 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 
 			artifactURLs, err := uploaders.DeployXcarchive(item, config.BuildURL, config.APIToken)
 			if err != nil {
-				err = fmt.Errorf("deploy failed, error: %s", err)
+				err = fmt.Errorf("deploy failed, error: %w", err)
 				errorCollection = append(errorCollection, err)
-				log.Errorf("%s", err)
+				log.Errorf(errorutil.FormattedError(err))
 				continue
 			}
 			fillURLMaps(artifactURLCollection, artifactURLs, pth, false)
