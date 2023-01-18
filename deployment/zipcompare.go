@@ -8,32 +8,32 @@ import (
 	"github.com/bitrise-io/go-utils/log"
 )
 
-type ZipFileInfo struct {
+type zipFileInfo struct {
 	Name               string
 	UncompressedSize64 uint64
 	CRC32              uint32
 }
 
-func (i ZipFileInfo) equals(info ZipFileInfo) bool {
+func (i zipFileInfo) equals(info zipFileInfo) bool {
 	return i.Name == info.Name &&
 		i.UncompressedSize64 == info.UncompressedSize64 &&
 		i.CRC32 == info.CRC32
 }
 
-type CompareResult struct {
+type compareResult struct {
 	removed  []string
 	changed  []string
 	added    []string
 	matching []string
 }
 
-func (r CompareResult) hasChanges() bool {
+func (r compareResult) hasChanges() bool {
 	return len(r.removed) > 0 ||
 		len(r.changed) > 0 ||
 		len(r.added) > 0
 }
 
-func (r CompareResult) String() string {
+func (r compareResult) String() string {
 	if !r.hasChanges() {
 		return "No removed, changed or added files found"
 	}
@@ -79,16 +79,16 @@ func sameZips(aZip, bZip string) (bool, error) {
 	return !hasChanges, nil
 }
 
-func newZipDescriptor(pth string) (map[string]ZipFileInfo, error) {
+func newZipDescriptor(pth string) (map[string]zipFileInfo, error) {
 	reader, err := zip.OpenReader(pth)
 	if err != nil {
 		return nil, err
 	}
 
-	descriptor := make(map[string]ZipFileInfo, len(reader.File))
+	descriptor := make(map[string]zipFileInfo, len(reader.File))
 
 	for _, f := range reader.File {
-		info := ZipFileInfo{
+		info := zipFileInfo{
 			UncompressedSize64: f.FileHeader.UncompressedSize64,
 			CRC32:              f.FileHeader.CRC32,
 			Name:               f.FileHeader.Name,
@@ -100,13 +100,13 @@ func newZipDescriptor(pth string) (map[string]ZipFileInfo, error) {
 	return descriptor, nil
 }
 
-func compareZipDescriptors(aDescriptor, bDescriptor map[string]ZipFileInfo) CompareResult {
-	bDescriptorCopy := make(map[string]ZipFileInfo, len(bDescriptor))
+func compareZipDescriptors(aDescriptor, bDescriptor map[string]zipFileInfo) compareResult {
+	bDescriptorCopy := make(map[string]zipFileInfo, len(bDescriptor))
 	for k, v := range bDescriptor {
 		bDescriptorCopy[k] = v
 	}
 
-	var result CompareResult
+	var result compareResult
 	for aPth, aInfo := range aDescriptor {
 		bInfo, ok := bDescriptorCopy[aPth]
 		if !ok {
