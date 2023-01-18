@@ -23,6 +23,7 @@ workflows:
     - test
     after_run:
     - _zero_length_file_upload
+    - _test_duplicated_file_upload
     steps:
     - change-workdir:
         run_if: true
@@ -208,6 +209,7 @@ workflows:
     - golint:
     - errcheck:
     - go-test:
+
   _zero_length_file_upload:
     steps:
     - script:
@@ -220,6 +222,37 @@ workflows:
         - build_url: $BITRISE_BUILD_URL
         - build_api_token: $BITRISE_BUILD_API_TOKEN
         - deploy_path: 0_length_file.txt
+        - debug_mode: "true"
+
+  _test_duplicated_file_upload:
+    steps:
+    - secure-delete-path@2:
+        inputs:
+        - with_sudo: 'false'
+        - path: "./_tmp"
+    - change-workdir:
+        run_if: true
+        inputs:
+        - path: ./_tmp
+        - is_create_path: true
+    - script:
+        inputs:
+        - content: |-
+            mkdir ./dir
+            echo "Hello World" >> ./dir/test_file.txt
+            cd dir
+            /usr/bin/zip -rTy ../dir.zip .
+            cd -
+            envman add --key TEST_ZIP --value ./dir.zip
+            envman add --key TEST_DIR --value ./dir
+    - path::./:
+        title: Same dir specified as Build Artifact and Pipeline File
+        run_if: true
+        inputs:
+        - build_url: $BITRISE_BUILD_URL
+        - build_api_token: $BITRISE_BUILD_API_TOKEN
+        - deploy_path: $TEST_ZIP
+        - pipeline_intermediate_files: $TEST_DIR:TEST_DIR
         - debug_mode: "true"
 
   generate_readme:
