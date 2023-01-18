@@ -21,9 +21,9 @@ workflows:
     before_run:
     - audit-this-step
     - test
+    - _test_duplicated_file_upload
     after_run:
     - _zero_length_file_upload
-    - _test_duplicated_file_upload
     steps:
     - change-workdir:
         run_if: true
