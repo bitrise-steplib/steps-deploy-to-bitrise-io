@@ -75,7 +75,6 @@ func main() {
 	}
 
 	stepconf.Print(config)
-	fmt.Println()
 	log.SetEnableDebugLog(config.DebugMode)
 
 	tmpDir, err := pathutil.NormalizedOSTempDirPath("__deploy-to-bitrise-io__")
