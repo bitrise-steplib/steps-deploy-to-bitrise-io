@@ -144,8 +144,17 @@ func ParseTestResults(testsRootDir string) (results Results, err error) {
 
 		// find step-info in dir, continue if no step-info.json as this file is only required if step has exported artifacts also
 		// <root_tests_dir>/<test_dir>/step-info.json
+
+		stepInfoPth := filepath.Join(testDirPath, "step-info.json")
+		if isExists, err := pathutil.IsPathExists(stepInfoPth); err != nil {
+			log.Warnf("Failed to check if step-info.json file exists in dir: %s: %s", testDirPath, err)
+			continue
+		} else if !isExists {
+			continue
+		}
+
 		var stepInfo *models.TestResultStepInfo
-		stepInfoFileContent, err := fileutil.ReadBytesFromFile(filepath.Join(testDirPath, "step-info.json"))
+		stepInfoFileContent, err := fileutil.ReadBytesFromFile(stepInfoPth)
 		if err != nil {
 			log.Warnf("Failed to read step-info.json file in dir: %s, error: %s", testDirPath, err)
 			continue

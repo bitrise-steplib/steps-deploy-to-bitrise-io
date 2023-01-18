@@ -122,7 +122,6 @@ func main() {
 			fail("%s", err)
 		}
 
-		fmt.Println()
 		log.Donef("Success")
 		log.Printf("You can find the Artifact on Bitrise, on the Build's page: %s", config.BuildURL)
 
