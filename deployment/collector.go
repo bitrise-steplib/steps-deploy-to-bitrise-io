@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/bitrise-io/go-utils/log"
 )
 
 const (
@@ -92,6 +94,8 @@ func (c Collector) AddIntermediateFiles(deployableItems []DeployableItem, interm
 	if err != nil {
 		return []DeployableItem{}, err
 	}
+
+	deployableItems = c.mergeZipPairs(deployableItems)
 
 	return deployableItems, nil
 }
@@ -204,4 +208,48 @@ func (c Collector) zipDir(path string) (string, error) {
 	}
 
 	return targetPth, nil
+}
+
+func (c Collector) mergeZipPairs(deployableItems []DeployableItem) []DeployableItem {
+	var mergedDeployableItems []DeployableItem
+	pipelineDirs := map[string]DeployableItem{}
+	zipBuildArtifacts := map[string]DeployableItem{}
+
+	for _, item := range deployableItems {
+		if item.IntermediateFileMeta != nil {
+			if item.IntermediateFileMeta.IsDir {
+				pipelineDirs[item.Path] = item
+			}
+			mergedDeployableItems = append(mergedDeployableItems, item)
+			continue
+		}
+
+		if filepath.Ext(item.Path) == ".zip" {
+			zipBuildArtifacts[item.Path] = item
+		} else {
+			mergedDeployableItems = append(mergedDeployableItems, item)
+		}
+	}
+
+	// At this point mergedDeployableItems contains all Pipeline Files and none ZIP Build Artifacts.
+	// Let's find Pipeline File pairs of ZIP Build Artifacts.
+	for _, pipelineDir := range pipelineDirs {
+		for pth, zipBuildArtifact := range zipBuildArtifacts {
+			same, err := sameZips(pipelineDir.Path, zipBuildArtifact.Path)
+			if err != nil {
+				log.Warnf("Couldn't compare Pipeline File (%s) and Build Artifact (%s): %s", pipelineDir.Path, zipBuildArtifact.Path, err)
+				continue
+			}
+
+			if same {
+				log.Warnf("Same directory specified both as Build Artifact (%s) and Pipeline File (%s), keeping Pipeline File...", zipBuildArtifact.Path, pipelineDir.Path)
+				delete(zipBuildArtifacts, pth)
+			}
+		}
+	}
+
+	for _, item := range zipBuildArtifacts {
+		mergedDeployableItems = append(mergedDeployableItems, item)
+	}
+	return mergedDeployableItems
 }
