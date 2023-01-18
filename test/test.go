@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"github.com/bitrise-io/go-utils/pathutil"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -15,9 +14,9 @@ import (
 	"strings"
 
 	"github.com/bitrise-io/bitrise/models"
-	"github.com/bitrise-io/go-utils/colorstring"
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/log"
+	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters"
 )
 
@@ -133,7 +132,7 @@ func ParseTestResults(testsRootDir string) (results Results, err error) {
 		testDirPath := filepath.Join(testsRootDir, testDir.Name())
 
 		if !testDir.IsDir() {
-			log.Debugf(colorstring.Yellowf("%s is not a directory", testDirPath))
+			log.Debugf("%s is not a directory", testDirPath)
 			continue
 		}
 
@@ -148,11 +147,12 @@ func ParseTestResults(testsRootDir string) (results Results, err error) {
 		var stepInfo *models.TestResultStepInfo
 		stepInfoFileContent, err := fileutil.ReadBytesFromFile(filepath.Join(testDirPath, "step-info.json"))
 		if err != nil {
-			log.Debugf(colorstring.Yellowf("Failed to read step-info.json file in dir: %s, error: %s", testDirPath, err))
+			log.Warnf("Failed to read step-info.json file in dir: %s, error: %s", testDirPath, err)
 			continue
 		}
 
 		if err := json.Unmarshal(stepInfoFileContent, &stepInfo); err != nil {
+			log.Warnf("Failed to parse step-info.json file in dir: %s, error: %s", testDirPath, err)
 			continue
 		}
 
@@ -223,6 +223,16 @@ func ParseTestResults(testsRootDir string) (results Results, err error) {
 // Upload ...
 func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug string) error {
 	for _, result := range results {
+		if len(result.ImagePaths) > 0 {
+			fmt.Printf("Uploading: %s with attachments:", result.Name)
+			for _, pth := range result.ImagePaths {
+				fmt.Printf("- %s", pth)
+			}
+			fmt.Printf("")
+		} else {
+			fmt.Printf("Uploading: %s", result.Name)
+		}
+
 		uploadReq := UploadRequest{
 			FileInfo: FileInfo{
 				FileName: "test_result.xml",
