@@ -28,7 +28,7 @@ type DeployableItem struct {
 // ConvertPaths ...
 func ConvertPaths(paths []string) []DeployableItem {
 	if len(paths) == 0 {
-		return []DeployableItem{}
+		return nil
 	}
 
 	var items []DeployableItem

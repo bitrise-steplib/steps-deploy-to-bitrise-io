@@ -253,7 +253,7 @@ func Test_GivenDeployFiles_WhenIntermediateFilesSpecified_ThenMergesThem(t *test
 			name:              "Empty lists can be merged",
 			deployFiles:       []string{},
 			intermediateFiles: "",
-			want:              []DeployableItem{},
+			want:              nil,
 		},
 	}
 
