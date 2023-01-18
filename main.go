@@ -81,6 +81,9 @@ func main() {
 		fail("Failed to create tmp dir, error: %s", err)
 	}
 
+	fmt.Println()
+	log.Infof("Collecting files to deploy...")
+
 	var deployableItems []deployment.DeployableItem
 	if strings.TrimSpace(config.DeployPath) != "" {
 		absDeployPth, err := pathutil.AbsPath(config.DeployPath)
@@ -105,17 +108,13 @@ func main() {
 	}
 
 	if len(deployableItems) == 0 {
-		fmt.Println()
 		log.Printf("No deployment files were defined. Please check the deploy_path and pipeline_intermediate_files inputs.")
 	} else {
-		fmt.Println()
-		log.Infof("List of files to deploy")
-
+		log.Printf("List of files to deploy:")
 		logDeployFiles(deployableItems)
 
 		fmt.Println()
-		log.Infof("Deploying files")
-
+		log.Infof("Deploying files...")
 		artifactURLCollection, err := deploy(deployableItems, config)
 		if err != nil {
 			fail("%s", err)
@@ -255,13 +254,11 @@ func collectFilesToDeploy(absDeployPth string, config Config, tmpDir string) (fi
 	}
 
 	if !isDeployPathDir {
-		fmt.Println()
-		log.Infof("Deploying single file")
+		log.Printf("Build Artifact deployment mode: deploying single file")
 
 		filesToDeploy = []string{absDeployPth}
 	} else if config.IsCompress {
-		fmt.Println()
-		log.Infof("Deploying compressed Deploy directory")
+		log.Printf("Build Artifact deployment mode: deploying compressed deploy directory")
 
 		zipName := filepath.Base(absDeployPth)
 		if config.ZipName != "" {
@@ -275,8 +272,7 @@ func collectFilesToDeploy(absDeployPth string, config Config, tmpDir string) (fi
 
 		filesToDeploy = []string{tmpZipPath}
 	} else {
-		fmt.Println()
-		log.Infof("Deploying the content of the Deploy directory separately")
+		log.Printf("Build Artifact deployment mode: deploying the content of the deploy directory")
 
 		pattern := filepath.Join(absDeployPth, "*")
 		pths, err := filepath.Glob(pattern)
@@ -338,7 +334,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 		PermanentDownloadURLs: map[string]string{},
 	}
 	for _, apk := range apks {
-		log.Donef("Uploading apk file: %s", apk)
+		log.Printf("Deploying apk file: %s", apk)
 
 		artifactURLs, err := uploaders.DeployAPK(apk, androidArtifacts, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
 		if err != nil {
@@ -346,16 +342,17 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 		}
 
 		fillURLMaps(artifactURLCollection, artifactURLs, apk.Path, config.IsPublicPageEnabled)
+
+		fmt.Println()
 	}
 
 	for _, item := range append(aabs, others...) {
 		pth := item.Path
 		fileType := getFileType(pth)
-		fmt.Println()
 
 		switch fileType {
 		case ".ipa":
-			log.Donef("Uploading ipa file: %s", pth)
+			log.Printf("Deploying ipa file: %s", pth)
 
 			artifactURLs, err := uploaders.DeployIPA(item, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
 			if err != nil {
@@ -364,7 +361,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 
 			fillURLMaps(artifactURLCollection, artifactURLs, pth, config.IsPublicPageEnabled)
 		case ".aab":
-			log.Donef("Uploading aab file: %s", pth)
+			log.Printf("Deploying aab file: %s", pth)
 
 			artifactURLs, err := uploaders.DeployAAB(item, androidArtifacts, config.BuildURL, config.APIToken, config.BundletoolVersion)
 			if err != nil {
@@ -373,7 +370,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 
 			fillURLMaps(artifactURLCollection, artifactURLs, pth, false)
 		case zippedXcarchiveExt:
-			log.Donef("Uploading xcarchive file: %s", pth)
+			log.Printf("Deploying xcarchive file: %s", pth)
 
 			artifactURLs, err := uploaders.DeployXcarchive(item, config.BuildURL, config.APIToken)
 			if err != nil {
@@ -381,7 +378,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 			}
 			fillURLMaps(artifactURLCollection, artifactURLs, pth, false)
 		default:
-			log.Donef("Uploading file: %s", pth)
+			log.Printf("Deploying file: %s", pth)
 
 			artifactURLs, err := uploaders.DeployFile(item, config.BuildURL, config.APIToken)
 			if err != nil {
@@ -390,6 +387,8 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 
 			fillURLMaps(artifactURLCollection, artifactURLs, pth, config.IsPublicPageEnabled)
 		}
+
+		fmt.Println()
 	}
 	return artifactURLCollection, nil
 }

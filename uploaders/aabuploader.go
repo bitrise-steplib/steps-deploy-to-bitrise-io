@@ -1,7 +1,9 @@
 package uploaders
 
 import (
+	"errors"
 	"fmt"
+	"os/exec"
 
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/androidartifact"
@@ -11,11 +13,6 @@ import (
 
 // DeployAAB ...
 func DeployAAB(item deployment.DeployableItem, artifacts []string, buildURL, token, bundletoolVersion string) (ArtifactURLs, error) {
-	log.Printf("- analyzing aab")
-
-	// get aab manifest dump
-	log.Printf("- fetching info")
-
 	pth := item.Path
 	r, err := bundletool.New(bundletoolVersion)
 	if err != nil {
@@ -23,11 +20,13 @@ func DeployAAB(item deployment.DeployableItem, artifacts []string, buildURL, tok
 	}
 	cmd := r.Command("dump", "manifest", "--bundle", pth)
 
-	log.Donef("$ %s", cmd.PrintableCommandArgs())
-
 	out, err := cmd.RunAndReturnTrimmedCombinedOutput()
 	if err != nil {
-		return ArtifactURLs{}, err
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
+			return ArtifactURLs{}, fmt.Errorf("command failed with exit status %d (%s): %s", exitErr.ExitCode(), cmd.PrintableCommandArgs(), out)
+		}
+		return ArtifactURLs{}, fmt.Errorf("executing command failed (%s): %w", cmd.PrintableCommandArgs(), err)
 	}
 
 	packageName, versionCode, versionName := androidartifact.ParsePackageInfos(out)
@@ -38,7 +37,7 @@ func DeployAAB(item deployment.DeployableItem, artifacts []string, buildURL, tok
 		"version_name": versionName,
 	}
 
-	log.Printf("  aab infos: %v", appInfo)
+	log.Printf("aab infos: %v", appInfo)
 
 	if packageName == "" {
 		log.Warnf("Package name is undefined, AndroidManifest.xml package content:\n%s", out)
