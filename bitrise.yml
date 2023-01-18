@@ -254,6 +254,15 @@ workflows:
         - deploy_path: $TEST_ZIP
         - pipeline_intermediate_files: $TEST_DIR:TEST_DIR
         - debug_mode: "true"
+    - script:
+        inputs:
+        - content: |-
+            #!/usr/bin/env bash
+            set -exo pipefail
+              
+            curl -X GET "https://api.bitrise.io/v0.1/apps/$BITRISE_APP_SLUG/builds/$BITRISE_BUILD_SLUG/artifacts" \
+                -H "accept: application/json" \
+                -H "Authorization: $BITRISE_API_TOKEN"
 
   generate_readme:
     steps:
