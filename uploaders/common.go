@@ -3,6 +3,7 @@ package uploaders
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -102,7 +103,15 @@ func createArtifact(buildURL, token, artifactPth, artifactType, contentType stri
 			return fmt.Errorf("failed to read create artifact response, error: %s", err)
 		}
 		if response.StatusCode != http.StatusOK {
-			return fmt.Errorf("failed to create artifact on bitrise, status code: %d, response: %s", response.StatusCode, string(body))
+			type errorResponse struct {
+				ErrorMessage string `json:"error_msg"`
+			}
+			var createResponse errorResponse
+			if unmarshalErr := json.Unmarshal(body, &createResponse); unmarshalErr != nil {
+				return errors.New(string(body))
+			}
+
+			return errors.New(createResponse.ErrorMessage)
 		}
 
 		if err := json.Unmarshal(body, &artifactResponse); err != nil {

@@ -15,6 +15,7 @@ import (
 	"github.com/bitrise-io/go-steputils/tools"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
+	"github.com/bitrise-io/go-utils/v2/errorutil"
 	"github.com/bitrise-io/go-utils/ziputil"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test"
@@ -119,7 +120,8 @@ func main() {
 		log.Infof("Deploying files...")
 		artifactURLCollection, err := deploy(deployableItems, config)
 		if err != nil {
-			fail("%s", err)
+			fmt.Println()
+			fail(errorutil.FormattedError(err))
 		}
 
 		log.Donef("Success")
@@ -352,12 +354,14 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 		PublicInstallPageURLs: map[string]string{},
 		PermanentDownloadURLs: map[string]string{},
 	}
+	errorCollection := []error{}
 	for _, apk := range apks {
 		log.Printf("Deploying apk file: %s", apk)
 
 		artifactURLs, err := uploaders.DeployAPK(apk, androidArtifacts, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
 		if err != nil {
-			return ArtifactURLCollection{}, fmt.Errorf("deploy failed, error: %s", err)
+			errorCollection = handleDeploymentFailureError(err, errorCollection)
+			continue
 		}
 
 		fillURLMaps(artifactURLCollection, artifactURLs, apk.Path, config.IsPublicPageEnabled)
@@ -375,7 +379,8 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 
 			artifactURLs, err := uploaders.DeployIPA(item, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
 			if err != nil {
-				return ArtifactURLCollection{}, fmt.Errorf("deploy failed, error: %s", err)
+				errorCollection = handleDeploymentFailureError(err, errorCollection)
+				continue
 			}
 
 			fillURLMaps(artifactURLCollection, artifactURLs, pth, config.IsPublicPageEnabled)
@@ -384,7 +389,8 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 
 			artifactURLs, err := uploaders.DeployAAB(item, androidArtifacts, config.BuildURL, config.APIToken, config.BundletoolVersion)
 			if err != nil {
-				return ArtifactURLCollection{}, fmt.Errorf("deploy failed, error: %s", err)
+				errorCollection = handleDeploymentFailureError(err, errorCollection)
+				continue
 			}
 
 			fillURLMaps(artifactURLCollection, artifactURLs, pth, false)
@@ -393,7 +399,8 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 
 			artifactURLs, err := uploaders.DeployXcarchive(item, config.BuildURL, config.APIToken)
 			if err != nil {
-				return ArtifactURLCollection{}, fmt.Errorf("deploy failed, error: %s", err)
+				errorCollection = handleDeploymentFailureError(err, errorCollection)
+				continue
 			}
 			fillURLMaps(artifactURLCollection, artifactURLs, pth, false)
 		default:
@@ -401,7 +408,8 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 
 			artifactURLs, err := uploaders.DeployFile(item, config.BuildURL, config.APIToken)
 			if err != nil {
-				return ArtifactURLCollection{}, fmt.Errorf("deploy failed, error: %s", err)
+				errorCollection = handleDeploymentFailureError(err, errorCollection)
+				continue
 			}
 
 			fillURLMaps(artifactURLCollection, artifactURLs, pth, config.IsPublicPageEnabled)
@@ -409,7 +417,21 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 
 		fmt.Println()
 	}
-	return artifactURLCollection, nil
+
+	var errorToReturn error
+
+	if len(errorCollection) > 0 {
+		errorToReturn = errorCollection[0]
+	}
+
+	return artifactURLCollection, errorToReturn
+}
+
+func handleDeploymentFailureError(err error, errorCollection []error) []error {
+	log.Errorf(errorutil.FormattedError(err))
+	err = fmt.Errorf("deploy failed, error: %w", err)
+	errorCollection = append(errorCollection, err)
+	return errorCollection
 }
 
 func fillURLMaps(artifactURLCollection ArtifactURLCollection, artifactURLs uploaders.ArtifactURLs, apk string, tryPublic bool) {
