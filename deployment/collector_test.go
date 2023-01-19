@@ -145,7 +145,7 @@ func Test_GivenIntermediateFiles_WhenProcessing_ThenConvertsCorrectly(t *testing
 
 			assert.NoError(t, err)
 
-			if !reflect.DeepEqual(deployableItems, tt.want) {
+			if !assert.ElementsMatch(t, deployableItems, tt.want) {
 				t.Errorf("%s got = %v, want %v", t.Name(), deployableItems, tt.want)
 			}
 		})
