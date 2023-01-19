@@ -234,7 +234,7 @@ func (c Collector) mergeZipPairs(deployableItems []DeployableItem) []DeployableI
 		}
 	}
 
-	// At this point mergedDeployableItems contains all Pipeline Files and none ZIP Build Artifacts.
+	// At this point mergedDeployableItems contains all Pipeline Files and no ZIP Build Artifacts.
 	// Let's find Pipeline File pairs of ZIP Build Artifacts.
 	for _, pipelineDir := range pipelineDirs {
 		for pth, zipBuildArtifact := range zipBuildArtifacts {
