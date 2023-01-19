@@ -1,6 +1,8 @@
 package deployment
 
 import (
+	"archive/zip"
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -131,7 +133,8 @@ func Test_GivenIntermediateFiles_WhenProcessing_ThenConvertsCorrectly(t *testing
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			collector := NewCollector(isDirFunction(directories), emptyZipFunction(), tempDir)
+			zipComparator := NewZipComparator(DefaultReadZipFunction)
+			collector := NewCollector(zipComparator, isDirFunction(directories), emptyZipFunction(), tempDir)
 
 			var deployableItems []DeployableItem
 			deployableItems, err := collector.AddIntermediateFiles(deployableItems, tt.list)
@@ -259,7 +262,67 @@ func Test_GivenDeployFiles_WhenIntermediateFilesSpecified_ThenMergesThem(t *test
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			collector := NewCollector(isDirFunction(directories), emptyZipFunction(), tempDir)
+			zipComparator := NewZipComparator(DefaultReadZipFunction)
+			collector := NewCollector(zipComparator, isDirFunction(directories), emptyZipFunction(), tempDir)
+			deployableItems := ConvertPaths(tt.deployFiles)
+			deployableItems, err := collector.AddIntermediateFiles(deployableItems, tt.intermediateFiles)
+
+			assert.NoError(t, err)
+
+			if !reflect.DeepEqual(deployableItems, tt.want) {
+				t.Errorf("%s got = %v, want %v", t.Name(), deployableItems, tt.want)
+			}
+		})
+	}
+}
+
+func Test_GivenDeployDirectories_WhenIntermediateDirectoriesSpecified_ThenMergesTem(t *testing.T) {
+	tempDir := t.TempDir()
+	directories := []string{"/dir"}
+
+	zips := map[string][]*zip.File{
+		"/dir1234.zip": {
+			{FileHeader: zip.FileHeader{
+				Name:               "test_file.txt",
+				CRC32:              0xb095e5e3,
+				UncompressedSize64: 12,
+			}},
+		},
+		filepath.Join(tempDir, "dir.zip"): {
+			{FileHeader: zip.FileHeader{
+				Name:               "test_file.txt",
+				CRC32:              0xb095e5e3,
+				UncompressedSize64: 12,
+			}},
+		},
+	}
+
+	tests := []struct {
+		name              string
+		deployFiles       []string
+		intermediateFiles string
+		want              []DeployableItem
+	}{
+		{
+			name:              "Same directory specified as Build Artifact and Pipeline File",
+			deployFiles:       []string{"/dir1234.zip"},
+			intermediateFiles: "/dir:DIR_PATH",
+			want: []DeployableItem{
+				{
+					Path: filepath.Join(tempDir, "dir.zip"),
+					IntermediateFileMeta: &IntermediateFileMetaData{
+						EnvKey: "DIR_PATH",
+						IsDir:  true,
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			zipComparator := NewZipComparator(readZipFunction(zips))
+			collector := NewCollector(zipComparator, isDirFunction(directories), emptyZipFunction(), tempDir)
 			deployableItems := ConvertPaths(tt.deployFiles)
 			deployableItems, err := collector.AddIntermediateFiles(deployableItems, tt.intermediateFiles)
 
@@ -273,6 +336,16 @@ func Test_GivenDeployFiles_WhenIntermediateFilesSpecified_ThenMergesThem(t *test
 }
 
 // Helpers
+
+func readZipFunction(zips map[string][]*zip.File) ReadZipFunction {
+	return func(pth string) ([]*zip.File, error) {
+		files, ok := zips[pth]
+		if !ok {
+			return nil, fmt.Errorf("no such file or directory")
+		}
+		return files, nil
+	}
+}
 
 func isDirFunction(directoryEntries []string) IsDirFunction {
 	return func(path string) (bool, error) {

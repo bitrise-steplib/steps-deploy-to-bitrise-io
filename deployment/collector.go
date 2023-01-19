@@ -60,6 +60,7 @@ func DefaultIsDirFunction(path string) (bool, error) {
 
 // Collector ...
 type Collector struct {
+	zipComparator   ZipComparator
 	isDirFunction   IsDirFunction
 	zipDirFunction  ZipDirFunction
 	temporaryFolder string
@@ -67,11 +68,13 @@ type Collector struct {
 
 // NewCollector ...
 func NewCollector(
+	zipComparator ZipComparator,
 	isDirFunction IsDirFunction,
 	zipDirFunction ZipDirFunction,
 	temporaryFolder string,
 ) Collector {
 	return Collector{
+		zipComparator:   zipComparator,
 		isDirFunction:   isDirFunction,
 		zipDirFunction:  zipDirFunction,
 		temporaryFolder: temporaryFolder,
@@ -235,7 +238,7 @@ func (c Collector) mergeZipPairs(deployableItems []DeployableItem) []DeployableI
 	// Let's find Pipeline File pairs of ZIP Build Artifacts.
 	for _, pipelineDir := range pipelineDirs {
 		for pth, zipBuildArtifact := range zipBuildArtifacts {
-			same, err := sameZips(pipelineDir.Path, zipBuildArtifact.Path)
+			same, err := c.zipComparator.Equals(pipelineDir.Path, zipBuildArtifact.Path)
 			if err != nil {
 				log.Warnf("Couldn't compare Pipeline File (%s) and Build Artifact (%s): %s", pipelineDir.Path, zipBuildArtifact.Path, err)
 				continue
