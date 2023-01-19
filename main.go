@@ -119,6 +119,7 @@ func main() {
 
 		artifactURLCollection, err := deploy(deployableItems, config)
 		if err != nil {
+			fmt.Println()
 			fail(errorutil.FormattedError(err))
 		}
 
@@ -344,9 +345,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 
 		artifactURLs, err := uploaders.DeployAPK(apk, androidArtifacts, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
 		if err != nil {
-			err = fmt.Errorf("deploy failed, error: %w", err)
-			errorCollection = append(errorCollection, err)
-			log.Errorf(errorutil.FormattedError(err))
+			errorCollection = handleDeploymentFailureError(err, errorCollection)
 			continue
 		}
 
@@ -364,9 +363,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 
 			artifactURLs, err := uploaders.DeployIPA(item, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
 			if err != nil {
-				err = fmt.Errorf("deploy failed, error: %w", err)
-				errorCollection = append(errorCollection, err)
-				log.Errorf(errorutil.FormattedError(err))
+				errorCollection = handleDeploymentFailureError(err, errorCollection)
 				continue
 			}
 
@@ -376,9 +373,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 
 			artifactURLs, err := uploaders.DeployAAB(item, androidArtifacts, config.BuildURL, config.APIToken, config.BundletoolVersion)
 			if err != nil {
-				err = fmt.Errorf("deploy failed, error: %w", err)
-				errorCollection = append(errorCollection, err)
-				log.Errorf(errorutil.FormattedError(err))
+				errorCollection = handleDeploymentFailureError(err, errorCollection)
 				continue
 			}
 
@@ -388,9 +383,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 
 			artifactURLs, err := uploaders.DeployXcarchive(item, config.BuildURL, config.APIToken)
 			if err != nil {
-				err = fmt.Errorf("deploy failed, error: %w", err)
-				errorCollection = append(errorCollection, err)
-				log.Errorf(errorutil.FormattedError(err))
+				errorCollection = handleDeploymentFailureError(err, errorCollection)
 				continue
 			}
 			fillURLMaps(artifactURLCollection, artifactURLs, pth, false)
@@ -399,9 +392,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 
 			artifactURLs, err := uploaders.DeployFile(item, config.BuildURL, config.APIToken)
 			if err != nil {
-				err = fmt.Errorf("deploy failed, error: %w", err)
-				errorCollection = append(errorCollection, err)
-				log.Errorf(errorutil.FormattedError(err))
+				errorCollection = handleDeploymentFailureError(err, errorCollection)
 				continue
 			}
 
@@ -416,6 +407,13 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 	}
 
 	return artifactURLCollection, errorToReturn
+}
+
+func handleDeploymentFailureError(err error, errorCollection []error) []error {
+	log.Errorf(errorutil.FormattedError(err))
+	err = fmt.Errorf("deploy failed, error: %w", err)
+	errorCollection = append(errorCollection, err)
+	return errorCollection
 }
 
 func fillURLMaps(artifactURLCollection ArtifactURLCollection, artifactURLs uploaders.ArtifactURLs, apk string, tryPublic bool) {
