@@ -94,7 +94,7 @@ func (c *Converter) XML() (junit.XML, error) {
 		maxParallel   = runtime.NumCPU() * 2
 	)
 
-	log.Printf("Maximum parallelism: %d.", maxParallel)
+	log.Debugf("Maximum parallelism: %d.", maxParallel)
 
 	_, summaries, err := Parse(c.xcresultPth)
 	if err != nil {
@@ -108,7 +108,7 @@ func (c *Converter) XML() (junit.XML, error) {
 	}
 
 	summariesCount := len(summaries)
-	log.Printf("Summaries Count: %d", summariesCount)
+	log.Debugf("Summaries Count: %d", summariesCount)
 
 	for _, summary := range summaries {
 		testSuiteOrder, testsByName := summary.tests()
@@ -185,7 +185,7 @@ func genTestSuite(name string,
 		wg.Wait()
 	}
 
-	log.TPrintf("Generating test suite [%s] (%d tests) - DONE %v", name, len(tests), time.Since(start))
+	log.Debugf("Generating test suite [%s] (%d tests) - DONE %v", name, len(tests), time.Since(start))
 
 	return testSuite, genTestSuiteErr
 }

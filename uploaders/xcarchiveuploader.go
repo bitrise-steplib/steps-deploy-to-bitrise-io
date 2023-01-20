@@ -12,8 +12,6 @@ import (
 
 // DeployXcarchive ...
 func DeployXcarchive(item deployment.DeployableItem, buildURL, token string) (ArtifactURLs, error) {
-	log.Printf("analyzing xcarchive")
-
 	pth := item.Path
 	unzippedPth, err := xcarchive.UnzipXcarchive(pth)
 	if err != nil {
@@ -63,7 +61,7 @@ func DeployXcarchive(item deployment.DeployableItem, buildURL, token string) (Ar
 		"scheme":          scheme,
 	}
 
-	log.Printf("  xcarchive infos: %v", appInfo)
+	log.Printf("xcarchive infos: %v", appInfo)
 
 	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "ios-xcarchive", "")
 	if err != nil {

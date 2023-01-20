@@ -10,8 +10,6 @@ import (
 
 // DeployAPK ...
 func DeployAPK(item deployment.DeployableItem, artifacts []string, buildURL, token, notifyUserGroups, notifyEmails string, isEnablePublicPage bool) (ArtifactURLs, error) {
-	log.Printf("analyzing apk")
-
 	pth := item.Path
 	apkInfo, err := androidartifact.GetAPKInfo(pth)
 	if err != nil {
@@ -26,7 +24,7 @@ func DeployAPK(item deployment.DeployableItem, artifacts []string, buildURL, tok
 		"min_sdk_version": apkInfo.MinSDKVersion,
 	}
 
-	log.Printf("  apk infos: %v", appInfo)
+	log.Printf("apk infos: %v", appInfo)
 
 	if apkInfo.PackageName == "" {
 		log.Warnf("Package name is undefined, AndroidManifest.xml package content:\n%s", apkInfo.RawPackageContent)

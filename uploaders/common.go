@@ -36,8 +36,6 @@ type AppDeploymentMetaData struct {
 }
 
 func createArtifact(buildURL, token, artifactPth, artifactType, contentType string) (string, string, error) {
-	log.Printf("creating artifact")
-
 	// create form data
 	artifactName := filepath.Base(artifactPth)
 	fileSize, err := fileSizeInBytes(artifactPth)
@@ -49,9 +47,9 @@ func createArtifact(buildURL, token, artifactPth, artifactType, contentType stri
 	roundedMegaBytes := int(roundPlus(megaBytes, 2))
 
 	if roundedMegaBytes < 1 {
-		log.Printf("  file size: %dB", int(fileSize))
+		log.Printf("file size: %dB", int(fileSize))
 	} else {
-		log.Printf("  file size: %dMB", roundedMegaBytes)
+		log.Printf("file size: %dMB", roundedMegaBytes)
 	}
 
 	if strings.TrimSpace(token) == "" {
@@ -139,8 +137,6 @@ func createArtifact(buildURL, token, artifactPth, artifactType, contentType stri
 }
 
 func uploadArtifact(uploadURL, artifactPth, contentType string) error {
-	log.Printf("uploading artifact")
-
 	netClient := &http.Client{
 		Timeout: 10 * time.Minute,
 	}
@@ -208,8 +204,6 @@ func uploadArtifact(uploadURL, artifactPth, contentType string) error {
 }
 
 func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDeploymentMetaData, pipelineMeta *deployment.IntermediateFileMetaData) (ArtifactURLs, error) {
-	log.Printf("finishing artifact")
-
 	// create form data
 	data := url.Values{"api_token": {token}}
 	isEnablePublicPage := false

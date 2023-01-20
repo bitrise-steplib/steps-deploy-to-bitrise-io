@@ -13,8 +13,6 @@ import (
 
 // DeployIPA ...
 func DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups, notifyEmails string, isEnablePublicPage bool) (ArtifactURLs, error) {
-	log.Printf("analyzing ipa")
-
 	pth := item.Path
 	infoPlistPth, err := ipa.UnwrapEmbeddedInfoPlist(pth)
 	if err != nil {
@@ -42,7 +40,7 @@ func DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups
 		"device_family_list": deviceFamilyList,
 	}
 
-	log.Printf("  ipa infos: %v", appInfo)
+	log.Printf("ipa infos: %v", appInfo)
 
 	// ---
 
