@@ -216,9 +216,12 @@ inputs:
       category: Pipeline Intermediate File Sharing
       title: Files to share between pipeline stages
       summary: |-
-        A newline separated list of file path - env key pairs (`{path}:{env_key}`).
+        A newline (`\n`) separated list of file path - env key pairs (`{path}:{env_key}`).
       description: |-
-        A newline separated list of file path - env key pairs (`{path}:{env_key}`).
+        A newline (`\n`) separated list of file path - env key pairs (`{path}:{env_key}`).
+        
+        The input uses a `{path}:{env_key}` syntax.
+        The colon character (`:`) is the delimiter between the file path and the environment variable key.
         
         The file path can be specified with environment variables or direct paths,  
         and can point to both a local file or directory:
