@@ -31,4 +31,4 @@ The Step can handle multiple file uploads in one go. In this case the **deploy_p
 ```
 
 The Step supports sharing files between pipeline stages. The input needs to be a newline separated list of file path - env key pairs (&lt;path>:&lt;env\\_key>).  
-This metadata will be saved with the individual files and restored by the [Pull Pipeline intermediate files Step](https://www.bitrise.io/integrations/steps/artifact-pull).
+This metadata will be saved with the individual files and restored by the [Pull Pipeline intermediate files Step](https://www.bitrise.io/integrations/steps/pull-intermediate-files).
