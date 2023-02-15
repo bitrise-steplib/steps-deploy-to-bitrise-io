@@ -102,10 +102,14 @@ The Step can handle multiple file uploads in one go. In this case the **deploy_p
     inputs:
     - pipeline_intermediate_files: |-
         $BITRISE_IPA_PATH:BITRISE_IPA_PATH
-        ./path/to/test.bundle:TEST_BUNDLE_PATH
+        $BITRISE_APK_PATH:DEVELOPMENT_APK_PATH
+        ./path/to/test_reports:TEST_REPORTS_DIR
+        $BITRISE_SOURCE_DIR/deploy_dir:DEPLOY_DIR
 ```
 
-The Step supports sharing files between pipeline stages. The input needs to be a newline separated **value:env_key_name** list. This metadata will be saved with the individual files and restored by the [Pull Pipeline intermediate files Step](https://www.bitrise.io/integrations/steps/pull-intermediate-files).
+The Step supports sharing files between pipeline stages. The input needs to be a newline separated list of file path - env key pairs (`&lt;path>:&lt;env_key>`).  
+This metadata will be saved with the individual files and restored by the [Pull Pipeline intermediate files Step](https://www.bitrise.io/integrations/steps/pull-intermediate-files).
+
 
 ## ⚙️ Configuration
 
@@ -123,7 +127,7 @@ The Step supports sharing files between pipeline stages. The input needs to be a
 | `bundletool_version` | If you need a specific [bundletool version]((https://github.com/google/bundletool/releases) other than the default version,   you can modify the value of the **Bundletool version** required input. | required | `1.8.1` |
 | `build_url` | Unique build URL of this build on Bitrise.io | required | `$BITRISE_BUILD_URL` |
 | `build_api_token` | The build's API Token for the build on Bitrise.io | required, sensitive | `$BITRISE_BUILD_API_TOKEN` |
-| `pipeline_intermediate_files` | Intermediate files to share between pipeline stages.   The value needs to be a newline separated list of colon separated items with the following structure:   **&lt;path>:&lt;env_key>**          The `path` is the path to the file or folder. The `env_key` is the name of the environment variable with which this value is associated. |  |  |
+| `pipeline_intermediate_files` | A newline separated list of file path - env key pairs (&lt;path>:&lt;env\\_key>).  The file path can be specified with environment variables or direct paths,   and can point to both a local file or directory: ``` $BITRISE_IPA_PATH:BITRISE_IPA_PATH $BITRISE_APK_PATH:DEVELOPMENT_APK_PATH ./path/to/test_reports:TEST_REPORTS_DIR $BITRISE_SOURCE_DIR/deploy_dir:DEPLOY_DIR ``` |  |  |
 | `addon_api_base_url` | The URL where test API is accessible.  | required | `https://vdt.bitrise.io/test` |
 | `addon_api_token` | The token required to authenticate with the API.  | sensitive | `$ADDON_VDTESTING_API_TOKEN` |
 | `public_install_page_url_map_format` | Provide a language template description using [Golang templates](https://golang.org/pkg/text/template) so that the **Deploy to Bitrise.io** Step can build the required custom output. | required | `{{range $index, $element := .}}{{if $index}}\|{{end}}{{$element.File}}=>{{$element.URL}}{{end}}` |
