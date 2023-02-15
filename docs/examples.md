@@ -25,7 +25,10 @@ The Step can handle multiple file uploads in one go. In this case the **deploy_p
     inputs:
     - pipeline_intermediate_files: |-
         $BITRISE_IPA_PATH:BITRISE_IPA_PATH
-        ./path/to/test.bundle:TEST_BUNDLE_PATH
+        $BITRISE_APK_PATH:DEVELOPMENT_APK_PATH
+        ./path/to/test_reports:TEST_REPORTS_DIR
+        $BITRISE_SOURCE_DIR/deploy_dir:DEPLOY_DIR
 ```
 
-The Step supports sharing files between pipeline stages. The input needs to be a newline separated **value:env_key_name** list. This metadata will be saved with the individual files and restored by the [Pull Pipeline intermediate files Step](https://www.bitrise.io/integrations/steps/artifact-pull).
+The Step supports sharing files between pipeline stages. The input needs to be a newline separated list of file path - env key pairs (&lt;path>:&lt;env\\_key>).  
+This metadata will be saved with the individual files and restored by the [Pull Pipeline intermediate files Step](https://www.bitrise.io/integrations/steps/artifact-pull).

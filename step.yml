@@ -213,14 +213,18 @@ inputs:
     opts:
       category: Pipeline Intermediate File Sharing
       title: Files to share between pipeline stages
-      summary: |-
-        Intermediate files to share between pipeline stages. 
+      summary: "A newline separated list of file path - env key pairs (&lt;path>:&lt;env\\_key>)."
+      description: |-
+        A newline separated list of file path - env key pairs (&lt;path>:&lt;env\\_key>).
         
-        The value needs to be a newline separated list of colon separated items with the following structure: 
-        
-        **&lt;path>:&lt;env_key>**
-                
-        The `path` is the path to the file or folder. The `env_key` is the name of the environment variable with which this value is associated.
+        The file path can be specified with environment variables or direct paths,  
+        and can point to both a local file or directory:
+        ```
+        $BITRISE_IPA_PATH:BITRISE_IPA_PATH
+        $BITRISE_APK_PATH:DEVELOPMENT_APK_PATH
+        ./path/to/test_reports:TEST_REPORTS_DIR
+        $BITRISE_SOURCE_DIR/deploy_dir:DEPLOY_DIR
+        ```
   - addon_api_base_url: "https://vdt.bitrise.io/test"
     opts:
       category: Test Reports Addon
