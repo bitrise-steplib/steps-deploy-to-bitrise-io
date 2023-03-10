@@ -86,7 +86,7 @@ func httpCall(apiToken, method, url string, input io.Reader, output interface{})
 
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			fmt.Printf("Failed to close body, error: %s\n", err)
+			log.Warnf("Failed to close body: %s", err)
 		}
 	}()
 
@@ -233,13 +233,13 @@ func ParseTestResults(testsRootDir string) (results Results, err error) {
 func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug string) error {
 	for _, result := range results {
 		if len(result.ImagePaths) > 0 {
-			fmt.Printf("Uploading: %s with attachments:", result.Name)
+			log.Printf("Uploading: %s with attachments:", result.Name)
 			for _, pth := range result.ImagePaths {
-				fmt.Printf("- %s", pth)
+				log.Printf("- %s", pth)
 			}
-			fmt.Printf("")
+			log.Println("")
 		} else {
-			fmt.Printf("Uploading: %s", result.Name)
+			log.Printf("Uploading: %s", result.Name)
 		}
 
 		uploadReq := UploadRequest{
