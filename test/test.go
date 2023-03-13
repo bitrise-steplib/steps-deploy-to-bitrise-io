@@ -278,6 +278,9 @@ func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug stri
 			return err
 		}
 
+		fmt.Printf("Upload id: %s\n", uploadResponse.ID)
+		fmt.Printf("Xml content: %s\n", string(result.XMLContent))
+
 		for _, upload := range uploadResponse.Assets {
 			for _, file := range result.ImagePaths {
 				if filepath.Base(file) == upload.FileName {
