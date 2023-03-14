@@ -237,7 +237,7 @@ func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug stri
 			for _, pth := range result.ImagePaths {
 				log.Printf("- %s", pth)
 			}
-			log.Println("")
+			log.Printf("")
 		} else {
 			log.Printf("Uploading: %s", result.Name)
 		}
