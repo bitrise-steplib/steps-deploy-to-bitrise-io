@@ -8,7 +8,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"net/http/httputil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -67,22 +66,10 @@ func httpCall(apiToken, method, url string, input io.Reader, output interface{})
 		return err
 	}
 
-	b, err := httputil.DumpRequest(req, true)
-	if err != nil {
-		return err
-	}
-	log.Debugf(string(b))
-
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
-
-	b, err = httputil.DumpResponse(resp, true)
-	if err != nil {
-		return err
-	}
-	log.Debugf(string(b))
 
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
