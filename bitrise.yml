@@ -25,8 +25,8 @@ workflows:
   ci:
     before_run:
     - audit-this-step
-    - test
     - _download_sample_artifacts
+    - test
     after_run:
     - _zero_length_file_upload
     - _test_results_deployment
