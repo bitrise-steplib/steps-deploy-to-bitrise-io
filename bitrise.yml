@@ -15,14 +15,21 @@ app:
   - SAMPLE_ARTIFACTS_GIT_CLONE_URL: https://github.com/bitrise-io/sample-artifacts.git
 
 workflows:
-  # ----------------------------------------------------------------
-  # --- workflow to Step Test
+  test:
+    steps:
+    - go-list:
+    - golint:
+    - errcheck:
+    - go-test:
+
   ci:
     before_run:
     - audit-this-step
+    - _download_sample_artifacts
     - test
     after_run:
     - _zero_length_file_upload
+    - _test_results_deployment
     steps:
     - change-workdir:
         run_if: true
@@ -186,7 +193,8 @@ workflows:
             echo "-> BITRISE_PUBLIC_INSTALL_PAGE_URL: ${BITRISE_PUBLIC_INSTALL_PAGE_URL}"
             echo "-> BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP: ${BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP}"
             echo "-> BITRISE_PERMANENT_DOWNLOAD_URL_MAP: ${BITRISE_PERMANENT_DOWNLOAD_URL_MAP}"
-  download_sample_artifacts:
+
+  _download_sample_artifacts:
     steps:
     - script:
         inputs:
@@ -200,14 +208,22 @@ workflows:
             #!/bin/bash
             set -ex
             git clone --depth 1 $SAMPLE_ARTIFACTS_GIT_CLONE_URL ./_tmp
-  test:
-    before_run:
-    - download_sample_artifacts
+
+  _test_results_deployment:
     steps:
-    - go-list:
-    - golint:
-    - errcheck:
-    - go-test:
+    - custom-test-results-export:
+        inputs:
+        - test_name: multi_level_UI_tests
+        - base_path: ./
+        - search_pattern: "*/xcresult3_multi_level_UI_tests.xcresult"
+    - path::./:
+        title: Test result deployment
+        run_if: true
+        inputs:
+        - build_url: $BITRISE_BUILD_URL
+        - build_api_token: $BITRISE_BUILD_API_TOKEN
+        - deploy_path: ""
+        - debug_mode: "true"
 
   _zero_length_file_upload:
     steps:
@@ -229,8 +245,6 @@ workflows:
           inputs:
             - example_section: docs/examples.md
 
-  # ----------------------------------------------------------------
-  # --- workflow to Share this step into a Step Library
   audit-this-step:
     steps:
     - script:
