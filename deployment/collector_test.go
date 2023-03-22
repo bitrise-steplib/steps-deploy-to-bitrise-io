@@ -106,6 +106,34 @@ func Test_GivenIntermediateFiles_WhenProcessing_ThenConvertsCorrectly(t *testing
 			wantErr: false,
 		},
 		{
+			name: "shorthand syntax when path value from env var, same as exported env var",
+			list: "$BITRISE_IPA_PATH",
+			want: []DeployableItem{
+				{
+					Path: filepath.Join(currentDir, "$BITRISE_IPA_PATH"),
+					IntermediateFileMeta: &IntermediateFileMetaData{
+						EnvKey: "BITRISE_IPA_PATH",
+						IsDir:  false,
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "shorthand syntax when path value is the same as exported env var",
+			list: "my_binary",
+			want: []DeployableItem{
+				{
+					Path: filepath.Join(currentDir, "my_binary"),
+					IntermediateFileMeta: &IntermediateFileMetaData{
+						EnvKey: "my_binary",
+						IsDir:  false,
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name:    "Item is empty",
 			list:    "",
 			want:    nil,
@@ -282,18 +310,22 @@ func Test_GivenDeployDirectories_WhenIntermediateDirectoriesSpecified_ThenMerges
 
 	zips := map[string][]*zip.File{
 		"/dir1234.zip": {
-			{FileHeader: zip.FileHeader{
-				Name:               "test_file.txt",
-				CRC32:              0xb095e5e3,
-				UncompressedSize64: 12,
-			}},
+			{
+				FileHeader: zip.FileHeader{
+					Name:               "test_file.txt",
+					CRC32:              0xb095e5e3,
+					UncompressedSize64: 12,
+				},
+			},
 		},
 		filepath.Join(tempDir, "dir.zip"): {
-			{FileHeader: zip.FileHeader{
-				Name:               "test_file.txt",
-				CRC32:              0xb095e5e3,
-				UncompressedSize64: 12,
-			}},
+			{
+				FileHeader: zip.FileHeader{
+					Name:               "test_file.txt",
+					CRC32:              0xb095e5e3,
+					UncompressedSize64: 12,
+				},
+			},
 		},
 	}
 
