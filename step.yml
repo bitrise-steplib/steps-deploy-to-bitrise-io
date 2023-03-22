@@ -35,7 +35,7 @@ description: |-
   
   The **Files to share between pipeline stages** input specifies the files meant to be intermediate files shared between the Pipeline Stages. When uploading the Pipeline intermediate files, you must assign environment variable keys to them in the **Files to share between pipeline stages** input.
   The inputs `path:env_key` values will be saved together with the file and later automatically reconstructed by the [Pull Pipeline intermediate files Step](https://www.bitrise.io/integrations/steps/pull-intermediate-files). 
-  You can use a shorthand of just `env_var` for `env_var:env_key`, for example when the `env_var` holds the path to the file(s) you want to share with subsequent stages.
+  You can use a shorthand of just `$env_var` for `$env_var:env_var`, when the `$env_var` holds the path to the file(s) you want to share with subsequent stages.
   The directories you specify will be archived and uploaded as a single file.
   
   #### Configuring the Debug section of the Step
@@ -58,8 +58,9 @@ description: |-
   
   - [Deployment on Bitrise](https://devcenter.bitrise.io/deploy/deployment-index/)
   - [Watching an app](https://devcenter.bitrise.io/builds/configuring-notifications/#watching-an-app)
-
-  ### Related Steps
+  - [Using artifacts from different Stages](https://devcenter.bitrise.io/en/builds/build-pipelines/configuring-a-bitrise-pipeline.html#using-artifacts-from-different-stages)
+    
+    ### Related Steps
   
   - [Deploy to Google Play](https://www.bitrise.io/integrations/steps/google-play-deploy)
   - [Deploy to iTunesConnect](https://www.bitrise.io/integrations/steps/deploy-to-itunesconnect-deliver)
