@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/mocks"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,12 +24,14 @@ func Test_GivenIntermediateFiles_WhenProcessing_ThenConvertsCorrectly(t *testing
 	}
 
 	tests := []struct {
-		name    string
-		list    string
-		want    []DeployableItem
-		wantErr bool
+		name        string
+		list        string
+		environment map[string]string
+		want        []DeployableItem
+		wantErr     bool
 	}{
 		{
+			// TODO: do we need this test case
 			name: "Path value from an env var",
 			list: "$BITRISE_IPA_PATH:BITRISE_IPA_PATH",
 			want: []DeployableItem{
@@ -106,27 +109,14 @@ func Test_GivenIntermediateFiles_WhenProcessing_ThenConvertsCorrectly(t *testing
 			wantErr: false,
 		},
 		{
-			name: "shorthand syntax when path value from env var, same as exported env var",
-			list: "$BITRISE_IPA_PATH",
+			name:        "shorthand syntax when path value from env var, same as exported env var",
+			list:        "BITRISE_IPA_PATH",
+			environment: map[string]string{"BITRISE_IPA_PATH": "./app.ipa"},
 			want: []DeployableItem{
 				{
-					Path: filepath.Join(currentDir, "$BITRISE_IPA_PATH"),
+					Path: filepath.Join(currentDir, "./app.ipa"),
 					IntermediateFileMeta: &IntermediateFileMetaData{
 						EnvKey: "BITRISE_IPA_PATH",
-						IsDir:  false,
-					},
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "shorthand syntax when path value is the same as exported env var",
-			list: "my_binary",
-			want: []DeployableItem{
-				{
-					Path: filepath.Join(currentDir, "my_binary"),
-					IntermediateFileMeta: &IntermediateFileMetaData{
-						EnvKey: "my_binary",
 						IsDir:  false,
 					},
 				},
@@ -161,8 +151,12 @@ func Test_GivenIntermediateFiles_WhenProcessing_ThenConvertsCorrectly(t *testing
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			mockRepository := new(mocks.Repository)
+			for key, value := range tt.environment {
+				mockRepository.On("Get", key).Return(value).Once()
+			}
 			zipComparator := NewZipComparator(DefaultReadZipFunction)
-			collector := NewCollector(zipComparator, isDirFunction(directories), emptyZipFunction(), tempDir)
+			collector := NewCollector(zipComparator, isDirFunction(directories), emptyZipFunction(), mockRepository, tempDir)
 
 			var deployableItems []DeployableItem
 			deployableItems, err := collector.AddIntermediateFiles(deployableItems, tt.list)
@@ -176,6 +170,8 @@ func Test_GivenIntermediateFiles_WhenProcessing_ThenConvertsCorrectly(t *testing
 			if !assert.ElementsMatch(t, deployableItems, tt.want) {
 				t.Errorf("%s got = %v, want %v", t.Name(), deployableItems, tt.want)
 			}
+
+			mockRepository.AssertExpectations(t)
 		})
 	}
 }
@@ -291,7 +287,8 @@ func Test_GivenDeployFiles_WhenIntermediateFilesSpecified_ThenMergesThem(t *test
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			zipComparator := NewZipComparator(DefaultReadZipFunction)
-			collector := NewCollector(zipComparator, isDirFunction(directories), emptyZipFunction(), tempDir)
+			mockRepository := new(mocks.Repository)
+			collector := NewCollector(zipComparator, isDirFunction(directories), emptyZipFunction(), mockRepository, tempDir)
 			deployableItems := ConvertPaths(tt.deployFiles)
 			deployableItems, err := collector.AddIntermediateFiles(deployableItems, tt.intermediateFiles)
 
@@ -354,7 +351,8 @@ func Test_GivenDeployDirectories_WhenIntermediateDirectoriesSpecified_ThenMerges
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			zipComparator := NewZipComparator(readZipFunction(zips))
-			collector := NewCollector(zipComparator, isDirFunction(directories), emptyZipFunction(), tempDir)
+			mockRepository := new(mocks.Repository)
+			collector := NewCollector(zipComparator, isDirFunction(directories), emptyZipFunction(), mockRepository, tempDir)
 			deployableItems := ConvertPaths(tt.deployFiles)
 			deployableItems, err := collector.AddIntermediateFiles(deployableItems, tt.intermediateFiles)
 

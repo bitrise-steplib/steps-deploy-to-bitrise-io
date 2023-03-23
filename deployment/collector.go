@@ -116,7 +116,7 @@ func (c Collector) processIntermediateFiles(s string) (map[string]string, error)
 	intermediateFiles := map[string]string{}
 
 	list := strings.Split(s, "\n")
-	for i, item := range list {
+	for _, item := range list {
 		item = strings.TrimSpace(item)
 		if item == "" {
 			continue
@@ -126,17 +126,22 @@ func (c Collector) processIntermediateFiles(s string) (map[string]string, error)
 		if len(split) > 2 {
 			return nil, fmt.Errorf("invalid item (%s): contains more than one '%s' character", item, separator)
 		}
+
 		key := split[len(split)-1]
+		if key == "" {
+			return nil, fmt.Errorf("invalid item (%s): environment variable key is empty", item)
+		}
+
 		path := strings.Join(split[:len(split)-1], separator)
-		if path == "" {
+		if path == "" && len(split) == 1 {
 			path = c.envRepository.Get(key)
 			if path == "" {
-				return nil, fmt.Errorf("%d - invalid item (%s): environment variable isn't set", i, item)
+				return nil, fmt.Errorf("invalid item (%s): environment variable isn't set", item)
 			}
 		}
 
 		if path == "" {
-			return nil, fmt.Errorf("invalid item for key (%s): empty path", key)
+			return nil, fmt.Errorf("invalid item (%s): empty path", item)
 		}
 
 		path, err := filepath.Abs(path)

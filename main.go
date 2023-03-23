@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/bitrise-io/go-utils/v2/env"
+
 	"github.com/bitrise-io/bitrise/models"
 
 	"github.com/bitrise-io/envman/envman"
@@ -103,7 +105,7 @@ func main() {
 
 	if strings.TrimSpace(config.PipelineIntermediateFiles) != "" {
 		zipComparator := deployment.NewZipComparator(deployment.DefaultReadZipFunction)
-		collector := deployment.NewCollector(zipComparator, deployment.DefaultIsDirFunction, ziputil.ZipDir, tmpDir)
+		collector := deployment.NewCollector(zipComparator, deployment.DefaultIsDirFunction, ziputil.ZipDir, env.NewRepository(), tmpDir)
 		deployableItems, err = collector.AddIntermediateFiles(deployableItems, config.PipelineIntermediateFiles)
 		if err != nil {
 			fail("%s", err)
