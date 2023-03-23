@@ -174,7 +174,7 @@ workflows:
           - pipeline_intermediate_files: |-
               ./ipas/ios-simple-objc.ipa:PIPELINE_FILE_1
               ./xcresults/xcresult3-flaky-with-rerun.xcresult:PIPELINE_FILE_2
-              $PIPELINE_FILE_3
+              PIPELINE_FILE_3
           - notify_user_groups: $NOTIFY_USER_GROUPS
           - notify_email_list: $NOTIFY_EMAIL_LIST
           - is_enable_public_page: "true"
