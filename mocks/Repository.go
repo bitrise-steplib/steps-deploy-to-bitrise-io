@@ -17,7 +17,10 @@ func (_m *Repository) Get(key string) string {
 	if rf, ok := ret.Get(0).(func(string) string); ok {
 		r0 = rf(key)
 	} else {
-		r0 = ret.Get(0).(string)
+		r0, ok = ret.Get(0).(string)
+		if !ok {
+
+		}
 	}
 
 	return r0
@@ -32,7 +35,10 @@ func (_m *Repository) List() []string {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]string)
+			r0, ok = ret.Get(0).([]string)
+			if !ok {
+
+			}
 		}
 	}
 
