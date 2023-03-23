@@ -112,35 +112,31 @@ func (c Collector) processIntermediateFiles(s string) (map[string]string, error)
 	intermediateFiles := map[string]string{}
 
 	list := strings.Split(s, "\n")
-	for _, item := range list {
+	for i, item := range list {
 		item = strings.TrimSpace(item)
 		if item == "" {
 			continue
 		}
 
-		if strings.Count(item, separator) > 1 {
+		split := strings.Split(item, separator)
+		if len(split) > 2 {
 			return nil, fmt.Errorf("invalid item (%s): contains more than one '%s' character", item, separator)
 		}
-		var key, path string
-		if strings.Count(item, separator) == 0 {
-			if item[0] == '$' {
-				key = item[1:]
-			} else {
-				key = item
-			}
-			path = item
-		} else {
-			idx := strings.LastIndex(item, separator)
-			path = item[:idx]
+		key := split[len(split)-1]
+		path := strings.Join(split[:len(split)-1], separator)
+		if path == "" {
+			path = os.Getenv(key)
 			if path == "" {
-				return nil, fmt.Errorf("invalid item (%s): doesn't specify file path", item)
-			}
-
-			key = item[idx+1:]
-			if key == "" {
-				return nil, fmt.Errorf("invalid item (%s): doesn't specify key", item)
+				return nil, fmt.Errorf("%d - invalid item (%s): environment variable isn't set", i, item)
 			}
 		}
+
+		if path == "" {
+			return nil, fmt.Errorf("invalid item for key (%s): empty path", key)
+		}
+
+		fmt.Println("key:", key)
+		fmt.Println("path:", path)
 
 		path, err := filepath.Abs(path)
 		if err != nil {
