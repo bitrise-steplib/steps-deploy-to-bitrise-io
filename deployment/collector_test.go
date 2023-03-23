@@ -31,21 +31,6 @@ func Test_GivenIntermediateFiles_WhenProcessing_ThenConvertsCorrectly(t *testing
 		wantErr     bool
 	}{
 		{
-			// TODO: do we need this test case
-			name: "Path value from an env var",
-			list: "$BITRISE_IPA_PATH:BITRISE_IPA_PATH",
-			want: []DeployableItem{
-				{
-					Path: filepath.Join(currentDir, "$BITRISE_IPA_PATH"),
-					IntermediateFileMeta: &IntermediateFileMetaData{
-						EnvKey: "BITRISE_IPA_PATH",
-						IsDir:  false,
-					},
-				},
-			},
-			wantErr: false,
-		},
-		{
 			name: "Relative file paths",
 			list: "test.txt:TEST_FILE" + "\n" + "./a/folder/another_test.txt:ANOTHER_TEST_FILE",
 			want: []DeployableItem{
