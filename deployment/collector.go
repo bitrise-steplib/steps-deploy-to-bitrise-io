@@ -118,19 +118,28 @@ func (c Collector) processIntermediateFiles(s string) (map[string]string, error)
 			continue
 		}
 
-		if strings.Count(item, separator) != 1 {
-			return nil, fmt.Errorf("invalid item (%s): doesn't contain exactly one '%s' character", item, separator)
+		if strings.Count(item, separator) > 1 {
+			return nil, fmt.Errorf("invalid item (%s): contains more than one '%s' character", item, separator)
 		}
+		var key, path string
+		if strings.Count(item, separator) == 0 {
+			if item[0] == '$' {
+				key = item[1:]
+			} else {
+				key = item
+			}
+			path = item
+		} else {
+			idx := strings.LastIndex(item, separator)
+			path = item[:idx]
+			if path == "" {
+				return nil, fmt.Errorf("invalid item (%s): doesn't specify file path", item)
+			}
 
-		idx := strings.LastIndex(item, separator)
-		path := item[:idx]
-		if path == "" {
-			return nil, fmt.Errorf("invalid item (%s): doesn't specify file path", item)
-		}
-
-		key := item[idx+1:]
-		if key == "" {
-			return nil, fmt.Errorf("invalid item (%s): doesn't specify key", item)
+			key = item[idx+1:]
+			if key == "" {
+				return nil, fmt.Errorf("invalid item (%s): doesn't specify key", item)
+			}
 		}
 
 		path, err := filepath.Abs(path)
