@@ -10,6 +10,7 @@ import (
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
 
+// DeployXcarchive ...
 func DeployXcarchive(item deployment.DeployableItem, buildURL, token string) (ArtifactURLs, error) {
 	uploadURL, artifactID, err := createArtifact(buildURL, token, item.Path, "ios-xcarchive", "")
 	if err != nil {
