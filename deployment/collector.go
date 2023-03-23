@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/bitrise-io/go-utils/log"
+	"github.com/bitrise-io/go-utils/v2/env"
 )
 
 const (
@@ -63,6 +64,7 @@ type Collector struct {
 	zipComparator   ZipComparator
 	isDirFunction   IsDirFunction
 	zipDirFunction  ZipDirFunction
+	envRepository   env.Repository
 	temporaryFolder string
 }
 
@@ -71,12 +73,14 @@ func NewCollector(
 	zipComparator ZipComparator,
 	isDirFunction IsDirFunction,
 	zipDirFunction ZipDirFunction,
+	envRepository env.Repository,
 	temporaryFolder string,
 ) Collector {
 	return Collector{
 		zipComparator:   zipComparator,
 		isDirFunction:   isDirFunction,
 		zipDirFunction:  zipDirFunction,
+		envRepository:   envRepository,
 		temporaryFolder: temporaryFolder,
 	}
 }
@@ -118,28 +122,26 @@ func (c Collector) processIntermediateFiles(s string) (map[string]string, error)
 			continue
 		}
 
-		if strings.Count(item, separator) > 1 {
+		split := strings.Split(item, separator)
+		if len(split) > 2 {
 			return nil, fmt.Errorf("invalid item (%s): contains more than one '%s' character", item, separator)
 		}
-		var key, path string
-		if strings.Count(item, separator) == 0 {
-			if item[0] == '$' {
-				key = item[1:]
-			} else {
-				key = item
-			}
-			path = item
-		} else {
-			idx := strings.LastIndex(item, separator)
-			path = item[:idx]
-			if path == "" {
-				return nil, fmt.Errorf("invalid item (%s): doesn't specify file path", item)
-			}
 
-			key = item[idx+1:]
-			if key == "" {
-				return nil, fmt.Errorf("invalid item (%s): doesn't specify key", item)
+		key := split[len(split)-1]
+		if key == "" {
+			return nil, fmt.Errorf("invalid item (%s): environment variable key is empty", item)
+		}
+
+		path := strings.Join(split[:len(split)-1], separator)
+		if path == "" && len(split) == 1 {
+			path = c.envRepository.Get(key)
+			if path == "" {
+				return nil, fmt.Errorf("invalid item (%s): environment variable isn't set", item)
 			}
+		}
+
+		if path == "" {
+			return nil, fmt.Errorf("invalid item (%s): empty path", item)
 		}
 
 		path, err := filepath.Abs(path)

@@ -35,7 +35,7 @@ description: |-
   
   The **Files to share between pipeline stages** input specifies the files meant to be intermediate files shared between the Pipeline Stages. When uploading the Pipeline intermediate files, you must assign environment variable keys to them in the **Files to share between pipeline stages** input.
   The inputs `path:env_key` values will be saved together with the file and later automatically reconstructed by the [Pull Pipeline intermediate files Step](https://www.bitrise.io/integrations/steps/pull-intermediate-files). 
-  You can use a shorthand of just `$env_var` for `$env_var:env_var`, when the `$env_var` holds the path to the file(s) you want to share with subsequent stages.
+  You can use a shorthand of just `env_var` for `$env_var:env_var`, when the `env_var` holds the path to the file(s) you want to share with subsequent stages.
   The directories you specify will be archived and uploaded as a single file.
   
   #### Configuring the Debug section of the Step
@@ -225,16 +225,16 @@ inputs:
         
         The input uses a `{path}:{env_key}` syntax.
         The colon character (`:`) is the delimiter between the file path and the environment variable key.
-        A shorthand syntax of `$ENV_VAR` can be used for `$ENV_VAR:ENV_VAR` when the name of the env var in the current workflow will become the shared env_key. 
+        A shorthand syntax of `ENV_VAR` can be used for `$ENV_VAR:ENV_VAR` when the name of the env var in the current workflow will become the shared env_key. 
         
         The file path can be specified with environment variables or direct paths,  
         and can point to both a local file or directory:
         ```
         $BITRISE_IPA_PATH:BITRISE_IPA_PATH
+        BITRISE_IPA_PATH
         $BITRISE_APK_PATH:DEVELOPMENT_APK_PATH
         ./path/to/test_reports:TEST_REPORTS_DIR
         $BITRISE_SOURCE_DIR/deploy_dir:DEPLOY_DIR
-        $BITRISE_IPA_PATH
         ```
   - addon_api_base_url: "https://vdt.bitrise.io/test"
     opts:
