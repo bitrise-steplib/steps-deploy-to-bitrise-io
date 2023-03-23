@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/bitrise-io/go-utils/log"
+	"github.com/bitrise-io/go-utils/v2/env"
 )
 
 const (
@@ -63,6 +64,7 @@ type Collector struct {
 	zipComparator   ZipComparator
 	isDirFunction   IsDirFunction
 	zipDirFunction  ZipDirFunction
+	envRepository   env.Repository
 	temporaryFolder string
 }
 
@@ -71,12 +73,14 @@ func NewCollector(
 	zipComparator ZipComparator,
 	isDirFunction IsDirFunction,
 	zipDirFunction ZipDirFunction,
+	envRepository env.Repository,
 	temporaryFolder string,
 ) Collector {
 	return Collector{
 		zipComparator:   zipComparator,
 		isDirFunction:   isDirFunction,
 		zipDirFunction:  zipDirFunction,
+		envRepository:   envRepository,
 		temporaryFolder: temporaryFolder,
 	}
 }
@@ -125,7 +129,7 @@ func (c Collector) processIntermediateFiles(s string) (map[string]string, error)
 		key := split[len(split)-1]
 		path := strings.Join(split[:len(split)-1], separator)
 		if path == "" {
-			path = os.Getenv(key)
+			path = c.envRepository.Get(key)
 			if path == "" {
 				return nil, fmt.Errorf("%d - invalid item (%s): environment variable isn't set", i, item)
 			}
@@ -134,9 +138,6 @@ func (c Collector) processIntermediateFiles(s string) (map[string]string, error)
 		if path == "" {
 			return nil, fmt.Errorf("invalid item for key (%s): empty path", key)
 		}
-
-		fmt.Println("key:", key)
-		fmt.Println("path:", path)
 
 		path, err := filepath.Abs(path)
 		if err != nil {
