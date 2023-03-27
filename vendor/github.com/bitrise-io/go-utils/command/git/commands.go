@@ -10,13 +10,24 @@ func (g *Git) Init() *command.Model {
 }
 
 // Clone a repository into a new directory.
-func (g *Git) Clone(repo string) *command.Model {
-	return g.command("clone", repo, ".")
+func (g *Git) Clone(repo string, opts ...string) *command.Model {
+	args := []string{"clone"}
+	args = append(args, opts...)
+	args = append(args, repo)
+	args = append(args, ".")
+	return g.command(args...)
 }
 
 // CloneTagOrBranch is recursively clones a tag or branch.
-func (g *Git) CloneTagOrBranch(repo, tagOrBranch string) *command.Model {
-	return g.command("clone", "--recursive", "--branch", tagOrBranch, repo, ".")
+func (g *Git) CloneTagOrBranch(repo, tagOrBranch string, opts ...string) *command.Model {
+	args := []string{"clone"}
+	args = append(args, "--recursive")
+	args = append(args, []string{"--branch", tagOrBranch}...)
+	args = append(args, opts...)
+	args = append(args, repo)
+	args = append(args, ".")
+
+	return g.command(args...)
 }
 
 // RemoteList shows a list of existing remote urls with remote names.
@@ -104,8 +115,11 @@ func (g *Git) Apply(patch string) *command.Model {
 }
 
 // Log shows the commit logs. The format parameter controls what is shown and how.
-func (g *Git) Log(format string) *command.Model {
-	return g.command("log", "-1", "--format="+format)
+// Revision range can be optionally specified using the opts parameter.
+func (g *Git) Log(format string, opts ...string) *command.Model {
+	args := []string{"log", "-1", "--format=" + format}
+	args = append(args, opts...)
+	return g.command(args...)
 }
 
 // RevList lists commit objects in reverse chronological order.

@@ -160,6 +160,7 @@ workflows:
         - is_enable_public_page: "true"
         - debug_mode: "true"
     - set-env-var:
+        is_always_run: true
         inputs:
           - destination_keys: PIPELINE_FILE_3
           - value: "./xcresults/xcresult3-flaky-with-rerun.xcresult"
@@ -233,6 +234,7 @@ workflows:
   _zero_length_file_upload:
     steps:
     - script:
+        is_always_run: true
         inputs:
         - content: touch 0_length_file.txt
     - path::./:

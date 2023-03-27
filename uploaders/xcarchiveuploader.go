@@ -23,6 +23,7 @@ func DeployXcarchive(item deployment.DeployableItem, buildURL, token string) (Ar
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("could not check if given project is macOS or not, error: %s", err)
 	} else if isMacos {
+		log.Warnf("macOS archive deployment is not supported, skipping file: %s", archivePth)
 		return ArtifactURLs{}, nil // MacOS project is not supported, so won't be deployed.
 	}
 

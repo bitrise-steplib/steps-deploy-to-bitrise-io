@@ -8,7 +8,7 @@ require (
 	github.com/bitrise-io/envman v0.0.0-20210517135508-b2b4fe89eac5
 	github.com/bitrise-io/go-android v0.0.0-20210517091621-72f0eb7a5197
 	github.com/bitrise-io/go-steputils v0.0.0-20210514150206-5b6261447e77
-	github.com/bitrise-io/go-utils v0.0.0-20210520073355-367fa34178f5
+	github.com/bitrise-io/go-utils v1.0.6
 	github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.15
 	github.com/bitrise-io/go-xcode v0.0.0-20210521101355-fb6a1eb6e05b
 	github.com/google/go-cmp v0.5.5
