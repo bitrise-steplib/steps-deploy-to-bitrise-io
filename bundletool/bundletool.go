@@ -26,7 +26,7 @@ func fetchAny(source string, fallbackSources ...string) (Path, error) {
 		return "", err
 	}
 
-	downloader := filedownloader.New(retry.NewHTTPClient())
+	downloader := filedownloader.New(retry.NewHTTPClient().StandardClient())
 
 	toolPath := filepath.Join(tmpPth, "bundletool-all.jar")
 	if err := downloader.GetWithFallback(toolPath, source, fallbackSources...); err != nil {
