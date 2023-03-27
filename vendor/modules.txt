@@ -15,7 +15,7 @@ github.com/bitrise-io/go-android/sdk
 ## explicit; go 1.15
 github.com/bitrise-io/go-steputils/stepconf
 github.com/bitrise-io/go-steputils/tools
-# github.com/bitrise-io/go-utils v0.0.0-20210520073355-367fa34178f5
+# github.com/bitrise-io/go-utils v1.0.6
 ## explicit; go 1.13
 github.com/bitrise-io/go-utils/colorstring
 github.com/bitrise-io/go-utils/command
