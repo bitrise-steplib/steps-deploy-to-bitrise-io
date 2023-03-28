@@ -261,6 +261,9 @@ func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug stri
 			return err
 		}
 
+		log.Warnf("xml content:")
+		log.Warnf("%+v", string(result.XMLContent))
+
 		if err := httpCall("", http.MethodPut, uploadResponse.URL, bytes.NewReader(result.XMLContent), nil); err != nil {
 			return err
 		}
