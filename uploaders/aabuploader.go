@@ -29,7 +29,7 @@ func DeployAAB(item deployment.DeployableItem, artifacts []string, buildURL, tok
 		return ArtifactURLs{}, fmt.Errorf("executing command failed (%s): %w", cmd.PrintableCommandArgs(), err)
 	}
 
-	packageName, versionCode, versionName := androidartifact.ParsePackageInfos(out)
+	packageName, versionCode, versionName := androidartifact.ParsePackageInfos(out, true)
 
 	appInfo := map[string]interface{}{
 		"package_name": packageName,
