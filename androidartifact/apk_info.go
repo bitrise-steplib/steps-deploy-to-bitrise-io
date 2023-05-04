@@ -65,8 +65,13 @@ func parsePackageField(aaptOut, key string) string {
 }
 
 // ParsePackageInfos parses package name, version code and name from `aapt dump badging` command output.
-func ParsePackageInfos(aaptOut string) (string, string, string) {
-	return parsePackageField(aaptOut, "name"),
+func ParsePackageInfos(aaptOut string, isAAB bool) (string, string, string) {
+	packageNameKey := "name"
+	if isAAB {
+		packageNameKey = "package"
+	}
+
+	return parsePackageField(aaptOut, packageNameKey),
 		parsePackageField(aaptOut, "versionCode"),
 		parsePackageField(aaptOut, "versionName")
 }
@@ -144,7 +149,7 @@ func getAPKInfoWithAapt(apkPth string) (ApkInfo, error) {
 	}
 
 	appName := parseAppName(aaptOut)
-	packageName, versionCode, versionName := ParsePackageInfos(aaptOut)
+	packageName, versionCode, versionName := ParsePackageInfos(aaptOut, false)
 	minSDKVersion := parseMinSDKVersion(aaptOut)
 
 	packageContent := ""
