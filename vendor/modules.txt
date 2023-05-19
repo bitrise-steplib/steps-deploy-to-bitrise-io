@@ -32,10 +32,14 @@ github.com/bitrise-io/go-utils/retry
 github.com/bitrise-io/go-utils/sliceutil
 github.com/bitrise-io/go-utils/urlutil
 github.com/bitrise-io/go-utils/ziputil
-# github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.15
+# github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.16.0.20230516145037-6d0e0f8517b1
 ## explicit; go 1.17
 github.com/bitrise-io/go-utils/v2/env
 github.com/bitrise-io/go-utils/v2/errorutil
+github.com/bitrise-io/go-utils/v2/exitcode
+github.com/bitrise-io/go-utils/v2/filterwriter
+github.com/bitrise-io/go-utils/v2/log
+github.com/bitrise-io/go-utils/v2/log/colorstring
 # github.com/bitrise-io/go-xcode v0.0.0-20210521101355-fb6a1eb6e05b
 ## explicit; go 1.15
 github.com/bitrise-io/go-xcode/certificateutil

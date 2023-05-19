@@ -8,6 +8,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/bitrise-io/go-utils/v2/exitcode"
+
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/fileredactor"
+
 	"github.com/bitrise-io/go-utils/v2/env"
 
 	"github.com/bitrise-io/bitrise/models"
@@ -92,6 +96,12 @@ func main() {
 	log.Infof("Redacting files...")
 	pathProcessor := fileredactor.NewFilePathProcessor(repository)
 	filePaths, err := pathProcessor.ProcessFilePaths(config.FilesToRedact)
+	redactor := fileredactor.NewFileRedactor()
+	err = redactor.RedactFiles(filePaths, []string{})
+	if err != nil {
+		log.Errorf(errorutil.FormattedError(fmt.Errorf("failed to redact files: %w", err)))
+		os.Exit(int(exitcode.Failure))
+	}
 
 	fmt.Println()
 	log.Infof("Collecting files to deploy...")
