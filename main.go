@@ -86,6 +86,13 @@ func main() {
 		fail("Failed to create tmp dir, error: %s", err)
 	}
 
+	repository := env.NewRepository()
+
+	fmt.Println()
+	log.Infof("Redacting files...")
+	pathProcessor := fileredactor.NewFilePathProcessor(repository)
+	filePaths, err := pathProcessor.ProcessFilePaths(config.FilesToRedact)
+
 	fmt.Println()
 	log.Infof("Collecting files to deploy...")
 
@@ -106,7 +113,7 @@ func main() {
 
 	if strings.TrimSpace(config.PipelineIntermediateFiles) != "" {
 		zipComparator := deployment.NewZipComparator(deployment.DefaultReadZipFunction)
-		collector := deployment.NewCollector(zipComparator, deployment.DefaultIsDirFunction, ziputil.ZipDir, env.NewRepository(), tmpDir)
+		collector := deployment.NewCollector(zipComparator, deployment.DefaultIsDirFunction, ziputil.ZipDir, repository, tmpDir)
 		deployableItems, err = collector.AddIntermediateFiles(deployableItems, config.PipelineIntermediateFiles)
 		if err != nil {
 			fail("%s", err)
