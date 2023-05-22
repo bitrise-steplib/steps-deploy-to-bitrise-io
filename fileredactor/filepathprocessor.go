@@ -2,11 +2,10 @@ package fileredactor
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/bitrise-io/go-utils/v2/env"
+	"github.com/bitrise-io/go-utils/v2/pathutil"
 )
 
 type FilePathProcessor interface {
@@ -15,11 +14,15 @@ type FilePathProcessor interface {
 
 type filePathProcessor struct {
 	envRepository env.Repository
+	pathChecker   pathutil.PathChecker
+	pathModifier  pathutil.PathModifier
 }
 
-func NewFilePathProcessor(repository env.Repository) FilePathProcessor {
+func NewFilePathProcessor(repository env.Repository, checker pathutil.PathChecker, modifier pathutil.PathModifier) FilePathProcessor {
 	return filePathProcessor{
 		envRepository: repository,
+		pathChecker:   checker,
+		pathModifier:  modifier,
 	}
 }
 
@@ -46,12 +49,12 @@ func (f filePathProcessor) ProcessFilePaths(filePaths string) ([]string, error) 
 			}
 		}
 
-		path, err := filepath.Abs(path)
+		path, err := f.pathModifier.AbsPath(path)
 		if err != nil {
 			return nil, err
 		}
 
-		isDir, err := f.isDirectory(path)
+		isDir, err := f.pathChecker.IsDirExists(path)
 		if err != nil {
 			return nil, fmt.Errorf("failed to check if path (%s) is a directory: %w", path, err)
 		}
@@ -63,17 +66,4 @@ func (f filePathProcessor) ProcessFilePaths(filePaths string) ([]string, error) 
 	}
 
 	return processedFilePaths, nil
-}
-
-func (f filePathProcessor) isDirectory(s string) (bool, error) {
-	fileInfo, err := os.Stat(s)
-	if err != nil {
-		return false, err
-	}
-
-	if fileInfo.IsDir() {
-		return true, nil
-	}
-
-	return false, nil
 }
