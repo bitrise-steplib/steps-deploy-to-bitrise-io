@@ -14,15 +14,15 @@ type FilePathProcessor interface {
 
 type filePathProcessor struct {
 	envRepository env.Repository
-	pathChecker   pathutil.PathChecker
 	pathModifier  pathutil.PathModifier
+	pathChecker   pathutil.PathChecker
 }
 
-func NewFilePathProcessor(repository env.Repository, checker pathutil.PathChecker, modifier pathutil.PathModifier) FilePathProcessor {
+func NewFilePathProcessor(repository env.Repository, modifier pathutil.PathModifier, checker pathutil.PathChecker) FilePathProcessor {
 	return filePathProcessor{
 		envRepository: repository,
-		pathChecker:   checker,
 		pathModifier:  modifier,
+		pathChecker:   checker,
 	}
 }
 
@@ -44,7 +44,7 @@ func (f filePathProcessor) ProcessFilePaths(filePaths string) ([]string, error) 
 		path := item
 		if strings.HasPrefix(item, "$") {
 			path = f.envRepository.Get(item[1:])
-			if path != "" {
+			if path == "" {
 				return nil, fmt.Errorf("invalid item (%s): environment variable isn't set", item)
 			}
 		}

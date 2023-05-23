@@ -5,21 +5,27 @@ import (
 	"io"
 	"os"
 
-	"github.com/bitrise-io/go-utils/v2/filterwriter"
+	"github.com/bitrise-io/go-utils/v2/fileutil"
+
+	"github.com/bitrise-io/go-utils/v2/redactwriter"
+
 	"github.com/bitrise-io/go-utils/v2/log"
 )
 
-const bufferSize = 1024
+const bufferSize = 64 * 1024
 
 type FileRedactor interface {
 	RedactFiles([]string, []string) error
 }
 
 type fileRedactor struct {
+	fileManager fileutil.FileManager
 }
 
-func NewFileRedactor() FileRedactor {
-	return fileRedactor{}
+func NewFileRedactor(manager fileutil.FileManager) FileRedactor {
+	return fileRedactor{
+		fileManager: manager,
+	}
 }
 
 func (f fileRedactor) RedactFiles(filePaths []string, secrets []string) error {
@@ -34,7 +40,10 @@ func (f fileRedactor) RedactFiles(filePaths []string, secrets []string) error {
 }
 
 func (f fileRedactor) redactFile(path string, secrets []string, logger log.Logger) error {
-	source, err := os.Open(path)
+	source, err := f.fileManager.Open(path)
+	if err != nil {
+		return fmt.Errorf("failed to open file for redaction (%s): %w", path, err)
+	}
 	defer source.Close()
 
 	newPath := path + ".redacted"
@@ -45,7 +54,7 @@ func (f fileRedactor) redactFile(path string, secrets []string, logger log.Logge
 	defer destination.Close()
 
 	buffer := make([]byte, bufferSize)
-	redactWriter := filterwriter.New(secrets, destination, logger)
+	redactWriter := redactwriter.New(secrets, destination, logger)
 	for {
 		n, err := source.Read(buffer)
 		if err != nil && err != io.EOF {
@@ -61,10 +70,10 @@ func (f fileRedactor) redactFile(path string, secrets []string, logger log.Logge
 	}
 
 	//rename new file to old file name
-	err = os.Rename(path, newPath)
+	err = os.Rename(newPath, path)
 	if err != nil {
 		return fmt.Errorf("failed to overwrite old file (%s) with redacted file: %w", path, err)
 	}
-	
+
 	return nil
 }
