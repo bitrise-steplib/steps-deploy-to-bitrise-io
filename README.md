@@ -136,6 +136,7 @@ This metadata will be saved with the individual files and restored by the [Pull 
 | `addon_api_base_url` | The URL where test API is accessible.  | required | `https://vdt.bitrise.io/test` |
 | `addon_api_token` | The token required to authenticate with the API.  | sensitive | `$ADDON_VDTESTING_API_TOKEN` |
 | `public_install_page_url_map_format` | Provide a language template description using [Golang templates](https://golang.org/pkg/text/template) so that the **Deploy to Bitrise.io** Step can build the required custom output. | required | `{{range $index, $element := .}}{{if $index}}\|{{end}}{{$element.File}}=>{{$element.URL}}{{end}}` |
+| `files_to_redact` |  A newline (`\n`) separated list of file paths to redact secrets from before the step deploys them. |  |  |
 | `permanent_download_url_map_format` | Provide a language template description using [Golang templates](https://golang.org/pkg/text/template) so that the **Deploy to Bitrise.io** Step can build the required custom output for the permanent download URL.   | required | `{{range $index, $element := .}}{{if $index}}\|{{end}}{{$element.File}}=>{{$element.URL}}{{end}}` |
 | `debug_mode` | The Step will print more verbose logs if enabled. | required | `false` |
 </details>
