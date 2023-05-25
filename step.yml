@@ -184,7 +184,7 @@ inputs:
       value_options:
       - "true"
       - "false"
-  - bundletool_version: "1.8.1"
+  - bundletool_version: "1.15.0"
     opts:
       category: Build Artifact Deployment
       title: "Bundletool version"
