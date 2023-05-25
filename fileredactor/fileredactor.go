@@ -14,6 +14,8 @@ import (
 
 const bufferSize = 64 * 1024
 
+// FileRedactor is an interface for a structure which, given a slice of file paths and another slice of secrets can
+// process the specified files to redact secrets from them.
 type FileRedactor interface {
 	RedactFiles([]string, []string) error
 }
@@ -22,6 +24,7 @@ type fileRedactor struct {
 	fileManager fileutil.FileManager
 }
 
+// NewFileRedactor returns a structure that implements the FileRedactor interface
 func NewFileRedactor(manager fileutil.FileManager) FileRedactor {
 	return fileRedactor{
 		fileManager: manager,

@@ -8,6 +8,8 @@ import (
 	"github.com/bitrise-io/go-utils/v2/pathutil"
 )
 
+// FilePathProcessor is an interface for an entity which accepts file paths separated by the
+// newline (`\n`) character and returns a slice of absolute paths.
 type FilePathProcessor interface {
 	ProcessFilePaths(string) ([]string, error)
 }
@@ -18,6 +20,10 @@ type filePathProcessor struct {
 	pathChecker   pathutil.PathChecker
 }
 
+// NewFilePathProcessor returns a structure which implements the FilePathProcessor interface.
+// The implementation includes handling filepaths defined as environment variables, relative file paths,
+// and absolute file paths.
+// The implementation also includes making sure the filepath exists and is not a directory.
 func NewFilePathProcessor(repository env.Repository, modifier pathutil.PathModifier, checker pathutil.PathChecker) FilePathProcessor {
 	return filePathProcessor{
 		envRepository: repository,
