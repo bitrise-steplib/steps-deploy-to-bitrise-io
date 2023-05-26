@@ -3,7 +3,6 @@ package xcresult3
 import (
 	"strconv"
 	"fmt"
-	"github.com/bitrise-io/go-utils/log"
 )
 
 type DecoratedTestSummaryGroups struct {
