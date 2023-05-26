@@ -151,22 +151,30 @@ func genTestSuite(name string,
 		mtx             sync.RWMutex
 	)
 
+	decoratedTests := decorateTests(tests) 
+
 	testSuite := junit.TestSuite{
 		Name:      name,
-		Tests:     len(tests),
-		Failures:  summary.failuresCount(name),
-		Skipped:   summary.skippedCount(name),
-		Time:      summary.totalTime(name),
-		TestCases: make([]junit.TestCase, len(tests)),
+		Tests:     len(decoratedTests.tests)-decoratedTests.flaky,
+		Failures:  decoratedTests.failures,
+		Skipped:   decoratedTests.skipped,
+		Time:      decoratedTests.totalTime,
+		TestCases: make([]junit.TestCase, len(decoratedTests.tests)-decoratedTests.flaky),
 	}
 
 	testIdx := 0
-	for testIdx < len(tests) {
-		for i := 0; i < maxParallel && testIdx < len(tests); i++ {
-			test := tests[testIdx]
+	adjustedTestIdx := testIdx
+	for testIdx < len(decoratedTests.tests) {
+		for i := 0; i < maxParallel && testIdx < len(decoratedTests.tests); i++ {
+			test := decoratedTests.tests[testIdx]
+
+			if test.TestStatus.Value == "Flaky" {
+				testIdx++
+				continue
+			}
 			wg.Add(1)
 
-			go func(test ActionTestSummaryGroup, testIdx int) {
+			go func(test ActionTestSummaryGroup, adjustedTestIdx int) {
 				defer wg.Done()
 
 				testCase, err := genTestCase(test, xcresultPath, testResultDir)
@@ -176,12 +184,12 @@ func genTestSuite(name string,
 					mtx.Unlock()
 				}
 
-				testSuite.TestCases[testIdx] = testCase
-			}(test, testIdx)
+				testSuite.TestCases[adjustedTestIdx] = testCase
+			}(test, adjustedTestIdx)
 
 			testIdx++
+			adjustedTestIdx++
 		}
-
 		wg.Wait()
 	}
 
