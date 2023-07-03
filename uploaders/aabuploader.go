@@ -7,6 +7,7 @@ import (
 
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/androidartifact"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/androidsignature"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/bundletool"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
@@ -68,9 +69,15 @@ func DeployAAB(item deployment.DeployableItem, artifacts []string, buildURL, tok
 		"build_type":      info.BuildType,
 	}
 
+	signature, err := androidsignature.Read(pth)
+	if err != nil {
+		log.Warnf("Failed to read signature: %s", err)
+	}
+	aabInfoMap["signed_by"] = signature
+
 	splitMeta, err := androidartifact.CreateSplitArtifactMeta(pth, artifacts)
 	if err != nil {
-		log.Errorf("Failed to create split meta, error: %s", err)
+		log.Warnf("Failed to create split meta, error: %s", err)
 	} else {
 		aabInfoMap["apk"] = splitMeta.APK
 		aabInfoMap["aab"] = splitMeta.AAB
