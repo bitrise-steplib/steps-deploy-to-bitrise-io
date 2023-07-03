@@ -71,20 +71,20 @@ func DeployAAB(item deployment.DeployableItem, artifacts []string, buildURL, tok
 
 	signature, err := androidsignature.Read(pth)
 	if err != nil {
-		log.Errorf("Failed to read signature: %s", err)
+		log.Warnf("Failed to read signature: %s", err)
 	}
 	aabInfoMap["signed_by"] = signature
 
 	splitMeta, err := androidartifact.CreateSplitArtifactMeta(pth, artifacts)
 	if err != nil {
-		log.Errorf("Failed to create split meta, error: %s", err)
+		log.Warnf("Failed to create split meta, error: %s", err)
 	} else {
 		aabInfoMap["apk"] = splitMeta.APK
 		aabInfoMap["aab"] = splitMeta.AAB
 		aabInfoMap["split"] = splitMeta.Split
 		aabInfoMap["universal"] = splitMeta.UniversalApk
 	}
-	
+
 	// ---
 
 	const AABContentType = "application/octet-stream aab"
