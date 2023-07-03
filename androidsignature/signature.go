@@ -24,10 +24,11 @@ func Read(path string) (string, error) {
 	if strings.Contains(output, validSignatureMessage) {
 		// The signature details appear in the output in the following format:
 		// - Signed by "C=Aa, ST=Bbbbb, L=Ccccc, O=Ddddd, OU=Eeeee, CN=Fffff"
-		regex := regexp.MustCompile(`- Signed by "(.*?)"`)
-		matches := regex.FindStringSubmatch(output)
-		if len(matches) == 2 {
-			signature = matches[1]
+		regex := regexp.MustCompile(`- Signed by ".*"`)
+		sig := regex.FindString(output)
+		if sig != "" {
+			signature = strings.TrimPrefix(sig, "- Signed by \"")
+			signature = strings.TrimSuffix(signature, "\"")
 		}
 	}
 
