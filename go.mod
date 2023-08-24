@@ -1,6 +1,6 @@
 module github.com/bitrise-steplib/steps-deploy-to-bitrise-io
 
-go 1.17
+go 1.20
 
 require (
 	github.com/avast/apkparser v0.0.0-20210301101811-6256c76f738e
@@ -10,7 +10,7 @@ require (
 	github.com/bitrise-io/go-steputils v1.0.5
 	github.com/bitrise-io/go-utils v1.0.9
 	github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.15
-	github.com/bitrise-io/go-xcode v1.0.15
+	github.com/bitrise-io/go-xcode v1.0.16
 	github.com/google/go-cmp v0.5.9
 	github.com/gorilla/mux v1.8.0
 	github.com/pkg/errors v0.9.1
