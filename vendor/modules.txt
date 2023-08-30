@@ -11,11 +11,15 @@ github.com/bitrise-io/envman/models
 # github.com/bitrise-io/go-android v0.0.0-20210517091621-72f0eb7a5197
 ## explicit; go 1.16
 github.com/bitrise-io/go-android/sdk
-# github.com/bitrise-io/go-steputils v0.0.0-20210514150206-5b6261447e77
+# github.com/bitrise-io/go-pkcs12 v0.0.0-20230815095624-feb898696e02
+## explicit; go 1.19
+github.com/bitrise-io/go-pkcs12
+github.com/bitrise-io/go-pkcs12/internal/rc2
+# github.com/bitrise-io/go-steputils v1.0.5
 ## explicit; go 1.15
 github.com/bitrise-io/go-steputils/stepconf
 github.com/bitrise-io/go-steputils/tools
-# github.com/bitrise-io/go-utils v1.0.6
+# github.com/bitrise-io/go-utils v1.0.9
 ## explicit; go 1.13
 github.com/bitrise-io/go-utils/colorstring
 github.com/bitrise-io/go-utils/command
@@ -36,8 +40,8 @@ github.com/bitrise-io/go-utils/ziputil
 ## explicit; go 1.17
 github.com/bitrise-io/go-utils/v2/env
 github.com/bitrise-io/go-utils/v2/errorutil
-# github.com/bitrise-io/go-xcode v0.0.0-20210521101355-fb6a1eb6e05b
-## explicit; go 1.15
+# github.com/bitrise-io/go-xcode v1.0.16
+## explicit; go 1.20
 github.com/bitrise-io/go-xcode/certificateutil
 github.com/bitrise-io/go-xcode/exportoptions
 github.com/bitrise-io/go-xcode/ipa
@@ -50,10 +54,6 @@ github.com/bitrise-io/go-xcode/xcodeproject/serialized
 # github.com/bitrise-io/goinp v0.0.0-20210504152833-8559b0680ab1
 ## explicit; go 1.16
 github.com/bitrise-io/goinp/goinp
-# github.com/bitrise-io/pkcs12 v0.0.0-20210430063833-0da06eb56630
-## explicit
-github.com/bitrise-io/pkcs12
-github.com/bitrise-io/pkcs12/internal/rc2
 # github.com/bitrise-io/stepman v0.0.0-20210517135458-203f7a48d37a
 ## explicit; go 1.16
 github.com/bitrise-io/stepman/models
@@ -63,8 +63,8 @@ github.com/davecgh/go-spew/spew
 # github.com/fullsailor/pkcs7 v0.0.0-20190404230743-d7302db945fa
 ## explicit
 github.com/fullsailor/pkcs7
-# github.com/google/go-cmp v0.5.5
-## explicit; go 1.8
+# github.com/google/go-cmp v0.5.9
+## explicit; go 1.13
 github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
@@ -79,7 +79,7 @@ github.com/hashicorp/go-cleanhttp
 # github.com/hashicorp/go-retryablehttp v0.7.1
 ## explicit; go 1.13
 github.com/hashicorp/go-retryablehttp
-# github.com/hashicorp/go-version v1.3.0
+# github.com/hashicorp/go-version v1.6.0
 ## explicit
 github.com/hashicorp/go-version
 # github.com/klauspost/compress v1.12.2
@@ -97,21 +97,22 @@ github.com/ryanuber/go-glob
 # github.com/stretchr/objx v0.5.0
 ## explicit; go 1.12
 github.com/stretchr/objx
-# github.com/stretchr/testify v1.8.2
-## explicit; go 1.13
+# github.com/stretchr/testify v1.8.4
+## explicit; go 1.20
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/mock
 github.com/stretchr/testify/require
-# golang.org/x/crypto v0.6.0
+# golang.org/x/crypto v0.12.0
 ## explicit; go 1.17
+golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/sys v0.5.0
+# golang.org/x/sys v0.11.0
 ## explicit; go 1.17
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/term v0.5.0
+# golang.org/x/term v0.11.0
 ## explicit; go 1.17
 golang.org/x/term
 # gopkg.in/yaml.v2 v2.4.0
@@ -120,6 +121,6 @@ gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
-# howett.net/plist v0.0.0-20201203080718-1454fab16a06
-## explicit
+# howett.net/plist v1.0.0
+## explicit; go 1.12
 howett.net/plist
