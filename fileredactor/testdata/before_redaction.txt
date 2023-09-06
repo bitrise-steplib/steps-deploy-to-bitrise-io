@@ -1,0 +1,8 @@
+SUPER_SECRET_WORD
+
+Normal output from any of our steps.
+More output.
+
+ANOTHER_SECRET_WORD
+
+The end.
