@@ -8,26 +8,21 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/bitrise-io/go-utils/v2/fileutil"
-
-	pathutil2 "github.com/bitrise-io/go-utils/v2/pathutil"
-
-	"github.com/bitrise-io/go-utils/v2/exitcode"
-
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/fileredactor"
-
-	"github.com/bitrise-io/go-utils/v2/env"
-
 	"github.com/bitrise-io/bitrise/models"
-
 	"github.com/bitrise-io/envman/envman"
 	"github.com/bitrise-io/go-steputils/stepconf"
 	"github.com/bitrise-io/go-steputils/tools"
+	"github.com/bitrise-io/go-steputils/v2/secretkeys"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
+	"github.com/bitrise-io/go-utils/v2/env"
 	"github.com/bitrise-io/go-utils/v2/errorutil"
+	"github.com/bitrise-io/go-utils/v2/exitcode"
+	"github.com/bitrise-io/go-utils/v2/fileutil"
+	pathutil2 "github.com/bitrise-io/go-utils/v2/pathutil"
 	"github.com/bitrise-io/go-utils/ziputil"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/fileredactor"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/uploaders"
 )
@@ -103,8 +98,9 @@ func main() {
 	log.Infof("Redacting files...")
 	pathProcessor := fileredactor.NewFilePathProcessor(repository, pathModifier, pathChecker)
 	filePaths, err := pathProcessor.ProcessFilePaths(config.FilesToRedact)
+	secrets := loadSecrets()
 	redactor := fileredactor.NewFileRedactor(fileManager)
-	err = redactor.RedactFiles(filePaths, []string{})
+	err = redactor.RedactFiles(filePaths, secrets)
 	if err != nil {
 		log.Errorf(errorutil.FormattedError(fmt.Errorf("failed to redact files: %w", err)))
 		os.Exit(int(exitcode.Failure))
@@ -162,6 +158,20 @@ func main() {
 	if config.AddonAPIToken != "" {
 		deployTestResults(config)
 	}
+}
+
+func loadSecrets() []string {
+	envRepository := env.NewRepository()
+	keys := secretkeys.NewManager().Load(envRepository)
+
+	var values []string
+	for _, key := range keys {
+		value := envRepository.Get(key)
+		if value != "" {
+			values = append(values, value)
+		}
+	}
+	return values
 }
 
 func exportInstallPages(artifactURLCollection ArtifactURLCollection, config Config) error {
