@@ -287,6 +287,9 @@ inputs:
         $XCODE_BUILD_RAW_RESULT_TEXT_PATH
         ./path/to/build_log.xml
         ```
+        
+        The step will fail (and potentially also fail the build) if there is any error during the redaction process. 
+        This will prevent secrets in files accidentally leaking out of builds.
       is_required: false
   - debug_mode: "false"
     opts: 
