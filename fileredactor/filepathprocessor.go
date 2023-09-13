@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/bitrise-io/go-utils/v2/env"
 	"github.com/bitrise-io/go-utils/v2/pathutil"
 )
 
@@ -15,20 +14,18 @@ type FilePathProcessor interface {
 }
 
 type filePathProcessor struct {
-	envRepository env.Repository
-	pathModifier  pathutil.PathModifier
-	pathChecker   pathutil.PathChecker
+	pathModifier pathutil.PathModifier
+	pathChecker  pathutil.PathChecker
 }
 
 // NewFilePathProcessor returns a structure which implements the FilePathProcessor interface.
 // The implementation includes handling filepaths defined as environment variables, relative file paths,
 // and absolute file paths.
 // The implementation also includes making sure the filepath exists and is not a directory.
-func NewFilePathProcessor(repository env.Repository, modifier pathutil.PathModifier, checker pathutil.PathChecker) FilePathProcessor {
+func NewFilePathProcessor(modifier pathutil.PathModifier, checker pathutil.PathChecker) FilePathProcessor {
 	return filePathProcessor{
-		envRepository: repository,
-		pathModifier:  modifier,
-		pathChecker:   checker,
+		pathModifier: modifier,
+		pathChecker:  checker,
 	}
 }
 
@@ -47,15 +44,7 @@ func (f filePathProcessor) ProcessFilePaths(filePaths string) ([]string, error) 
 			continue
 		}
 
-		path := item
-		if strings.HasPrefix(item, "$") {
-			path = f.envRepository.Get(item[1:])
-			if path == "" {
-				return nil, fmt.Errorf("invalid item (%s): environment variable isn't set", item)
-			}
-		}
-
-		path, err := f.pathModifier.AbsPath(path)
+		path, err := f.pathModifier.AbsPath(item)
 		if err != nil {
 			return nil, err
 		}

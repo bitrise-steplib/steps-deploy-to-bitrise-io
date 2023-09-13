@@ -26,27 +26,7 @@ func Test_ProcessFilePaths(t *testing.T) {
 			envs:      nil,
 		},
 		{
-			name:  "Expand env var",
-			input: "$ABCD",
-			output: []string{
-				"/some/absolute/path/deploy_dir/a_file.txt",
-			},
-			outputErr: "",
-			envs: map[string]string{
-				"ABCD": "a_file.txt",
-			},
-		},
-		{
-			name: "Missing env var",
-			input: `    
-   $ABCD
-`,
-			output:    nil,
-			outputErr: "invalid item ($ABCD): environment variable isn't set",
-			envs:      nil,
-		},
-		{
-			name: "Expand env var",
+			name: "Expand relative path",
 			input: `    
 /some/absolute/path/to/file.txt
 file_in_deploy_dir.txt
@@ -56,20 +36,12 @@ file_in_deploy_dir.txt
 				"/some/absolute/path/deploy_dir/file_in_deploy_dir.txt",
 			},
 			outputErr: "",
-			envs: map[string]string{
-				"ABCD": "a_file.txt",
-			},
+			envs:      nil,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockRepository := new(mocks.Repository)
-			for key, val := range tt.envs {
-				mockRepository.On("Get", key).Return(val)
-			}
-			mockRepository.On("Get", mock.Anything).Return("")
-
 			mockModifier := new(mocks.PathModifier)
 			mockModifier.On("AbsPath", "a_file.txt").Return(deployDirPath+"/a_file.txt", nil)
 			mockModifier.On("AbsPath", "/some/absolute/path/to/file.txt").Return("/some/absolute/path/to/file.txt", nil)
@@ -78,7 +50,7 @@ file_in_deploy_dir.txt
 			mockChecker := new(mocks.PathChecker)
 			mockChecker.On("IsDirExists", mock.Anything).Return(false, nil)
 
-			pathProcessor := NewFilePathProcessor(mockRepository, mockModifier, mockChecker)
+			pathProcessor := NewFilePathProcessor(mockModifier, mockChecker)
 			result, err := pathProcessor.ProcessFilePaths(tt.input)
 
 			if err != nil && tt.outputErr != "" {
