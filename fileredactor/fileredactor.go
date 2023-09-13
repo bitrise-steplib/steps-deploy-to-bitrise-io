@@ -62,20 +62,9 @@ func (f fileRedactor) redactFile(path string, secrets []string, logger log.Logge
 		}
 	}()
 
-	buffer := make([]byte, bufferSize)
 	redactWriter := redactwriter.New(secrets, destination, logger)
-	for {
-		n, err := source.Read(buffer)
-		if err != nil && err != io.EOF {
-			return err
-		}
-		if n == 0 {
-			break
-		}
-
-		if _, err := redactWriter.Write(buffer[:n]); err != nil {
-			return err
-		}
+	if _, err := io.Copy(redactWriter, source); err != nil {
+		return err
 	}
 
 	//rename new file to old file name
