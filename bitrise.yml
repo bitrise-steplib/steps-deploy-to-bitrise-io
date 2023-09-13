@@ -17,16 +17,11 @@ app:
 workflows:
   test:
     steps:
-    - go-list: {}
-    - script:
-        title: Exclude the mock packages
+    - go-list:
         inputs:
-          - content: |-
-              #!/bin/bash
-              set -ex
-              # Remove the mock packages because errcheck will find unhandled errors in the generated code
-              filtered=$(echo "$BITRISE_GO_PACKAGES" | sed '/mocks/d')
-              envman add --key BITRISE_GO_PACKAGES --value "${filtered}"
+        - exclude: |-
+            */vendor/*
+            */mocks
     - golint: {}
     - errcheck: {}
     - go-test: {}
