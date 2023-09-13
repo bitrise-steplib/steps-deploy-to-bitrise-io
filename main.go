@@ -89,20 +89,34 @@ func main() {
 		fail("Failed to create tmp dir, error: %s", err)
 	}
 
+	fmt.Println()
+	log.Infof("Collecting files to redact...")
+
 	pathModifier := pathutil2.NewPathModifier()
 	pathChecker := pathutil2.NewPathChecker()
-	fileManager := fileutil.NewFileManager()
-
-	fmt.Println()
-	log.Infof("Redacting files...")
 	pathProcessor := fileredactor.NewFilePathProcessor(pathModifier, pathChecker)
 	filePaths, err := pathProcessor.ProcessFilePaths(config.FilesToRedact)
-	secrets := loadSecrets()
-	redactor := fileredactor.NewFileRedactor(fileManager)
-	err = redactor.RedactFiles(filePaths, secrets)
 	if err != nil {
-		log.Errorf(errorutil.FormattedError(fmt.Errorf("failed to redact files: %w", err)))
+		log.Errorf(errorutil.FormattedError(fmt.Errorf("failed to collect file paths to redact: %w", err)))
 		os.Exit(int(exitcode.Failure))
+	}
+
+	if len(filePaths) > 0 {
+		log.Printf("List of files to redact:")
+		for _, path := range filePaths {
+			log.Printf("- %s", path)
+		}
+
+		fileManager := fileutil.NewFileManager()
+		redactor := fileredactor.NewFileRedactor(fileManager)
+		secrets := loadSecrets()
+		err = redactor.RedactFiles(filePaths, secrets)
+		if err != nil {
+			log.Errorf(errorutil.FormattedError(fmt.Errorf("failed to redact files: %w", err)))
+			os.Exit(int(exitcode.Failure))
+		}
+	} else {
+		log.Printf("No files to redact...")
 	}
 
 	fmt.Println()
