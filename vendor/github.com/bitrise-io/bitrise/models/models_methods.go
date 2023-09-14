@@ -944,7 +944,7 @@ func MergeStepWith(step, otherStep stepmanModels.StepModel) (stepmanModels.StepM
 		step.Toolkit = new(stepmanModels.StepToolkitModel)
 		*step.Toolkit = *otherStep.Toolkit
 	}
-	if otherStep.Deps != nil && (len(otherStep.Deps.Brew) > 0 || len(otherStep.Deps.AptGet) > 0 || len(otherStep.Deps.CheckOnly) > 0) {
+	if otherStep.Deps != nil && (len(otherStep.Deps.Brew) > 0 || len(otherStep.Deps.AptGet) > 0) {
 		step.Deps = otherStep.Deps
 	}
 	if otherStep.IsRequiresAdminUser != nil {
@@ -962,6 +962,9 @@ func MergeStepWith(step, otherStep stepmanModels.StepModel) (stepmanModels.StepM
 	}
 	if otherStep.Timeout != nil {
 		step.Timeout = pointers.NewIntPtr(*otherStep.Timeout)
+	}
+	if otherStep.NoOutputTimeout != nil {
+		step.NoOutputTimeout = pointers.NewIntPtr(*otherStep.NoOutputTimeout)
 	}
 
 	for _, input := range step.Inputs {

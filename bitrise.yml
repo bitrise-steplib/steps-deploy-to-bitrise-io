@@ -17,7 +17,11 @@ app:
 workflows:
   test:
     steps:
-    - go-list: {}
+    - go-list:
+        inputs:
+        - exclude: |-
+            */vendor/*
+            */mocks
     - golint: {}
     - errcheck: {}
     - go-test: {}
@@ -28,6 +32,7 @@ workflows:
     - _download_sample_artifacts
     - test
     after_run:
+    - _file_redaction
     - _zero_length_file_upload
     - _test_results_deployment
     steps:
@@ -245,6 +250,48 @@ workflows:
         - build_api_token: $BITRISE_BUILD_API_TOKEN
         - deploy_path: 0_length_file.txt
         - debug_mode: "true"
+
+  _file_redaction:
+    steps:
+      - script:
+          is_always_run: true
+          inputs:
+            - content: |-
+                #!/bin/bash
+                set -ex
+                # Create empty temporary file
+                temp_file_path=$(mktemp)
+                # Add some content
+                echo "this is not a secret\nthis is a secret\nagain not a secret\n" > $temp_file_path
+                
+                # Export the file and the secret as env vars
+                envman add --key FILE_TO_REDACT --value "${temp_file_path}"
+                envman add --key SUPER_SECRET --value "this is a secret" --sensitive
+      - path::./:
+          title: File redaction test
+          run_if: true
+          inputs:
+            - build_url: $BITRISE_BUILD_URL
+            - build_api_token: $BITRISE_BUILD_API_TOKEN
+            - deploy_path: ""
+            - files_to_redact: $FILE_TO_REDACT
+            - debug_mode: "true"
+      - script:
+          is_always_run: true
+          inputs:
+            - content: |-
+                #!/bin/bash
+                set -ex
+                actual_content=$(<$FILE_TO_REDACT)
+                expected_content="this is not a secret\n[REDACTED]\nagain not a secret\n"
+                
+                # Fail if the content of the redacted file does not meat our expected value
+                if [[ "$actual_content" != "$expected_content" ]]; then
+                  echo "$FILE_TO_REDACT was not redacted"
+                  echo "Actual content: "$actual_content""
+                  echo "Expected content: "$expected_content""
+                  exit 1
+                fi
 
   generate_readme:
     steps:

@@ -274,6 +274,23 @@ inputs:
         so that the **Deploy to Bitrise.io** Step can build the required custom output for the permanent download URL.  
       is_required: true
       is_expand: false
+  - files_to_redact:
+    opts:
+      title: Files to redact
+      description: |-
+        A newline (`\n`) separated list of file paths to redact secrets from before the step deploys them.
+      summary: |-
+        A newline (`\n`) separated list of file paths to redact secrets from before the step deploys them.
+        
+        The file path can be specified with environment variables or direct paths:
+        ```
+        $XCODE_BUILD_RAW_RESULT_TEXT_PATH
+        ./path/to/build_log.xml
+        ```
+        
+        The step will fail (and potentially also fail the build) if there is any error during the redaction process. 
+        This will prevent secrets in files accidentally leaking out of builds.
+      is_required: false
   - debug_mode: "false"
     opts: 
       category: Debugging

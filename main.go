@@ -8,18 +8,21 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/bitrise-io/go-utils/v2/env"
-
 	"github.com/bitrise-io/bitrise/models"
-
 	"github.com/bitrise-io/envman/envman"
 	"github.com/bitrise-io/go-steputils/stepconf"
 	"github.com/bitrise-io/go-steputils/tools"
+	"github.com/bitrise-io/go-steputils/v2/secretkeys"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
+	"github.com/bitrise-io/go-utils/v2/env"
 	"github.com/bitrise-io/go-utils/v2/errorutil"
+	"github.com/bitrise-io/go-utils/v2/exitcode"
+	"github.com/bitrise-io/go-utils/v2/fileutil"
+	pathutil2 "github.com/bitrise-io/go-utils/v2/pathutil"
 	"github.com/bitrise-io/go-utils/ziputil"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/fileredactor"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/uploaders"
 )
@@ -44,6 +47,7 @@ type Config struct {
 	AppSlug                       string `env:"BITRISE_APP_SLUG,required"`
 	AddonAPIBaseURL               string `env:"addon_api_base_url,required"`
 	AddonAPIToken                 string `env:"addon_api_token"`
+	FilesToRedact                 string `env:"files_to_redact"`
 	DebugMode                     bool   `env:"debug_mode,opt[true,false]"`
 	BundletoolVersion             string `env:"bundletool_version,required"`
 }
@@ -86,6 +90,36 @@ func main() {
 	}
 
 	fmt.Println()
+	log.Infof("Collecting files to redact...")
+
+	pathModifier := pathutil2.NewPathModifier()
+	pathChecker := pathutil2.NewPathChecker()
+	pathProcessor := fileredactor.NewFilePathProcessor(pathModifier, pathChecker)
+	filePaths, err := pathProcessor.ProcessFilePaths(config.FilesToRedact)
+	if err != nil {
+		log.Errorf(errorutil.FormattedError(fmt.Errorf("failed to collect file paths to redact: %w", err)))
+		os.Exit(int(exitcode.Failure))
+	}
+
+	if len(filePaths) > 0 {
+		log.Printf("List of files to redact:")
+		for _, path := range filePaths {
+			log.Printf("- %s", path)
+		}
+
+		fileManager := fileutil.NewFileManager()
+		redactor := fileredactor.NewFileRedactor(fileManager)
+		secrets := loadSecrets()
+		err = redactor.RedactFiles(filePaths, secrets)
+		if err != nil {
+			log.Errorf(errorutil.FormattedError(fmt.Errorf("failed to redact files: %w", err)))
+			os.Exit(int(exitcode.Failure))
+		}
+	} else {
+		log.Printf("No files to redact...")
+	}
+
+	fmt.Println()
 	log.Infof("Collecting files to deploy...")
 
 	var deployableItems []deployment.DeployableItem
@@ -105,7 +139,8 @@ func main() {
 
 	if strings.TrimSpace(config.PipelineIntermediateFiles) != "" {
 		zipComparator := deployment.NewZipComparator(deployment.DefaultReadZipFunction)
-		collector := deployment.NewCollector(zipComparator, deployment.DefaultIsDirFunction, ziputil.ZipDir, env.NewRepository(), tmpDir)
+		repository := env.NewRepository()
+		collector := deployment.NewCollector(zipComparator, deployment.DefaultIsDirFunction, ziputil.ZipDir, repository, tmpDir)
 		deployableItems, err = collector.AddIntermediateFiles(deployableItems, config.PipelineIntermediateFiles)
 		if err != nil {
 			fail("%s", err)
@@ -137,6 +172,20 @@ func main() {
 	if config.AddonAPIToken != "" {
 		deployTestResults(config)
 	}
+}
+
+func loadSecrets() []string {
+	envRepository := env.NewRepository()
+	keys := secretkeys.NewManager().Load(envRepository)
+
+	var values []string
+	for _, key := range keys {
+		value := envRepository.Get(key)
+		if value != "" {
+			values = append(values, value)
+		}
+	}
+	return values
 }
 
 func exportInstallPages(artifactURLCollection ArtifactURLCollection, config Config) error {

@@ -1,0 +1,8 @@
+[REDACTED]
+
+Normal output from any of our steps.
+More output.
+
+[REDACTED]
+
+The end.
