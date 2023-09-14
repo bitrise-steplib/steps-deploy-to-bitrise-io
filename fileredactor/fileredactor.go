@@ -66,7 +66,9 @@ func (f fileRedactor) redactFile(path string, secrets []string, logger log.Logge
 	if _, err := io.Copy(redactWriter, source); err != nil {
 		return err
 	}
-
+       if err := redactWriter.Close(); err != nil {
+		return fmt.Errorf("failed to redact secrets: %w", err)
+       }
 	//rename new file to old file name
 	err = os.Rename(newPath, path)
 	if err != nil {
