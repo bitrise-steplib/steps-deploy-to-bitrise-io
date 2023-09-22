@@ -152,6 +152,14 @@ workflows:
         - notify_email_list: $NOTIFY_EMAIL_LIST
         - is_enable_public_page: "true"
         - debug_mode: "true"
+    - script:
+        is_always_run: true
+        inputs:
+          - content: |-
+              #!/bin/bash
+              set -ex
+              # Force turn on the parallel uploads
+              envman add --key BITRISE_DEPLOY_UPLOAD_CONCURRENCY --value "10"
     - path::./:
         title: Many xml resources test
         run_if: true

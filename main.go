@@ -6,7 +6,9 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/bitrise-io/bitrise/models"
 	"github.com/bitrise-io/envman/envman"
@@ -50,6 +52,7 @@ type Config struct {
 	FilesToRedact                 string `env:"files_to_redact"`
 	DebugMode                     bool   `env:"debug_mode,opt[true,false]"`
 	BundletoolVersion             string `env:"bundletool_version,required"`
+	UploadConcurrency             string `env:"BITRISE_DEPLOY_UPLOAD_CONCURRENCY"`
 }
 
 // PublicInstallPage ...
@@ -150,15 +153,21 @@ func main() {
 	if len(deployableItems) == 0 {
 		log.Printf("No deployment files were defined. Please check the deploy_path and pipeline_intermediate_files inputs.")
 	} else {
-		log.Printf("List of files to deploy:")
+		log.Printf("List of files to deploy (%d):", len(deployableItems))
 		logDeployFiles(deployableItems)
 
 		fmt.Println()
 		log.Infof("Deploying files...")
-		artifactURLCollection, err := deploy(deployableItems, config)
-		if err != nil {
+		artifactURLCollection, errors := deploy(deployableItems, config)
+		if len(errors) > 0 {
 			fmt.Println()
-			fail(errorutil.FormattedError(err))
+
+			var errMessage string
+			for _, err := range errors {
+				errMessage += errorutil.FormattedError(err)
+			}
+
+			fail(errMessage)
 		}
 
 		log.Donef("Success")
@@ -393,7 +402,7 @@ func findAPKsAndAABs(items []deployment.DeployableItem) (apks []deployment.Deplo
 	return
 }
 
-func deploy(deployableItems []deployment.DeployableItem, config Config) (ArtifactURLCollection, error) {
+func deploy(deployableItems []deployment.DeployableItem, config Config) (ArtifactURLCollection, []error) {
 	apks, aabs, others := findAPKsAndAABs(deployableItems)
 
 	var androidArtifacts []string
@@ -405,77 +414,69 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 		PublicInstallPageURLs: map[string]string{},
 		PermanentDownloadURLs: map[string]string{},
 	}
-	errorCollection := []error{}
-	for _, apk := range apks {
-		log.Printf("Deploying apk file: %s", apk)
+	var errorCollection []error
+	var wg sync.WaitGroup
 
-		artifactURLs, err := uploaders.DeployAPK(apk, androidArtifacts, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
-		if err != nil {
-			errorCollection = handleDeploymentFailureError(err, errorCollection)
-			continue
-		}
+	concurrency := determineConcurrency(config)
+	jobs := make(chan bool, concurrency)
+	combinedItems := append(append(apks, aabs...), others...)
+	mapLock := &sync.RWMutex{}
+	errLock := &sync.RWMutex{}
 
-		fillURLMaps(artifactURLCollection, artifactURLs, apk.Path, config.IsPublicPageEnabled)
+	for _, item := range combinedItems {
+		wg.Add(1)
 
-		fmt.Println()
+		go func(item deployment.DeployableItem) {
+			defer wg.Done()
+
+			jobs <- true
+
+			artifactURLs, err := deploySingleItem(item, config, androidArtifacts)
+			if err != nil {
+				errLock.Lock()
+				errorCollection = handleDeploymentFailureError(err, errorCollection)
+				errLock.Unlock()
+			} else {
+				fillURLMaps(mapLock, artifactURLCollection, artifactURLs, item.Path, config.IsPublicPageEnabled)
+			}
+
+			<-jobs
+		}(item)
 	}
 
-	for _, item := range append(aabs, others...) {
-		pth := item.Path
-		fileType := getFileType(pth)
+	wg.Wait()
 
-		switch fileType {
-		case ".ipa":
-			log.Printf("Deploying ipa file: %s", pth)
+	return artifactURLCollection, errorCollection
+}
 
-			artifactURLs, err := uploaders.DeployIPA(item, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
-			if err != nil {
-				errorCollection = handleDeploymentFailureError(err, errorCollection)
-				continue
-			}
+func deploySingleItem(item deployment.DeployableItem, config Config, androidArtifacts []string) (uploaders.ArtifactURLs, error) {
+	pth := item.Path
+	fileType := getFileType(pth)
 
-			fillURLMaps(artifactURLCollection, artifactURLs, pth, config.IsPublicPageEnabled)
-		case ".aab":
-			log.Printf("Deploying aab file: %s", pth)
+	defer fmt.Println()
 
-			artifactURLs, err := uploaders.DeployAAB(item, androidArtifacts, config.BuildURL, config.APIToken, config.BundletoolVersion)
-			if err != nil {
-				errorCollection = handleDeploymentFailureError(err, errorCollection)
-				continue
-			}
+	switch fileType {
+	case ".apk":
+		log.Printf("Deploying apk file: %s", pth)
 
-			fillURLMaps(artifactURLCollection, artifactURLs, pth, false)
-		case zippedXcarchiveExt:
-			log.Printf("Deploying xcarchive file: %s", pth)
+		return uploaders.DeployAPK(item, androidArtifacts, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
+	case ".aab":
+		log.Printf("Deploying aab file: %s", pth)
 
-			artifactURLs, err := uploaders.DeployXcarchive(item, config.BuildURL, config.APIToken)
-			if err != nil {
-				errorCollection = handleDeploymentFailureError(err, errorCollection)
-				continue
-			}
-			fillURLMaps(artifactURLCollection, artifactURLs, pth, false)
-		default:
-			log.Printf("Deploying file: %s", pth)
+		return uploaders.DeployAAB(item, androidArtifacts, config.BuildURL, config.APIToken, config.BundletoolVersion)
+	case ".ipa":
+		log.Printf("Deploying ipa file: %s", pth)
 
-			artifactURLs, err := uploaders.DeployFile(item, config.BuildURL, config.APIToken)
-			if err != nil {
-				errorCollection = handleDeploymentFailureError(err, errorCollection)
-				continue
-			}
+		return uploaders.DeployIPA(item, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
+	case zippedXcarchiveExt:
+		log.Printf("Deploying xcarchive file: %s", pth)
 
-			fillURLMaps(artifactURLCollection, artifactURLs, pth, config.IsPublicPageEnabled)
-		}
+		return uploaders.DeployXcarchive(item, config.BuildURL, config.APIToken)
+	default:
+		log.Printf("Deploying file: %s", pth)
 
-		fmt.Println()
+		return uploaders.DeployFile(item, config.BuildURL, config.APIToken)
 	}
-
-	var errorToReturn error
-
-	if len(errorCollection) > 0 {
-		errorToReturn = errorCollection[0]
-	}
-
-	return artifactURLCollection, errorToReturn
 }
 
 func handleDeploymentFailureError(err error, errorCollection []error) []error {
@@ -485,12 +486,15 @@ func handleDeploymentFailureError(err error, errorCollection []error) []error {
 	return errorCollection
 }
 
-func fillURLMaps(artifactURLCollection ArtifactURLCollection, artifactURLs uploaders.ArtifactURLs, apk string, tryPublic bool) {
+func fillURLMaps(lock *sync.RWMutex, artifactURLCollection ArtifactURLCollection, artifactURLs uploaders.ArtifactURLs, path string, tryPublic bool) {
+	lock.Lock()
+	defer lock.Unlock()
+
 	if tryPublic && artifactURLs.PublicInstallPageURL != "" {
-		artifactURLCollection.PublicInstallPageURLs[filepath.Base(apk)] = artifactURLs.PublicInstallPageURL
+		artifactURLCollection.PublicInstallPageURLs[filepath.Base(path)] = artifactURLs.PublicInstallPageURL
 	}
 	if artifactURLs.PermanentDownloadURL != "" {
-		artifactURLCollection.PermanentDownloadURLs[filepath.Base(apk)] = artifactURLs.PermanentDownloadURL
+		artifactURLCollection.PermanentDownloadURLs[filepath.Base(path)] = artifactURLs.PermanentDownloadURL
 	}
 }
 
@@ -506,4 +510,25 @@ func validateGoTemplate(publicInstallPageMapFormat string) error {
 
 	_, err := temp.Parse(publicInstallPageMapFormat)
 	return err
+}
+
+func determineConcurrency(config Config) int {
+	if config.UploadConcurrency == "" {
+		return 1
+	}
+
+	value, err := strconv.Atoi(config.UploadConcurrency)
+	if err != nil {
+		return 1
+	}
+
+	if value < 1 {
+		return 1
+	}
+
+	if value > 10 {
+		return 10
+	}
+
+	return value
 }
