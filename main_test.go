@@ -3,6 +3,8 @@ package main
 import (
 	"html/template"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_generateUrlOutputWithTemplate(t *testing.T) {
@@ -89,6 +91,48 @@ func Test_generateUrlOutputWithTemplate(t *testing.T) {
 			if got != tt.want {
 				t.Errorf("applyTemplateWithMaxSize() = %v, want %v", got, tt.want)
 			}
+		})
+	}
+}
+
+func TestUploadConcurrency(t *testing.T) {
+	tests := []struct {
+		name   string
+		config Config
+		want   int
+	}{
+		{
+			name: "Zero value",
+			config: Config{
+				UploadConcurrency: "0",
+			},
+			want: 1,
+		},
+		{
+			name: "Negative value",
+			config: Config{
+				UploadConcurrency: "-1",
+			},
+			want: 1,
+		},
+		{
+			name: "In range value",
+			config: Config{
+				UploadConcurrency: "3",
+			},
+			want: 3,
+		},
+		{
+			name: "Too large value",
+			config: Config{
+				UploadConcurrency: "100",
+			},
+			want: 10,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, determineConcurrency(tt.config))
 		})
 	}
 }
