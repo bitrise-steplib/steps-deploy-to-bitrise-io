@@ -38,5 +38,5 @@ func fetchAny(source string, fallbackSources ...string) (Path, error) {
 
 // Command ...
 func (p Path) Command(cmd string, args ...string) *command.Model {
-	return command.New("java", append([]string{"-jar", string(p), cmd}, args...)...)
+	return command.New("java", append([]string{"-Djdk.util.zip.disableZip64ExtraFieldValidation=true", "-jar", string(p), cmd}, args...)...)
 }
