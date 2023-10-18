@@ -93,7 +93,7 @@ func DeployAAB(item deployment.DeployableItem, artifacts []string, buildURL, tok
 		return ArtifactURLs{}, fmt.Errorf("failed to create apk artifact: %s %w", pth, err)
 	}
 
-	if err := uploadArtifact(uploadURL, pth, AABContentType); err != nil {
+	if err := UploadArtifact(uploadURL, pth, AABContentType); err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to upload apk artifact, error: %s", err)
 	}
 

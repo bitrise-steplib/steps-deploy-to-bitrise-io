@@ -89,8 +89,8 @@ func Test_uploadArtifact(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := uploadArtifact(tt.uploadURL, tt.artifactPth, tt.contentType); (err != nil) != tt.wantErr {
-				t.Errorf("uploadArtifact() error = %v, wantErr %v", err, tt.wantErr)
+			if err := UploadArtifact(tt.uploadURL, tt.artifactPth, tt.contentType); (err != nil) != tt.wantErr {
+				t.Errorf("UploadArtifact() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
