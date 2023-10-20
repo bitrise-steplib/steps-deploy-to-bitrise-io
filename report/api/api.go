@@ -20,15 +20,15 @@ type ClientAPI interface {
 	FinishReport(identifier string, allAssetsUploaded bool) error
 }
 
-// HttpClient ...
-type HttpClient interface {
+// HTTPClient ...
+type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
 // TestReportClient ...
 type TestReportClient struct {
 	logger     log.Logger
-	httpClient HttpClient
+	httpClient HTTPClient
 	buildURL   string
 	authToken  string
 }

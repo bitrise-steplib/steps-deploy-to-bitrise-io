@@ -82,10 +82,10 @@ func TestCreateReport(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			apiClient, mockHttpClient := createSutAndMock(t)
+			apiClient, mockHTTPClient := createSutAndMock(t)
 
 			var request http.Request
-			setupMockNetworking(mockHttpClient, &request, tt.responseBody, tt.responseStatusCode)
+			setupMockNetworking(mockHTTPClient, &request, tt.responseBody, tt.responseStatusCode)
 
 			response, err := apiClient.CreateReport(tt.params)
 			assert.Equal(t, fmt.Sprintf("%s/html_reports.json", buildURL), request.URL.String())
@@ -102,7 +102,7 @@ func TestCreateReport(t *testing.T) {
 				assert.Equal(t, tt.expectedOutput, response)
 			}
 
-			mockHttpClient.AssertExpectations(t)
+			mockHTTPClient.AssertExpectations(t)
 		})
 	}
 }
@@ -138,10 +138,10 @@ func TestFinishReport(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			apiClient, mockHttpClient := createSutAndMock(t)
+			apiClient, mockHTTPClient := createSutAndMock(t)
 
 			var request http.Request
-			setupMockNetworking(mockHttpClient, &request, tt.responseBody, tt.responseStatusCode)
+			setupMockNetworking(mockHTTPClient, &request, tt.responseBody, tt.responseStatusCode)
 
 			err := apiClient.FinishReport(tt.identifier, tt.allAssetsUploaded)
 			assert.Equal(t, fmt.Sprintf("%s/html_reports/%s.json", buildURL, tt.identifier), request.URL.String())
@@ -153,28 +153,28 @@ func TestFinishReport(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			mockHttpClient.AssertExpectations(t)
+			mockHTTPClient.AssertExpectations(t)
 		})
 	}
 }
 
 func createSutAndMock(t *testing.T) (TestReportClient, *mocks.HttpClient) {
-	mockHttpClient := mocks.NewHttpClient(t)
+	mockHTTPClient := mocks.NewHttpClient(t)
 	client := TestReportClient{
 		logger:     log.NewLogger(),
-		httpClient: mockHttpClient,
+		httpClient: mockHTTPClient,
 		authToken:  authToken,
 		buildURL:   buildURL,
 	}
 
-	return client, mockHttpClient
+	return client, mockHTTPClient
 }
 
-func setupMockNetworking(mockHttpClient *mocks.HttpClient, request *http.Request, body string, statusCode int) {
+func setupMockNetworking(mockHTTPClient *mocks.HttpClient, request *http.Request, body string, statusCode int) {
 	response := &http.Response{Body: io.NopCloser(bytes.NewReader([]byte(body)))}
 	response.StatusCode = statusCode
 
-	mockHttpClient.On("Do", mock.Anything).Return(response, nil).Run(func(args mock.Arguments) {
+	mockHTTPClient.On("Do", mock.Anything).Return(response, nil).Run(func(args mock.Arguments) {
 		if request == nil {
 			return
 		}
