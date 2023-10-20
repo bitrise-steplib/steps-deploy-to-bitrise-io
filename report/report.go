@@ -8,6 +8,7 @@ import (
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/report/api"
 )
 
+// TestReportUploader ...
 type TestReportUploader struct {
 	client      api.ClientAPI
 	logger      log.Logger
@@ -15,6 +16,7 @@ type TestReportUploader struct {
 	concurrency int
 }
 
+// NewTestReportUploader ...
 func NewTestReportUploader(reportDir, buildURL, authToken string, concurrency int, logger log.Logger) TestReportUploader {
 	client := api.NewBitriseClient(buildURL, authToken, logger)
 
@@ -26,6 +28,7 @@ func NewTestReportUploader(reportDir, buildURL, authToken string, concurrency in
 	}
 }
 
+// DeployReports ...
 func (t *TestReportUploader) DeployReports() []error {
 	reports, err := collectReports(t.reportDir)
 	if err != nil {

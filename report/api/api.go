@@ -13,16 +13,19 @@ import (
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/uploaders"
 )
 
+// ClientAPI ...
 type ClientAPI interface {
 	CreateReport(params CreateReportParameters) (CreateReportResponse, error)
 	UploadAsset(url, path, contentType string) error
 	FinishReport(identifier string, allAssetsUploaded bool) error
 }
 
+// HttpClient ...
 type HttpClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+// TestReportClient ...
 type TestReportClient struct {
 	logger     log.Logger
 	httpClient HttpClient
@@ -30,6 +33,7 @@ type TestReportClient struct {
 	authToken  string
 }
 
+// NewBitriseClient ...
 func NewBitriseClient(buildURL, authToken string, logger log.Logger) *TestReportClient {
 	httpClient := retry.NewHTTPClient().StandardClient()
 
@@ -41,6 +45,7 @@ func NewBitriseClient(buildURL, authToken string, logger log.Logger) *TestReport
 	}
 }
 
+// CreateReport ...
 func (t *TestReportClient) CreateReport(params CreateReportParameters) (CreateReportResponse, error) {
 	url := fmt.Sprintf("%s/html_reports.json", t.buildURL)
 
@@ -72,10 +77,12 @@ func (t *TestReportClient) CreateReport(params CreateReportParameters) (CreateRe
 	return response, nil
 }
 
+// UploadAsset ...
 func (t *TestReportClient) UploadAsset(url, path, contentType string) error {
 	return uploaders.UploadArtifact(url, path, contentType)
 }
 
+// FinishReport ...
 func (t *TestReportClient) FinishReport(identifier string, allAssetsUploaded bool) error {
 	url := fmt.Sprintf("%s/html_reports/%s.json", t.buildURL, identifier)
 
