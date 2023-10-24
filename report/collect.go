@@ -78,7 +78,9 @@ func detectContentType(path string) string {
 		return fallbackType
 	}
 	defer func() {
-		_ = file.Close()
+		if err := file.Close(); err != nil {
+			// This is empty on purpose to please the linter
+		}
 	}()
 
 	// At most, the first 512 bytes of data are used:
