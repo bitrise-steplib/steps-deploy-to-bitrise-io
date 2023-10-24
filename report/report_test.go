@@ -83,15 +83,23 @@ func createReports(t *testing.T) (string, []Report) {
 
 	var reports []Report
 	for _, data := range reportData {
-		reportName := data["name"].(string)
+		reportName, ok := data["name"].(string)
+		if !ok {
+			require.Fail(t, "Failed to cast the report name to string type")
+		}
+
 		reportPath := filepath.Join(tempDir, reportName)
 		require.NoError(t, os.Mkdir(reportPath, 0755))
 
 		assetDirPath := filepath.Join(reportPath, "something.xcresult")
 		require.NoError(t, os.Mkdir(assetDirPath, 0755))
 
+		assetData, ok := data["assets"].([]map[string]string)
+		if !ok {
+			require.Fail(t, "Failed to cast the asset data to map type")
+		}
+
 		var assets []Asset
-		assetData := data["assets"].([]map[string]string)
 		for _, asset := range assetData {
 			assetName := asset["name"]
 

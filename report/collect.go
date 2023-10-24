@@ -77,7 +77,9 @@ func detectContentType(path string) string {
 	if err != nil {
 		return fallbackType
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 
 	// At most, the first 512 bytes of data are used:
 	// https://golang.org/src/net/http/sniff.go?s=646:688#L11
