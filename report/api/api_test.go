@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"io"
 	"net/http"
 	"testing"
@@ -85,7 +86,7 @@ func TestCreateReport(t *testing.T) {
 			apiClient, mockHTTPClient := createSutAndMock(t)
 
 			var request http.Request
-			setupMockNetworking(mockHTTPClient, &request, tt.responseBody, tt.responseStatusCode)
+			setupMockNetworking(t, mockHTTPClient, &request, tt.responseBody, tt.responseStatusCode)
 
 			response, err := apiClient.CreateReport(tt.params)
 			assert.Equal(t, fmt.Sprintf("%s/html_reports.json", buildURL), request.URL.String())
@@ -141,7 +142,7 @@ func TestFinishReport(t *testing.T) {
 			apiClient, mockHTTPClient := createSutAndMock(t)
 
 			var request http.Request
-			setupMockNetworking(mockHTTPClient, &request, tt.responseBody, tt.responseStatusCode)
+			setupMockNetworking(t, mockHTTPClient, &request, tt.responseBody, tt.responseStatusCode)
 
 			err := apiClient.FinishReport(tt.identifier, tt.allAssetsUploaded)
 			assert.Equal(t, fmt.Sprintf("%s/html_reports/%s.json", buildURL, tt.identifier), request.URL.String())
@@ -170,7 +171,7 @@ func createSutAndMock(t *testing.T) (TestReportClient, *mocks.HttpClient) {
 	return client, mockHTTPClient
 }
 
-func setupMockNetworking(mockHTTPClient *mocks.HttpClient, request *http.Request, body string, statusCode int) {
+func setupMockNetworking(t *testing.T, mockHTTPClient *mocks.HttpClient, request *http.Request, body string, statusCode int) {
 	response := &http.Response{Body: io.NopCloser(bytes.NewReader([]byte(body)))}
 	response.StatusCode = statusCode
 
@@ -178,7 +179,12 @@ func setupMockNetworking(mockHTTPClient *mocks.HttpClient, request *http.Request
 		if request == nil {
 			return
 		}
-		value := args.Get(0).(*http.Request)
+
+		value, ok := args.Get(0).(*http.Request)
+		if !ok {
+			require.Fail(t, "Failed to cast to http.Request")
+		}
+
 		*request = *value
 		response.Request = value
 	})
