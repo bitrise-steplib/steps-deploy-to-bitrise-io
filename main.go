@@ -55,7 +55,7 @@ type Config struct {
 	DebugMode                     bool   `env:"debug_mode,opt[true,false]"`
 	BundletoolVersion             string `env:"bundletool_version,required"`
 	UploadConcurrency             string `env:"BITRISE_DEPLOY_UPLOAD_CONCURRENCY"`
-	TestReportDir                 string `env:"BITRISE_TEST_REPORT_DIR"`
+	HTMLReportDir                 string `env:"BITRISE_HTML_REPORT_DIR"`
 }
 
 // PublicInstallPage ...
@@ -185,19 +185,19 @@ func main() {
 		deployTestResults(config)
 	}
 
-	if config.TestReportDir != "" {
-		deployTestReports(config)
+	if config.HTMLReportDir != "" {
+		deployHTMLReports(config)
 	}
 }
 
-func deployTestReports(config Config) {
+func deployHTMLReports(config Config) {
 	fmt.Println()
-	log.Infof("Deploying test reports...")
+	log.Infof("Deploying html reports...")
 
 	logger := loggerV2.NewLogger()
 	logger.EnableDebugLog(config.DebugMode)
 	concurrency := determineConcurrency(Config{})
-	uploader := report.NewTestReportUploader(config.TestReportDir, config.BuildURL, config.APIToken, concurrency, logger)
+	uploader := report.NewHTMLReportUploader(config.HTMLReportDir, config.BuildURL, config.APIToken, concurrency, logger)
 
 	uploadErrors := uploader.DeployReports()
 	if 0 < len(uploadErrors) {

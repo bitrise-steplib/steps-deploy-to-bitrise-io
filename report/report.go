@@ -8,19 +8,19 @@ import (
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/report/api"
 )
 
-// TestReportUploader ...
-type TestReportUploader struct {
+// HTMLReportUploader ...
+type HTMLReportUploader struct {
 	client      api.ClientAPI
 	logger      log.Logger
 	reportDir   string
 	concurrency int
 }
 
-// NewTestReportUploader ...
-func NewTestReportUploader(reportDir, buildURL, authToken string, concurrency int, logger log.Logger) TestReportUploader {
+// NewHTMLReportUploader ...
+func NewHTMLReportUploader(reportDir, buildURL, authToken string, concurrency int, logger log.Logger) HTMLReportUploader {
 	client := api.NewBitriseClient(buildURL, authToken, logger)
 
-	return TestReportUploader{
+	return HTMLReportUploader{
 		client:      client,
 		logger:      logger,
 		reportDir:   reportDir,
@@ -29,20 +29,20 @@ func NewTestReportUploader(reportDir, buildURL, authToken string, concurrency in
 }
 
 // DeployReports ...
-func (t *TestReportUploader) DeployReports() []error {
-	reports, err := collectReports(t.reportDir)
+func (h *HTMLReportUploader) DeployReports() []error {
+	reports, err := collectReports(h.reportDir)
 	if err != nil {
 		return []error{err}
 	}
 
-	t.logger.Printf("Found reports (%d):", len(reports))
+	h.logger.Printf("Found reports (%d):", len(reports))
 	for _, report := range reports {
-		t.logger.Printf("- %s", report.Name)
+		h.logger.Printf("- %s", report.Name)
 	}
 
 	var errors []error
 	for _, report := range reports {
-		if err := t.uploadReport(report); err != nil {
+		if err := h.uploadReport(report); err != nil {
 			errors = append(errors, err)
 		}
 	}
@@ -50,29 +50,29 @@ func (t *TestReportUploader) DeployReports() []error {
 	return errors
 }
 
-func (t *TestReportUploader) uploadReport(report Report) error {
-	t.logger.Println()
-	t.logger.Printf("Uploading %s", report.Name)
+func (h *HTMLReportUploader) uploadReport(report Report) error {
+	h.logger.Println()
+	h.logger.Printf("Uploading %s", report.Name)
 
-	serverReport, err := t.createReport(report)
+	serverReport, err := h.createReport(report)
 	if err != nil {
 		return err
 	}
 
 	allAssetsUploaded := true
-	errors := t.uploadAssets(report.Assets, serverReport.AssetURLs)
+	errors := h.uploadAssets(report.Assets, serverReport.AssetURLs)
 	if 0 < len(errors) {
 		for _, uploadError := range errors {
-			t.logger.Warnf("Asset upload failed:\n")
-			t.logger.Warnf("- %w", uploadError)
+			h.logger.Warnf("Asset upload failed:\n")
+			h.logger.Warnf("- %w", uploadError)
 		}
 
 		allAssetsUploaded = false
 
-		t.logger.Warnf("Html report will be marked unsuccessful as some assets could not be saved")
+		h.logger.Warnf("Html report will be marked unsuccessful as some assets could not be saved")
 	}
 
-	err = t.finishReport(serverReport.Identifier, allAssetsUploaded)
+	err = h.finishReport(serverReport.Identifier, allAssetsUploaded)
 	if err != nil {
 		return err
 	}
@@ -80,7 +80,7 @@ func (t *TestReportUploader) uploadReport(report Report) error {
 	return nil
 }
 
-func (t *TestReportUploader) createReport(report Report) (ServerReport, error) {
+func (h *HTMLReportUploader) createReport(report Report) (ServerReport, error) {
 	var assets []api.CreateReportAsset
 	for _, asset := range report.Assets {
 		assets = append(assets, api.CreateReportAsset{
@@ -90,7 +90,7 @@ func (t *TestReportUploader) createReport(report Report) (ServerReport, error) {
 		})
 	}
 
-	resp, err := t.client.CreateReport(api.CreateReportParameters{
+	resp, err := h.client.CreateReport(api.CreateReportParameters{
 		Title:  report.Name,
 		Assets: assets,
 	})
@@ -109,11 +109,11 @@ func (t *TestReportUploader) createReport(report Report) (ServerReport, error) {
 	}, nil
 }
 
-func (t *TestReportUploader) uploadAssets(assets []Asset, urls map[string]string) []error {
+func (h *HTMLReportUploader) uploadAssets(assets []Asset, urls map[string]string) []error {
 	var errors []error
 	var wg sync.WaitGroup
 
-	jobs := make(chan bool, t.concurrency)
+	jobs := make(chan bool, h.concurrency)
 
 	for _, item := range assets {
 		wg.Add(1)
@@ -126,7 +126,7 @@ func (t *TestReportUploader) uploadAssets(assets []Asset, urls map[string]string
 
 			jobs <- true
 
-			t.logger.Debugf("Uploading %s", asset.TestDirRelativePath)
+			h.logger.Debugf("Uploading %s", asset.TestDirRelativePath)
 
 			url, ok := urls[asset.TestDirRelativePath]
 			if !ok {
@@ -134,7 +134,7 @@ func (t *TestReportUploader) uploadAssets(assets []Asset, urls map[string]string
 				return
 			}
 
-			err := t.client.UploadAsset(url, asset.Path, asset.ContentType)
+			err := h.client.UploadAsset(url, asset.Path, asset.ContentType)
 			if err != nil {
 				errors = append(errors, err)
 			}
@@ -146,6 +146,6 @@ func (t *TestReportUploader) uploadAssets(assets []Asset, urls map[string]string
 	return errors
 }
 
-func (t *TestReportUploader) finishReport(identifier string, allAssetsUploaded bool) error {
-	return t.client.FinishReport(identifier, allAssetsUploaded)
+func (h *HTMLReportUploader) finishReport(identifier string, allAssetsUploaded bool) error {
+	return h.client.FinishReport(identifier, allAssetsUploaded)
 }

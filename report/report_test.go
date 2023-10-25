@@ -28,7 +28,7 @@ func TestFindsAndUploadsReports(t *testing.T) {
 	setupMockingForReport(mockClient, reports[0])
 	setupMockingForReport(mockClient, reports[2])
 
-	uploader := TestReportUploader{
+	uploader := HTMLReportUploader{
 		client:      mockClient,
 		logger:      loggerV2.NewLogger(),
 		reportDir:   reportDir,
