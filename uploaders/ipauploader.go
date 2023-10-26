@@ -99,7 +99,7 @@ func DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups
 		return ArtifactURLs{}, fmt.Errorf("failed to create ipa artifact: %s %w", pth, err)
 	}
 
-	if err := uploadArtifact(uploadURL, pth, IPAContentType); err != nil {
+	if err := UploadArtifact(uploadURL, pth, IPAContentType); err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to upload ipa artifact, error: %s", err)
 	}
 

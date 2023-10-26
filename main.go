@@ -21,10 +21,12 @@ import (
 	"github.com/bitrise-io/go-utils/v2/errorutil"
 	"github.com/bitrise-io/go-utils/v2/exitcode"
 	"github.com/bitrise-io/go-utils/v2/fileutil"
+	loggerV2 "github.com/bitrise-io/go-utils/v2/log"
 	pathutil2 "github.com/bitrise-io/go-utils/v2/pathutil"
 	"github.com/bitrise-io/go-utils/ziputil"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/fileredactor"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/report"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/uploaders"
 )
@@ -53,6 +55,7 @@ type Config struct {
 	DebugMode                     bool   `env:"debug_mode,opt[true,false]"`
 	BundletoolVersion             string `env:"bundletool_version,required"`
 	UploadConcurrency             string `env:"BITRISE_DEPLOY_UPLOAD_CONCURRENCY"`
+	HTMLReportDir                 string `env:"BITRISE_HTML_REPORT_DIR"`
 }
 
 // PublicInstallPage ...
@@ -180,6 +183,30 @@ func main() {
 
 	if config.AddonAPIToken != "" {
 		deployTestResults(config)
+	}
+
+	if config.HTMLReportDir != "" {
+		deployHTMLReports(config)
+	}
+}
+
+func deployHTMLReports(config Config) {
+	fmt.Println()
+	log.Infof("Deploying html reports...")
+
+	logger := loggerV2.NewLogger()
+	logger.EnableDebugLog(config.DebugMode)
+	concurrency := determineConcurrency(Config{})
+	uploader := report.NewHTMLReportUploader(config.HTMLReportDir, config.BuildURL, config.APIToken, concurrency, logger)
+
+	uploadErrors := uploader.DeployReports()
+	if 0 < len(uploadErrors) {
+		log.Errorf("Failed to upload html reports:")
+		for _, err := range uploadErrors {
+			log.Errorf("- %w", err)
+		}
+	} else {
+		log.Donef("Successful html report upload")
 	}
 }
 

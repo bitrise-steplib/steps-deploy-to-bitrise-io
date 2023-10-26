@@ -72,7 +72,7 @@ func DeployAPK(item deployment.DeployableItem, artifacts []string, buildURL, tok
 		return ArtifactURLs{}, fmt.Errorf("failed to create apk artifact: %s %w", pth, err)
 	}
 
-	if err := uploadArtifact(uploadURL, pth, APKContentType); err != nil {
+	if err := UploadArtifact(uploadURL, pth, APKContentType); err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to upload apk artifact, error: %s", err)
 	}
 

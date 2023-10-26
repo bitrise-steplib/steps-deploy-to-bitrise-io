@@ -136,7 +136,8 @@ func createArtifact(buildURL, token, artifactPth, artifactType, contentType stri
 	return artifactResponse.UploadURL, fmt.Sprintf("%d", artifactResponse.ID), nil
 }
 
-func uploadArtifact(uploadURL, artifactPth, contentType string) error {
+// UploadArtifact ...
+func UploadArtifact(uploadURL, artifactPth, contentType string) error {
 	netClient := &http.Client{
 		Timeout: 10 * time.Minute,
 	}
