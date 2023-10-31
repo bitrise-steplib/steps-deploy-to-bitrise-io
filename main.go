@@ -553,8 +553,8 @@ func determineConcurrency(config Config) int {
 		return 1
 	}
 
-	if value > 10 {
-		return 10
+	if value > 20 {
+		return 20
 	}
 
 	return value
