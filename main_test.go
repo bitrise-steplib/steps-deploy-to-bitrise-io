@@ -127,7 +127,7 @@ func TestUploadConcurrency(t *testing.T) {
 			config: Config{
 				UploadConcurrency: "100",
 			},
-			want: 10,
+			want: 20,
 		},
 	}
 	for _, tt := range tests {
