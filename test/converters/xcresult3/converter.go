@@ -1,6 +1,7 @@
 package xcresult3
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 	"runtime"
@@ -202,7 +203,11 @@ func genTestCase(test ActionTestSummaryGroup, xcresultPath, testResultDir string
 	}
 
 	testSummary, err := test.loadActionTestSummary(xcresultPath)
-	if err != nil {
+	// Ignoring the SummaryNotFoundError error is on purpose because not having an action summary is a valid use case.
+	// For example, failed tests will always have a summary, but successful ones might have it or might not.
+	// If they do not have it, then that means that they did not log anything to the console,
+	// and they were not executed as device configuration tests.
+	if err != nil && !errors.Is(err, ErrSummaryNotFound) {
 		return junit.TestCase{}, err
 	}
 
