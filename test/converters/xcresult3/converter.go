@@ -1,6 +1,7 @@
 package xcresult3
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 	"runtime"
@@ -9,12 +10,13 @@ import (
 	"sync"
 	"time"
 
+	"howett.net/plist"
+
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-xcode/xcodeproject/serialized"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
-	"howett.net/plist"
 )
 
 // Converter ...
@@ -200,15 +202,19 @@ func genTestCase(test ActionTestSummaryGroup, xcresultPath, testResultDir string
 		}
 	}
 
+	testSummary, err := test.loadActionTestSummary(xcresultPath)
+	// Ignoring the SummaryNotFoundError error is on purpose because not having an action summary is a valid use case.
+	// For example, failed tests will always have a summary, but successful ones might have it or might not.
+	// If they do not have it, then that means that they did not log anything to the console,
+	// and they were not executed as device configuration tests.
+	if err != nil && !errors.Is(err, ErrSummaryNotFound) {
+		return junit.TestCase{}, err
+	}
+
 	var failure *junit.Failure
 	var skipped *junit.Skipped
 	switch test.TestStatus.Value {
 	case "Failure":
-		testSummary, err := test.loadActionTestSummary(xcresultPath)
-		if err != nil {
-			return junit.TestCase{}, err
-		}
-
 		failureMessage := ""
 		for _, aTestFailureSummary := range testSummary.FailureSummaries.Values {
 			file := aTestFailureSummary.FileName.Value
@@ -233,10 +239,11 @@ func genTestCase(test ActionTestSummaryGroup, xcresultPath, testResultDir string
 	}
 
 	return junit.TestCase{
-		Name:      test.Name.Value,
-		ClassName: strings.Split(test.Identifier.Value, "/")[0],
-		Failure:   failure,
-		Skipped:   skipped,
-		Time:      duartion,
+		Name:              test.Name.Value,
+		ConfigurationHash: testSummary.Configuration.Hash,
+		ClassName:         strings.Split(test.Identifier.Value, "/")[0],
+		Failure:           failure,
+		Skipped:           skipped,
+		Time:              duartion,
 	}, nil
 }
