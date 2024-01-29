@@ -70,7 +70,7 @@ func collectReports(dir string) ([]Report, error) {
 		var reportInfo Info
 		if infoFileData, err := os.ReadFile(filepath.Join(testDir, htmlReportInfoFile)); err == nil {
 			if err := json.Unmarshal(infoFileData, &reportInfo); err != nil {
-				return nil, fmt.Errorf("cannot parse report info file: %w\n", err)
+				return nil, fmt.Errorf("cannot parse report info file: %w", err)
 			}
 		}
 
