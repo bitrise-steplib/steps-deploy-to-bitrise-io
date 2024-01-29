@@ -21,6 +21,7 @@ type ServerReport struct {
 	AssetURLs  map[string]string
 }
 
+// Info ...
 type Info struct {
 	Category string `json:"category"`
 }
