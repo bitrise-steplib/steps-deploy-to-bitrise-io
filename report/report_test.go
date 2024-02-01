@@ -2,6 +2,7 @@ package report
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -27,6 +28,7 @@ func TestFindsAndUploadsReports(t *testing.T) {
 	mockClient := mocks.NewClientAPI(t)
 	setupMockingForReport(mockClient, reports[0])
 	setupMockingForReport(mockClient, reports[2])
+	setupMockingForReport(mockClient, reports[3])
 
 	uploader := HTMLReportUploader{
 		client:      mockClient,
@@ -71,6 +73,19 @@ func createReports(t *testing.T) (string, []Report) {
 		},
 		{
 			"name": "Test C",
+			"assets": []map[string]string{
+				{
+					"name": "index.html",
+					"size": "1",
+					"type": "text/plain; charset=utf-8",
+				},
+			},
+		},
+		{
+			"name": "Test D",
+			"info": map[string]string{
+				"category": "random",
+			},
 			"assets": []map[string]string{
 				{
 					"name": "index.html",
@@ -135,8 +150,20 @@ func createReports(t *testing.T) (string, []Report) {
 			})
 		}
 
+		var reportInfo Info
+		if reportInfoRaw, ok := data["info"].(map[string]string); ok {
+			reportInfoData, err := json.Marshal(reportInfoRaw)
+			require.NoError(t, err)
+
+			reportInfoFile := filepath.Join(reportPath, htmlReportInfoFile)
+			require.NoError(t, os.WriteFile(reportInfoFile, reportInfoData, 0755))
+
+			require.NoError(t, json.Unmarshal(reportInfoData, &reportInfo))
+		}
+
 		reports = append(reports, Report{
 			Name:   reportName,
+			Info:   reportInfo,
 			Assets: assets,
 		})
 	}
@@ -160,8 +187,9 @@ func setupMockingForReport(client *mocks.ClientAPI, report Report) {
 		})
 	}
 	requestParams := api.CreateReportParameters{
-		Title:  report.Name,
-		Assets: requestAssets,
+		Title:    report.Name,
+		Category: report.Info.Category,
+		Assets:   requestAssets,
 	}
 
 	response := api.CreateReportResponse{
