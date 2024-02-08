@@ -1,5 +1,10 @@
 package xcresult3
 
+import (
+	"crypto/md5"
+	"encoding/hex"
+)
+
 // Attachment ...
 type Attachment struct {
 	Filename struct {
@@ -48,8 +53,26 @@ type FailureSummaries struct {
 	Values []ActionTestFailureSummary `json:"_values"`
 }
 
+// Configuration ...
+type Configuration struct {
+	Hash string
+}
+
+// UnmarshalJSON ...
+func (c *Configuration) UnmarshalJSON(data []byte) error {
+	if string(data) == "null" || string(data) == `""` {
+		return nil
+	}
+
+	hash := md5.Sum(data)
+	c.Hash = hex.EncodeToString(hash[:])
+
+	return nil
+}
+
 // ActionTestSummary ...
 type ActionTestSummary struct {
 	ActivitySummaries ActivitySummaries `json:"activitySummaries"`
 	FailureSummaries  FailureSummaries  `json:"failureSummaries"`
+	Configuration     Configuration     `json:"configuration"`
 }

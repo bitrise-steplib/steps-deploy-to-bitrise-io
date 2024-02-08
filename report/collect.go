@@ -1,11 +1,17 @@
 package report
 
 import (
+	"encoding/json"
+	"fmt"
 	"io"
 	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
+)
+
+const (
+	htmlReportInfoFile = "report-info.json"
 )
 
 func collectReports(dir string) ([]Report, error) {
@@ -28,7 +34,7 @@ func collectReports(dir string) ([]Report, error) {
 				return err
 			}
 
-			if d.IsDir() || d.Name() == ".DS_Store" {
+			if d.IsDir() || d.Name() == ".DS_Store" || d.Name() == htmlReportInfoFile {
 				return nil
 			}
 
@@ -61,8 +67,16 @@ func collectReports(dir string) ([]Report, error) {
 			continue
 		}
 
+		var reportInfo Info
+		if infoFileData, err := os.ReadFile(filepath.Join(testDir, htmlReportInfoFile)); err == nil {
+			if err := json.Unmarshal(infoFileData, &reportInfo); err != nil {
+				return nil, fmt.Errorf("cannot parse report info file: %w", err)
+			}
+		}
+
 		reports = append(reports, Report{
 			Name:   entry.Name(),
+			Info:   reportInfo,
 			Assets: assets,
 		})
 	}

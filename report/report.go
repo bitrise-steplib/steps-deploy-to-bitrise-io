@@ -91,8 +91,9 @@ func (h *HTMLReportUploader) createReport(report Report) (ServerReport, error) {
 	}
 
 	resp, err := h.client.CreateReport(api.CreateReportParameters{
-		Title:  report.Name,
-		Assets: assets,
+		Title:    report.Name,
+		Category: report.Info.Category,
+		Assets:   assets,
 	})
 	if err != nil {
 		return ServerReport{}, err

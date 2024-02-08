@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+ <testsuite name="DarkAndLightModeTests" tests="3" failures="1" skipped="0" errors="0" time="0.3750969171524048">
+  <testcase configuration-hash="" name="testExample()" classname="DarkAndLightModeTests" time="0.11242496967315674">
+   <failure>/Users/vagrant/git/DarkAndLightModeTests/DarkAndLightModeTests.swift:25 - failed - Reached 1</failure>
+  </testcase>
+  <testcase configuration-hash="" name="testExample()" classname="DarkAndLightModeTests" time="0.0011119842529296875"></testcase>
+  <testcase configuration-hash="" name="testPerformanceExample()" classname="DarkAndLightModeTests" time="0.26155996322631836"></testcase>
+ </testsuite>
+ <testsuite name="DarkAndLightModeUITests" tests="14" failures="12" skipped="0" errors="0" time="92.95631325244904">
+  <testcase configuration-hash="" name="testExample()" classname="DarkAndLightModeUITests" time="3.8267470598220825"></testcase>
+  <testcase configuration-hash="" name="testLaunchPerformance()" classname="DarkAndLightModeUITests" time="28.429319024086"></testcase>
+  <testcase configuration-hash="16789993f7012553276a039f8829bcbf" name="testLaunch()" classname="DarkAndLightModeUITestsLaunchTests" time="7.017634034156799">
+   <failure>/Users/vagrant/git/DarkAndLightModeUITests/DarkAndLightModeUITestsLaunchTests.swift:32 - XCTAssertTrue failed</failure>
+  </testcase>
+  <testcase configuration-hash="16789993f7012553276a039f8829bcbf" name="testLaunch()" classname="DarkAndLightModeUITestsLaunchTests" time="4.156491994857788">
+   <failure>/Users/vagrant/git/DarkAndLightModeUITests/DarkAndLightModeUITestsLaunchTests.swift:32 - XCTAssertTrue failed</failure>
+  </testcase>
+  <testcase configuration-hash="16789993f7012553276a039f8829bcbf" name="testLaunch()" classname="DarkAndLightModeUITestsLaunchTests" time="4.570378065109253">
+   <failure>/Users/vagrant/git/DarkAndLightModeUITests/DarkAndLightModeUITestsLaunchTests.swift:32 - XCTAssertTrue failed</failure>
+  </testcase>
+  <testcase configuration-hash="bb9ffdfb3f0e2ac59b09a83bd8c1ba55" name="testLaunch()" classname="DarkAndLightModeUITestsLaunchTests" time="7.531908988952637">
+   <failure>/Users/vagrant/git/DarkAndLightModeUITests/DarkAndLightModeUITestsLaunchTests.swift:32 - XCTAssertTrue failed</failure>
+  </testcase>
+  <testcase configuration-hash="bb9ffdfb3f0e2ac59b09a83bd8c1ba55" name="testLaunch()" classname="DarkAndLightModeUITestsLaunchTests" time="4.387096047401428">
+   <failure>/Users/vagrant/git/DarkAndLightModeUITests/DarkAndLightModeUITestsLaunchTests.swift:32 - XCTAssertTrue failed</failure>
+  </testcase>
+  <testcase configuration-hash="bb9ffdfb3f0e2ac59b09a83bd8c1ba55" name="testLaunch()" classname="DarkAndLightModeUITestsLaunchTests" time="4.1682270765304565">
+   <failure>/Users/vagrant/git/DarkAndLightModeUITests/DarkAndLightModeUITestsLaunchTests.swift:32 - XCTAssertTrue failed</failure>
+  </testcase>
+  <testcase configuration-hash="990bacacade8f7dc5b2d9f4d042c3349" name="testLaunch()" classname="DarkAndLightModeUITestsLaunchTests" time="7.013818025588989">
+   <failure>/Users/vagrant/git/DarkAndLightModeUITests/DarkAndLightModeUITestsLaunchTests.swift:32 - XCTAssertTrue failed</failure>
+  </testcase>
+  <testcase configuration-hash="990bacacade8f7dc5b2d9f4d042c3349" name="testLaunch()" classname="DarkAndLightModeUITestsLaunchTests" time="4.297332048416138">
+   <failure>/Users/vagrant/git/DarkAndLightModeUITests/DarkAndLightModeUITestsLaunchTests.swift:32 - XCTAssertTrue failed</failure>
+  </testcase>
+  <testcase configuration-hash="990bacacade8f7dc5b2d9f4d042c3349" name="testLaunch()" classname="DarkAndLightModeUITestsLaunchTests" time="4.593717932701111">
+   <failure>/Users/vagrant/git/DarkAndLightModeUITests/DarkAndLightModeUITestsLaunchTests.swift:32 - XCTAssertTrue failed</failure>
+  </testcase>
+  <testcase configuration-hash="09150042f5350c48cdf9784faaa4b911" name="testLaunch()" classname="DarkAndLightModeUITestsLaunchTests" time="4.915426015853882">
+   <failure>/Users/vagrant/git/DarkAndLightModeUITests/DarkAndLightModeUITestsLaunchTests.swift:32 - XCTAssertTrue failed</failure>
+  </testcase>
+  <testcase configuration-hash="09150042f5350c48cdf9784faaa4b911" name="testLaunch()" classname="DarkAndLightModeUITestsLaunchTests" time="4.210652947425842">
+   <failure>/Users/vagrant/git/DarkAndLightModeUITests/DarkAndLightModeUITestsLaunchTests.swift:32 - XCTAssertTrue failed</failure>
+  </testcase>
+  <testcase configuration-hash="09150042f5350c48cdf9784faaa4b911" name="testLaunch()" classname="DarkAndLightModeUITestsLaunchTests" time="3.837563991546631">
+   <failure>/Users/vagrant/git/DarkAndLightModeUITests/DarkAndLightModeUITestsLaunchTests.swift:32 - XCTAssertTrue failed</failure>
+  </testcase>
+ </testsuite>
+</testsuites>
