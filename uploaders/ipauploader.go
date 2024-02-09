@@ -5,7 +5,7 @@ import (
 
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-xcode/exportoptions"
-	"github.com/bitrise-io/go-xcode/ipa"
+	ipaV2 "github.com/bitrise-io/go-xcode/ipa/v2"
 	"github.com/bitrise-io/go-xcode/plistutil"
 	"github.com/bitrise-io/go-xcode/profileutil"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
@@ -14,7 +14,7 @@ import (
 // DeployIPA ...
 func DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups, notifyEmails string, isEnablePublicPage bool) (ArtifactURLs, error) {
 	pth := item.Path
-	infoPlistPth, err := ipa.UnwrapEmbeddedInfoPlist(pth)
+	infoPlistPth, err := ipaV2.UnwrapEmbeddedInfoPlist(pth)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to unwrap Info.plist from ipa, error: %s", err)
 	}
@@ -44,7 +44,7 @@ func DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups
 
 	// ---
 
-	provisioningProfilePth, err := ipa.UnwrapEmbeddedMobileProvision(pth)
+	provisioningProfilePth, err := ipaV2.UnwrapEmbeddedMobileProvision(pth)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to unwrap embedded.mobilprovision from ipa, error: %s", err)
 	}
