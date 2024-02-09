@@ -14,12 +14,12 @@ import (
 // DeployIPA ...
 func DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups, notifyEmails string, isEnablePublicPage bool) (ArtifactURLs, error) {
 	pth := item.Path
-	infoPlistPth, err := ipaV2.UnwrapEmbeddedInfoPlist(pth)
+	infoPlistContent, err := ipaV2.UnwrapEmbeddedInfoPlist(pth)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to unwrap Info.plist from ipa, error: %s", err)
 	}
 
-	infoPlistData, err := plistutil.NewPlistDataFromFile(infoPlistPth)
+	infoPlistData, err := plistutil.NewPlistDataFromContent(infoPlistContent)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to parse Info.plist, error: %s", err)
 	}
@@ -44,14 +44,19 @@ func DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups
 
 	// ---
 
-	provisioningProfilePth, err := ipaV2.UnwrapEmbeddedMobileProvision(pth)
+	provisioningProfileContent, err := ipaV2.UnwrapEmbeddedMobileProvision(pth)
 	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to unwrap embedded.mobilprovision from ipa, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to unwrap embedded.mobilprovision from ipa: %w", err)
 	}
 
-	provisioningProfileInfo, err := profileutil.NewProvisioningProfileInfoFromFile(provisioningProfilePth)
+	profilePKCS7, err := profileutil.ProvisioningProfileFromContent([]byte(provisioningProfileContent))
 	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to parse embedded.mobilprovision, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to parse embedded.mobilprovision: %w", err)
+	}
+
+	provisioningProfileInfo, err := profileutil.NewProvisioningProfileInfo(*profilePKCS7)
+	if err != nil {
+		return ArtifactURLs{}, fmt.Errorf("failed to read profile info: %w", err)
 	}
 
 	teamName := provisioningProfileInfo.TeamName
