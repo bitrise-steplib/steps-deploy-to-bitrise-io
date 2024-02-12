@@ -6,30 +6,31 @@ import (
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-xcode/exportoptions"
 	ipaV2 "github.com/bitrise-io/go-xcode/ipa/v2"
-	"github.com/bitrise-io/go-xcode/plistutil"
-	"github.com/bitrise-io/go-xcode/profileutil"
+	"github.com/bitrise-io/go-xcode/zipreader"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
 
 // DeployIPA ...
 func DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups, notifyEmails string, isEnablePublicPage bool) (ArtifactURLs, error) {
 	pth := item.Path
-	infoPlistContent, err := ipaV2.UnwrapEmbeddedInfoPlist(pth)
+
+	reader, err := zipreader.OpenZip(pth)
+	if err != nil {
+		return ArtifactURLs{}, fmt.Errorf("failed to open ipa file %s, error: %s", pth, err)
+	}
+
+	ipaReader := ipaV2.NewIPAReader(*reader)
+	infoPlist, err := ipaReader.AppInfoPlist()
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to unwrap Info.plist from ipa, error: %s", err)
 	}
 
-	infoPlistData, err := plistutil.NewPlistDataFromContent(infoPlistContent)
-	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to parse Info.plist, error: %s", err)
-	}
-
-	appTitle, _ := infoPlistData.GetString("CFBundleName")
-	bundleID, _ := infoPlistData.GetString("CFBundleIdentifier")
-	version, _ := infoPlistData.GetString("CFBundleShortVersionString")
-	buildNumber, _ := infoPlistData.GetString("CFBundleVersion")
-	minOSVersion, _ := infoPlistData.GetString("MinimumOSVersion")
-	deviceFamilyList, _ := infoPlistData.GetUInt64Array("UIDeviceFamily")
+	appTitle, _ := infoPlist.GetString("CFBundleName")
+	bundleID, _ := infoPlist.GetString("CFBundleIdentifier")
+	version, _ := infoPlist.GetString("CFBundleShortVersionString")
+	buildNumber, _ := infoPlist.GetString("CFBundleVersion")
+	minOSVersion, _ := infoPlist.GetString("MinimumOSVersion")
+	deviceFamilyList, _ := infoPlist.GetUInt64Array("UIDeviceFamily")
 
 	appInfo := map[string]interface{}{
 		"app_title":          appTitle,
@@ -43,18 +44,7 @@ func DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups
 	log.Printf("ipa infos: %v", appInfo)
 
 	// ---
-
-	provisioningProfileContent, err := ipaV2.UnwrapEmbeddedMobileProvision(pth)
-	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to unwrap embedded.mobilprovision from ipa: %w", err)
-	}
-
-	profilePKCS7, err := profileutil.ProvisioningProfileFromContent([]byte(provisioningProfileContent))
-	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to parse embedded.mobilprovision: %w", err)
-	}
-
-	provisioningProfileInfo, err := profileutil.NewProvisioningProfileInfo(*profilePKCS7)
+	provisioningProfileInfo, err := ipaReader.ProvisioningProfileInfo()
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to read profile info: %w", err)
 	}

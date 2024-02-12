@@ -2,43 +2,45 @@ package uploaders
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/bitrise-io/go-utils/log"
-	"github.com/bitrise-io/go-utils/pathutil"
-	"github.com/bitrise-io/go-xcode/xcarchive"
+	xcarchiveV2 "github.com/bitrise-io/go-xcode/xcarchive/v2"
+	"github.com/bitrise-io/go-xcode/zipreader"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
 
 // DeployXcarchive ...
 func DeployXcarchive(item deployment.DeployableItem, buildURL, token string) (ArtifactURLs, error) {
 	pth := item.Path
-	unzippedPth, err := xcarchive.UnzipXcarchive(pth)
-	if err != nil {
-		return ArtifactURLs{}, err
-	}
 
-	archivePth := filepath.Join(unzippedPth, pathutil.GetFileName(pth))
-	isMacos, err := xcarchive.IsMacOS(archivePth)
+	reader, err := zipreader.OpenZip(pth)
 	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("could not check if given project is macOS or not, error: %s", err)
-	} else if isMacos {
-		log.Warnf("macOS archive deployment is not supported, skipping file: %s", archivePth)
+		return ArtifactURLs{}, fmt.Errorf("failed to open ipa file %s, error: %s", pth, err)
+	}
+	xcarchiveReader := xcarchiveV2.NewXcarchiveZipReader(*reader)
+	isMacos := xcarchiveReader.IsMacOS()
+	if isMacos {
+		log.Warnf("macOS archive deployment is not supported, skipping file: %s", pth)
 		return ArtifactURLs{}, nil // MacOS project is not supported, so won't be deployed.
 	}
-
-	iosArchive, err := xcarchive.NewIosArchive(archivePth)
+	archiveInfoPlist, err := xcarchiveReader.InfoPlist()
 	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to parse iOS XcArchive from %s. Error: %s", archivePth, err)
+		return ArtifactURLs{}, fmt.Errorf("failed to parse archive Info.plist from %s: %s", pth, err)
 	}
 
-	appTitle, _ := iosArchive.Application.InfoPlist.GetString("CFBundleName")
-	bundleID := iosArchive.Application.BundleIdentifier()
-	version, _ := iosArchive.Application.InfoPlist.GetString("CFBundleShortVersionString")
-	buildNumber, _ := iosArchive.Application.InfoPlist.GetString("CFBundleVersion")
-	minOSVersion, _ := iosArchive.Application.InfoPlist.GetString("MinimumOSVersion")
-	deviceFamilyList, _ := iosArchive.Application.InfoPlist.GetUInt64Array("UIDeviceFamily")
-	scheme, _ := iosArchive.InfoPlist.GetString("SchemeName")
+	iosXCArchiveReader := xcarchiveV2.NewIOSXcarchiveZipReader(*reader)
+	appInfoPlist, err := iosXCArchiveReader.AppInfoPlist()
+	if err != nil {
+		return ArtifactURLs{}, fmt.Errorf("failed to parse application Info.plist from %s: %s", pth, err)
+	}
+
+	appTitle, _ := appInfoPlist.GetString("CFBundleName")
+	bundleID, _ := appInfoPlist.GetString("CFBundleIdentifier")
+	version, _ := appInfoPlist.GetString("CFBundleShortVersionString")
+	buildNumber, _ := appInfoPlist.GetString("CFBundleVersion")
+	minOSVersion, _ := appInfoPlist.GetString("MinimumOSVersion")
+	deviceFamilyList, _ := appInfoPlist.GetUInt64Array("UIDeviceFamily")
+	scheme, _ := archiveInfoPlist.GetString("SchemeName")
 
 	appInfo := map[string]interface{}{
 		"app_title":          appTitle,
