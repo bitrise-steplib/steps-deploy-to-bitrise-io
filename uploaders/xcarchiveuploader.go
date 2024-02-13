@@ -17,6 +17,11 @@ func DeployXcarchive(item deployment.DeployableItem, buildURL, token string) (Ar
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to open ipa file %s, error: %s", pth, err)
 	}
+	defer func() {
+		if err := reader.Close(); err != nil {
+			log.Warnf("Failed to close archive: %s", pth)
+		}
+	}()
 
 	xcarchiveReader := zip.NewXcarchiveReader(*reader)
 	isMacos := xcarchiveReader.IsMacOS()
