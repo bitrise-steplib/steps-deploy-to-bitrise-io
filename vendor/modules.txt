@@ -50,7 +50,7 @@ github.com/bitrise-io/go-utils/v2/log
 github.com/bitrise-io/go-utils/v2/log/colorstring
 github.com/bitrise-io/go-utils/v2/pathutil
 github.com/bitrise-io/go-utils/v2/redactwriter
-# github.com/bitrise-io/go-xcode v1.0.19-0.20240212094537-1ebbd25bc1cc
+# github.com/bitrise-io/go-xcode v1.0.18
 ## explicit; go 1.20
 github.com/bitrise-io/go-xcode/certificateutil
 github.com/bitrise-io/go-xcode/exportoptions
