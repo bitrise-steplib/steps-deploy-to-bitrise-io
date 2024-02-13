@@ -1,4 +1,4 @@
-package zipreader
+package zip
 
 import (
 	"archive/zip"
@@ -6,28 +6,32 @@ import (
 	"io"
 	"strings"
 
-	"github.com/bitrise-io/go-utils/log"
+	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/ryanuber/go-glob"
 )
 
-type ZipReader struct {
+type Reader struct {
 	zipReader *zip.ReadCloser
+	logger    log.Logger
 }
 
-func OpenZip(archivePath string) (*ZipReader, error) {
+func NewReader(archivePath string, logger log.Logger) (*Reader, error) {
 	zipReader, err := zip.OpenReader(archivePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open archive %s: %w", archivePath, err)
 	}
 
-	return &ZipReader{zipReader: zipReader}, nil
+	return &Reader{
+		zipReader: zipReader,
+		logger:    logger,
+	}, nil
 }
 
-func (reader ZipReader) Close() error {
+func (reader Reader) Close() error {
 	return reader.zipReader.Close()
 }
 
-func (reader ZipReader) ReadFile(targetPathGlob string) ([]byte, error) {
+func (reader Reader) ReadFile(targetPathGlob string) ([]byte, error) {
 	var files []*zip.File
 	var fileNames []string
 	for _, file := range reader.zipReader.File {
@@ -52,7 +56,7 @@ func (reader ZipReader) ReadFile(targetPathGlob string) ([]byte, error) {
 	}
 	defer func() {
 		if err := r.Close(); err != nil {
-			log.Warnf("failed to close archive file %s: %s", file.Name, err)
+			reader.logger.Warnf("failed to close archive file %s: %s", file.Name, err)
 		}
 	}()
 
@@ -64,7 +68,7 @@ func (reader ZipReader) ReadFile(targetPathGlob string) ([]byte, error) {
 	return b, nil
 }
 
-func (reader ZipReader) IsFileOrDirExistsInZipArchive(targetPathGlob string) bool {
+func (reader Reader) IsFileOrDirExistsInZipArchive(targetPathGlob string) bool {
 	for _, file := range reader.zipReader.File {
 		if glob.Glob(targetPathGlob, file.Name) {
 			return true

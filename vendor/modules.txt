@@ -39,7 +39,7 @@ github.com/bitrise-io/go-utils/retry
 github.com/bitrise-io/go-utils/sliceutil
 github.com/bitrise-io/go-utils/urlutil
 github.com/bitrise-io/go-utils/ziputil
-# github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.19
+# github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.20
 ## explicit; go 1.17
 github.com/bitrise-io/go-utils/v2/command
 github.com/bitrise-io/go-utils/v2/env
@@ -54,15 +54,12 @@ github.com/bitrise-io/go-utils/v2/redactwriter
 ## explicit; go 1.20
 github.com/bitrise-io/go-xcode/certificateutil
 github.com/bitrise-io/go-xcode/exportoptions
-github.com/bitrise-io/go-xcode/ipa/v2
-github.com/bitrise-io/go-xcode/models
 github.com/bitrise-io/go-xcode/plistutil
 github.com/bitrise-io/go-xcode/profileutil
-github.com/bitrise-io/go-xcode/utility
-github.com/bitrise-io/go-xcode/xcarchive
-github.com/bitrise-io/go-xcode/xcarchive/v2
 github.com/bitrise-io/go-xcode/xcodeproject/serialized
-github.com/bitrise-io/go-xcode/zipreader
+# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.40.0.20240213140719-b76d9af5372d
+## explicit; go 1.20
+github.com/bitrise-io/go-xcode/v2/zip
 # github.com/bitrise-io/goinp v0.0.0-20211005113137-305e91b481f4
 ## explicit; go 1.16
 github.com/bitrise-io/goinp/goinp
@@ -88,7 +85,7 @@ github.com/gorilla/mux
 # github.com/hashicorp/go-cleanhttp v0.5.2
 ## explicit; go 1.13
 github.com/hashicorp/go-cleanhttp
-# github.com/hashicorp/go-retryablehttp v0.7.1
+# github.com/hashicorp/go-retryablehttp v0.7.4
 ## explicit; go 1.13
 github.com/hashicorp/go-retryablehttp
 # github.com/hashicorp/go-version v1.6.0
@@ -106,8 +103,8 @@ github.com/pmezard/go-difflib/difflib
 # github.com/ryanuber/go-glob v1.0.0
 ## explicit
 github.com/ryanuber/go-glob
-# github.com/stretchr/objx v0.5.0
-## explicit; go 1.12
+# github.com/stretchr/objx v0.5.1
+## explicit; go 1.13
 github.com/stretchr/objx
 # github.com/stretchr/testify v1.8.4
 ## explicit; go 1.20

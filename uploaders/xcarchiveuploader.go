@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/bitrise-io/go-utils/log"
-	xcarchiveV2 "github.com/bitrise-io/go-xcode/xcarchive/v2"
-	"github.com/bitrise-io/go-xcode/zipreader"
+	logV2 "github.com/bitrise-io/go-utils/v2/log"
+	"github.com/bitrise-io/go-xcode/v2/zip"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
 
@@ -13,11 +13,12 @@ import (
 func DeployXcarchive(item deployment.DeployableItem, buildURL, token string) (ArtifactURLs, error) {
 	pth := item.Path
 
-	reader, err := zipreader.OpenZip(pth)
+	reader, err := zip.NewReader(pth, logV2.NewLogger())
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to open ipa file %s, error: %s", pth, err)
 	}
-	xcarchiveReader := xcarchiveV2.NewXcarchiveZipReader(*reader)
+
+	xcarchiveReader := zip.NewXcarchiveReader(*reader)
 	isMacos := xcarchiveReader.IsMacOS()
 	if isMacos {
 		log.Warnf("macOS archive deployment is not supported, skipping file: %s", pth)
@@ -28,7 +29,7 @@ func DeployXcarchive(item deployment.DeployableItem, buildURL, token string) (Ar
 		return ArtifactURLs{}, fmt.Errorf("failed to parse archive Info.plist from %s: %s", pth, err)
 	}
 
-	iosXCArchiveReader := xcarchiveV2.NewIOSXcarchiveZipReader(*reader)
+	iosXCArchiveReader := zip.NewIOSXcarchiveReader(*reader)
 	appInfoPlist, err := iosXCArchiveReader.AppInfoPlist()
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to parse application Info.plist from %s: %s", pth, err)
