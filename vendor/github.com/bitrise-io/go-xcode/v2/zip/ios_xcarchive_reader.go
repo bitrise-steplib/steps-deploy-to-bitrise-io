@@ -2,15 +2,18 @@ package zip
 
 import "github.com/bitrise-io/go-xcode/plistutil"
 
-type IOSXcarchiveReader struct {
+// IOSXCArchiveReader ...
+type IOSXCArchiveReader struct {
 	zipReader Reader
 }
 
-func NewIOSXcarchiveReader(reader Reader) IOSXcarchiveReader {
-	return IOSXcarchiveReader{zipReader: reader}
+// NewIOSXCArchiveReader ...
+func NewIOSXCArchiveReader(reader Reader) IOSXCArchiveReader {
+	return IOSXCArchiveReader{zipReader: reader}
 }
 
-func (reader IOSXcarchiveReader) AppInfoPlist() (plistutil.PlistData, error) {
+// AppInfoPlist ...
+func (reader IOSXCArchiveReader) AppInfoPlist() (plistutil.PlistData, error) {
 	b, err := reader.zipReader.ReadFile("*.xcarchive/Products/Applications/*.app/Info.plist")
 	if err != nil {
 		return nil, err

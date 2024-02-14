@@ -12,7 +12,7 @@ require (
 	github.com/bitrise-io/go-utils v1.0.11
 	github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.20
 	github.com/bitrise-io/go-xcode v1.0.18
-	github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.40.0.20240213140719-b76d9af5372d
+	github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.40.0.20240214124622-ba5336cb5d5a
 	github.com/google/go-cmp v0.5.9
 	github.com/gorilla/mux v1.8.0
 	github.com/pkg/errors v0.9.1

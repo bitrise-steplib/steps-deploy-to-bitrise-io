@@ -23,7 +23,7 @@ func DeployXcarchive(item deployment.DeployableItem, buildURL, token string) (Ar
 		}
 	}()
 
-	xcarchiveReader := zip.NewXcarchiveReader(*reader)
+	xcarchiveReader := zip.NewXCArchiveReader(*reader)
 	isMacos := xcarchiveReader.IsMacOS()
 	if isMacos {
 		log.Warnf("macOS archive deployment is not supported, skipping file: %s", pth)
@@ -34,7 +34,7 @@ func DeployXcarchive(item deployment.DeployableItem, buildURL, token string) (Ar
 		return ArtifactURLs{}, fmt.Errorf("failed to parse archive Info.plist from %s: %s", pth, err)
 	}
 
-	iosXCArchiveReader := zip.NewIOSXcarchiveReader(*reader)
+	iosXCArchiveReader := zip.NewIOSXCArchiveReader(*reader)
 	appInfoPlist, err := iosXCArchiveReader.AppInfoPlist()
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to parse application Info.plist from %s: %s", pth, err)

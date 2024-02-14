@@ -2,15 +2,18 @@ package zip
 
 import "github.com/bitrise-io/go-xcode/plistutil"
 
-type XcarchiveReader struct {
+// XCArchiveReader ...
+type XCArchiveReader struct {
 	zipReader Reader
 }
 
-func NewXcarchiveReader(reader Reader) XcarchiveReader {
-	return XcarchiveReader{zipReader: reader}
+// NewXCArchiveReader ...
+func NewXCArchiveReader(reader Reader) XCArchiveReader {
+	return XCArchiveReader{zipReader: reader}
 }
 
-func (reader XcarchiveReader) InfoPlist() (plistutil.PlistData, error) {
+// InfoPlist ...
+func (reader XCArchiveReader) InfoPlist() (plistutil.PlistData, error) {
 	b, err := reader.zipReader.ReadFile("*.xcarchive/Info.plist")
 	if err != nil {
 		return nil, err
@@ -19,6 +22,7 @@ func (reader XcarchiveReader) InfoPlist() (plistutil.PlistData, error) {
 	return plistutil.NewPlistDataFromContent(string(b))
 }
 
-func (reader XcarchiveReader) IsMacOS() bool {
-	return reader.zipReader.IsFileOrDirExistsInZipArchive("*.xcarchive/Products/Applications/*.app/Contents")
+// IsMacOS ...
+func (reader XCArchiveReader) IsMacOS() bool {
+	return reader.zipReader.IsFileOrDirExistsInZipArchive("*.xcarchive/Products/Applications/*.app/Contents/*")
 }
