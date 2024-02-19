@@ -24,14 +24,15 @@ type TestSuite struct {
 
 // TestCase ...
 type TestCase struct {
-	XMLName   xml.Name `xml:"testcase"`
-	Name      string   `xml:"name,attr"`
-	ClassName string   `xml:"classname,attr"`
-	Time      float64  `xml:"time,attr"`
-	Failure   *Failure `xml:"failure,omitempty"`
-	Skipped   *Skipped `xml:"skipped,omitempty"`
-	Error     *Error   `xml:"error,omitempty"`
-	SystemErr string   `xml:"system-err,omitempty"`
+	XMLName           xml.Name `xml:"testcase"`
+	ConfigurationHash string   `xml:"configuration-hash,attr"`
+	Name              string   `xml:"name,attr"`
+	ClassName         string   `xml:"classname,attr"`
+	Time              float64  `xml:"time,attr"`
+	Failure           *Failure `xml:"failure,omitempty"`
+	Skipped           *Skipped `xml:"skipped,omitempty"`
+	Error             *Error   `xml:"error,omitempty"`
+	SystemErr         string   `xml:"system-err,omitempty"`
 }
 
 // Failure ...

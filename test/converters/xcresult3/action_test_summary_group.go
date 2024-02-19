@@ -7,6 +7,9 @@ import (
 	"strings"
 )
 
+// ErrSummaryNotFound ...
+var ErrSummaryNotFound = errors.New("no summaryRef.ID.Value found for test case")
+
 // ActionTestSummaryGroup ...
 type ActionTestSummaryGroup struct {
 	Name       Name       `json:"name"`
@@ -73,7 +76,7 @@ func (g ActionTestSummaryGroup) testsWithStatus() (tests []ActionTestSummaryGrou
 // loadActionTestSummary ...
 func (g ActionTestSummaryGroup) loadActionTestSummary(xcresultPath string) (ActionTestSummary, error) {
 	if g.SummaryRef.ID.Value == "" {
-		return ActionTestSummary{}, errors.New("no summaryRef.ID.Value found for test case")
+		return ActionTestSummary{}, ErrSummaryNotFound
 	}
 
 	var summary ActionTestSummary

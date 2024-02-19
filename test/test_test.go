@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"testing"
 	"time"
@@ -12,9 +13,12 @@ import (
 	"github.com/bitrise-io/bitrise/models"
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/pathutil"
+	"github.com/bitrise-io/go-utils/v2/command"
+	"github.com/bitrise-io/go-utils/v2/env"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func createDummyFilesInDirWithContent(dir, content string, fileNames []string) error {
@@ -158,7 +162,7 @@ func Test_Upload(t *testing.T) {
 	}
 }
 
-func Test_ParseTestResults(t *testing.T) {
+func Test_ParseXctestResults(t *testing.T) {
 	sampleTestSummariesPlist, err := fileutil.ReadStringFromFile(filepath.Join("testdata", "ios_testsummaries_plist.golden"))
 	if err != nil {
 		t.Fatal("unable to read golden file, error:", err)
@@ -269,4 +273,45 @@ func Test_ParseTestResults(t *testing.T) {
 
 		assert.Equal(t, sampleIOSXmlOutput, string(bundle[0].XMLContent))
 	}
+}
+
+func Test_ParseXctest3Results(t *testing.T) {
+	tmpDir := t.TempDir()
+	gitDir := path.Join(tmpDir, "git")
+
+	// The xcresult3 format has many small encoded binary files, so it is better to use a real xcresult file.
+	// We are storing these in the sample-artifacts git repo.
+	cmd := command.NewFactory(env.NewRepository()).Create("git", []string{"clone", "--depth", "1", "https://github.com/bitrise-io/sample-artifacts.git", gitDir}, nil)
+	err := cmd.Run()
+	require.NoError(t, err)
+
+	testDir := path.Join(tmpDir, "tests")
+	testResultDir := path.Join(testDir, "test-result")
+	err = os.MkdirAll(testDir, os.ModePerm)
+	require.NoError(t, err)
+
+	phaseDir := path.Join(testResultDir, "phase")
+	err = os.MkdirAll(testDir, os.ModePerm)
+	require.NoError(t, err)
+
+	if err := createDummyFilesInDirWithContent(testResultDir, `{"title": "test title"}`, []string{"step-info.json"}); err != nil {
+		t.Fatal("failed to create dummy files in dir, error:", err)
+	}
+	if err := createDummyFilesInDirWithContent(phaseDir, `{"name": "test name"}`, []string{"test-info.json"}); err != nil {
+		t.Fatal("failed to create dummy files in dir, error:", err)
+	}
+
+	oldDir := path.Join(gitDir, "xcresults", "xcresult3-device-configuration-tests.xcresult")
+	newDir := path.Join(phaseDir, "xcresult3-device-configuration-tests.xcresult")
+	copyCmd := command.NewFactory(env.NewRepository()).Create("cp", []string{"-a", oldDir, newDir}, nil)
+	err = copyCmd.Run()
+	require.NoError(t, err)
+
+	bundle, err := ParseTestResults(testDir)
+	require.NoError(t, err)
+
+	want, err := fileutil.ReadStringFromFile(filepath.Join("testdata", "ios_device_config_xml_output.golden"))
+
+	assert.Equal(t, 1, len(bundle))
+	assert.Equal(t, want, string(bundle[0].XMLContent))
 }

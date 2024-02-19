@@ -2,8 +2,9 @@ package api
 
 // CreateReportParameters ...
 type CreateReportParameters struct {
-	Title  string              `json:"title"`
-	Assets []CreateReportAsset `json:"assets"`
+	Title    string              `json:"title"`
+	Category string              `json:"category,omitempty"`
+	Assets   []CreateReportAsset `json:"assets"`
 }
 
 // CreateReportAsset ...

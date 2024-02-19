@@ -3,6 +3,7 @@ package report
 // Report ...
 type Report struct {
 	Name   string
+	Info   Info
 	Assets []Asset
 }
 
@@ -18,4 +19,9 @@ type Asset struct {
 type ServerReport struct {
 	Identifier string
 	AssetURLs  map[string]string
+}
+
+// Info ...
+type Info struct {
+	Category string `json:"category"`
 }

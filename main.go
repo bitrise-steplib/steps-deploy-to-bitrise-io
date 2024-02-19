@@ -170,7 +170,7 @@ func main() {
 				errMessage += errorutil.FormattedError(err)
 			}
 
-			fail(errMessage)
+			fail("%s", errMessage)
 		}
 
 		log.Donef("Success")
@@ -314,7 +314,7 @@ func logDeployFiles(files []deployment.DeployableItem) {
 			message += " (pipeline intermediate file)"
 		}
 
-		log.Printf(message)
+		log.Printf("%s", message)
 	}
 }
 
@@ -516,7 +516,7 @@ func deploySingleItem(item deployment.DeployableItem, config Config, androidArti
 }
 
 func handleDeploymentFailureError(err error, errorCollection []error) []error {
-	log.Errorf(errorutil.FormattedError(err))
+	log.Errorf("%s", errorutil.FormattedError(err))
 	err = fmt.Errorf("deploy failed, error: %w", err)
 	errorCollection = append(errorCollection, err)
 	return errorCollection
