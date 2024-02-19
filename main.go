@@ -334,9 +334,18 @@ func clearDeployFiles(filesToDeploy []string) []string {
 }
 
 func collectFilesToDeploy(absDeployPth string, config Config, tmpDir string) (filesToDeploy []string, err error) {
+	pathExists, err := pathutil.IsPathExists(absDeployPth)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check if %s exists, error: %s", absDeployPth, err)
+	}
+	if !pathExists {
+		log.Warnf("Nothing to deploy at %s", absDeployPth)
+		return
+	}
+	
 	isDeployPathDir, err := pathutil.IsDirExists(absDeployPth)
 	if err != nil {
-		return nil, fmt.Errorf("failed to check if DeployPath (%s) is a directory or a file, error: %s", absDeployPth, err)
+		return nil, fmt.Errorf("failed to check if %s is a directory or a file, error: %s", absDeployPth, err)
 	}
 
 	if !isDeployPathDir {
