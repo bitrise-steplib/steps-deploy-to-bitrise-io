@@ -345,7 +345,7 @@ func collectFilesToDeploy(absDeployPth string, config Config, tmpDir string) (fi
 	
 	isDeployPathDir, err := pathutil.IsDirExists(absDeployPth)
 	if err != nil {
-		return nil, fmt.Errorf("failed to check if %s is a directory or a file, error: %s", absDeployPth, err)
+		return nil, fmt.Errorf("failed to check if %s is a directory or a file: %s", absDeployPth, err)
 	}
 
 	if !isDeployPathDir {
