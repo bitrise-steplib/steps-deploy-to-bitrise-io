@@ -54,7 +54,8 @@ func TestInvalidReportFiltering(t *testing.T) {
 	}
 
 	// Create an invalid report
-	reports[0].Assets = reports[0].Assets[:2]
+	reports[0].Assets[2].Path = filepath.Join(filepath.Dir(reports[0].Assets[2].Path), "my_report_index.html")
+	reports[0].Assets[2].TestDirRelativePath = filepath.Join(filepath.Dir(reports[0].Assets[2].TestDirRelativePath), "my_report_index.html")
 
 	validatedReports, validatedErrors := uploader.validate(reports)
 

@@ -2,7 +2,7 @@ package report
 
 import (
 	"fmt"
-	"strings"
+	"path/filepath"
 	"sync"
 
 	"github.com/bitrise-io/go-utils/v2/log"
@@ -68,7 +68,7 @@ func (h *HTMLReportUploader) validate(reports []Report) ([]Report, []error) {
 		valid := false
 
 		for _, asset := range report.Assets {
-			if strings.HasSuffix(asset.Path, "index.html") {
+			if filepath.Base(asset.Path) == "index.html" {
 				valid = true
 				break
 			}
