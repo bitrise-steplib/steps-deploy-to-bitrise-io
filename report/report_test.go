@@ -13,6 +13,7 @@ import (
 	loggerV2 "github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/report/api"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/report/mocks"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -41,6 +42,29 @@ func TestFindsAndUploadsReports(t *testing.T) {
 	require.Equal(t, 0, len(uploadErrors))
 
 	mockClient.AssertExpectations(t)
+}
+
+func TestInvalidReportFiltering(t *testing.T) {
+	reportDir, reports := createReports(t)
+	uploader := HTMLReportUploader{
+		client:      nil,
+		logger:      loggerV2.NewLogger(),
+		reportDir:   reportDir,
+		concurrency: 1,
+	}
+
+	// Create an invalid report
+	reports[0].Assets[2].Path = filepath.Join(filepath.Dir(reports[0].Assets[2].Path), "my_report_index.html")
+	reports[0].Assets[2].TestDirRelativePath = filepath.Join(filepath.Dir(reports[0].Assets[2].TestDirRelativePath), "my_report_index.html")
+
+	validatedReports, validatedErrors := uploader.validate(reports)
+
+	expectedErrors := []error{
+		fmt.Errorf("missing index.html file for Test A"),
+		fmt.Errorf("missing index.html file for Test B"),
+	}
+	assert.Equal(t, expectedErrors, validatedErrors)
+	assert.Equal(t, len(validatedReports), 2)
 }
 
 // createReports creates dummy data for multiple test reports.
