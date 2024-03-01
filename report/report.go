@@ -2,6 +2,7 @@ package report
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/bitrise-io/go-utils/v2/log"
@@ -40,14 +41,48 @@ func (h *HTMLReportUploader) DeployReports() []error {
 		h.logger.Printf("- %s", report.Name)
 	}
 
-	var errors []error
-	for _, report := range reports {
-		if err := h.uploadReport(report); err != nil {
-			errors = append(errors, err)
+	validatedReports, validationErrors := h.validate(reports)
+	if len(validationErrors) != 0 {
+		h.logger.Warnf("Validation errors:\n")
+
+		for _, validationError := range validationErrors {
+			h.logger.Warnf("- %s\n", validationError)
 		}
 	}
 
-	return errors
+	var uploadErrors []error
+	for _, report := range validatedReports {
+		if err := h.uploadReport(report); err != nil {
+			uploadErrors = append(uploadErrors, err)
+		}
+	}
+
+	return uploadErrors
+}
+
+func (h *HTMLReportUploader) validate(reports []Report) ([]Report, []error) {
+	var validatedReports []Report
+	var validationErrors []error
+
+	for _, report := range reports {
+		valid := false
+
+		for _, asset := range report.Assets {
+			if strings.HasSuffix(asset.Path, "index.html") {
+				valid = true
+				break
+			}
+		}
+
+		if valid {
+			validatedReports = append(validatedReports, report)
+			continue
+		}
+
+		validationErrors = append(validationErrors, fmt.Errorf("missing index.html file for %s", report.Name))
+	}
+
+	return validatedReports, validationErrors
 }
 
 func (h *HTMLReportUploader) uploadReport(report Report) error {
