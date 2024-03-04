@@ -8,10 +8,12 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 const (
 	htmlReportInfoFile = "report-info.json"
+	plainContentType   = "text/plain"
 )
 
 func collectReports(dir string) ([]Report, error) {
@@ -108,6 +110,23 @@ func detectContentType(path string) string {
 
 	// Slice to remove fill-up zero values which cause a wrong content type detection in the next step
 	buff = buff[:bytesRead]
+	contentType := http.DetectContentType(buff)
+	extension := filepath.Ext(path)
 
-	return http.DetectContentType(buff)
+	return overrideContentTypeForKnownExtensions(extension, contentType)
+}
+
+func overrideContentTypeForKnownExtensions(extension, contentType string) string {
+	if strings.HasPrefix(contentType, plainContentType) == false {
+		return contentType
+	}
+
+	switch extension {
+	case ".js":
+		return strings.ReplaceAll(contentType, plainContentType, "text/javascript")
+	case ".css":
+		return strings.ReplaceAll(contentType, plainContentType, "text/css")
+	default:
+		return contentType
+	}
 }
