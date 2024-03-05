@@ -87,7 +87,7 @@ func createReports(t *testing.T) (string, []Report) {
 				{
 					"name": "index.html",
 					"size": "1",
-					"type": "text/plain; charset=utf-8",
+					"type": "text/html; charset=utf-8",
 				},
 			},
 		},
@@ -101,7 +101,7 @@ func createReports(t *testing.T) (string, []Report) {
 				{
 					"name": "index.html",
 					"size": "1",
-					"type": "text/plain; charset=utf-8",
+					"type": "text/html; charset=utf-8",
 				},
 			},
 		},
@@ -114,7 +114,7 @@ func createReports(t *testing.T) (string, []Report) {
 				{
 					"name": "index.html",
 					"size": "1",
-					"type": "text/plain; charset=utf-8",
+					"type": "text/html; charset=utf-8",
 				},
 			},
 		},
