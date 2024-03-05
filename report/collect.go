@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -121,12 +122,10 @@ func overrideContentTypeForKnownExtensions(extension, contentType string) string
 		return contentType
 	}
 
-	switch extension {
-	case ".js":
-		return strings.ReplaceAll(contentType, plainContentType, "text/javascript")
-	case ".css":
-		return strings.ReplaceAll(contentType, plainContentType, "text/css")
-	default:
-		return contentType
+	newContentType := mime.TypeByExtension(extension)
+	if newContentType != "" {
+		return newContentType
 	}
+
+	return contentType
 }

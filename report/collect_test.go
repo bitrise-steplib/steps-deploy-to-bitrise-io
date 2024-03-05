@@ -23,7 +23,7 @@ func TestSpecialContentTypes(t *testing.T) {
 		{
 			name:     "Javascript file",
 			fileName: "abc.js",
-			expected: "text/javascript; charset=utf-8",
+			expected: "application/javascript",
 		},
 		{
 			name:     "CSS file",
