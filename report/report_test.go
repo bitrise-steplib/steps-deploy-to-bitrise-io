@@ -17,10 +17,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Smallest valid base64 encoded image data which returns a correct content type.
 const (
+	// Smallest valid base64 encoded image data which returns a correct content type.
 	pngBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z/C/HgAGgwJ/lK3Q6wAAAABJRU5ErkJggg=="
 	jpgBase64 = "/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA="
+	// Smallest valid html code
+	html = "<!doctype html><meta charset=utf-8><title>shortest html5</title>"
 )
 
 func TestFindsAndUploadsReports(t *testing.T) {
@@ -86,7 +88,7 @@ func createReports(t *testing.T) (string, []Report) {
 				},
 				{
 					"name": "index.html",
-					"size": "1",
+					"size": "64",
 					"type": "text/html; charset=utf-8",
 				},
 			},
@@ -100,7 +102,7 @@ func createReports(t *testing.T) (string, []Report) {
 			"assets": []map[string]string{
 				{
 					"name": "index.html",
-					"size": "1",
+					"size": "64",
 					"type": "text/html; charset=utf-8",
 				},
 			},
@@ -113,7 +115,7 @@ func createReports(t *testing.T) (string, []Report) {
 			"assets": []map[string]string{
 				{
 					"name": "index.html",
-					"size": "1",
+					"size": "64",
 					"type": "text/html; charset=utf-8",
 				},
 			},
@@ -153,6 +155,8 @@ func createReports(t *testing.T) (string, []Report) {
 				require.NoError(t, err)
 
 				bytes = decoded
+			} else if strings.HasSuffix(assetName, ".html") {
+				bytes = []byte(html)
 			} else {
 				bytes = []byte("a")
 			}
