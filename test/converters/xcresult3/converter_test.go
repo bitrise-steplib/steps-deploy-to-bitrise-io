@@ -93,16 +93,10 @@ func TestConverter_XML(t *testing.T) {
 				},
 			},
 			{ // testFlakyFeature() was flaky: failed once, and then passed the second run
-				Name: "BullsEyeFlakyTests", Tests: 3, Failures: 1, Skipped: 1, Errors: 0, Time: 0.22202682495117188,
+				Name: "BullsEyeFlakyTests", Tests: 2, Failures: 0, Skipped: 1, Errors: 0, Time: 0.22202682495117188,
 				TestCases: []junit.TestCase{
 					{
-						Name: "testFlakyFeature()", ClassName: "BullsEyeFlakyTests", Time: 0.1958599090576172,
-						Failure: &junit.Failure{
-							Value: "/Users/vagrant/git/BullsEyeFlakyTests/BullsEyeFlakyTests.swift:43 - XCTAssertEqual failed: (\"1\") is not equal to (\"0\") - Number is not even",
-						},
-					},
-					{
-						Name: "testFlakyFeature()", ClassName: "BullsEyeFlakyTests", Time: 0.00603795051574707,
+						Name: "testFlakyFeature()", ClassName: "BullsEyeFlakyTests", Time: 0.201898,
 					},
 					{
 						Name: "testFlakySkip()", ClassName: "BullsEyeSkippedTests", Time: 0.020128965377807617,
