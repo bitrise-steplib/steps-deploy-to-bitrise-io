@@ -22,7 +22,7 @@ github.com/bitrise-io/go-steputils/tools
 # github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.20
 ## explicit; go 1.17
 github.com/bitrise-io/go-steputils/v2/secretkeys
-# github.com/bitrise-io/go-utils v1.0.11
+# github.com/bitrise-io/go-utils v1.0.12
 ## explicit; go 1.13
 github.com/bitrise-io/go-utils/colorstring
 github.com/bitrise-io/go-utils/command
@@ -57,10 +57,10 @@ github.com/bitrise-io/go-xcode/exportoptions
 github.com/bitrise-io/go-xcode/plistutil
 github.com/bitrise-io/go-xcode/profileutil
 github.com/bitrise-io/go-xcode/xcodeproject/serialized
-# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.41
+# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.43.0.20240415072200-05bab98243f5
 ## explicit; go 1.20
-github.com/bitrise-io/go-xcode/v2/internals/zip
 github.com/bitrise-io/go-xcode/v2/zip
+github.com/bitrise-io/go-xcode/v2/ziputil
 # github.com/bitrise-io/goinp v0.0.0-20211005113137-305e91b481f4
 ## explicit; go 1.16
 github.com/bitrise-io/goinp/goinp

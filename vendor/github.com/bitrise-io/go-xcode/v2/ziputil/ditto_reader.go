@@ -1,0 +1,73 @@
+package ziputil
+
+import (
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+
+	"github.com/bitrise-io/go-utils/v2/log"
+
+	"github.com/bitrise-io/go-utils/v2/command"
+	"github.com/bitrise-io/go-utils/v2/env"
+	"github.com/bitrise-io/go-utils/v2/pathutil"
+)
+
+type dittoReader struct {
+	extractedDir string
+	logger       log.Logger
+}
+
+// NewDittoReader ...
+func NewDittoReader(archivePath string, logger log.Logger) (ReadCloser, error) {
+	factory := command.NewFactory(env.NewRepository())
+	tmpDir, err := pathutil.NewPathProvider().CreateTempDir("ditto_reader")
+	if err != nil {
+		return nil, err
+	}
+
+	cmd := factory.Create("ditto", []string{"-x", archivePath, tmpDir}, nil)
+	if err := cmd.Run(); err != nil {
+		return nil, err
+	}
+
+	return dittoReader{
+		extractedDir: tmpDir,
+		logger:       logger,
+	}, nil
+}
+
+// ReadFile ...
+func (r dittoReader) ReadFile(relPthPattern string) ([]byte, error) {
+	absPthPattern := filepath.Join(r.extractedDir, relPthPattern)
+	matches, err := filepath.Glob(absPthPattern)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find file with pattern: %s: %w", absPthPattern, err)
+	}
+	if len(matches) == 0 {
+		return nil, fmt.Errorf("no file found with pattern: %s", absPthPattern)
+	}
+
+	pth := matches[0]
+	f, err := os.Open(pth)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open %s: %w", pth, err)
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			r.logger.Warnf("Failed to close %s: %s", pth, err)
+		}
+	}()
+
+	b, err := io.ReadAll(f)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read %s: %w", pth, err)
+	}
+
+	return b, nil
+}
+
+// Close ...
+func (r dittoReader) Close() error {
+	return os.RemoveAll(r.extractedDir)
+}

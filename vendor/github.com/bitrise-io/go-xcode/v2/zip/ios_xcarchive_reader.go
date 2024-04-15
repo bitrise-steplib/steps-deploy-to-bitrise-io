@@ -1,14 +1,17 @@
 package zip
 
-import "github.com/bitrise-io/go-xcode/plistutil"
+import (
+	"github.com/bitrise-io/go-xcode/plistutil"
+	"github.com/bitrise-io/go-xcode/v2/ziputil"
+)
 
 // IOSXCArchiveReader ...
 type IOSXCArchiveReader struct {
-	zipReader Reader
+	zipReader ziputil.ReadCloser
 }
 
 // NewIOSXCArchiveReader ...
-func NewIOSXCArchiveReader(reader Reader) IOSXCArchiveReader {
+func NewIOSXCArchiveReader(reader ziputil.ReadCloser) IOSXCArchiveReader {
 	return IOSXCArchiveReader{zipReader: reader}
 }
 

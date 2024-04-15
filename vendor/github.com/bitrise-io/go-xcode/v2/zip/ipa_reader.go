@@ -5,15 +5,16 @@ import (
 
 	"github.com/bitrise-io/go-xcode/plistutil"
 	"github.com/bitrise-io/go-xcode/profileutil"
+	"github.com/bitrise-io/go-xcode/v2/ziputil"
 )
 
 // IPAReader ...
 type IPAReader struct {
-	zipReader Reader
+	zipReader ziputil.ReadCloser
 }
 
 // NewIPAReader ...
-func NewIPAReader(zipReader Reader) IPAReader {
+func NewIPAReader(zipReader ziputil.ReadCloser) IPAReader {
 	return IPAReader{zipReader: zipReader}
 }
 

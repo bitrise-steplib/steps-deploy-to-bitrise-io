@@ -1,14 +1,17 @@
 package zip
 
-import "github.com/bitrise-io/go-xcode/plistutil"
+import (
+	"github.com/bitrise-io/go-xcode/plistutil"
+	"github.com/bitrise-io/go-xcode/v2/ziputil"
+)
 
 // XCArchiveReader ...
 type XCArchiveReader struct {
-	zipReader Reader
+	zipReader ziputil.ReadCloser
 }
 
 // NewXCArchiveReader ...
-func NewXCArchiveReader(reader Reader) XCArchiveReader {
+func NewXCArchiveReader(reader ziputil.ReadCloser) XCArchiveReader {
 	return XCArchiveReader{zipReader: reader}
 }
 
@@ -24,5 +27,7 @@ func (reader XCArchiveReader) InfoPlist() (plistutil.PlistData, error) {
 
 // IsMacOS ...
 func (reader XCArchiveReader) IsMacOS() bool {
-	return reader.zipReader.IsFileOrDirExistsInZipArchive("*.xcarchive/Products/Applications/*.app/Contents/*")
+	// TODO: distingush unzip and not found errors
+	_, err := reader.zipReader.ReadFile("*.xcarchive/Products/Applications/*.app/Contents/*")
+	return err == nil
 }
