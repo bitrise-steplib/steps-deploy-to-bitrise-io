@@ -13,41 +13,27 @@ import (
 // DeployIPA ...
 func DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups, notifyEmails string, isEnablePublicPage bool) (ArtifactURLs, error) {
 	logger := logV2.NewLogger()
-
 	pth := item.Path
-
-	zipReader, err := ziputil.NewDefaultRead(pth, logger)
-	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to open %s: %w", pth, err)
+	defaultZipReaderFactory := func() (ziputil.ReadCloser, error) {
+		return ziputil.NewDefaultRead(pth, logger)
 	}
-	defer func() {
-		if err := zipReader.Close(); err != nil {
-			logger.Warnf("Failed to close %s: %s", pth, err)
-		}
-	}()
 
-	appInfo, provisioningInfo, err := readDeploymentMeta(zipReader, logger)
+	appInfo, provisioningInfo, err := readIPADeploymentMeta(defaultZipReaderFactory, logger)
 	if err != nil {
 		if !ziputil.IsErrFormat(err) {
-			return ArtifactURLs{}, fmt.Errorf("failed to parse deployment info from %s: %w", pth, err)
+			return ArtifactURLs{}, fmt.Errorf("failed to parse deployment info for %s: %w", pth, err)
 		}
 
-		logger.Warnf("Deafult zip reader failed to extract ipa file (%s): %s", pth, err)
+		logger.Warnf("Default zip reader failed to extract ipa file (%s): %s", pth, err)
 		logger.Warnf("Continue with fallback zip reader...")
 
-		zipReader, err := ziputil.NewDittoReader(pth, logger)
-		if err != nil {
-			return ArtifactURLs{}, fmt.Errorf("failed to open %s: %w", pth, err)
+		dittoZipReaderFactory := func() (ziputil.ReadCloser, error) {
+			return ziputil.NewDittoReader(pth, logger)
 		}
-		defer func() {
-			if err := zipReader.Close(); err != nil {
-				logger.Warnf("Failed to close %s: %s", pth, err)
-			}
-		}()
 
-		appInfo, provisioningInfo, err = readDeploymentMeta(zipReader, logger)
+		appInfo, provisioningInfo, err = readIPADeploymentMeta(dittoZipReaderFactory, logger)
 		if err != nil {
-			return ArtifactURLs{}, fmt.Errorf("failed to parse deployment info from %s: %w", pth, err)
+			return ArtifactURLs{}, fmt.Errorf("failed to parse deployment info for %s: %w", pth, err)
 		}
 	}
 
@@ -93,7 +79,19 @@ func DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups
 	return artifactURLs, nil
 }
 
-func readDeploymentMeta(zipReader ziputil.ReadCloser, logger logV2.Logger) (map[string]interface{}, map[string]interface{}, error) {
+type zipReaderFactory func() (ziputil.ReadCloser, error)
+
+func readIPADeploymentMeta(zipFactory zipReaderFactory, logger logV2.Logger) (map[string]interface{}, map[string]interface{}, error) {
+	zipReader, err := zipFactory()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to open ipa: %w", err)
+	}
+	defer func() {
+		if err := zipReader.Close(); err != nil {
+			logger.Warnf("Failed to close ipa: %s", err)
+		}
+	}()
+
 	ipaReader := zip.NewIPAReader(zipReader)
 	infoPlist, err := ipaReader.AppInfoPlist()
 	if err != nil {
