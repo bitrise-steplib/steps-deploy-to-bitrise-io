@@ -13,6 +13,7 @@ import (
 // DeployIPA ...
 func DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups, notifyEmails string, isEnablePublicPage bool) (ArtifactURLs, error) {
 	logger := logV2.NewLogger()
+
 	pth := item.Path
 
 	zipReader, err := ziputil.NewDefaultRead(pth, logger)
@@ -30,6 +31,9 @@ func DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups
 		if !ziputil.IsErrFormat(err) {
 			return ArtifactURLs{}, fmt.Errorf("failed to parse deployment info from %s: %w", pth, err)
 		}
+
+		logger.Warnf("Deafult zip reader failed to extract ipa file (%s): %s", pth, err)
+		logger.Warnf("Continue with fallback zip reader...")
 
 		zipReader, err := ziputil.NewDittoReader(pth, logger)
 		if err != nil {
@@ -63,8 +67,6 @@ func DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups
 		"app_info":          appInfo,
 		"provisioning_info": provisioningInfo,
 	}
-
-	// ---
 
 	const IPAContentType = "application/octet-stream ipa"
 	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "ios-ipa", IPAContentType)
