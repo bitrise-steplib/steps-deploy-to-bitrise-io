@@ -19,7 +19,9 @@ func DeployXcarchive(item deployment.DeployableItem, buildURL, token string) (Ar
 
 	appInfo, scheme, err := readXCArchiveDeploymentMeta(defaultZipReaderFactory, logger)
 	if err != nil {
-		if !zip.IsErrFormat(err) {
+		// Default zip reader can return a 'zip: not a valid zip file' error for certain ios artifacts,
+		// in this case we fall back to the ditto tool.
+		if !zip.IsErrFormat(err) || !zip.IsDittoReaderAvailable() {
 			return ArtifactURLs{}, fmt.Errorf("failed to parse deployment info for %s: %w", pth, err)
 		}
 
@@ -38,7 +40,7 @@ func DeployXcarchive(item deployment.DeployableItem, buildURL, token string) (Ar
 
 	fileSize, err := fileSizeInBytes(pth)
 	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to get xcarchive size, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to get size of %s: %w", pth, err)
 	}
 
 	xcarchiveInfoMap := map[string]interface{}{
@@ -51,11 +53,11 @@ func DeployXcarchive(item deployment.DeployableItem, buildURL, token string) (Ar
 
 	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "ios-xcarchive", "")
 	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to create xcarchive artifact: %s %w", pth, err)
+		return ArtifactURLs{}, fmt.Errorf("failed to create xcarchive artifact from %s %w", pth, err)
 	}
 
 	if err := UploadArtifact(uploadURL, pth, ""); err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to upload xcarchive artifact, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to upload xcarchive (%s): %w", pth, err)
 	}
 
 	buildArtifactMeta := AppDeploymentMetaData{
@@ -67,8 +69,9 @@ func DeployXcarchive(item deployment.DeployableItem, buildURL, token string) (Ar
 
 	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta, item.IntermediateFileMeta)
 	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to finish xcarchive artifact, error: %s", err)
+		return ArtifactURLs{}, fmt.Errorf("failed to finish xcarchive (%s) upload: %w", pth, err)
 	}
+
 	return artifactURLs, nil
 }
 

@@ -20,7 +20,9 @@ func DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups
 
 	appInfo, provisioningInfo, err := readIPADeploymentMeta(defaultZipReaderFactory, logger)
 	if err != nil {
-		if !zip.IsErrFormat(err) {
+		// Default zip reader can return a 'zip: not a valid zip file' error for certain ios artifacts,
+		// in this case we fall back to the ditto tool.
+		if !zip.IsErrFormat(err) || !zip.IsDittoReaderAvailable() {
 			return ArtifactURLs{}, fmt.Errorf("failed to parse deployment info for %s: %w", pth, err)
 		}
 
@@ -45,7 +47,7 @@ func DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups
 
 	fileSize, err := fileSizeInBytes(pth)
 	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to size of %s: %w", pth, err)
+		return ArtifactURLs{}, fmt.Errorf("failed to get size of %s: %w", pth, err)
 	}
 
 	ipaInfoMap := map[string]interface{}{
@@ -53,6 +55,8 @@ func DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups
 		"app_info":          appInfo,
 		"provisioning_info": provisioningInfo,
 	}
+
+	logger.Printf("ipa infos: %v", appInfo)
 
 	const IPAContentType = "application/octet-stream ipa"
 	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "ios-ipa", IPAContentType)
@@ -113,8 +117,6 @@ func readIPADeploymentMeta(zipFactory zipReaderFactory, logger logV2.Logger) (ma
 		"min_OS_version":     minOSVersion,
 		"device_family_list": deviceFamilyList,
 	}
-
-	logger.Printf("ipa infos: %v", appInfo)
 
 	provisioningProfileInfo, err := ipaReader.ProvisioningProfileInfo()
 	if err != nil {
