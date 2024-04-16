@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	logV2 "github.com/bitrise-io/go-utils/v2/log"
+	"github.com/bitrise-io/go-xcode/v2/artifacts"
 	"github.com/bitrise-io/go-xcode/v2/zip"
-	"github.com/bitrise-io/go-xcode/v2/ziputil"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
 
@@ -13,21 +13,21 @@ import (
 func DeployXcarchive(item deployment.DeployableItem, buildURL, token string) (ArtifactURLs, error) {
 	logger := logV2.NewLogger()
 	pth := item.Path
-	defaultZipReaderFactory := func() (ziputil.ReadCloser, error) {
-		return ziputil.NewDefaultRead(pth, logger)
+	defaultZipReaderFactory := func() (zip.ReadCloser, error) {
+		return zip.NewDefaultRead(pth, logger)
 	}
 
 	appInfo, scheme, err := readXCArchiveDeploymentMeta(defaultZipReaderFactory, logger)
 	if err != nil {
-		if !ziputil.IsErrFormat(err) {
+		if !zip.IsErrFormat(err) {
 			return ArtifactURLs{}, fmt.Errorf("failed to parse deployment info for %s: %w", pth, err)
 		}
 
 		logger.Warnf("Default zip reader failed to extract xcarxhive file (%s): %s", pth, err)
 		logger.Warnf("Continue with fallback zip reader...")
 
-		dittoZipReaderFactory := func() (ziputil.ReadCloser, error) {
-			return ziputil.NewDittoReader(pth, logger)
+		dittoZipReaderFactory := func() (zip.ReadCloser, error) {
+			return zip.NewDittoReader(pth, logger)
 		}
 
 		appInfo, scheme, err = readXCArchiveDeploymentMeta(dittoZipReaderFactory, logger)
@@ -83,7 +83,7 @@ func readXCArchiveDeploymentMeta(zipFactory zipReaderFactory, logger logV2.Logge
 		}
 	}()
 
-	xcarchiveReader := zip.NewXCArchiveReader(reader)
+	xcarchiveReader := artifacts.NewXCArchiveReader(reader)
 	isMacos := xcarchiveReader.IsMacOS()
 	if isMacos {
 		logger.Warnf("macOS archive deployment is not supported, skipping xcarchive")
@@ -94,7 +94,7 @@ func readXCArchiveDeploymentMeta(zipFactory zipReaderFactory, logger logV2.Logge
 		return nil, "", fmt.Errorf("failed to unwrap Info.plist from xcarchive: %w", err)
 	}
 
-	iosXCArchiveReader := zip.NewIOSXCArchiveReader(reader)
+	iosXCArchiveReader := artifacts.NewIOSXCArchiveReader(reader)
 	appInfoPlist, err := iosXCArchiveReader.AppInfoPlist()
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to unwrap application Info.plist from xcarchive: %w", err)

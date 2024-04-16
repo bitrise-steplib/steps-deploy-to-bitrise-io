@@ -5,8 +5,8 @@ import (
 
 	logV2 "github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-xcode/exportoptions"
+	"github.com/bitrise-io/go-xcode/v2/artifacts"
 	"github.com/bitrise-io/go-xcode/v2/zip"
-	"github.com/bitrise-io/go-xcode/v2/ziputil"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
 
@@ -14,21 +14,21 @@ import (
 func DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups, notifyEmails string, isEnablePublicPage bool) (ArtifactURLs, error) {
 	logger := logV2.NewLogger()
 	pth := item.Path
-	defaultZipReaderFactory := func() (ziputil.ReadCloser, error) {
-		return ziputil.NewDefaultRead(pth, logger)
+	defaultZipReaderFactory := func() (zip.ReadCloser, error) {
+		return zip.NewDefaultRead(pth, logger)
 	}
 
 	appInfo, provisioningInfo, err := readIPADeploymentMeta(defaultZipReaderFactory, logger)
 	if err != nil {
-		if !ziputil.IsErrFormat(err) {
+		if !zip.IsErrFormat(err) {
 			return ArtifactURLs{}, fmt.Errorf("failed to parse deployment info for %s: %w", pth, err)
 		}
 
 		logger.Warnf("Default zip reader failed to extract ipa file (%s): %s", pth, err)
 		logger.Warnf("Continue with fallback zip reader...")
 
-		dittoZipReaderFactory := func() (ziputil.ReadCloser, error) {
-			return ziputil.NewDittoReader(pth, logger)
+		dittoZipReaderFactory := func() (zip.ReadCloser, error) {
+			return zip.NewDittoReader(pth, logger)
 		}
 
 		appInfo, provisioningInfo, err = readIPADeploymentMeta(dittoZipReaderFactory, logger)
@@ -79,7 +79,7 @@ func DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups
 	return artifactURLs, nil
 }
 
-type zipReaderFactory func() (ziputil.ReadCloser, error)
+type zipReaderFactory func() (zip.ReadCloser, error)
 
 func readIPADeploymentMeta(zipFactory zipReaderFactory, logger logV2.Logger) (map[string]interface{}, map[string]interface{}, error) {
 	zipReader, err := zipFactory()
@@ -92,7 +92,7 @@ func readIPADeploymentMeta(zipFactory zipReaderFactory, logger logV2.Logger) (ma
 		}
 	}()
 
-	ipaReader := zip.NewIPAReader(zipReader)
+	ipaReader := artifacts.NewIPAReader(zipReader)
 	infoPlist, err := ipaReader.AppInfoPlist()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to unwrap Info.plist from ipa: %w", err)
