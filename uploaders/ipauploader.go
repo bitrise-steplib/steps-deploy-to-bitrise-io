@@ -14,29 +14,10 @@ import (
 func DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups, notifyEmails string, isEnablePublicPage bool) (ArtifactURLs, error) {
 	logger := logV2.NewLogger()
 	pth := item.Path
-	defaultZipReaderFactory := func() (zip.ReadCloser, error) {
-		return zip.NewDefaultRead(pth, logger)
-	}
 
-	appInfo, provisioningInfo, err := readIPADeploymentMeta(defaultZipReaderFactory, logger)
+	appInfo, provisioningInfo, err := readIPADeploymentMeta(pth, logger)
 	if err != nil {
-		// Default zip reader can return a 'zip: not a valid zip file' error for certain ios artifacts,
-		// in this case we fall back to the ditto tool.
-		if !zip.IsErrFormat(err) || !zip.IsDittoReaderAvailable() {
-			return ArtifactURLs{}, fmt.Errorf("failed to parse deployment info for %s: %w", pth, err)
-		}
-
-		logger.Warnf("Default zip reader failed to extract ipa file (%s): %s", pth, err)
-		logger.Warnf("Continue with fallback zip reader...")
-
-		dittoZipReaderFactory := func() (zip.ReadCloser, error) {
-			return zip.NewDittoReader(pth, logger)
-		}
-
-		appInfo, provisioningInfo, err = readIPADeploymentMeta(dittoZipReaderFactory, logger)
-		if err != nil {
-			return ArtifactURLs{}, fmt.Errorf("failed to parse deployment info for %s: %w", pth, err)
-		}
+		return ArtifactURLs{}, fmt.Errorf("failed to parse deployment info for %s: %w", pth, err)
 	}
 
 	if provisioningInfo["ipa_export_method"] == exportoptions.MethodAppStore {
@@ -85,18 +66,18 @@ func DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups
 
 type zipReaderFactory func() (zip.ReadCloser, error)
 
-func readIPADeploymentMeta(zipFactory zipReaderFactory, logger logV2.Logger) (map[string]interface{}, map[string]interface{}, error) {
-	zipReader, err := zipFactory()
+func readIPADeploymentMeta(ipaPth string, logger logV2.Logger) (map[string]interface{}, map[string]interface{}, error) {
+	reader, err := zip.NewDefaultReader(ipaPth, logger)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to open ipa: %w", err)
+		return nil, nil, err
 	}
 	defer func() {
-		if err := zipReader.Close(); err != nil {
-			logger.Warnf("Failed to close ipa: %s", err)
+		if err := reader.Close(); err != nil {
+			logger.Warnf("%s", err)
 		}
 	}()
 
-	ipaReader := artifacts.NewIPAReader(zipReader)
+	ipaReader := artifacts.NewIPAReader(reader)
 	infoPlist, err := ipaReader.AppInfoPlist()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to unwrap Info.plist from ipa: %w", err)

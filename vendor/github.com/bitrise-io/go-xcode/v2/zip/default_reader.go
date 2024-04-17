@@ -1,76 +1,84 @@
 package zip
 
 import (
-	"archive/zip"
-	"errors"
 	"fmt"
-	"io"
-	"sort"
 
 	"github.com/bitrise-io/go-utils/v2/log"
-	"github.com/ryanuber/go-glob"
 )
 
-type defaultRead struct {
-	zipReader *zip.ReadCloser
-	logger    log.Logger
+// defaultReader is a zip ReadCloser, that utilises multiple zip readers.
+// If one fails it falls back to the next reader.
+type defaultReader struct {
+	logger           log.Logger
+	zipReaders       []ReadCloser
+	currentReaderIdx int
 }
 
-// NewDefaultRead ...
-func NewDefaultRead(archivePath string, logger log.Logger) (ReadCloser, error) {
-	zipReader, err := zip.OpenReader(archivePath)
+func NewDefaultReader(archivePath string, logger log.Logger) (ReadCloser, error) {
+	var zipReaders []ReadCloser
+
+	stdlibReader, err := NewStdlibRead(archivePath, logger)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open archive %s: %w", archivePath, err)
+		return nil, err
+	}
+	zipReaders = append(zipReaders, stdlibReader)
+
+	if IsDittoReaderAvailable() {
+		dittoReader := NewDittoReader(archivePath, logger)
+		zipReaders = append(zipReaders, dittoReader)
 	}
 
-	return defaultRead{
-		zipReader: zipReader,
-		logger:    logger,
+	return &defaultReader{
+		logger:           logger,
+		zipReaders:       zipReaders,
+		currentReaderIdx: 0,
 	}, nil
 }
 
-// ReadFile ...
-func (r defaultRead) ReadFile(relPthPattern string) ([]byte, error) {
-	var files []*zip.File
-	for _, f := range r.zipReader.File {
-		if glob.Glob(relPthPattern, f.Name) {
-			files = append(files, f)
+func (r *defaultReader) ReadFile(relPthPattern string) ([]byte, error) {
+	zipReader := r.zipReaders[r.currentReaderIdx]
+	b, err := zipReader.ReadFile(relPthPattern)
+	if err != nil && r.currentReaderIdx < len(r.zipReaders)-1 {
+		r.logger.Warnf("zip reader #%d failed to read %s: %s", r.currentReaderIdx+1, relPthPattern, err)
+		r.logger.Warnf("Retrying with the next zip reader...")
+
+		r.currentReaderIdx++
+		return r.ReadFile(relPthPattern)
+	}
+	return b, err
+}
+
+func (r *defaultReader) Close() error {
+	var closeErrs []map[int]error
+	for i := 0; i <= r.currentReaderIdx; i++ {
+		zipReader := r.zipReaders[r.currentReaderIdx]
+		if err := zipReader.Close(); err != nil {
+			closeErrs = append(closeErrs, map[int]error{
+				i: err,
+			})
 		}
 	}
 
-	if len(files) == 0 {
-		return nil, fmt.Errorf("no file found with pattern: %s", relPthPattern)
+	return handleCloseErrs(closeErrs, r.logger)
+}
+
+func handleCloseErrs(closeErrs []map[int]error, logger log.Logger) error {
+	if len(closeErrs) == 0 {
+		return nil
 	}
 
-	sort.Slice(files, func(i, j int) bool {
-		return len(files[i].Name) < len(files[j].Name)
-	})
-
-	file := files[0]
-	f, err := file.Open()
-	if err != nil {
-		return nil, fmt.Errorf("failed to open %s: %w", file.Name, err)
-	}
-	defer func() {
-		if err := f.Close(); err != nil {
-			r.logger.Warnf("Failed to close %s: %s", file.Name, err)
+	// The last error is returned, the rest printed.
+	if len(closeErrs) > 1 {
+		for i := 0; i < len(closeErrs)-1; i++ {
+			for idx, err := range closeErrs[i] {
+				logger.Warnf("failed to close zip reader #%d: %s", idx, err)
+			}
 		}
-	}()
-
-	b, err := io.ReadAll(f)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read %s: %w", file.Name, err)
 	}
 
-	return b, nil
-}
+	for idx, err := range closeErrs[len(closeErrs)-1] {
+		return fmt.Errorf("failed to close zip reader #%d: %s", idx, err)
+	}
 
-// Close ...
-func (r defaultRead) Close() error {
-	return r.zipReader.Close()
-}
-
-// IsErrFormat ...
-func IsErrFormat(err error) bool {
-	return errors.Is(err, zip.ErrFormat)
+	return nil
 }

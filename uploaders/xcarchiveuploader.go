@@ -13,29 +13,10 @@ import (
 func DeployXcarchive(item deployment.DeployableItem, buildURL, token string) (ArtifactURLs, error) {
 	logger := logV2.NewLogger()
 	pth := item.Path
-	defaultZipReaderFactory := func() (zip.ReadCloser, error) {
-		return zip.NewDefaultRead(pth, logger)
-	}
 
-	appInfo, scheme, err := readXCArchiveDeploymentMeta(defaultZipReaderFactory, logger)
+	appInfo, scheme, err := readXCArchiveDeploymentMeta(pth, logger)
 	if err != nil {
-		// Default zip reader can return a 'zip: not a valid zip file' error for certain ios artifacts,
-		// in this case we fall back to the ditto tool.
-		if !zip.IsErrFormat(err) || !zip.IsDittoReaderAvailable() {
-			return ArtifactURLs{}, fmt.Errorf("failed to parse deployment info for %s: %w", pth, err)
-		}
-
-		logger.Warnf("Default zip reader failed to extract xcarxhive file (%s): %s", pth, err)
-		logger.Warnf("Continue with fallback zip reader...")
-
-		dittoZipReaderFactory := func() (zip.ReadCloser, error) {
-			return zip.NewDittoReader(pth, logger)
-		}
-
-		appInfo, scheme, err = readXCArchiveDeploymentMeta(dittoZipReaderFactory, logger)
-		if err != nil {
-			return ArtifactURLs{}, fmt.Errorf("failed to parse deployment info for %s: %w", pth, err)
-		}
+		return ArtifactURLs{}, fmt.Errorf("failed to parse deployment info for %s: %w", pth, err)
 	}
 
 	fileSize, err := fileSizeInBytes(pth)
@@ -75,14 +56,14 @@ func DeployXcarchive(item deployment.DeployableItem, buildURL, token string) (Ar
 	return artifactURLs, nil
 }
 
-func readXCArchiveDeploymentMeta(zipFactory zipReaderFactory, logger logV2.Logger) (map[string]interface{}, string, error) {
-	reader, err := zipFactory()
+func readXCArchiveDeploymentMeta(xcarchivePth string, logger logV2.Logger) (map[string]interface{}, string, error) {
+	reader, err := zip.NewDefaultReader(xcarchivePth, logger)
 	if err != nil {
-		return nil, "", fmt.Errorf("failed to open xcarchive: %w", err)
+		return nil, "", err
 	}
 	defer func() {
 		if err := reader.Close(); err != nil {
-			logger.Warnf("Failed to close xcarchive: %s", err)
+			logger.Warnf("%s", err)
 		}
 	}()
 
