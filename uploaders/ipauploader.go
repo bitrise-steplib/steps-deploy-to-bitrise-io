@@ -64,8 +64,6 @@ func DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups
 	return artifactURLs, nil
 }
 
-type zipReaderFactory func() (zip.ReadCloser, error)
-
 func readIPADeploymentMeta(ipaPth string, logger logV2.Logger) (map[string]interface{}, map[string]interface{}, error) {
 	reader, err := zip.NewDefaultReader(ipaPth, logger)
 	if err != nil {

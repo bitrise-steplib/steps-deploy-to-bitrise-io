@@ -57,9 +57,10 @@ github.com/bitrise-io/go-xcode/exportoptions
 github.com/bitrise-io/go-xcode/plistutil
 github.com/bitrise-io/go-xcode/profileutil
 github.com/bitrise-io/go-xcode/xcodeproject/serialized
-# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.43.0.20240417141352-58724009a245
+# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.43.0.20240418081037-209fe35da339
 ## explicit; go 1.20
 github.com/bitrise-io/go-xcode/v2/artifacts
+github.com/bitrise-io/go-xcode/v2/internal/zip
 github.com/bitrise-io/go-xcode/v2/zip
 # github.com/bitrise-io/goinp v0.0.0-20211005113137-305e91b481f4
 ## explicit; go 1.16
