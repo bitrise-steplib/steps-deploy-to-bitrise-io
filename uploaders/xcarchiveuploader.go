@@ -3,41 +3,85 @@ package uploaders
 import (
 	"fmt"
 
-	"github.com/bitrise-io/go-utils/log"
 	logV2 "github.com/bitrise-io/go-utils/v2/log"
+	"github.com/bitrise-io/go-xcode/v2/artifacts"
 	"github.com/bitrise-io/go-xcode/v2/zip"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
 
 // DeployXcarchive ...
 func DeployXcarchive(item deployment.DeployableItem, buildURL, token string) (ArtifactURLs, error) {
+	logger := logV2.NewLogger()
 	pth := item.Path
 
-	reader, err := zip.NewReader(pth, logV2.NewLogger())
+	appInfo, scheme, err := readXCArchiveDeploymentMeta(pth, logger)
 	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to open ipa file %s, error: %s", pth, err)
+		return ArtifactURLs{}, fmt.Errorf("failed to parse deployment info for %s: %w", pth, err)
+	}
+
+	fileSize, err := fileSizeInBytes(pth)
+	if err != nil {
+		return ArtifactURLs{}, fmt.Errorf("failed to get size of %s: %w", pth, err)
+	}
+
+	xcarchiveInfoMap := map[string]interface{}{
+		"file_size_bytes": fmt.Sprintf("%f", fileSize),
+		"app_info":        appInfo,
+		"scheme":          scheme,
+	}
+
+	logger.Printf("xcarchive infos: %v", appInfo)
+
+	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "ios-xcarchive", "")
+	if err != nil {
+		return ArtifactURLs{}, fmt.Errorf("failed to create xcarchive artifact from %s %w", pth, err)
+	}
+
+	if err := UploadArtifact(uploadURL, pth, ""); err != nil {
+		return ArtifactURLs{}, fmt.Errorf("failed to upload xcarchive (%s): %w", pth, err)
+	}
+
+	buildArtifactMeta := AppDeploymentMetaData{
+		ArtifactInfo:       xcarchiveInfoMap,
+		NotifyUserGroups:   "",
+		NotifyEmails:       "",
+		IsEnablePublicPage: false,
+	}
+
+	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta, item.IntermediateFileMeta)
+	if err != nil {
+		return ArtifactURLs{}, fmt.Errorf("failed to finish xcarchive (%s) upload: %w", pth, err)
+	}
+
+	return artifactURLs, nil
+}
+
+func readXCArchiveDeploymentMeta(xcarchivePth string, logger logV2.Logger) (map[string]interface{}, string, error) {
+	reader, err := zip.NewDefaultReader(xcarchivePth, logger)
+	if err != nil {
+		return nil, "", err
 	}
 	defer func() {
 		if err := reader.Close(); err != nil {
-			log.Warnf("Failed to close archive: %s", pth)
+			logger.Warnf("%s", err)
 		}
 	}()
 
-	xcarchiveReader := zip.NewXCArchiveReader(*reader)
+	xcarchiveReader := artifacts.NewXCArchiveReader(reader)
 	isMacos := xcarchiveReader.IsMacOS()
 	if isMacos {
-		log.Warnf("macOS archive deployment is not supported, skipping file: %s", pth)
-		return ArtifactURLs{}, nil // MacOS project is not supported, so won't be deployed.
+		logger.Warnf("macOS archive deployment is not supported, skipping xcarchive")
+		return nil, "", nil // MacOS project is not supported, so won't be deployed.
 	}
 	archiveInfoPlist, err := xcarchiveReader.InfoPlist()
 	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to parse archive Info.plist from %s: %s", pth, err)
+		return nil, "", fmt.Errorf("failed to unwrap Info.plist from xcarchive: %w", err)
 	}
 
-	iosXCArchiveReader := zip.NewIOSXCArchiveReader(*reader)
+	iosXCArchiveReader := artifacts.NewIOSXCArchiveReader(reader)
 	appInfoPlist, err := iosXCArchiveReader.AppInfoPlist()
 	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to parse application Info.plist from %s: %s", pth, err)
+		return nil, "", fmt.Errorf("failed to unwrap application Info.plist from xcarchive: %w", err)
 	}
 
 	appTitle, _ := appInfoPlist.GetString("CFBundleName")
@@ -57,40 +101,5 @@ func DeployXcarchive(item deployment.DeployableItem, buildURL, token string) (Ar
 		"device_family_list": deviceFamilyList,
 	}
 
-	// ---
-
-	fileSize, err := fileSizeInBytes(pth)
-	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to get xcarchive size, error: %s", err)
-	}
-
-	xcarchiveInfoMap := map[string]interface{}{
-		"file_size_bytes": fmt.Sprintf("%f", fileSize),
-		"app_info":        appInfo,
-		"scheme":          scheme,
-	}
-
-	log.Printf("xcarchive infos: %v", appInfo)
-
-	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "ios-xcarchive", "")
-	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to create xcarchive artifact: %s %w", pth, err)
-	}
-
-	if err := UploadArtifact(uploadURL, pth, ""); err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to upload xcarchive artifact, error: %s", err)
-	}
-
-	buildArtifactMeta := AppDeploymentMetaData{
-		ArtifactInfo:       xcarchiveInfoMap,
-		NotifyUserGroups:   "",
-		NotifyEmails:       "",
-		IsEnablePublicPage: false,
-	}
-
-	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta, item.IntermediateFileMeta)
-	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to finish xcarchive artifact, error: %s", err)
-	}
-	return artifactURLs, nil
+	return appInfo, scheme, nil
 }

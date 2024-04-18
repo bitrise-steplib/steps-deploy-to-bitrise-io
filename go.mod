@@ -9,10 +9,10 @@ require (
 	github.com/bitrise-io/go-android v0.0.0-20210517091621-72f0eb7a5197
 	github.com/bitrise-io/go-steputils v1.0.5
 	github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.20
-	github.com/bitrise-io/go-utils v1.0.11
+	github.com/bitrise-io/go-utils v1.0.12
 	github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.20
 	github.com/bitrise-io/go-xcode v1.0.18
-	github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.41
+	github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.44
 	github.com/google/go-cmp v0.5.9
 	github.com/gorilla/mux v1.8.0
 	github.com/pkg/errors v0.9.1
