@@ -33,7 +33,7 @@ func DeployAAB(item deployment.DeployableItem, artifacts []string, buildURL, tok
 	}
 
 	packageName, versionCode, versionName := androidartifact.ParsePackageInfos(out, true)
-
+	minSDKVersion := androidartifact.ParseMinSDKVersion(out, true)
 	appName := androidartifact.GetAppNameFromManifest(out, true)
 
 	if strings.HasPrefix(appName, "@") {
@@ -51,10 +51,11 @@ func DeployAAB(item deployment.DeployableItem, artifacts []string, buildURL, tok
 	}
 
 	appInfo := map[string]interface{}{
-		"package_name": packageName,
-		"version_code": versionCode,
-		"version_name": versionName,
-		"app_name":     appName,
+		"package_name":    packageName,
+		"version_code":    versionCode,
+		"version_name":    versionName,
+		"app_name":        appName,
+		"min_sdk_version": minSDKVersion,
 	}
 
 	log.Printf("aab infos: %v", appInfo)
@@ -69,6 +70,10 @@ func DeployAAB(item deployment.DeployableItem, artifacts []string, buildURL, tok
 
 	if versionName == "" {
 		log.Warnf("Version name is undefined, AndroidManifest.xml package content:\n%s", out)
+	}
+
+	if minSDKVersion == "" {
+		log.Warnf("Min SDK version is undefined, AndroidManifest.xml package content:\n%s", out)
 	}
 
 	if appName == "" {

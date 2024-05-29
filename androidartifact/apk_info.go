@@ -44,9 +44,12 @@ func parseAppName(aaptOut string) string {
 	return ""
 }
 
-// parseMinSDKVersion parses the min sdk version from `aapt dump badging` command output.
-func parseMinSDKVersion(aaptOut string) string {
+// ParseMinSDKVersion parses the min sdk version from `aapt dump badging` command output.
+func ParseMinSDKVersion(aaptOut string, isAAB bool) string {
 	pattern := `sdkVersion:\'(?P<min_sdk_version>.*)\'`
+	if isAAB {
+		pattern = `minSdkVersion=['"](.*?)['"]`
+	}
 	re := regexp.MustCompile(pattern)
 	if matches := re.FindStringSubmatch(aaptOut); len(matches) == 2 {
 		return matches[1]
@@ -182,7 +185,7 @@ func getAPKInfoWithAapt(apkPth string) (ApkInfo, error) {
 
 	appName := parseAppName(aaptOut)
 	packageName, versionCode, versionName := ParsePackageInfos(aaptOut, false)
-	minSDKVersion := parseMinSDKVersion(aaptOut)
+	minSDKVersion := ParseMinSDKVersion(aaptOut, false)
 
 	packageContent := ""
 	for _, line := range strings.Split(aaptOut, "\n") {
