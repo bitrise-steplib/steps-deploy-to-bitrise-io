@@ -6,10 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"reflect"
 	"regexp"
 	"strings"
 
 	"github.com/avast/apkparser"
+
 	"github.com/bitrise-io/go-android/sdk"
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/log"
@@ -74,6 +76,36 @@ func ParsePackageInfos(aaptOut string, isAAB bool) (string, string, string) {
 	return parsePackageField(aaptOut, packageNameKey),
 		parsePackageField(aaptOut, "versionCode"),
 		parsePackageField(aaptOut, "versionName")
+}
+
+// GetAppNameFromManifest parses app name from `aapt dump badging` command output.
+func GetAppNameFromManifest(aaptOut string, isAAB bool) string {
+	if !isAAB {
+		return parseAppName(aaptOut)
+	}
+
+	pattern := `label=['"](.*?)['"]`
+	re := regexp.MustCompile(pattern)
+	if matches := re.FindStringSubmatch(aaptOut); len(matches) == 2 {
+		return matches[1]
+	}
+
+	return ""
+}
+
+// GetAppNameFromResources parses app name from `aapt dump resources badging` command output.
+func GetAppNameFromResources(aaptOut string) string {
+	pattern := `['"](.*?)['"]`
+	re := regexp.MustCompile(pattern)
+	matches := re.FindAllStringSubmatch(aaptOut, 2)
+	if len(matches) == 2 {
+		appNameMatch := matches[len(matches)-1]
+		if reflect.TypeOf(appNameMatch).Kind() == reflect.Slice && len(appNameMatch) == 2 {
+			return appNameMatch[1]
+		}
+	}
+
+	return ""
 }
 
 type manifest struct {

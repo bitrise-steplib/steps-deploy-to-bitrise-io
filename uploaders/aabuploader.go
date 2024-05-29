@@ -4,12 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"strings"
 
-	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/androidartifact"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/androidsignature"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/bundletool"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
+
+	"github.com/bitrise-io/go-utils/log"
 )
 
 // DeployAAB ...
@@ -32,10 +34,27 @@ func DeployAAB(item deployment.DeployableItem, artifacts []string, buildURL, tok
 
 	packageName, versionCode, versionName := androidartifact.ParsePackageInfos(out, true)
 
+	appName := androidartifact.GetAppNameFromManifest(out, true)
+
+	if strings.HasPrefix(appName, "@") {
+		cmd := r.Command("dump", "resources", "--bundle", pth, "--resource", appName[1:], "--values")
+		out, err := cmd.RunAndReturnTrimmedCombinedOutput()
+		if err != nil {
+			var exitErr *exec.ExitError
+			if errors.As(err, &exitErr) {
+				return ArtifactURLs{}, fmt.Errorf("command failed with exit status %d (%s): %s", exitErr.ExitCode(), cmd.PrintableCommandArgs(), out)
+			}
+			return ArtifactURLs{}, fmt.Errorf("executing command failed (%s): %w", cmd.PrintableCommandArgs(), err)
+		}
+
+		appName = androidartifact.GetAppNameFromResources(out)
+	}
+
 	appInfo := map[string]interface{}{
 		"package_name": packageName,
 		"version_code": versionCode,
 		"version_name": versionName,
+		"app_name":     appName,
 	}
 
 	log.Printf("aab infos: %v", appInfo)
@@ -50,6 +69,10 @@ func DeployAAB(item deployment.DeployableItem, artifacts []string, buildURL, tok
 
 	if versionName == "" {
 		log.Warnf("Version name is undefined, AndroidManifest.xml package content:\n%s", out)
+	}
+
+	if appName == "" {
+		log.Warnf("App name is undefined, AndroidManifest.xml package content:\n%s", out)
 	}
 
 	// ---
