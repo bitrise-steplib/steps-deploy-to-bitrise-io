@@ -10,6 +10,12 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/fileredactor"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/report"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/uploaders"
+
 	"github.com/bitrise-io/bitrise/models"
 	"github.com/bitrise-io/envman/envman"
 	"github.com/bitrise-io/go-steputils/stepconf"
@@ -24,11 +30,6 @@ import (
 	loggerV2 "github.com/bitrise-io/go-utils/v2/log"
 	pathutil2 "github.com/bitrise-io/go-utils/v2/pathutil"
 	"github.com/bitrise-io/go-utils/ziputil"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/fileredactor"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/report"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/uploaders"
 )
 
 var fileBaseNamesToSkip = []string{".DS_Store"}
@@ -46,6 +47,7 @@ type Config struct {
 	IsPublicPageEnabled           bool   `env:"is_enable_public_page,opt[true,false]"`
 	PublicInstallPageMapFormat    string `env:"public_install_page_url_map_format,required"`
 	PermanentDownloadURLMapFormat string `env:"permanent_download_url_map_format,required"`
+	DetailsPageURLMapFormat       string `env:"details_page_url_map_format,required"`
 	BuildSlug                     string `env:"BITRISE_BUILD_SLUG,required"`
 	TestDeployDir                 string `env:"BITRISE_TEST_DEPLOY_DIR,required"`
 	AppSlug                       string `env:"BITRISE_APP_SLUG,required"`
@@ -68,6 +70,7 @@ type PublicInstallPage struct {
 type ArtifactURLCollection struct {
 	PublicInstallPageURLs map[string]string
 	PermanentDownloadURLs map[string]string
+	DetailsPageURLs       map[string]string
 }
 
 const zippedXcarchiveExt = ".xcarchive.zip"
@@ -247,6 +250,20 @@ func exportInstallPages(artifactURLCollection ArtifactURLCollection, config Conf
 		}
 		log.Printf("A map of deployed files and their permanent download urls is now available in the Environment Variable: BITRISE_PERMANENT_DOWNLOAD_URL_MAP (value: %s)", value)
 	}
+	if len(artifactURLCollection.DetailsPageURLs) > 0 {
+		pages := mapURLsToInstallPages(artifactURLCollection.DetailsPageURLs)
+
+		if err := tools.ExportEnvironmentWithEnvman("BITRISE_ARTIFACT_DETAILS_PAGE_URL", pages[0].URL); err != nil {
+			return fmt.Errorf("failed to export BITRISE_ARTIFACT_DETAILS_PAGE_URL: %s", err)
+		}
+		log.Printf("The artifact details page url is now available in the Environment Variable: BITRISE_ARTIFACT_DETAILS_PAGE_URL (value: %s)\n", pages[0].URL)
+
+		value, err := exportMapEnvironment("Details Page URL template", config.DetailsPageURLMapFormat, "DetailsPageURLMap", "BITRISE_ARTIFACT_DETAILS_PAGE_URL_MAP", pages)
+		if err != nil {
+			return fmt.Errorf("failed to export BITRISE_ARTIFACT_DETAILS_PAGE_URL_MAP, error: %s", err)
+		}
+		log.Printf("A map of deployed files and their details page urls is now available in the Environment Variable: BITRISE_ARTIFACT_DETAILS_PAGE_URL_MAP (value: %s)", value)
+	}
 	return nil
 }
 
@@ -342,7 +359,7 @@ func collectFilesToDeploy(absDeployPth string, config Config, tmpDir string) (fi
 		log.Warnf("Nothing to deploy at %s", absDeployPth)
 		return
 	}
-	
+
 	isDeployPathDir, err := pathutil.IsDirExists(absDeployPth)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check if %s is a directory or a file: %s", absDeployPth, err)
@@ -449,6 +466,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 	artifactURLCollection := ArtifactURLCollection{
 		PublicInstallPageURLs: map[string]string{},
 		PermanentDownloadURLs: map[string]string{},
+		DetailsPageURLs:       map[string]string{},
 	}
 	var errorCollection []error
 	var wg sync.WaitGroup
@@ -531,6 +549,9 @@ func fillURLMaps(lock *sync.RWMutex, artifactURLCollection ArtifactURLCollection
 	}
 	if artifactURLs.PermanentDownloadURL != "" {
 		artifactURLCollection.PermanentDownloadURLs[filepath.Base(path)] = artifactURLs.PermanentDownloadURL
+	}
+	if artifactURLs.DetailsPageURL != "" {
+		artifactURLCollection.DetailsPageURLs[filepath.Base(path)] = artifactURLs.DetailsPageURL
 	}
 }
 
