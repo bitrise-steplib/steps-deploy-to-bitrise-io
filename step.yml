@@ -353,6 +353,8 @@ outputs:
       title: Details Page URL
       description: |-
         Details Page's URL.
+        
+        At the moment, only installable artifacts (.aab, .apk, .ipa) have details page URL.
   - BITRISE_ARTIFACT_DETAILS_PAGE_URL_MAP:
     opts:
       title: Map of filenames and Public Install Page URLs
