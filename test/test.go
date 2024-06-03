@@ -16,7 +16,10 @@ import (
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
+	logV2 "github.com/bitrise-io/go-utils/v2/log"
+	"github.com/bitrise-io/go-utils/v2/retryhttp"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters"
+	"github.com/hashicorp/go-retryablehttp"
 )
 
 // FileInfo ...
@@ -61,12 +64,14 @@ func httpCall(apiToken, method, url string, input io.Reader, output interface{})
 	if apiToken != "" {
 		url = url + "/" + apiToken
 	}
-	req, err := http.NewRequest(method, url, input)
+	req, err := retryablehttp.NewRequest(method, url, input)
 	if err != nil {
 		return err
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	logger := logV2.NewLogger()
+	client := retryhttp.NewClient(logger)
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
