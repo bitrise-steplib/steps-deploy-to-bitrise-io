@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/bundletool"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/fileredactor"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/report"
@@ -55,7 +56,7 @@ type Config struct {
 	AddonAPIToken                 string `env:"addon_api_token"`
 	FilesToRedact                 string `env:"files_to_redact"`
 	DebugMode                     bool   `env:"debug_mode,opt[true,false]"`
-	BundletoolVersion             string `env:"bundletool_version,required"`
+	BundletoolVersion             string `env:"BUNDLETOOL_VERSION,required"`
 	UploadConcurrency             string `env:"BITRISE_DEPLOY_UPLOAD_CONCURRENCY"`
 	HTMLReportDir                 string `env:"BITRISE_HTML_REPORT_DIR"`
 }
@@ -468,6 +469,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 		PermanentDownloadURLs: map[string]string{},
 		DetailsPageURLs:       map[string]string{},
 	}
+	var err error
 	var errorCollection []error
 	var wg sync.WaitGroup
 
@@ -477,6 +479,14 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 	mapLock := &sync.RWMutex{}
 	errLock := &sync.RWMutex{}
 
+	var bTool bundletool.Path
+	if len(aabs) > 0 {
+		bTool, err = bundletool.New(config.BundletoolVersion)
+		if err != nil {
+			errorCollection = handleDeploymentFailureError(err, errorCollection)
+		}
+	}
+
 	for _, item := range combinedItems {
 		wg.Add(1)
 
@@ -485,7 +495,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 
 			jobs <- true
 
-			artifactURLs, err := deploySingleItem(item, config, androidArtifacts)
+			artifactURLs, err := deploySingleItem(item, config, androidArtifacts, bTool)
 			if err != nil {
 				errLock.Lock()
 				errorCollection = handleDeploymentFailureError(err, errorCollection)
@@ -503,7 +513,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config) (Artifac
 	return artifactURLCollection, errorCollection
 }
 
-func deploySingleItem(item deployment.DeployableItem, config Config, androidArtifacts []string) (uploaders.ArtifactURLs, error) {
+func deploySingleItem(item deployment.DeployableItem, config Config, androidArtifacts []string, bt bundletool.Path) (uploaders.ArtifactURLs, error) {
 	pth := item.Path
 	fileType := getFileType(pth)
 
@@ -517,7 +527,7 @@ func deploySingleItem(item deployment.DeployableItem, config Config, androidArti
 	case ".aab":
 		log.Printf("Deploying aab file: %s", pth)
 
-		return uploaders.DeployAAB(item, androidArtifacts, config.BuildURL, config.APIToken, config.BundletoolVersion)
+		return uploaders.DeployAAB(item, androidArtifacts, config.BuildURL, config.APIToken, bt)
 	case ".ipa":
 		log.Printf("Deploying ipa file: %s", pth)
 
