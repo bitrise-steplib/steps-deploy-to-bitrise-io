@@ -80,9 +80,10 @@ func httpCall(apiToken, method, url string, input io.Reader, output interface{})
 	if resp.StatusCode < 200 || 299 < resp.StatusCode {
 		bodyData, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			return fmt.Errorf("unsuccessful response code: %d and failed to read body, error: %s", resp.StatusCode, err)
+			log.Warnf("Failed to read response: %s", err)
+			return fmt.Errorf("unsuccessful status code: %d", resp.StatusCode)
 		}
-		return fmt.Errorf("unsuccessful response code: %d\nbody:\n%s", resp.StatusCode, bodyData)
+		return fmt.Errorf("unsuccessful status code: %d, response: %s", resp.StatusCode, bodyData)
 	}
 
 	if output != nil {
@@ -103,7 +104,29 @@ func findImages(testDir string) (imageFilePaths []string) {
 	return
 }
 
-// ParseTestResults ...
+/*
+ParseTestResults walks through the Test Deploy directory and parses all the Steps' test results.
+
+The Test Deploy directory has the following directory structure:
+
+	test_results ($BITRISE_TEST_DEPLOY_DIR)
+	├── step_1_test_results ($BITRISE_TEST_RESULT_DIR)
+	│		 ├── step-info.json
+	│		 ├── test_run_1
+	│		 │		 ├── UnitTest.xml
+	│		 │		 └── test-info.json
+	│		 └── test_run_2
+	│		     ├── UITest.xml
+	│		     └── test-info.json
+	└── step_2_test_results ($BITRISE_TEST_RESULT_DIR)
+	    ├── step-info.json
+	    └── test_run
+	        ├── results.xml
+	        ├── screenshot_1.jpg
+	        ├── screenshot_2.jpeg
+	        ├── screenshot_3.png
+	        └── test-info.json
+*/
 func ParseTestResults(testsRootDir string) (results Results, err error) {
 	// read dirs in base tests dir
 	// <root_tests_dir>
@@ -219,15 +242,7 @@ func ParseTestResults(testsRootDir string) (results Results, err error) {
 // Upload ...
 func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug string) error {
 	for _, result := range results {
-		if len(result.ImagePaths) > 0 {
-			log.Printf("Uploading: %s with attachments:", result.Name)
-			for _, pth := range result.ImagePaths {
-				log.Printf("- %s", pth)
-			}
-			log.Printf("")
-		} else {
-			log.Printf("Uploading: %s", result.Name)
-		}
+		log.Printf("Uploading: %s", result.Name)
 
 		uploadReq := UploadRequest{
 			FileInfo: FileInfo{
@@ -240,7 +255,7 @@ func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug stri
 		for _, asset := range result.ImagePaths {
 			fi, err := os.Stat(asset)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to get file info for %s: %w", asset, err)
 			}
 			uploadReq.Assets = append(uploadReq.Assets, FileInfo{
 				FileName: filepath.Base(asset),
@@ -250,7 +265,7 @@ func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug stri
 
 		uploadRequestBodyData, err := json.Marshal(uploadReq)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to json encode upload request: %w", err)
 		}
 
 		var (
@@ -258,11 +273,11 @@ func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug stri
 			uploadRequestURL = fmt.Sprintf("%s/apps/%s/builds/%s/test_reports", endpointBaseURL, appSlug, buildSlug)
 		)
 		if err := httpCall(apiToken, http.MethodPost, uploadRequestURL, bytes.NewReader(uploadRequestBodyData), &uploadResponse); err != nil {
-			return err
+			return fmt.Errorf("failed to initialise test result: %w", err)
 		}
 
 		if err := httpCall("", http.MethodPut, uploadResponse.URL, bytes.NewReader(result.XMLContent), nil); err != nil {
-			return err
+			return fmt.Errorf("failed to upload test result xml: %w", err)
 		}
 
 		for _, upload := range uploadResponse.Assets {
@@ -270,10 +285,10 @@ func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug stri
 				if filepath.Base(file) == upload.FileName {
 					fi, err := os.Open(file)
 					if err != nil {
-						return err
+						return fmt.Errorf("failed to open test result attachment (%s): %w", file, err)
 					}
 					if err := httpCall("", http.MethodPut, upload.URL, fi, nil); err != nil {
-						return err
+						return fmt.Errorf("failed to upload test result attachment (%s): %w", file, err)
 					}
 					break
 				}
@@ -282,7 +297,7 @@ func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug stri
 
 		var uploadPatchURL = fmt.Sprintf("%s/apps/%s/builds/%s/test_reports/%s", endpointBaseURL, appSlug, buildSlug, uploadResponse.ID)
 		if err := httpCall(apiToken, http.MethodPatch, uploadPatchURL, strings.NewReader(`{"uploaded":true}`), nil); err != nil {
-			return err
+			return fmt.Errorf("failed to finalise test result: %w", err)
 		}
 	}
 
