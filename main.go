@@ -56,7 +56,7 @@ type Config struct {
 	AddonAPIToken                 string `env:"addon_api_token"`
 	FilesToRedact                 string `env:"files_to_redact"`
 	DebugMode                     bool   `env:"debug_mode,opt[true,false]"`
-	BundletoolVersion             string `env:"BUNDLETOOL_VERSION,required"`
+	BundletoolVersion             string `env:"bundletool_version,required"`
 	UploadConcurrency             string `env:"BITRISE_DEPLOY_UPLOAD_CONCURRENCY"`
 	HTMLReportDir                 string `env:"BITRISE_HTML_REPORT_DIR"`
 }
