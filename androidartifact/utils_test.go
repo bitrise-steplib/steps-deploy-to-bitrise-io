@@ -81,7 +81,6 @@ func TestParsePackageInfos(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
 			packageName, versionCode, versionName := ParsePackageInfo(tt.aaptOut, tt.packageNameKey)
 			if packageName != tt.packageName {
 				t.Errorf("packageName got = %v, want %v", packageName, tt.packageName)

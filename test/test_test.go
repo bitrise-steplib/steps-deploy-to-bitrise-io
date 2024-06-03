@@ -10,15 +10,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/bitrise-io/bitrise/models"
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/env"
-	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func createDummyFilesInDirWithContent(dir, content string, fileNames []string) error {
@@ -179,7 +180,7 @@ func Test_ParseXctestResults(t *testing.T) {
 			t.Fatal("failed to create temp dir, error:", err)
 		}
 
-		_, err = ioutil.TempDir(testsDir, "test-result")
+		_, err = os.MkdirTemp(testsDir, "test-result")
 		if err != nil {
 			t.Fatal("failed to create temp dir, error:", err)
 		}
@@ -201,12 +202,12 @@ func Test_ParseXctestResults(t *testing.T) {
 			t.Fatal("failed to create temp dir, error:", err)
 		}
 
-		testDir, err := ioutil.TempDir(testsDir, "test-result")
+		testDir, err := os.MkdirTemp(testsDir, "test-result")
 		if err != nil {
 			t.Fatal("failed to create temp dir, error:", err)
 		}
 
-		phaseDir, err := ioutil.TempDir(testDir, "phase")
+		phaseDir, err := os.MkdirTemp(testDir, "phase")
 		if err != nil {
 			t.Fatal("failed to create temp dir, error:", err)
 		}
@@ -242,12 +243,12 @@ func Test_ParseXctestResults(t *testing.T) {
 			t.Fatal("failed to create temp dir, error:", err)
 		}
 
-		testDir, err := ioutil.TempDir(testsDir, "test-result")
+		testDir, err := os.MkdirTemp(testsDir, "test-result")
 		if err != nil {
 			t.Fatal("failed to create temp dir, error:", err)
 		}
 
-		phaseDir, err := ioutil.TempDir(testDir, "phase")
+		phaseDir, err := os.MkdirTemp(testDir, "phase")
 		if err != nil {
 			t.Fatal("failed to create temp dir, error:", err)
 		}
