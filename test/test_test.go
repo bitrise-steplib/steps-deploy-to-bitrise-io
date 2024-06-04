@@ -15,6 +15,7 @@ import (
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/env"
+	logV2 "github.com/bitrise-io/go-utils/v2/log"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -156,7 +157,7 @@ func Test_Upload(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	if err := results.Upload("access-token", "http://localhost:8893/test", "test-app-slug", "test-build-slug"); err != nil {
+	if err := results.Upload("access-token", "http://localhost:8893/test", "test-app-slug", "test-build-slug", logV2.NewLogger()); err != nil {
 		t.Fatalf("%v", errors.WithStack(err))
 		return
 	}

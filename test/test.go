@@ -14,7 +14,6 @@ import (
 
 	"github.com/bitrise-io/bitrise/models"
 	"github.com/bitrise-io/go-utils/fileutil"
-	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	logV2 "github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/retryhttp"
@@ -60,7 +59,7 @@ type Result struct {
 // Results ...
 type Results []Result
 
-func httpCall(apiToken, method, url string, input io.Reader, output interface{}) error {
+func httpCall(apiToken, method, url string, input io.Reader, output interface{}, logger logV2.Logger) error {
 	if apiToken != "" {
 		url = url + "/" + apiToken
 	}
@@ -69,7 +68,6 @@ func httpCall(apiToken, method, url string, input io.Reader, output interface{})
 		return err
 	}
 
-	logger := logV2.NewLogger()
 	client := retryhttp.NewClient(logger)
 	resp, err := client.Do(req)
 	if err != nil {
@@ -78,14 +76,14 @@ func httpCall(apiToken, method, url string, input io.Reader, output interface{})
 
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			log.Warnf("Failed to close body: %s", err)
+			logger.Warnf("Failed to close body: %s", err)
 		}
 	}()
 
 	if resp.StatusCode < 200 || 299 < resp.StatusCode {
 		bodyData, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			log.Warnf("Failed to read response: %s", err)
+			logger.Warnf("Failed to read response: %s", err)
 			return fmt.Errorf("unsuccessful status code: %d", resp.StatusCode)
 		}
 		return fmt.Errorf("unsuccessful status code: %d, response: %s", resp.StatusCode, bodyData)
@@ -132,7 +130,7 @@ The Test Deploy directory has the following directory structure:
 	        ├── screenshot_3.png
 	        └── test-info.json
 */
-func ParseTestResults(testsRootDir string) (results Results, err error) {
+func ParseTestResults(testsRootDir string, logger logV2.Logger) (results Results, err error) {
 	// read dirs in base tests dir
 	// <root_tests_dir>
 
@@ -147,7 +145,7 @@ func ParseTestResults(testsRootDir string) (results Results, err error) {
 		testDirPath := filepath.Join(testsRootDir, testDir.Name())
 
 		if !testDir.IsDir() {
-			log.Debugf("%s is not a directory", testDirPath)
+			logger.Debugf("%s is not a directory", testDirPath)
 			continue
 		}
 
@@ -162,7 +160,7 @@ func ParseTestResults(testsRootDir string) (results Results, err error) {
 
 		stepInfoPth := filepath.Join(testDirPath, "step-info.json")
 		if isExists, err := pathutil.IsPathExists(stepInfoPth); err != nil {
-			log.Warnf("Failed to check if step-info.json file exists in dir: %s: %s", testDirPath, err)
+			logger.Warnf("Failed to check if step-info.json file exists in dir: %s: %s", testDirPath, err)
 			continue
 		} else if !isExists {
 			continue
@@ -171,12 +169,12 @@ func ParseTestResults(testsRootDir string) (results Results, err error) {
 		var stepInfo *models.TestResultStepInfo
 		stepInfoFileContent, err := fileutil.ReadBytesFromFile(stepInfoPth)
 		if err != nil {
-			log.Warnf("Failed to read step-info.json file in dir: %s, error: %s", testDirPath, err)
+			logger.Warnf("Failed to read step-info.json file in dir: %s, error: %s", testDirPath, err)
 			continue
 		}
 
 		if err := json.Unmarshal(stepInfoFileContent, &stepInfo); err != nil {
-			log.Warnf("Failed to parse step-info.json file in dir: %s, error: %s", testDirPath, err)
+			logger.Warnf("Failed to parse step-info.json file in dir: %s, error: %s", testDirPath, err)
 			continue
 		}
 
@@ -195,12 +193,12 @@ func ParseTestResults(testsRootDir string) (results Results, err error) {
 
 			// get the converter that can manage test type contained in the dir
 			for _, converter := range converters.List() {
-				log.Debugf("Running converter: %T", converter)
+				logger.Debugf("Running converter: %T", converter)
 
 				// skip if couldn't find converter for content type
 				detected := converter.Detect(testFiles)
 
-				log.Debugf("known test result detected: %v", detected)
+				logger.Debugf("known test result detected: %v", detected)
 
 				if detected {
 					// test-info.json file is required
@@ -229,7 +227,7 @@ func ParseTestResults(testsRootDir string) (results Results, err error) {
 					// so here I will have image paths, xml data, and step info per test dir in a bundle info
 					images := findImages(testPhaseDirPath)
 
-					log.Debugf("found images: %d", len(images))
+					logger.Debugf("found images: %d", len(images))
 
 					results = append(results, Result{
 						Name:       testInfo.Name,
@@ -245,9 +243,9 @@ func ParseTestResults(testsRootDir string) (results Results, err error) {
 }
 
 // Upload ...
-func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug string) error {
+func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug string, logger logV2.Logger) error {
 	for _, result := range results {
-		log.Printf("Uploading: %s", result.Name)
+		logger.Printf("Uploading: %s", result.Name)
 
 		uploadReq := UploadRequest{
 			FileInfo: FileInfo{
@@ -277,11 +275,11 @@ func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug stri
 			uploadResponse   UploadResponse
 			uploadRequestURL = fmt.Sprintf("%s/apps/%s/builds/%s/test_reports", endpointBaseURL, appSlug, buildSlug)
 		)
-		if err := httpCall(apiToken, http.MethodPost, uploadRequestURL, bytes.NewReader(uploadRequestBodyData), &uploadResponse); err != nil {
+		if err := httpCall(apiToken, http.MethodPost, uploadRequestURL, bytes.NewReader(uploadRequestBodyData), &uploadResponse, logger); err != nil {
 			return fmt.Errorf("failed to initialise test result: %w", err)
 		}
 
-		if err := httpCall("", http.MethodPut, uploadResponse.URL, bytes.NewReader(result.XMLContent), nil); err != nil {
+		if err := httpCall("", http.MethodPut, uploadResponse.URL, bytes.NewReader(result.XMLContent), nil, logger); err != nil {
 			return fmt.Errorf("failed to upload test result xml: %w", err)
 		}
 
@@ -292,7 +290,7 @@ func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug stri
 					if err != nil {
 						return fmt.Errorf("failed to open test result attachment (%s): %w", file, err)
 					}
-					if err := httpCall("", http.MethodPut, upload.URL, fi, nil); err != nil {
+					if err := httpCall("", http.MethodPut, upload.URL, fi, nil, logger); err != nil {
 						return fmt.Errorf("failed to upload test result attachment (%s): %w", file, err)
 					}
 					break
@@ -301,7 +299,7 @@ func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug stri
 		}
 
 		var uploadPatchURL = fmt.Sprintf("%s/apps/%s/builds/%s/test_reports/%s", endpointBaseURL, appSlug, buildSlug, uploadResponse.ID)
-		if err := httpCall(apiToken, http.MethodPatch, uploadPatchURL, strings.NewReader(`{"uploaded":true}`), nil); err != nil {
+		if err := httpCall(apiToken, http.MethodPatch, uploadPatchURL, strings.NewReader(`{"uploaded":true}`), nil, logger); err != nil {
 			return fmt.Errorf("failed to finalise test result: %w", err)
 		}
 	}
