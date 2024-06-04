@@ -161,7 +161,6 @@ func TestXCresult3Converters(t *testing.T) {
 			wantXML:       want,
 		},
 	} {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			if got := test.converter.Detect(test.testFilePaths); got != test.wantDetect {
 				t.Fatalf("detect want: %v, got: %v", test.wantDetect, got)

@@ -33,7 +33,6 @@ func TestSpecialContentTypes(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			path := filepath.Join(t.TempDir(), test.fileName)
 			err := os.WriteFile(path, []byte("hello world"), 0644)
