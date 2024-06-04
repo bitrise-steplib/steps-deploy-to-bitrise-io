@@ -398,7 +398,7 @@ func stepNameWithIndex(stepInfo models.TestResultStepInfo) string {
 func deployTestResults(config Config, logger loggerV2.Logger) {
 	logger.Println()
 	logger.Infof("Collecting test results...")
-	testResults, err := test.ParseTestResults(config.TestDeployDir)
+	testResults, err := test.ParseTestResults(config.TestDeployDir, logger)
 	if err != nil {
 		logger.Warnf("Failed to parse test results: %s", err)
 		return
