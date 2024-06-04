@@ -1,6 +1,9 @@
 package bundletool
 
 import (
+	"errors"
+	"fmt"
+	"os/exec"
 	"path/filepath"
 
 	"github.com/bitrise-io/go-utils/command"
@@ -39,4 +42,20 @@ func fetchAny(source string, fallbackSources ...string) (Path, error) {
 // Command ...
 func (p Path) Command(cmd string, args ...string) *command.Model {
 	return command.New("java", append([]string{"-Djdk.util.zip.disableZip64ExtraFieldValidation=true", "-jar", string(p), cmd}, args...)...)
+}
+
+// Exec ...
+func (p Path) Exec(cmd string, args ...string) (string, error) {
+	c := p.Command(cmd, args...)
+
+	out, err := c.RunAndReturnTrimmedCombinedOutput()
+	if err != nil {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
+			return "", fmt.Errorf("command failed with exit status %d (%s): %s", exitErr.ExitCode(), c.PrintableCommandArgs(), out)
+		}
+		return "", fmt.Errorf("executing command failed (%s): %w", c.PrintableCommandArgs(), err)
+	}
+
+	return out, nil
 }

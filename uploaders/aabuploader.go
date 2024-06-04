@@ -1,58 +1,53 @@
 package uploaders
 
 import (
-	"errors"
 	"fmt"
-	"os/exec"
 
-	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/androidartifact"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/androidsignature"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/bundletool"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
+
+	"github.com/bitrise-io/go-utils/log"
 )
 
 // DeployAAB ...
-func DeployAAB(item deployment.DeployableItem, artifacts []string, buildURL, token, bundletoolVersion string) (ArtifactURLs, error) {
+func DeployAAB(item deployment.DeployableItem, artifacts []string, buildURL, token string, bt bundletool.Path) (ArtifactURLs, error) {
 	pth := item.Path
-	r, err := bundletool.New(bundletoolVersion)
+	aabInfo, err := androidartifact.GetAABInfo(bt, pth)
 	if err != nil {
 		return ArtifactURLs{}, err
 	}
-	cmd := r.Command("dump", "manifest", "--bundle", pth)
-
-	out, err := cmd.RunAndReturnTrimmedCombinedOutput()
-	if err != nil {
-		var exitErr *exec.ExitError
-		if errors.As(err, &exitErr) {
-			return ArtifactURLs{}, fmt.Errorf("command failed with exit status %d (%s): %s", exitErr.ExitCode(), cmd.PrintableCommandArgs(), out)
-		}
-		return ArtifactURLs{}, fmt.Errorf("executing command failed (%s): %w", cmd.PrintableCommandArgs(), err)
-	}
-
-	packageName, versionCode, versionName := androidartifact.ParsePackageInfos(out, true)
 
 	appInfo := map[string]interface{}{
-		"package_name": packageName,
-		"version_code": versionCode,
-		"version_name": versionName,
+		"package_name":    aabInfo.PackageName,
+		"version_code":    aabInfo.VersionCode,
+		"version_name":    aabInfo.VersionName,
+		"app_name":        aabInfo.AppName,
+		"min_sdk_version": aabInfo.MinSDKVersion,
 	}
 
 	log.Printf("aab infos: %v", appInfo)
 
-	if packageName == "" {
-		log.Warnf("Package name is undefined, AndroidManifest.xml package content:\n%s", out)
+	if aabInfo.PackageName == "" {
+		log.Warnf("Package name is undefined, AndroidManifest.xml package content:\n%s", aabInfo.RawPackageContent)
 	}
 
-	if versionCode == "" {
-		log.Warnf("Version code is undefined, AndroidManifest.xml package content:\n%s", out)
+	if aabInfo.VersionCode == "" {
+		log.Warnf("Version code is undefined, AndroidManifest.xml package content:\n%s", aabInfo.RawPackageContent)
 	}
 
-	if versionName == "" {
-		log.Warnf("Version name is undefined, AndroidManifest.xml package content:\n%s", out)
+	if aabInfo.VersionName == "" {
+		log.Warnf("Version name is undefined, AndroidManifest.xml package content:\n%s", aabInfo.RawPackageContent)
 	}
 
-	// ---
+	if aabInfo.MinSDKVersion == "" {
+		log.Warnf("Min SDK version is undefined, AndroidManifest.xml package content:\n%s", aabInfo.RawPackageContent)
+	}
+
+	if aabInfo.AppName == "" {
+		log.Warnf("App name is undefined, AndroidManifest.xml package content:\n%s", aabInfo.RawPackageContent)
+	}
 
 	fileSize, err := fileSizeInBytes(pth)
 	if err != nil {

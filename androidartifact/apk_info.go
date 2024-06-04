@@ -6,10 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"regexp"
 	"strings"
 
 	"github.com/avast/apkparser"
+
 	"github.com/bitrise-io/go-android/sdk"
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/log"
@@ -25,55 +25,17 @@ type ApkInfo struct {
 	RawPackageContent string
 }
 
-// parseAppName parses the application name from `aapt dump badging` command output.
-func parseAppName(aaptOut string) string {
-	pattern := `application: label=\'(?P<label>.+)\' icon=`
-	re := regexp.MustCompile(pattern)
-	if matches := re.FindStringSubmatch(aaptOut); len(matches) == 2 {
-		return matches[1]
+// GetAPKInfo returns infos about the APK.
+func GetAPKInfo(apkPth string) (ApkInfo, error) {
+	parsedInfo, err := parseAPKInfo(apkPth)
+	if err == nil {
+		return parsedInfo, nil
 	}
+	// err != nil
+	log.Warnf("Failed to parse APK info: %s", err)
+	log.RWarnf("deploy-to-bitrise-io", "apk-parse", nil, "apkparser package failed to parse APK, error: %s", err)
 
-	pattern = `application-label:\'(?P<label>.*)\'`
-	re = regexp.MustCompile(pattern)
-	if matches := re.FindStringSubmatch(aaptOut); len(matches) == 2 {
-		return matches[1]
-	}
-
-	return ""
-}
-
-// parseMinSDKVersion parses the min sdk version from `aapt dump badging` command output.
-func parseMinSDKVersion(aaptOut string) string {
-	pattern := `sdkVersion:\'(?P<min_sdk_version>.*)\'`
-	re := regexp.MustCompile(pattern)
-	if matches := re.FindStringSubmatch(aaptOut); len(matches) == 2 {
-		return matches[1]
-	}
-	return ""
-}
-
-// parsePackageField parses fields from `aapt dump badging` command output.
-func parsePackageField(aaptOut, key string) string {
-	pattern := fmt.Sprintf(`%s=['"](.*?)['"]`, key)
-
-	re := regexp.MustCompile(pattern)
-	if matches := re.FindStringSubmatch(aaptOut); len(matches) == 2 {
-		return matches[1]
-	}
-
-	return ""
-}
-
-// ParsePackageInfos parses package name, version code and name from `aapt dump badging` command output.
-func ParsePackageInfos(aaptOut string, isAAB bool) (string, string, string) {
-	packageNameKey := "name"
-	if isAAB {
-		packageNameKey = "package"
-	}
-
-	return parsePackageField(aaptOut, packageNameKey),
-		parsePackageField(aaptOut, "versionCode"),
-		parsePackageField(aaptOut, "versionName")
+	return getAPKInfoWithAapt(apkPth)
 }
 
 type manifest struct {
@@ -149,8 +111,8 @@ func getAPKInfoWithAapt(apkPth string) (ApkInfo, error) {
 	}
 
 	appName := parseAppName(aaptOut)
-	packageName, versionCode, versionName := ParsePackageInfos(aaptOut, false)
-	minSDKVersion := parseMinSDKVersion(aaptOut)
+	packageName, versionCode, versionName := ParsePackageInfo(aaptOut, "name")
+	minSDKVersion := getByPattern(aaptOut, `sdkVersion:\'(?P<min_sdk_version>.*)\'`)
 
 	packageContent := ""
 	for _, line := range strings.Split(aaptOut, "\n") {
@@ -169,15 +131,14 @@ func getAPKInfoWithAapt(apkPth string) (ApkInfo, error) {
 	}, nil
 }
 
-// GetAPKInfo returns infos about the APK.
-func GetAPKInfo(apkPth string) (ApkInfo, error) {
-	parsedInfo, err := parseAPKInfo(apkPth)
-	if err == nil {
-		return parsedInfo, nil
+// parseAppName parses the application name from `aapt dump badging` command output.
+func parseAppName(aaptOut string) string {
+	pattern := `application: label=\'(?P<label>.+)\' icon=`
+	found := getByPattern(aaptOut, pattern)
+	if found != "" {
+		return found
 	}
-	// err != nil
-	log.Warnf("Failed to parse APK info: %s", err)
-	log.RWarnf("deploy-to-bitrise-io", "apk-parse", nil, "apkparser package failed to parse APK, error: %s", err)
 
-	return getAPKInfoWithAapt(apkPth)
+	pattern = `application-label:\'(?P<label>.*)\'`
+	return getByPattern(aaptOut, pattern)
 }
