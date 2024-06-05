@@ -10,11 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/bitrise-io/bitrise/models"
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/pathutil"

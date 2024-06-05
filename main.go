@@ -259,7 +259,7 @@ func exportInstallPages(artifactURLCollection ArtifactURLCollection, config Conf
 		}
 		log.Printf("The artifact details page url is now available in the Environment Variable: BITRISE_ARTIFACT_DETAILS_PAGE_URL (value: %s)\n", pages[0].URL)
 
-		value, err := exportMapEnvironment("Details Page URL template", config.DetailsPageURLMapFormat, "DetailsPageURLMap", "BITRISE_ARTIFACT_DETAILS_PAGE_URL_MAP", pages)
+		value, err := exportMapEnvironment("Details Page URL template", config.DetailsPageURLMapFormat, "DetailsPageURLMap", "BITRISE_ARTIFACT_DETAILS_PAGE_URL_MAP", pages, logger)
 		if err != nil {
 			return fmt.Errorf("failed to export BITRISE_ARTIFACT_DETAILS_PAGE_URL_MAP, error: %s", err)
 		}
@@ -490,7 +490,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config, logger l
 	if len(aabs) > 0 {
 		bTool, err = bundletool.New(config.BundletoolVersion)
 		if err != nil {
-			errorCollection = handleDeploymentFailureError(err, errorCollection)
+			errorCollection = handleDeploymentFailureError(err, errorCollection, logger)
 		}
 	}
 
@@ -502,7 +502,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config, logger l
 
 			jobs <- true
 
-			artifactURLs, err := deploySingleItem(item, config, androidArtifacts, bTool)
+			artifactURLs, err := deploySingleItem(item, config, androidArtifacts, bTool, logger)
 			if err != nil {
 				errLock.Lock()
 				errorCollection = handleDeploymentFailureError(err, errorCollection, logger)
@@ -520,7 +520,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config, logger l
 	return artifactURLCollection, errorCollection
 }
 
-func deploySingleItem(item deployment.DeployableItem, config Config, androidArtifacts []string, bt bundletool.Path) (uploaders.ArtifactURLs, error) {
+func deploySingleItem(item deployment.DeployableItem, config Config, androidArtifacts []string, bt bundletool.Path, logger loggerV2.Logger) (uploaders.ArtifactURLs, error) {
 	pth := item.Path
 	fileType := getFileType(pth)
 
