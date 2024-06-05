@@ -11,10 +11,11 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
 	"github.com/google/go-cmp/cmp"
+
+	"github.com/bitrise-io/go-utils/log"
 )
 
 func TestXCresult3Converters(t *testing.T) {

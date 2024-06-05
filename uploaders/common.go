@@ -15,16 +15,18 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
+
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-io/go-utils/urlutil"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
 
 // ArtifactURLs ...
 type ArtifactURLs struct {
 	PublicInstallPageURL string
 	PermanentDownloadURL string
+	DetailsPageURL       string
 }
 
 // AppDeploymentMetaData ...
@@ -252,6 +254,7 @@ func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDe
 	type finishArtifactResponse struct {
 		PublicInstallPageURL string   `json:"public_install_page_url"`
 		PermanentDownloadURL string   `json:"permanent_download_url"`
+		DetailsPageURL       string   `json:"details_page_url"`
 		InvalidEmails        []string `json:"invalid_emails"`
 	}
 
@@ -292,18 +295,21 @@ func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDe
 		log.Warnf("Invalid e-mail addresses: %s", strings.Join(artifactResponse.InvalidEmails, ", "))
 	}
 
+	urls := ArtifactURLs{
+		PermanentDownloadURL: artifactResponse.PermanentDownloadURL,
+	}
+
+	if artifactResponse.DetailsPageURL != "" {
+		urls.DetailsPageURL = artifactResponse.DetailsPageURL
+	}
+
 	if isEnablePublicPage {
 		if artifactResponse.PublicInstallPageURL == "" {
 			return ArtifactURLs{}, fmt.Errorf("public install page was enabled, but no public install page generated")
 		}
 
-		return ArtifactURLs{
-			PublicInstallPageURL: artifactResponse.PublicInstallPageURL,
-			PermanentDownloadURL: artifactResponse.PermanentDownloadURL,
-		}, nil
+		urls.PublicInstallPageURL = artifactResponse.PublicInstallPageURL
 	}
 
-	return ArtifactURLs{
-		PermanentDownloadURL: artifactResponse.PermanentDownloadURL,
-	}, nil
+	return urls, nil
 }

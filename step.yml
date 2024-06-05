@@ -277,6 +277,16 @@ inputs:
         so that the **Deploy to Bitrise.io** Step can build the required custom output for the permanent download URL.  
       is_required: true
       is_expand: false
+  - details_page_url_map_format: "{{range $index, $element := .}}{{if $index}}|{{end}}{{$element.File}}=>{{$element.URL}}{{end}}"
+    opts:
+      category: Step output configuration
+      title: Format for the BITRISE_ARTIFACT_DETAILS_PAGE_URL_MAP output
+      summary: You can customize the format of the `BITRISE_ARTIFACT_DETAILS_PAGE_URL_MAP` output so that the next Step can render the output.
+      description: |-
+        Provide a language template description using [Golang templates](https://golang.org/pkg/text/template)
+        so that the **Deploy to Bitrise.io** Step can build the required custom output for the details page URL.
+      is_required: true
+      is_expand: false
   - files_to_redact:
     opts:
       title: Files to redact
@@ -337,3 +347,23 @@ outputs:
 
         - $BITRISE_DEPLOY_DIR/ios_app.ipa=>https://app.bitrise.io/artifacts/ipa-slug/download
         - $BITRISE_DEPLOY_DIR/android_app.apk=>https://app.bitrise.io/artifacts/apk-slug/download|$BITRISE_DEPLOY_DIR/ios_app.ipa=>https://app.bitrise.io/artifacts/ipa-slug/download
+
+  - BITRISE_ARTIFACT_DETAILS_PAGE_URL:
+    opts:
+      title: Details Page URL
+      description: |-
+        Details Page's URL.
+        
+        At the moment, only installable artifacts (.aab, .apk, .ipa) have details page URL.
+  - BITRISE_ARTIFACT_DETAILS_PAGE_URL_MAP:
+    opts:
+      title: Map of filenames and Public Install Page URLs
+      description: |-
+        Details Page URLs by the artifact's path. 
+        
+        The default format is `KEY1=>VALUE\|KEY2=>VALUE` but is controlled by the `details_page_url_map_format` input
+
+        Examples:
+
+        - $BITRISE_DEPLOY_DIR/ios_app.ipa=>https://app.bitrise.io/apps/ios_app/installable-artifacts/ipa-slug
+        - $BITRISE_DEPLOY_DIR/android_app.apk=>https://app.bitrise.io/apps/android_app/installable-artifacts/apk-slug|$BITRISE_DEPLOY_DIR/ios_app.ipa=>https://app.bitrise.io/apps/ios_app/installable-artifacts/ipa-slug

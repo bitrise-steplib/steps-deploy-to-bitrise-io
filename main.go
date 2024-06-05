@@ -10,6 +10,13 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/bundletool"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/fileredactor"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/report"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/uploaders"
+
 	"github.com/bitrise-io/bitrise/models"
 	"github.com/bitrise-io/envman/envman"
 	"github.com/bitrise-io/go-steputils/stepconf"
@@ -24,11 +31,6 @@ import (
 	loggerV2 "github.com/bitrise-io/go-utils/v2/log"
 	pathutil2 "github.com/bitrise-io/go-utils/v2/pathutil"
 	"github.com/bitrise-io/go-utils/ziputil"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/fileredactor"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/report"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/uploaders"
 )
 
 var fileBaseNamesToSkip = []string{".DS_Store"}
@@ -46,6 +48,7 @@ type Config struct {
 	IsPublicPageEnabled           bool   `env:"is_enable_public_page,opt[true,false]"`
 	PublicInstallPageMapFormat    string `env:"public_install_page_url_map_format,required"`
 	PermanentDownloadURLMapFormat string `env:"permanent_download_url_map_format,required"`
+	DetailsPageURLMapFormat       string `env:"details_page_url_map_format,required"`
 	BuildSlug                     string `env:"BITRISE_BUILD_SLUG,required"`
 	TestDeployDir                 string `env:"BITRISE_TEST_DEPLOY_DIR,required"`
 	AppSlug                       string `env:"BITRISE_APP_SLUG,required"`
@@ -68,6 +71,7 @@ type PublicInstallPage struct {
 type ArtifactURLCollection struct {
 	PublicInstallPageURLs map[string]string
 	PermanentDownloadURLs map[string]string
+	DetailsPageURLs       map[string]string
 }
 
 const zippedXcarchiveExt = ".xcarchive.zip"
@@ -246,6 +250,20 @@ func exportInstallPages(artifactURLCollection ArtifactURLCollection, config Conf
 			return fmt.Errorf("failed to export BITRISE_PERMANENT_DOWNLOAD_URL_MAP: %s", err)
 		}
 		logger.Printf("A map of deployed files and their permanent download urls is now available in the Environment Variable: BITRISE_PERMANENT_DOWNLOAD_URL_MAP (value: %s)", value)
+	}
+	if len(artifactURLCollection.DetailsPageURLs) > 0 {
+		pages := mapURLsToInstallPages(artifactURLCollection.DetailsPageURLs)
+
+		if err := tools.ExportEnvironmentWithEnvman("BITRISE_ARTIFACT_DETAILS_PAGE_URL", pages[0].URL); err != nil {
+			return fmt.Errorf("failed to export BITRISE_ARTIFACT_DETAILS_PAGE_URL: %s", err)
+		}
+		log.Printf("The artifact details page url is now available in the Environment Variable: BITRISE_ARTIFACT_DETAILS_PAGE_URL (value: %s)\n", pages[0].URL)
+
+		value, err := exportMapEnvironment("Details Page URL template", config.DetailsPageURLMapFormat, "DetailsPageURLMap", "BITRISE_ARTIFACT_DETAILS_PAGE_URL_MAP", pages)
+		if err != nil {
+			return fmt.Errorf("failed to export BITRISE_ARTIFACT_DETAILS_PAGE_URL_MAP, error: %s", err)
+		}
+		log.Printf("A map of deployed files and their details page urls is now available in the Environment Variable: BITRISE_ARTIFACT_DETAILS_PAGE_URL_MAP (value: %s)", value)
 	}
 	return nil
 }
@@ -456,7 +474,9 @@ func deploy(deployableItems []deployment.DeployableItem, config Config, logger l
 	artifactURLCollection := ArtifactURLCollection{
 		PublicInstallPageURLs: map[string]string{},
 		PermanentDownloadURLs: map[string]string{},
+		DetailsPageURLs:       map[string]string{},
 	}
+	var err error
 	var errorCollection []error
 	var wg sync.WaitGroup
 
@@ -466,6 +486,14 @@ func deploy(deployableItems []deployment.DeployableItem, config Config, logger l
 	mapLock := &sync.RWMutex{}
 	errLock := &sync.RWMutex{}
 
+	var bTool bundletool.Path
+	if len(aabs) > 0 {
+		bTool, err = bundletool.New(config.BundletoolVersion)
+		if err != nil {
+			errorCollection = handleDeploymentFailureError(err, errorCollection)
+		}
+	}
+
 	for _, item := range combinedItems {
 		wg.Add(1)
 
@@ -474,7 +502,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config, logger l
 
 			jobs <- true
 
-			artifactURLs, err := deploySingleItem(item, config, androidArtifacts, logger)
+			artifactURLs, err := deploySingleItem(item, config, androidArtifacts, bTool)
 			if err != nil {
 				errLock.Lock()
 				errorCollection = handleDeploymentFailureError(err, errorCollection, logger)
@@ -492,7 +520,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config, logger l
 	return artifactURLCollection, errorCollection
 }
 
-func deploySingleItem(item deployment.DeployableItem, config Config, androidArtifacts []string, logger loggerV2.Logger) (uploaders.ArtifactURLs, error) {
+func deploySingleItem(item deployment.DeployableItem, config Config, androidArtifacts []string, bt bundletool.Path) (uploaders.ArtifactURLs, error) {
 	pth := item.Path
 	fileType := getFileType(pth)
 
@@ -506,7 +534,7 @@ func deploySingleItem(item deployment.DeployableItem, config Config, androidArti
 	case ".aab":
 		logger.Printf("Deploying aab file: %s", pth)
 
-		return uploaders.DeployAAB(item, androidArtifacts, config.BuildURL, config.APIToken, config.BundletoolVersion)
+		return uploaders.DeployAAB(item, androidArtifacts, config.BuildURL, config.APIToken, bt)
 	case ".ipa":
 		logger.Printf("Deploying ipa file: %s", pth)
 
@@ -538,6 +566,9 @@ func fillURLMaps(lock *sync.RWMutex, artifactURLCollection ArtifactURLCollection
 	}
 	if artifactURLs.PermanentDownloadURL != "" {
 		artifactURLCollection.PermanentDownloadURLs[filepath.Base(path)] = artifactURLs.PermanentDownloadURL
+	}
+	if artifactURLs.DetailsPageURL != "" {
+		artifactURLCollection.DetailsPageURLs[filepath.Base(path)] = artifactURLs.DetailsPageURL
 	}
 }
 

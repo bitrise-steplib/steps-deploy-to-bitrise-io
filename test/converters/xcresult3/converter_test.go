@@ -5,10 +5,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/bitrise-io/go-utils/command"
-	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
 	"github.com/stretchr/testify/require"
+
+	"github.com/bitrise-io/go-utils/command"
+	"github.com/bitrise-io/go-utils/pathutil"
 )
 
 // copyTestdataToDir ...
