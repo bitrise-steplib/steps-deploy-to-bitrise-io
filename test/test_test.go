@@ -10,16 +10,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/bitrise-io/bitrise/models"
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/env"
+	logV2 "github.com/bitrise-io/go-utils/v2/log"
+	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func createDummyFilesInDirWithContent(dir, content string, fileNames []string) error {
@@ -157,7 +157,7 @@ func Test_Upload(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	if err := results.Upload("access-token", "http://localhost:8893/test", "test-app-slug", "test-build-slug"); err != nil {
+	if err := results.Upload("access-token", "http://localhost:8893/test", "test-app-slug", "test-build-slug", logV2.NewLogger()); err != nil {
 		t.Fatalf("%v", errors.WithStack(err))
 		return
 	}
@@ -185,7 +185,7 @@ func Test_ParseXctestResults(t *testing.T) {
 			t.Fatal("failed to create temp dir, error:", err)
 		}
 
-		bundle, err := ParseTestResults(testsDir)
+		bundle, err := ParseTestResults(testsDir, logV2.NewLogger())
 		if err != nil {
 			t.Fatal("failed to get bundle, error:", err)
 		}
@@ -225,7 +225,7 @@ func Test_ParseXctestResults(t *testing.T) {
 			t.Fatal("failed to create dummy files in dir, error:", err)
 		}
 
-		bundle, err := ParseTestResults(testsDir)
+		bundle, err := ParseTestResults(testsDir, logV2.NewLogger())
 		if err != nil {
 			t.Fatal("failed to get bundle, error:", err)
 		}
@@ -263,7 +263,7 @@ func Test_ParseXctestResults(t *testing.T) {
 			t.Fatal("failed to create dummy files in dir, error:", err)
 		}
 
-		bundle, err := ParseTestResults(testsDir)
+		bundle, err := ParseTestResults(testsDir, logV2.NewLogger())
 		if err != nil {
 			t.Fatal("failed to get bundle, error:", err)
 		}
@@ -308,7 +308,7 @@ func Test_ParseXctest3Results(t *testing.T) {
 	err = copyCmd.Run()
 	require.NoError(t, err)
 
-	bundle, err := ParseTestResults(testDir)
+	bundle, err := ParseTestResults(testDir, logV2.NewLogger())
 	require.NoError(t, err)
 
 	want, err := fileutil.ReadStringFromFile(filepath.Join("testdata", "ios_device_config_xml_output.golden"))
