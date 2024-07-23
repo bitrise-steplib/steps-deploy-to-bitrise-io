@@ -16,6 +16,8 @@ import (
 	"time"
 
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
+	
+	"github.com/docker/go-units"
 
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/retry"
@@ -42,17 +44,10 @@ func createArtifact(buildURL, token, artifactPth, artifactType, contentType stri
 	artifactName := filepath.Base(artifactPth)
 	fileSize, err := fileSizeInBytes(artifactPth)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to get file size, error: %s", err)
+		return "", "", fmt.Errorf("get file size: %s", err)
 	}
 
-	megaBytes := fileSize / 1024.0 / 1024.0
-	roundedMegaBytes := int(roundPlus(megaBytes, 2))
-
-	if roundedMegaBytes < 1 {
-		log.Printf("file size: %dB", int(fileSize))
-	} else {
-		log.Printf("file size: %dMB", roundedMegaBytes)
-	}
+	log.Printf("file size: %s", units.BytesSize(float64(fileSize)))
 
 	if strings.TrimSpace(token) == "" {
 		return "", "", fmt.Errorf("provided API token is empty")
@@ -63,7 +58,7 @@ func createArtifact(buildURL, token, artifactPth, artifactType, contentType stri
 		"title":           {artifactName},
 		"filename":        {artifactName},
 		"artifact_type":   {artifactType},
-		"file_size_bytes": {fmt.Sprintf("%d", int(fileSize))},
+		"file_size_bytes": {fmt.Sprintf("%d", fileSize)},
 		"content_type":    {contentType},
 	}
 	// ---

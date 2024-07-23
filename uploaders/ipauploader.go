@@ -32,7 +32,7 @@ func DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups
 	}
 
 	ipaInfoMap := map[string]interface{}{
-		"file_size_bytes":   fmt.Sprintf("%f", fileSize),
+		"file_size_bytes":   fmt.Sprintf("%d", fileSize),
 		"app_info":          appInfo,
 		"provisioning_info": provisioningInfo,
 	}

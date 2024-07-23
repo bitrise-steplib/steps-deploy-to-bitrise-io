@@ -57,7 +57,7 @@ func DeployAAB(item deployment.DeployableItem, artifacts []string, buildURL, tok
 	info := androidartifact.ParseArtifactPath(pth)
 
 	aabInfoMap := map[string]interface{}{
-		"file_size_bytes": fmt.Sprintf("%f", fileSize),
+		"file_size_bytes": fmt.Sprintf("%d", fileSize),
 		"app_info":        appInfo,
 		"module":          info.Module,
 		"product_flavour": info.ProductFlavour,

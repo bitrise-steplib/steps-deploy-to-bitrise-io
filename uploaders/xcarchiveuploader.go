@@ -25,7 +25,7 @@ func DeployXcarchive(item deployment.DeployableItem, buildURL, token string) (Ar
 	}
 
 	xcarchiveInfoMap := map[string]interface{}{
-		"file_size_bytes": fmt.Sprintf("%f", fileSize),
+		"file_size_bytes": fmt.Sprintf("%d", fileSize),
 		"app_info":        appInfo,
 		"scheme":          scheme,
 	}
