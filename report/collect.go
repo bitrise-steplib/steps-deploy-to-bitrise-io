@@ -95,9 +95,7 @@ func detectContentType(path string) string {
 		return fallbackType
 	}
 	defer func() {
-		if err := file.Close(); err != nil {
-			// This is empty on purpose to please the linter
-		}
+		_ = file.Close();
 	}()
 
 	// At most, the first 512 bytes of data are used:
@@ -118,7 +116,7 @@ func detectContentType(path string) string {
 }
 
 func overrideContentTypeForKnownExtensions(extension, contentType string) string {
-	if strings.HasPrefix(contentType, plainContentType) == false {
+	if !strings.HasPrefix(contentType, plainContentType) {
 		return contentType
 	}
 

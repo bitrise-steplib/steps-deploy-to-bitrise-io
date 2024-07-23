@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -95,7 +94,7 @@ func createArtifact(buildURL, token, artifactPth, artifactType, contentType stri
 			}
 		}()
 
-		body, err := ioutil.ReadAll(response.Body)
+		body, err := io.ReadAll(response.Body)
 		if err != nil {
 			return fmt.Errorf("failed to read create artifact response, error: %s", err)
 		}
@@ -158,7 +157,7 @@ func UploadArtifact(uploadURL, artifactPth, contentType string) error {
 		// Initializes request body to nil to send a Content-Length of 0: https://github.com/golang/go/issues/20257#issuecomment-299509391
 		var reqBody io.Reader
 		if fileInfo.Size() > 0 {
-			reqBody = ioutil.NopCloser(file)
+			reqBody = io.NopCloser(file)
 		}
 
 		request, err := http.NewRequest(http.MethodPut, uploadURL, reqBody)
@@ -188,7 +187,7 @@ func UploadArtifact(uploadURL, artifactPth, contentType string) error {
 			}
 		}()
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return fmt.Errorf("failed to read response body, error: %s", err)
 		}
@@ -269,7 +268,7 @@ func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDe
 		}()
 
 		// process response
-		body, err := ioutil.ReadAll(response.Body)
+		body, err := io.ReadAll(response.Body)
 		if err != nil {
 			return fmt.Errorf("failed to read finish artifact response, error: %s", err)
 		}

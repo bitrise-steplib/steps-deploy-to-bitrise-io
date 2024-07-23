@@ -2,7 +2,7 @@ package junitxml
 
 import (
 	"encoding/xml"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
@@ -18,7 +18,7 @@ type fileReader struct {
 }
 
 func (r *fileReader) ReadAll() ([]byte, error) {
-	return ioutil.ReadFile(r.Filename)
+	return os.ReadFile(r.Filename)
 }
 
 type stringReader struct {
