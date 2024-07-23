@@ -23,7 +23,7 @@ func (h *Converter) Detect(files []string) bool {
 	for _, file := range h.files {
 		if filepath.Ext(file) == ".xcresult" {
 			testSummariesPlistPath := filepath.Join(file, "TestSummaries.plist")
-			if exist, err := pathutil.IsPathExists(testSummariesPlistPath); err != nil || exist == false {
+			if exist, err := pathutil.IsPathExists(testSummariesPlistPath); err != nil || !exist {
 				continue
 			}
 

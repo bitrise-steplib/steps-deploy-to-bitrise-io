@@ -85,7 +85,7 @@ func parseAPKInfo(apkPath string) (ApkInfo, error) {
 		VersionCode:       manifest.VersionCode,
 		VersionName:       manifest.VersionName,
 		MinSDKVersion:     manifest.UsesSdk.MinSDKVersion,
-		RawPackageContent: string(manifestContent.Bytes()),
+		RawPackageContent: manifestContent.String(),
 	}, nil
 }
 

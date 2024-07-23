@@ -1,9 +1,10 @@
 package uploaders
 
 import (
+	"os"
+	"io"
 	"image"
 	"image/png"
-	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
@@ -15,7 +16,7 @@ import (
 func Test_uploadArtifact(t *testing.T) {
 	const contentType = "image/png"
 
-	file, err := ioutil.TempFile("", "")
+	file, err := os.CreateTemp("", "")
 	if err != nil {
 		t.Fatalf("setup: failed to create file, error: %s", err)
 	}
@@ -47,7 +48,7 @@ func Test_uploadArtifact(t *testing.T) {
 
 		t.Logf("Content type: %s", r.Header.Get("Content-Type"))
 
-		bytes, err := ioutil.ReadAll(r.Body)
+		bytes, err := io.ReadAll(r.Body)
 		if err != nil {
 			t.Fatalf("httptest: failed to read request, error: %s", err)
 			return

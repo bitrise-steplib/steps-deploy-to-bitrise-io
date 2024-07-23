@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/bitrise-io/go-utils/pretty"
-	"github.com/bitrise-io/go-utils/sliceutil"
 )
 
 func TestParseArtifactPath(t *testing.T) {
@@ -269,38 +268,6 @@ func Test_mapBuildArtifacts(t *testing.T) {
 	}
 }
 
-func comparseSlice(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-
-	for _, e := range a {
-		if !sliceutil.IsStringInSlice(e, b) {
-			return false
-		}
-	}
-	return true
-}
-
-func compareMapStringStringSlice(a, b map[string][]string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-
-	for keyA, valueA := range a {
-		valueB, ok := b[keyA]
-		if !ok {
-			return false
-		}
-
-		if !comparseSlice(valueA, valueB) {
-			return false
-		}
-	}
-
-	return true
-}
-
 func TestCreateSplitArtifactMeta(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -426,10 +393,6 @@ func TestCreateSplitArtifactMeta(t *testing.T) {
 }
 
 func TestFindSameArtifact(t *testing.T) {
-	type args struct {
-		pth  string
-		pths []string
-	}
 	tests := []struct {
 		name string
 		pth  string

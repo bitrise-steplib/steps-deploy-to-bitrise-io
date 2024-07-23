@@ -6,7 +6,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -81,7 +80,7 @@ func httpCall(apiToken, method, url string, input io.Reader, output interface{},
 	}()
 
 	if resp.StatusCode < 200 || 299 < resp.StatusCode {
-		bodyData, err := ioutil.ReadAll(resp.Body)
+		bodyData, err := io.ReadAll(resp.Body)
 		if err != nil {
 			logger.Warnf("Failed to read response: %s", err)
 			return fmt.Errorf("unsuccessful status code: %d", resp.StatusCode)
@@ -134,7 +133,7 @@ func ParseTestResults(testsRootDir string, logger logV2.Logger) (results Results
 	// read dirs in base tests dir
 	// <root_tests_dir>
 
-	testDirs, err := ioutil.ReadDir(testsRootDir)
+	testDirs, err := os.ReadDir(testsRootDir)
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +149,7 @@ func ParseTestResults(testsRootDir string, logger logV2.Logger) (results Results
 		}
 
 		// read unique test phase dirs
-		testPhaseDirs, err := ioutil.ReadDir(testDirPath)
+		testPhaseDirs, err := os.ReadDir(testDirPath)
 		if err != nil {
 			return nil, err
 		}
