@@ -34,7 +34,7 @@ func majorVersion(document serialized.Object) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	return int(major.(uint64)), err
+	return int(major.(uint64)), nil
 }
 
 func documentMajorVersion(pth string) (int, error) {
