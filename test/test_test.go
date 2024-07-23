@@ -2,7 +2,7 @@ package test
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path"
@@ -102,7 +102,7 @@ func Test_Upload(t *testing.T) {
 				t.Fatal("file_name must be specified") //nolint:govet // We should fix it one day, but it requires a bigger refactor
 			}
 
-			receivedData, err := ioutil.ReadAll(r.Body)
+			receivedData, err := io.ReadAll(r.Body)
 			if err != nil {
 				t.Fatal(err) //nolint:govet // We should fix it one day, but it requires a bigger refactor
 			}

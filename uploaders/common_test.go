@@ -1,9 +1,9 @@
 package uploaders
 
 import (
+	"os"
 	"image"
 	"image/png"
-	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
@@ -15,7 +15,7 @@ import (
 func Test_uploadArtifact(t *testing.T) {
 	const contentType = "image/png"
 
-	file, err := ioutil.TempFile("", "")
+	file, err := os.CreateTemp("", "")
 	if err != nil {
 		t.Fatalf("setup: failed to create file, error: %s", err)
 	}
