@@ -96,7 +96,7 @@ func detectContentType(path string) string {
 	}
 	defer func() {
 		if err := file.Close(); err != nil {
-			// This is empty on purpose to please the linter
+			panic(err)
 		}
 	}()
 
@@ -118,7 +118,7 @@ func detectContentType(path string) string {
 }
 
 func overrideContentTypeForKnownExtensions(extension, contentType string) string {
-	if strings.HasPrefix(contentType, plainContentType) == false {
+	if !strings.HasPrefix(contentType, plainContentType) {
 		return contentType
 	}
 

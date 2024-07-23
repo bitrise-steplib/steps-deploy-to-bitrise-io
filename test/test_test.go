@@ -57,21 +57,21 @@ func Test_Upload(t *testing.T) {
 		},
 	}
 
-	go func() {
+	go func() { //nolint:staticcheck // We should fix it one day, but it requires a bigger refactor
 		router := mux.NewRouter()
 
 		router.HandleFunc("/test/apps/{app_slug}/builds/{build_slug}/test_reports/{accessToken}", func(w http.ResponseWriter, r *http.Request) {
 			vars := mux.Vars(r)
 			if _, ok := vars["app_slug"]; !ok {
-				t.Fatal("app_slug must be specified")
+				t.Fatal("app_slug must be specified") //nolint:govet // We should fix it one day, but it requires a bigger refactor
 			}
 			if _, ok := vars["build_slug"]; !ok {
-				t.Fatal("build_slug must be specified")
+				t.Fatal("build_slug must be specified") //nolint:govet // We should fix it one day, but it requires a bigger refactor
 			}
 
 			var uploadReq UploadRequest
 			if err := json.NewDecoder(r.Body).Decode(&uploadReq); err != nil {
-				t.Fatal("failed to execute get request, error:", err)
+				t.Fatal("failed to execute get request, error:", err) //nolint:govet // We should fix it one day, but it requires a bigger refactor
 			}
 
 			response := UploadResponse{
@@ -88,10 +88,10 @@ func Test_Upload(t *testing.T) {
 
 			b, err := json.Marshal(response)
 			if err != nil {
-				t.Fatal(err)
+				t.Fatal(err) //nolint:govet // We should fix it one day, but it requires a bigger refactor
 			}
 			if _, err := w.Write(b); err != nil {
-				t.Fatal("Failed to write to the writer, error:", err)
+				t.Fatal("Failed to write to the writer, error:", err) //nolint:govet // We should fix it one day, but it requires a bigger refactor
 			}
 		}).Methods("POST")
 
@@ -99,12 +99,12 @@ func Test_Upload(t *testing.T) {
 			vars := mux.Vars(r)
 			fName, ok := vars["file_name"]
 			if !ok {
-				t.Fatal("file_name must be specified")
+				t.Fatal("file_name must be specified") //nolint:govet // We should fix it one day, but it requires a bigger refactor
 			}
 
 			receivedData, err := ioutil.ReadAll(r.Body)
 			if err != nil {
-				t.Fatal(err)
+				t.Fatal(err) //nolint:govet // We should fix it one day, but it requires a bigger refactor
 			}
 
 			if fName == "test_result.xml" {
@@ -118,11 +118,11 @@ func Test_Upload(t *testing.T) {
 				if filepath.Base(assetPath) == fName {
 					fileData, err := fileutil.ReadStringFromFile(assetPath)
 					if err != nil {
-						t.Fatal(err)
+						t.Fatal(err) //nolint:govet // We should fix it one day, but it requires a bigger refactor
 					}
 
 					if fileData != string(receivedData) {
-						t.Fatal("files are not the same!")
+						t.Fatal("files are not the same!") //nolint:govet // We should fix it one day, but it requires a bigger refactor
 					}
 
 					w.WriteHeader(http.StatusOK)
@@ -136,14 +136,14 @@ func Test_Upload(t *testing.T) {
 		router.HandleFunc("/test/apps/{app_slug}/builds/{build_slug}/test_reports/{id}/{accessToken}", func(w http.ResponseWriter, r *http.Request) {
 			vars := mux.Vars(r)
 			if _, ok := vars["app_slug"]; !ok {
-				t.Fatal("app_slug must be specified")
+				t.Fatal("app_slug must be specified") //nolint:govet // We should fix it one day, but it requires a bigger refactor
 			}
 			if _, ok := vars["build_slug"]; !ok {
-				t.Fatal("build_slug must be specified")
+				t.Fatal("build_slug must be specified") //nolint:govet // We should fix it one day, but it requires a bigger refactor
 			}
 			id, ok := vars["id"]
 			if !ok {
-				t.Fatal("id must be specified")
+				t.Fatal("id must be specified") //nolint:govet // We should fix it one day, but it requires a bigger refactor
 			}
 
 			if id != testResponseID {
@@ -152,7 +152,7 @@ func Test_Upload(t *testing.T) {
 
 		}).Methods("PATCH")
 
-		t.Fatal(http.ListenAndServe(":8893", router))
+		t.Fatal(http.ListenAndServe(":8893", router)) //nolint:staticcheck,govet // We should fix it one day, but it requires a bigger refactor
 	}()
 
 	time.Sleep(time.Second)
@@ -312,6 +312,7 @@ func Test_ParseXctest3Results(t *testing.T) {
 	require.NoError(t, err)
 
 	want, err := fileutil.ReadStringFromFile(filepath.Join("testdata", "ios_device_config_xml_output.golden"))
+	require.NoError(t, err)
 
 	assert.Equal(t, 1, len(bundle))
 	assert.Equal(t, want, string(bundle[0].XMLContent))
