@@ -90,7 +90,7 @@ func TestCreateReport(t *testing.T) {
 
 			response, err := apiClient.CreateReport(tt.params)
 			assert.Equal(t, fmt.Sprintf("%s/html_reports.json", buildURL), request.URL.String())
-			assert.Equal(t, []string{authToken}, request.Header[http.CanonicalHeaderKey("BUILD_API_TOKEN")])
+			assert.Equal(t, []string{authToken}, request.Header["BUILD_API_TOKEN"]) //nolint:staticcheck // See TestReportClient.perform()
 
 			if tt.wantError {
 				assert.Equal(t, tt.expectedError, err)
@@ -146,7 +146,7 @@ func TestFinishReport(t *testing.T) {
 
 			err := apiClient.FinishReport(tt.identifier, tt.allAssetsUploaded)
 			assert.Equal(t, fmt.Sprintf("%s/html_reports/%s.json", buildURL, tt.identifier), request.URL.String())
-			assert.Equal(t, []string{authToken}, request.Header[http.CanonicalHeaderKey("BUILD_API_TOKEN")])
+			assert.Equal(t, []string{authToken}, request.Header["BUILD_API_TOKEN"]) //nolint:staticcheck // See TestReportClient.perform()
 
 			if tt.wantError {
 				assert.Equal(t, tt.expectedError, err)
