@@ -17,14 +17,7 @@ app:
 workflows:
   test:
     steps:
-    - go-list:
-        inputs:
-        - exclude: |-
-            */vendor/*
-            */mocks
-    - golint: {}
-    - errcheck: {}
-    - go-test: {}
+    - git::https://github.com/bitrise-steplib/steps-check.git: { }
 
   ci:
     before_run:
