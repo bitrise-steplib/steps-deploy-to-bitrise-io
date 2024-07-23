@@ -67,12 +67,16 @@ func DeployAPK(item deployment.DeployableItem, artifacts []string, buildURL, tok
 	// ---
 
 	const APKContentType = "application/vnd.android.package-archive"
-	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "android-apk", APKContentType)
+	artifact := ArtifactArgs {
+		Path: pth,
+		FileSize: fileSize,
+	}
+	uploadURL, artifactID, err := createArtifact(buildURL, token, artifact, "android-apk", APKContentType)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to create apk artifact: %s %w", pth, err)
 	}
 
-	if err := UploadArtifact(uploadURL, pth, APKContentType); err != nil {
+	if err := UploadArtifact(uploadURL, artifact, APKContentType); err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to upload apk artifact, error: %s", err)
 	}
 

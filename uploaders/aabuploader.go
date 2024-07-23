@@ -83,12 +83,16 @@ func DeployAAB(item deployment.DeployableItem, artifacts []string, buildURL, tok
 	// ---
 
 	const AABContentType = "application/octet-stream aab"
-	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "android-apk", AABContentType)
+	artifact := ArtifactArgs {
+		Path: pth,
+		FileSize: fileSize,
+	}
+	uploadURL, artifactID, err := createArtifact(buildURL, token, artifact, "android-apk", AABContentType)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to create apk artifact: %s %w", pth, err)
 	}
 
-	if err := UploadArtifact(uploadURL, pth, AABContentType); err != nil {
+	if err := UploadArtifact(uploadURL, artifact, AABContentType); err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to upload apk artifact, error: %s", err)
 	}
 
