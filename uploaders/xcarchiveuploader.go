@@ -25,19 +25,23 @@ func DeployXcarchive(item deployment.DeployableItem, buildURL, token string) (Ar
 	}
 
 	xcarchiveInfoMap := map[string]interface{}{
-		"file_size_bytes": fmt.Sprintf("%f", fileSize),
+		"file_size_bytes": fmt.Sprintf("%d", fileSize),
 		"app_info":        appInfo,
 		"scheme":          scheme,
 	}
 
 	logger.Printf("xcarchive infos: %v", appInfo)
 
-	uploadURL, artifactID, err := createArtifact(buildURL, token, pth, "ios-xcarchive", "")
+	artifact := ArtifactArgs {
+		Path: pth,
+		FileSize: fileSize,
+	}
+	uploadURL, artifactID, err := createArtifact(buildURL, token, artifact, "ios-xcarchive", "")
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to create xcarchive artifact from %s %w", pth, err)
 	}
 
-	if err := UploadArtifact(uploadURL, pth, ""); err != nil {
+	if err := UploadArtifact(uploadURL, artifact, ""); err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to upload xcarchive (%s): %w", pth, err)
 	}
 

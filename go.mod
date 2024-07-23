@@ -13,6 +13,7 @@ require (
 	github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.22
 	github.com/bitrise-io/go-xcode v1.0.18
 	github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.44
+	github.com/docker/go-units v0.5.0
 	github.com/google/go-cmp v0.6.0
 	github.com/gorilla/mux v1.8.0
 	github.com/hashicorp/go-retryablehttp v0.7.7

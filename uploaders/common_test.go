@@ -1,16 +1,18 @@
 package uploaders
 
 import (
-	"os"
-	"io"
 	"image"
 	"image/png"
+	"io"
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"strconv"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func Test_uploadArtifact(t *testing.T) {
@@ -90,7 +92,13 @@ func Test_uploadArtifact(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := UploadArtifact(tt.uploadURL, tt.artifactPth, tt.contentType); (err != nil) != tt.wantErr {
+			fileInfo, err := os.Stat(tt.artifactPth)
+			require.NoError(t, err)
+			artifact := ArtifactArgs {
+				Path: tt.artifactPth,
+				FileSize: fileInfo.Size(),
+			}
+			if err := UploadArtifact(tt.uploadURL, artifact, tt.contentType); (err != nil) != tt.wantErr {
 				t.Errorf("UploadArtifact() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})

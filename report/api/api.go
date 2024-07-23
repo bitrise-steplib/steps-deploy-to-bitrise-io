@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httputil"
+	"os"
 
 	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-io/go-utils/v2/log"
@@ -79,7 +80,15 @@ func (t *TestReportClient) CreateReport(params CreateReportParameters) (CreateRe
 
 // UploadAsset ...
 func (t *TestReportClient) UploadAsset(url, path, contentType string) error {
-	return uploaders.UploadArtifact(url, path, contentType)
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+	artifact := uploaders.ArtifactArgs {
+		Path: path,
+		FileSize: fileInfo.Size(),
+	}
+	return uploaders.UploadArtifact(url, artifact, contentType)
 }
 
 // FinishReport ...

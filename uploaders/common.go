@@ -15,20 +15,20 @@ import (
 	"time"
 
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
+	
+	"github.com/docker/go-units"
 
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-io/go-utils/urlutil"
 )
 
-// ArtifactURLs ...
 type ArtifactURLs struct {
 	PublicInstallPageURL string
 	PermanentDownloadURL string
 	DetailsPageURL       string
 }
 
-// AppDeploymentMetaData ...
 type AppDeploymentMetaData struct {
 	ArtifactInfo       map[string]interface{}
 	NotifyUserGroups   string
@@ -36,22 +36,16 @@ type AppDeploymentMetaData struct {
 	IsEnablePublicPage bool
 }
 
-func createArtifact(buildURL, token, artifactPth, artifactType, contentType string) (string, string, error) {
+type ArtifactArgs struct {
+	Path string
+	FileSize int64 // bytes
+}
+
+func createArtifact(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string) (string, string, error) {
 	// create form data
-	artifactName := filepath.Base(artifactPth)
-	fileSize, err := fileSizeInBytes(artifactPth)
-	if err != nil {
-		return "", "", fmt.Errorf("failed to get file size, error: %s", err)
-	}
+	artifactName := filepath.Base(artifact.Path)
 
-	megaBytes := fileSize / 1024.0 / 1024.0
-	roundedMegaBytes := int(roundPlus(megaBytes, 2))
-
-	if roundedMegaBytes < 1 {
-		log.Printf("file size: %dB", int(fileSize))
-	} else {
-		log.Printf("file size: %dMB", roundedMegaBytes)
-	}
+	log.Printf("file size: %s", units.BytesSize(float64(artifact.FileSize)))
 
 	if strings.TrimSpace(token) == "" {
 		return "", "", fmt.Errorf("provided API token is empty")
@@ -62,7 +56,7 @@ func createArtifact(buildURL, token, artifactPth, artifactType, contentType stri
 		"title":           {artifactName},
 		"filename":        {artifactName},
 		"artifact_type":   {artifactType},
-		"file_size_bytes": {fmt.Sprintf("%d", int(fileSize))},
+		"file_size_bytes": {fmt.Sprintf("%d", artifact.FileSize)},
 		"content_type":    {contentType},
 	}
 	// ---
@@ -137,14 +131,13 @@ func createArtifact(buildURL, token, artifactPth, artifactType, contentType stri
 	return artifactResponse.UploadURL, fmt.Sprintf("%d", artifactResponse.ID), nil
 }
 
-// UploadArtifact ...
-func UploadArtifact(uploadURL, artifactPth, contentType string) error {
+func UploadArtifact(uploadURL string, artifact ArtifactArgs, contentType string) error {
 	netClient := &http.Client{
 		Timeout: 10 * time.Minute,
 	}
 
 	return retry.Times(3).Wait(5).Try(func(attempt uint) error {
-		file, err := os.Open(artifactPth)
+		file, err := os.Open(artifact.Path)
 		if err != nil {
 			return fmt.Errorf("failed to open artifact, error: %s", err)
 		}
@@ -154,14 +147,9 @@ func UploadArtifact(uploadURL, artifactPth, contentType string) error {
 			}
 		}()
 
-		fileInfo, err := file.Stat()
-		if err != nil {
-			return fmt.Errorf("failed to get file info for %s, error: %s", artifactPth, err)
-		}
-
 		// Initializes request body to nil to send a Content-Length of 0: https://github.com/golang/go/issues/20257#issuecomment-299509391
 		var reqBody io.Reader
-		if fileInfo.Size() > 0 {
+		if artifact.FileSize > 0 {
 			reqBody = io.NopCloser(file)
 		}
 
@@ -174,8 +162,8 @@ func UploadArtifact(uploadURL, artifactPth, contentType string) error {
 			request.Header.Add("Content-Type", contentType)
 		}
 
-		request.Header.Add("X-Upload-Content-Length", strconv.FormatInt(fileInfo.Size(), 10)) // header used by Google Cloud Storage signed URLs
-		request.ContentLength = fileInfo.Size()
+		request.Header.Add("X-Upload-Content-Length", strconv.FormatInt(artifact.FileSize, 10)) // header used by Google Cloud Storage signed URLs
+		request.ContentLength = artifact.FileSize
 
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 		defer cancel()
