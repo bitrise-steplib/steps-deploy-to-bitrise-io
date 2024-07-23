@@ -2,6 +2,7 @@ package uploaders
 
 import (
 	"os"
+	"io"
 	"image"
 	"image/png"
 	"math/rand"
@@ -47,7 +48,7 @@ func Test_uploadArtifact(t *testing.T) {
 
 		t.Logf("Content type: %s", r.Header.Get("Content-Type"))
 
-		bytes, err := ioutil.ReadAll(r.Body)
+		bytes, err := io.ReadAll(r.Body)
 		if err != nil {
 			t.Fatalf("httptest: failed to read request, error: %s", err)
 			return
