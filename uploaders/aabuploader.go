@@ -46,10 +46,10 @@ func DeployAAB(item deployment.DeployableItem, artifacts []string, buildURL, tok
 	}
 
 	buildArtifactMeta := AppDeploymentMetaData{
-		ArtifactInfo:       aabInfo,
-		NotifyUserGroups:   "",
-		NotifyEmails:       "",
-		IsEnablePublicPage: false,
+		AndroidArtifactInfo: aabInfo,
+		NotifyUserGroups:    "",
+		NotifyEmails:        "",
+		IsEnablePublicPage:  false,
 	}
 
 	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta, item.IntermediateFileMeta)

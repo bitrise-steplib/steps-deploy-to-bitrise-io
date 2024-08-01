@@ -15,14 +15,11 @@ import (
 	"time"
 
 	parser "github.com/bitrise-io/go-android/v2/metaparser"
-
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
-
-	"github.com/docker/go-units"
-
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-io/go-utils/urlutil"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
+	"github.com/docker/go-units"
 )
 
 type ArtifactURLs struct {
@@ -32,10 +29,11 @@ type ArtifactURLs struct {
 }
 
 type AppDeploymentMetaData struct {
-	ArtifactInfo       *parser.ArtifactMetadata
-	NotifyUserGroups   string
-	NotifyEmails       string
-	IsEnablePublicPage bool
+	AndroidArtifactInfo *parser.ArtifactMetadata
+	IOSArtifactInfo     map[string]interface{}
+	NotifyUserGroups    string
+	NotifyEmails        string
+	IsEnablePublicPage  bool
 }
 
 type ArtifactArgs struct {
@@ -200,7 +198,15 @@ func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDe
 	data := url.Values{"api_token": {token}}
 	isEnablePublicPage := false
 	if appDeploymentMeta != nil {
-		artifactInfoBytes, err := json.Marshal(appDeploymentMeta.ArtifactInfo)
+		var artifactInfoBytes []byte
+		var err error
+		if appDeploymentMeta.IOSArtifactInfo != nil {
+			artifactInfoBytes, err = json.Marshal(appDeploymentMeta.IOSArtifactInfo)
+		} else if appDeploymentMeta.AndroidArtifactInfo != nil {
+			artifactInfoBytes, err = json.Marshal(appDeploymentMeta.AndroidArtifactInfo)
+		} else {
+			err = fmt.Errorf("artifact metadata is missing")
+		}
 		if err != nil {
 			return ArtifactURLs{}, fmt.Errorf("failed to marshal app deployment meta: %s", err)
 		}

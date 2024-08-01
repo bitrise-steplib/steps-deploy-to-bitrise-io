@@ -41,10 +41,10 @@ func DeployAPK(item deployment.DeployableItem, artifacts []string, buildURL, tok
 	}
 
 	buildArtifactMeta := AppDeploymentMetaData{
-		ArtifactInfo:       apkInfo,
-		NotifyUserGroups:   notifyUserGroups,
-		NotifyEmails:       notifyEmails,
-		IsEnablePublicPage: isEnablePublicPage,
+		AndroidArtifactInfo: apkInfo,
+		NotifyUserGroups:    notifyUserGroups,
+		NotifyEmails:        notifyEmails,
+		IsEnablePublicPage:  isEnablePublicPage,
 	}
 
 	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta, item.IntermediateFileMeta)

@@ -54,7 +54,7 @@ func DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups
 	}
 
 	buildArtifactMeta := AppDeploymentMetaData{
-		ArtifactInfo:       ipaInfoMap,
+		IOSArtifactInfo:    ipaInfoMap,
 		NotifyUserGroups:   notifyUserGroups,
 		NotifyEmails:       notifyEmails,
 		IsEnablePublicPage: isEnablePublicPage,

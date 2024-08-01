@@ -46,7 +46,7 @@ func DeployXcarchive(item deployment.DeployableItem, buildURL, token string) (Ar
 	}
 
 	buildArtifactMeta := AppDeploymentMetaData{
-		ArtifactInfo:       xcarchiveInfoMap,
+		IOSArtifactInfo:    xcarchiveInfoMap,
 		NotifyUserGroups:   "",
 		NotifyEmails:       "",
 		IsEnablePublicPage: false,
