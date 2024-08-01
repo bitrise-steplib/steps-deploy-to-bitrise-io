@@ -9,18 +9,10 @@ import (
 )
 
 // ParseAPKData ...
-func ParseAPKData(pth string) (map[string]interface{}, error) {
+func ParseAPKData(pth string) (*ArtifactMetadata, error) {
 	apkInfo, err := androidartifact.GetAPKInfo(pth)
 	if err != nil {
 		return nil, err
-	}
-
-	appInfo := map[string]interface{}{
-		"app_name":        apkInfo.AppName,
-		"package_name":    apkInfo.PackageName,
-		"version_code":    apkInfo.VersionCode,
-		"version_name":    apkInfo.VersionName,
-		"min_sdk_version": apkInfo.MinSDKVersion,
 	}
 
 	var warnings []string
@@ -43,12 +35,12 @@ func ParseAPKData(pth string) (map[string]interface{}, error) {
 
 	info := androidartifact.ParseArtifactPath(pth)
 
-	return map[string]interface{}{
-		"file_size_bytes": fmt.Sprintf("%d", fileSize),
-		"app_info":        appInfo,
-		"module":          info.Module,
-		"product_flavour": info.ProductFlavour,
-		"build_type":      info.BuildType,
-		"warnings":        warnings,
+	return &ArtifactMetadata{
+		AppInfo:        apkInfo,
+		FileSizeBytes:  fileSize,
+		Module:         info.Module,
+		ProductFlavour: info.ProductFlavour,
+		BuildType:      info.BuildType,
+		Warnings:       warnings,
 	}, nil
 }

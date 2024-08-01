@@ -3,6 +3,7 @@ package uploaders
 import (
 	"fmt"
 
+	metaparser "github.com/bitrise-io/go-android/v2/metaparser"
 	"github.com/bitrise-io/go-android/v2/metaparser/androidartifact"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
@@ -11,57 +12,16 @@ import (
 // DeployAPK ...
 func DeployAPK(item deployment.DeployableItem, artifacts []string, buildURL, token, notifyUserGroups, notifyEmails string, isEnablePublicPage bool) (ArtifactURLs, error) {
 	pth := item.Path
-	apkInfo, err := androidartifact.GetAPKInfo(pth)
+	apkInfo, err := metaparser.ParseAPKData(pth)
 	if err != nil {
 		return ArtifactURLs{}, err
 	}
 
-	appInfo := map[string]interface{}{
-		"app_name":        apkInfo.AppName,
-		"package_name":    apkInfo.PackageName,
-		"version_code":    apkInfo.VersionCode,
-		"version_name":    apkInfo.VersionName,
-		"min_sdk_version": apkInfo.MinSDKVersion,
-	}
-
-	log.Printf("apk infos: %v", appInfo)
-
-	if apkInfo.PackageName == "" {
-		log.Warnf("Package name is undefined, AndroidManifest.xml package content:\n%s", apkInfo.RawPackageContent)
-	}
-
-	if apkInfo.VersionCode == "" {
-		log.Warnf("Version code is undefined, AndroidManifest.xml package content:\n%s", apkInfo.RawPackageContent)
-	}
-
-	if apkInfo.VersionName == "" {
-		log.Warnf("Version name is undefined, AndroidManifest.xml package content:\n%s", apkInfo.RawPackageContent)
-	}
-
-	// ---
-
-	fileSize, err := fileSizeInBytes(pth)
-	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to get apk size, error: %s", err)
-	}
-
-	info := androidartifact.ParseArtifactPath(pth)
-
-	apkInfoMap := map[string]interface{}{
-		"file_size_bytes": fmt.Sprintf("%d", fileSize),
-		"app_info":        appInfo,
-		"module":          info.Module,
-		"product_flavour": info.ProductFlavour,
-		"build_type":      info.BuildType,
-	}
 	splitMeta, err := androidartifact.CreateSplitArtifactMeta(pth, artifacts)
 	if err != nil {
 		log.Errorf("Failed to create split meta, error: %s", err)
 	} else {
-		apkInfoMap["aab"] = splitMeta.AAB
-		apkInfoMap["apk"] = splitMeta.APK
-		apkInfoMap["split"] = splitMeta.Split
-		apkInfoMap["universal"] = splitMeta.UniversalApk
+		apkInfo.Artifact = androidartifact.Artifact(splitMeta)
 	}
 
 	// ---
@@ -69,7 +29,7 @@ func DeployAPK(item deployment.DeployableItem, artifacts []string, buildURL, tok
 	const APKContentType = "application/vnd.android.package-archive"
 	artifact := ArtifactArgs{
 		Path:     pth,
-		FileSize: fileSize,
+		FileSize: apkInfo.FileSizeBytes,
 	}
 	uploadURL, artifactID, err := createArtifact(buildURL, token, artifact, "android-apk", APKContentType)
 	if err != nil {
@@ -81,7 +41,7 @@ func DeployAPK(item deployment.DeployableItem, artifacts []string, buildURL, tok
 	}
 
 	buildArtifactMeta := AppDeploymentMetaData{
-		ArtifactInfo:       apkInfoMap,
+		ArtifactInfo:       apkInfo,
 		NotifyUserGroups:   notifyUserGroups,
 		NotifyEmails:       notifyEmails,
 		IsEnablePublicPage: isEnablePublicPage,

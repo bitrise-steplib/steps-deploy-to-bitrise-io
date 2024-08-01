@@ -14,8 +14,10 @@ import (
 	"strings"
 	"time"
 
+	parser "github.com/bitrise-io/go-android/v2/metaparser"
+
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
-	
+
 	"github.com/docker/go-units"
 
 	"github.com/bitrise-io/go-utils/log"
@@ -30,14 +32,14 @@ type ArtifactURLs struct {
 }
 
 type AppDeploymentMetaData struct {
-	ArtifactInfo       map[string]interface{}
+	ArtifactInfo       *parser.ArtifactMetadata
 	NotifyUserGroups   string
 	NotifyEmails       string
 	IsEnablePublicPage bool
 }
 
 type ArtifactArgs struct {
-	Path string
+	Path     string
 	FileSize int64 // bytes
 }
 

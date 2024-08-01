@@ -32,8 +32,8 @@ func DeployXcarchive(item deployment.DeployableItem, buildURL, token string) (Ar
 
 	logger.Printf("xcarchive infos: %v", appInfo)
 
-	artifact := ArtifactArgs {
-		Path: pth,
+	artifact := ArtifactArgs{
+		Path:     pth,
 		FileSize: fileSize,
 	}
 	uploadURL, artifactID, err := createArtifact(buildURL, token, artifact, "ios-xcarchive", "")

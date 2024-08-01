@@ -151,11 +151,10 @@ type ArtifactMap map[string]map[string]map[string]Artifact
 
 // Artifact ...
 type Artifact struct {
-	APK string // set if a single APK represents the app
-
-	AAB          string
-	Split        []string // split apk paths including the universal apk path, excluding the bundle path
-	UniversalApk string
+	APK          string   `json:"apk"` // set if a single APK represents the app
+	AAB          string   `json:"aab"`
+	Split        []string `json:"split"` // split apk paths including the universal apk path, excluding the bundle path
+	UniversalApk string   `json:"universal"`
 }
 
 // FindSameArtifact returns the first artifact which is the same variant as the reference artifact,

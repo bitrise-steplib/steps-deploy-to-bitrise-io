@@ -10,18 +10,10 @@ import (
 )
 
 // ParseAABData ...
-func ParseAABData(pth string, bt bundletool.Path) (map[string]interface{}, error) {
+func ParseAABData(pth string, bt bundletool.Path) (*ArtifactMetadata, error) {
 	aabInfo, err := androidartifact.GetAABInfo(bt, pth)
 	if err != nil {
 		return nil, err
-	}
-
-	appInfo := map[string]interface{}{
-		"package_name":    aabInfo.PackageName,
-		"version_code":    aabInfo.VersionCode,
-		"version_name":    aabInfo.VersionName,
-		"app_name":        aabInfo.AppName,
-		"min_sdk_version": aabInfo.MinSDKVersion,
 	}
 
 	var warnings []string
@@ -57,13 +49,13 @@ func ParseAABData(pth string, bt bundletool.Path) (map[string]interface{}, error
 		warnings = append(warnings, fmt.Sprintf("Failed to read signature: %s", err))
 	}
 
-	return map[string]interface{}{
-		"file_size_bytes": fmt.Sprintf("%d", fileSize),
-		"app_info":        appInfo,
-		"module":          info.Module,
-		"product_flavour": info.ProductFlavour,
-		"build_type":      info.BuildType,
-		"signed_by":       signature,
-		"warnings":        warnings,
+	return &ArtifactMetadata{
+		AppInfo:        aabInfo,
+		FileSizeBytes:  fileSize,
+		Module:         info.Module,
+		ProductFlavour: info.ProductFlavour,
+		BuildType:      info.BuildType,
+		SignedBy:       signature,
+		Warnings:       warnings,
 	}, nil
 }

@@ -6,9 +6,8 @@ import (
 	metaparser "github.com/bitrise-io/go-android/v2/metaparser"
 	"github.com/bitrise-io/go-android/v2/metaparser/androidartifact"
 	"github.com/bitrise-io/go-android/v2/metaparser/bundletool"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
-
 	"github.com/bitrise-io/go-utils/log"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
 
 // DeployAAB ...
@@ -19,22 +18,15 @@ func DeployAAB(item deployment.DeployableItem, artifacts []string, buildURL, tok
 		return ArtifactURLs{}, err
 	}
 
-	if aabInfo["warnings"] != nil {
-		if warnings, ok := aabInfo["warnings"].([]string); ok {
-			for _, warning := range warnings {
-				log.Warnf(warning)
-			}
-		}
+	for _, warning := range aabInfo.Warnings {
+		log.Warnf(warning)
 	}
 
 	splitMeta, err := androidartifact.CreateSplitArtifactMeta(pth, artifacts)
 	if err != nil {
 		log.Warnf("Failed to create split meta, error: %s", err)
 	} else {
-		aabInfo["apk"] = splitMeta.APK
-		aabInfo["aab"] = splitMeta.AAB
-		aabInfo["split"] = splitMeta.Split
-		aabInfo["universal"] = splitMeta.UniversalApk
+		aabInfo.Artifact = androidartifact.Artifact(splitMeta)
 	}
 
 	// ---
@@ -42,7 +34,7 @@ func DeployAAB(item deployment.DeployableItem, artifacts []string, buildURL, tok
 	const AABContentType = "application/octet-stream aab"
 	artifact := ArtifactArgs{
 		Path:     pth,
-		FileSize: aabInfo["file_size_bytes"].(int64),
+		FileSize: aabInfo.FileSizeBytes,
 	}
 	uploadURL, artifactID, err := createArtifact(buildURL, token, artifact, "android-apk", AABContentType)
 	if err != nil {

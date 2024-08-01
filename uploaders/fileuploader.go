@@ -12,8 +12,8 @@ func DeployFile(item deployment.DeployableItem, buildURL, token string) (Artifac
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("get file size: %s", err)
 	}
-	artifact := ArtifactArgs {
-		Path: item.Path,
+	artifact := ArtifactArgs{
+		Path:     item.Path,
 		FileSize: fileSize,
 	}
 	uploadURL, artifactID, err := createArtifact(buildURL, token, artifact, "file", "")

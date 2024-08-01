@@ -9,18 +9,8 @@ import (
 	"github.com/bitrise-io/go-utils/log"
 )
 
-// AabInfo ...
-type AabInfo struct {
-	AppName           string
-	PackageName       string
-	VersionCode       string
-	VersionName       string
-	MinSDKVersion     string
-	RawPackageContent string
-}
-
 // GetAABInfo returns infos about the AAB.
-func GetAABInfo(bt bundletool.Path, aabPth string) (AabInfo, error) {
+func GetAABInfo(bt bundletool.Path, aabPth string) (Info, error) {
 	parsedInfo, err := getAABInfoWithBundletool(bt, aabPth)
 	if err != nil {
 		log.Warnf("Failed to parse AAB info: %s", err)
@@ -30,10 +20,10 @@ func GetAABInfo(bt bundletool.Path, aabPth string) (AabInfo, error) {
 	return parsedInfo, err
 }
 
-func getAABInfoWithBundletool(bt bundletool.Path, aabPath string) (AabInfo, error) {
+func getAABInfoWithBundletool(bt bundletool.Path, aabPath string) (Info, error) {
 	manifestContent, err := bt.Exec("dump", "manifest", "--bundle", aabPath)
 	if err != nil {
-		return AabInfo{}, err
+		return Info{}, err
 	}
 
 	packageName, versionCode, versionName := ParsePackageInfo(manifestContent, "package")
@@ -43,13 +33,13 @@ func getAABInfoWithBundletool(bt bundletool.Path, aabPath string) (AabInfo, erro
 	if strings.HasPrefix(appName, "@") {
 		resourcesContent, err := bt.Exec("dump", "resources", "--bundle", aabPath, "--resource", appName[1:], "--values")
 		if err != nil {
-			return AabInfo{}, err
+			return Info{}, err
 		}
 
 		appName = getAppNameFromResources(resourcesContent)
 	}
 
-	return AabInfo{
+	return Info{
 		AppName:           appName,
 		PackageName:       packageName,
 		VersionCode:       versionCode,

@@ -84,8 +84,8 @@ func (t *TestReportClient) UploadAsset(url, path, contentType string) error {
 	if err != nil {
 		return err
 	}
-	artifact := uploaders.ArtifactArgs {
-		Path: path,
+	artifact := uploaders.ArtifactArgs{
+		Path:     path,
 		FileSize: fileInfo.Size(),
 	}
 	return uploaders.UploadArtifact(url, artifact, contentType)

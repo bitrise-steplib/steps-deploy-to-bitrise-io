@@ -40,8 +40,8 @@ func DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups
 	logger.Printf("ipa infos: %v", appInfo)
 
 	const IPAContentType = "application/octet-stream ipa"
-	artifact := ArtifactArgs {
-		Path: pth,
+	artifact := ArtifactArgs{
+		Path:     pth,
 		FileSize: fileSize,
 	}
 	uploadURL, artifactID, err := createArtifact(buildURL, token, artifact, "ios-ipa", IPAContentType)

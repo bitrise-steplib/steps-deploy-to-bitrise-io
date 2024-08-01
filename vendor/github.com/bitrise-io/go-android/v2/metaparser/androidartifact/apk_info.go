@@ -8,26 +8,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/bitrise-io/go-utils/v2/log"
-
 	"github.com/avast/apkparser"
-
 	"github.com/bitrise-io/go-android/v2/sdk"
 	"github.com/bitrise-io/go-utils/command"
+	"github.com/bitrise-io/go-utils/v2/log"
 )
 
-// ApkInfo ...
-type ApkInfo struct {
-	AppName           string
-	PackageName       string
-	VersionCode       string
-	VersionName       string
-	MinSDKVersion     string
-	RawPackageContent string
-}
-
 // GetAPKInfo returns infos about the APK.
-func GetAPKInfo(apkPth string) (ApkInfo, error) {
+func GetAPKInfo(apkPth string) (Info, error) {
 	logger := log.NewLogger()
 	parsedInfo, err := parseAPKInfo(apkPth)
 	if err == nil {
@@ -60,28 +48,28 @@ type usesSdk struct {
 	MinSDKVersion string   `xml:"minSdkVersion,attr"`
 }
 
-func parseAPKInfo(apkPath string) (ApkInfo, error) {
+func parseAPKInfo(apkPath string) (Info, error) {
 	var manifestContent bytes.Buffer
 	enc := xml.NewEncoder(&manifestContent)
 	enc.Indent("", "\t")
 
 	zipErr, resErr, manErr := apkparser.ParseApk(apkPath, enc)
 	if zipErr != nil {
-		return ApkInfo{}, fmt.Errorf("failed to unzip the APK, error: %s", zipErr)
+		return Info{}, fmt.Errorf("failed to unzip the APK, error: %s", zipErr)
 	}
 	if resErr != nil {
-		return ApkInfo{}, fmt.Errorf("failed to parse resources, error: %s", zipErr)
+		return Info{}, fmt.Errorf("failed to parse resources, error: %s", zipErr)
 	}
 	if manErr != nil {
-		return ApkInfo{}, fmt.Errorf("failed to parse AndroidManifest.xml, error: %s", zipErr)
+		return Info{}, fmt.Errorf("failed to parse AndroidManifest.xml, error: %s", zipErr)
 	}
 
 	var manifest manifest
 	if err := xml.Unmarshal(manifestContent.Bytes(), &manifest); err != nil {
-		return ApkInfo{}, fmt.Errorf("failed to unmarshal AndroidManifest.xml, error: %s", err)
+		return Info{}, fmt.Errorf("failed to unmarshal AndroidManifest.xml, error: %s", err)
 	}
 
-	return ApkInfo{
+	return Info{
 		AppName:           manifest.Application.AppName,
 		PackageName:       manifest.PackageName,
 		VersionCode:       manifest.VersionCode,
@@ -91,25 +79,25 @@ func parseAPKInfo(apkPath string) (ApkInfo, error) {
 	}, nil
 }
 
-func getAPKInfoWithAapt(apkPth string) (ApkInfo, error) {
+func getAPKInfoWithAapt(apkPth string) (Info, error) {
 	androidHome := os.Getenv("ANDROID_HOME")
 	if androidHome == "" {
-		return ApkInfo{}, errors.New("ANDROID_HOME environment not set")
+		return Info{}, errors.New("ANDROID_HOME environment not set")
 	}
 
 	sdkModel, err := sdk.New(androidHome)
 	if err != nil {
-		return ApkInfo{}, fmt.Errorf("failed to create sdk model, error: %s", err)
+		return Info{}, fmt.Errorf("failed to create sdk model, error: %s", err)
 	}
 
 	aaptPth, err := sdkModel.LatestBuildToolPath("aapt")
 	if err != nil {
-		return ApkInfo{}, fmt.Errorf("failed to find latest aapt binary, error: %s", err)
+		return Info{}, fmt.Errorf("failed to find latest aapt binary, error: %s", err)
 	}
 
 	aaptOut, err := command.New(aaptPth, "dump", "badging", apkPth).RunAndReturnTrimmedCombinedOutput()
 	if err != nil {
-		return ApkInfo{}, fmt.Errorf("failed to get apk infos, output: %s, error: %s", aaptOut, err)
+		return Info{}, fmt.Errorf("failed to get apk infos, output: %s, error: %s", aaptOut, err)
 	}
 
 	appName := parseAppName(aaptOut)
@@ -123,7 +111,7 @@ func getAPKInfoWithAapt(apkPth string) (ApkInfo, error) {
 		}
 	}
 
-	return ApkInfo{
+	return Info{
 		AppName:           appName,
 		PackageName:       packageName,
 		VersionCode:       versionCode,
