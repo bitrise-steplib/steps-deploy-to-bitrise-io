@@ -3,8 +3,8 @@ package uploaders
 import (
 	"fmt"
 
+	"github.com/bitrise-io/go-android/v2/metaparser/androidartifact"
 	"github.com/bitrise-io/go-utils/log"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/androidartifact"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
 
@@ -67,8 +67,8 @@ func DeployAPK(item deployment.DeployableItem, artifacts []string, buildURL, tok
 	// ---
 
 	const APKContentType = "application/vnd.android.package-archive"
-	artifact := ArtifactArgs {
-		Path: pth,
+	artifact := ArtifactArgs{
+		Path:     pth,
 		FileSize: fileSize,
 	}
 	uploadURL, artifactID, err := createArtifact(buildURL, token, artifact, "android-apk", APKContentType)

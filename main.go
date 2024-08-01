@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/bundletool"
+	"github.com/bitrise-io/go-android/v2/metaparser/bundletool"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/fileredactor"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/report"

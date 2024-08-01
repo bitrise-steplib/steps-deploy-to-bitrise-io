@@ -8,11 +8,12 @@ import (
 	"os"
 	"strings"
 
+	"github.com/bitrise-io/go-utils/v2/log"
+
 	"github.com/avast/apkparser"
 
-	"github.com/bitrise-io/go-android/sdk"
+	"github.com/bitrise-io/go-android/v2/sdk"
 	"github.com/bitrise-io/go-utils/command"
-	"github.com/bitrise-io/go-utils/log"
 )
 
 // ApkInfo ...
@@ -27,13 +28,14 @@ type ApkInfo struct {
 
 // GetAPKInfo returns infos about the APK.
 func GetAPKInfo(apkPth string) (ApkInfo, error) {
+	logger := log.NewLogger()
 	parsedInfo, err := parseAPKInfo(apkPth)
 	if err == nil {
 		return parsedInfo, nil
 	}
 	// err != nil
-	log.Warnf("Failed to parse APK info: %s", err)
-	log.RWarnf("deploy-to-bitrise-io", "apk-parse", nil, "apkparser package failed to parse APK, error: %s", err)
+	logger.Warnf("Failed to parse APK info: %s", err)
+	//logger.RWarnf("deploy-to-bitrise-io", "apk-parse", nil, "apkparser package failed to parse APK, error: %s", err)
 
 	return getAPKInfoWithAapt(apkPth)
 }

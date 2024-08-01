@@ -5,8 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/bundletool"
-
+	"github.com/bitrise-io/go-android/v2/metaparser/bundletool"
 	"github.com/bitrise-io/go-utils/log"
 )
 
