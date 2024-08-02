@@ -544,8 +544,6 @@ func deploySingleItem(item deployment.DeployableItem, config Config, androidArti
 
 		return uploaders.DeployXcarchive(item, config.BuildURL, config.APIToken)
 	default:
-		logger.Printf("Deploying file: %s", pth)
-
 		return uploaders.DeployFile(item, config.BuildURL, config.APIToken)
 	}
 }

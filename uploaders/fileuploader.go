@@ -23,6 +23,7 @@ func DeployFile(item deployment.DeployableItem, buildURL, token string) (Artifac
 
 	// TODO: This is a workaround to avoid uploading a file that is being modified during the upload process,
 	//  which can cause an issue like: request body larger than specified content length at file upload.
+	deploySnapshot := false
 	if fileSize <= snapshotFileSizeLimitInBytes {
 		snapshotPth, err := createSnapshot(pth)
 		if err != nil {
@@ -34,7 +35,14 @@ func DeployFile(item deployment.DeployableItem, buildURL, token string) (Artifac
 				}
 			}()
 			pth = snapshotPth
+			deploySnapshot = true
 		}
+	}
+
+	if deploySnapshot {
+		log.Printf("Deploying file snapshot: %s", pth)
+	} else {
+		log.Printf("Deploying file: %s", pth)
 	}
 
 	artifact := ArtifactArgs{
