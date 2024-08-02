@@ -8,7 +8,6 @@ import (
 
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
-
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
 
@@ -22,6 +21,8 @@ func DeployFile(item deployment.DeployableItem, buildURL, token string) (Artifac
 		return ArtifactURLs{}, fmt.Errorf("get file size: %w", err)
 	}
 
+	// TODO: This is a workaround to avoid uploading a file that is being modified during the upload process,
+	//  which can cause an issue like: request body larger than specified content length at file upload.
 	if fileSize <= snapshotFileSizeLimitInBytes {
 		snapshotPth, err := createSnapshot(pth)
 		if err != nil {
