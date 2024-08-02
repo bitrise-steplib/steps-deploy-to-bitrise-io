@@ -40,7 +40,7 @@ func DeployFile(item deployment.DeployableItem, buildURL, token string) (Artifac
 	}
 
 	if deploySnapshot {
-		log.Printf("Deploying file snapshot: %s", pth)
+		log.Printf("Deploying snapshot of original file: %s", pth)
 	} else {
 		log.Printf("Deploying file: %s", pth)
 	}
