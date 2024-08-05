@@ -373,6 +373,15 @@ func collectFilesToDeploy(absDeployPth string, config Config, tmpDir string, log
 	} else if config.IsCompress {
 		logger.Printf("Build Artifact deployment mode: deploying compressed deploy directory")
 
+		entries, err := os.ReadDir(absDeployPth)
+		if err != nil {
+			return nil, fmt.Errorf("read contents of %s: %s", absDeployPth, err)
+		}
+		if len(entries) == 0 {
+			logger.Donef("Directory is empty, nothing to compress")
+			return nil, nil
+		}
+
 		zipName := filepath.Base(absDeployPth)
 		if config.ZipName != "" {
 			zipName = config.ZipName
