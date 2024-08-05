@@ -3,28 +3,48 @@ package uploaders
 import (
 	"fmt"
 
-	metaparser "github.com/bitrise-io/go-android/v2/metaparser"
+	"github.com/bitrise-io/go-android/v2/metaparser"
 	"github.com/bitrise-io/go-android/v2/metaparser/androidartifact"
 	"github.com/bitrise-io/go-android/v2/metaparser/bundletool"
-	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
 
 // DeployAAB ...
 func DeployAAB(item deployment.DeployableItem, artifacts []string, buildURL, token string, bt bundletool.Path) (ArtifactURLs, error) {
 	pth := item.Path
-	aabInfo, err := metaparser.ParseAABData(pth, bt)
+
+	logger := NewLogger()
+	parser := metaparser.New(logger, bt)
+	aabInfo, err := parser.ParseAABData(pth)
 	if err != nil {
 		return ArtifactURLs{}, err
 	}
 
-	for _, warning := range aabInfo.Warnings {
-		log.Warnf(warning)
+	logger.Printf("aab infos: %v", aabInfo.AppInfo)
+
+	if aabInfo.AppInfo.PackageName == "" {
+		logger.Warnf("Package name is undefined, AndroidManifest.xml package content:\n%s", aabInfo.AppInfo.RawPackageContent)
 	}
 
-	splitMeta, err := androidartifact.CreateSplitArtifactMeta(pth, artifacts)
+	if aabInfo.AppInfo.VersionCode == "" {
+		logger.Warnf("Version code is undefined, AndroidManifest.xml package content:\n%s", aabInfo.AppInfo.RawPackageContent)
+	}
+
+	if aabInfo.AppInfo.VersionName == "" {
+		logger.Warnf("Version name is undefined, AndroidManifest.xml package content:\n%s", aabInfo.AppInfo.RawPackageContent)
+	}
+
+	if aabInfo.AppInfo.MinSDKVersion == "" {
+		logger.Warnf("Min SDK version is undefined, AndroidManifest.xml package content:\n%s", aabInfo.AppInfo.RawPackageContent)
+	}
+
+	if aabInfo.AppInfo.AppName == "" {
+		logger.Warnf("App name is undefined, AndroidManifest.xml package content:\n%s", aabInfo.AppInfo.RawPackageContent)
+	}
+
+	splitMeta, err := androidartifact.CreateSplitArtifactMeta(nil, pth, artifacts)
 	if err != nil {
-		log.Warnf("Failed to create split meta, error: %s", err)
+		logger.Warnf("Failed to create split meta, error: %s", err)
 	} else {
 		aabInfo.Artifact = androidartifact.Artifact(splitMeta)
 	}

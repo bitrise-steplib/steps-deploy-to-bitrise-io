@@ -6,21 +6,10 @@ import (
 	"strings"
 
 	"github.com/bitrise-io/go-android/v2/metaparser/bundletool"
-	"github.com/bitrise-io/go-utils/log"
 )
 
 // GetAABInfo returns infos about the AAB.
-func GetAABInfo(bt bundletool.Path, aabPth string) (Info, error) {
-	parsedInfo, err := getAABInfoWithBundletool(bt, aabPth)
-	if err != nil {
-		log.Warnf("Failed to parse AAB info: %s", err)
-		log.RWarnf("deploy-to-bitrise-io", "aab-parse", nil, "aabparser package failed to parse AAB, error: %s", err)
-	}
-
-	return parsedInfo, err
-}
-
-func getAABInfoWithBundletool(bt bundletool.Path, aabPath string) (Info, error) {
+func GetAABInfo(bt bundletool.Path, aabPath string) (Info, error) {
 	manifestContent, err := bt.Exec("dump", "manifest", "--bundle", aabPath)
 	if err != nil {
 		return Info{}, err

@@ -11,21 +11,18 @@ import (
 	"github.com/avast/apkparser"
 	"github.com/bitrise-io/go-android/v2/sdk"
 	"github.com/bitrise-io/go-utils/command"
-	"github.com/bitrise-io/go-utils/v2/log"
 )
 
-// GetAPKInfo returns infos about the APK.
-func GetAPKInfo(apkPth string) (Info, error) {
-	logger := log.NewLogger()
-	parsedInfo, err := parseAPKInfo(apkPth)
+func GetAPKInfoWithFallback(logger Logger, apkPth string) (Info, error) {
+	parsedInfo, err := GetAPKInfo(apkPth)
 	if err == nil {
 		return parsedInfo, nil
 	}
 	// err != nil
 	logger.Warnf("Failed to parse APK info: %s", err)
-	//logger.RWarnf("deploy-to-bitrise-io", "apk-parse", nil, "apkparser package failed to parse APK, error: %s", err)
+	logger.APKParseWarnf("apk-parse", "apkparser package failed to parse APK, error: %s", err)
 
-	return getAPKInfoWithAapt(apkPth)
+	return GetAPKInfoWithAapt(apkPth)
 }
 
 type manifest struct {
@@ -48,7 +45,8 @@ type usesSdk struct {
 	MinSDKVersion string   `xml:"minSdkVersion,attr"`
 }
 
-func parseAPKInfo(apkPath string) (Info, error) {
+// GetAPKInfo returns infos about the APK.
+func GetAPKInfo(apkPath string) (Info, error) {
 	var manifestContent bytes.Buffer
 	enc := xml.NewEncoder(&manifestContent)
 	enc.Indent("", "\t")
@@ -79,7 +77,7 @@ func parseAPKInfo(apkPath string) (Info, error) {
 	}, nil
 }
 
-func getAPKInfoWithAapt(apkPth string) (Info, error) {
+func GetAPKInfoWithAapt(apkPth string) (Info, error) {
 	androidHome := os.Getenv("ANDROID_HOME")
 	if androidHome == "" {
 		return Info{}, errors.New("ANDROID_HOME environment not set")

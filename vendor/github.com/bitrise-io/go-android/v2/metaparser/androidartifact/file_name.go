@@ -6,7 +6,6 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pretty"
 	"github.com/bitrise-io/go-utils/sliceutil"
 )
@@ -172,7 +171,7 @@ func FindSameArtifact(pth string, pths []string) string {
 }
 
 // mapBuildArtifacts creates a module/buildType/productFlavour[artifactPaths] mapping.
-func mapBuildArtifacts(pths []string) ArtifactMap {
+func mapBuildArtifacts(logger Logger, pths []string) ArtifactMap {
 	buildArtifacts := map[string]map[string]map[string]Artifact{}
 	for _, pth := range pths {
 		info := ParseArtifactPath(pth)
@@ -191,7 +190,7 @@ func mapBuildArtifacts(pths []string) ArtifactMap {
 
 		if filepath.Ext(pth) == ".aab" {
 			if len(artifact.AAB) != 0 {
-				log.Warnf("Multiple AAB generated for module: %s, productFlavour: %s, buildType: %s: %s", info.Module, info.ProductFlavour, info.BuildType, pth)
+				logger.Warnf("Multiple AAB generated for module: %s, productFlavour: %s, buildType: %s: %s", info.Module, info.ProductFlavour, info.BuildType, pth)
 			}
 			artifact.AAB = pth
 			buildTypeArtifacts[info.ProductFlavour] = artifact
@@ -210,7 +209,7 @@ func mapBuildArtifacts(pths []string) ArtifactMap {
 
 		if info.SplitInfo.Universal {
 			if len(artifact.UniversalApk) != 0 {
-				log.Warnf("Multiple universal APK generated for module: %s, productFlavour: %s, buildType: %s: %s", info.Module, info.ProductFlavour, info.BuildType, pth)
+				logger.Warnf("Multiple universal APK generated for module: %s, productFlavour: %s, buildType: %s: %s", info.Module, info.ProductFlavour, info.BuildType, pth)
 			}
 			artifact.UniversalApk = pth
 		}
@@ -241,8 +240,8 @@ func remove(slice []string, i uint) []string {
 type SplitArtifactMeta Artifact
 
 // CreateSplitArtifactMeta ...
-func CreateSplitArtifactMeta(pth string, pths []string) (SplitArtifactMeta, error) {
-	artifactsMap := mapBuildArtifacts(pths)
+func CreateSplitArtifactMeta(logger Logger, pth string, pths []string) (SplitArtifactMeta, error) {
+	artifactsMap := mapBuildArtifacts(logger, pths)
 	info := ParseArtifactPath(pth)
 
 	moduleArtifacts, ok := artifactsMap[info.Module]
