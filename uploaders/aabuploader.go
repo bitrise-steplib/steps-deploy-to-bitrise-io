@@ -42,7 +42,7 @@ func DeployAAB(item deployment.DeployableItem, artifacts []string, buildURL, tok
 		logger.Warnf("App name is undefined, AndroidManifest.xml package content:\n%s", aabInfo.AppInfo.RawPackageContent)
 	}
 
-	splitMeta, err := androidartifact.CreateSplitArtifactMeta(nil, pth, artifacts)
+	splitMeta, err := androidartifact.CreateSplitArtifactMeta(logger, pth, artifacts)
 	if err != nil {
 		logger.Warnf("Failed to create split meta, error: %s", err)
 	} else {
