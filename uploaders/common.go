@@ -14,10 +14,11 @@ import (
 	"strings"
 	"time"
 
-	parser "github.com/bitrise-io/go-android/v2/metaparser"
+	androidparser "github.com/bitrise-io/go-android/v2/metaparser"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-io/go-utils/urlutil"
+	iosparser "github.com/bitrise-io/go-xcode/v2/metaparser"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 	"github.com/docker/go-units"
 )
@@ -29,8 +30,8 @@ type ArtifactURLs struct {
 }
 
 type AppDeploymentMetaData struct {
-	AndroidArtifactInfo *parser.ArtifactMetadata
-	IOSArtifactInfo     map[string]interface{}
+	AndroidArtifactInfo *androidparser.ArtifactMetadata
+	IOSArtifactInfo     *iosparser.ArtifactMetadata
 	NotifyUserGroups    string
 	NotifyEmails        string
 	IsEnablePublicPage  bool
