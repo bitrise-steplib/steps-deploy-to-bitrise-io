@@ -3,6 +3,8 @@ package uploaders
 import (
 	"fmt"
 
+	"github.com/pkg/errors"
+
 	"github.com/bitrise-io/go-utils/v2/fileutil"
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-xcode/v2/metaparser"
@@ -18,7 +20,11 @@ func DeployXcarchive(item deployment.DeployableItem, buildURL, token string) (Ar
 
 	xcarchiveInfo, err := parser.ParseXCArchiveData(pth)
 	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to parse deployment info for %s: %w", pth, err)
+		if errors.Is(err, metaparser.MacOSProjectIsNotSupported) {
+			logger.Warnf("macOS archive deployment is not supported, skipping xcarchive")
+		} else {
+			return ArtifactURLs{}, fmt.Errorf("failed to parse deployment info for %s: %w", pth, err)
+		}
 	}
 
 	logger.Printf("xcarchive infos: %v", xcarchiveInfo)

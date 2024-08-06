@@ -11,7 +11,7 @@ require (
 	github.com/bitrise-io/go-utils v1.0.13
 	github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.23
 	github.com/bitrise-io/go-xcode v1.0.18
-	github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.45.0.20240806072429-f7d40a77856e
+	github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.45.0.20240806091154-c74f0b9d8b60
 	github.com/docker/go-units v0.5.0
 	github.com/google/go-cmp v0.6.0
 	github.com/gorilla/mux v1.8.0
