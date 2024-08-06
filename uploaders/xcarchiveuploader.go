@@ -5,29 +5,24 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/bitrise-io/go-utils/v2/fileutil"
-	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-xcode/v2/metaparser"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
 
 // DeployXcarchive ...
-func DeployXcarchive(item deployment.DeployableItem, buildURL, token string) (ArtifactURLs, error) {
-	logger := log.NewLogger()
+func (u *Uploader) DeployXcarchive(item deployment.DeployableItem, buildURL, token string) (ArtifactURLs, error) {
 	pth := item.Path
-	fileManager := fileutil.NewFileManager()
-	parser := metaparser.New(logger, fileManager)
 
-	xcarchiveInfo, err := parser.ParseXCArchiveData(pth)
+	xcarchiveInfo, err := u.iosParser.ParseXCArchiveData(pth)
 	if err != nil {
 		if errors.Is(err, metaparser.MacOSProjectIsNotSupported) {
-			logger.Warnf("macOS archive deployment is not supported, skipping xcarchive")
+			u.logger.Warnf("macOS archive deployment is not supported, skipping xcarchive")
 		} else {
 			return ArtifactURLs{}, fmt.Errorf("failed to parse deployment info for %s: %w", pth, err)
 		}
 	}
 
-	logger.Printf("xcarchive infos: %v", xcarchiveInfo)
+	u.logger.Printf("xcarchive infos: %v", xcarchiveInfo)
 
 	artifact := ArtifactArgs{
 		Path:     pth,

@@ -3,25 +3,22 @@ package uploaders
 import (
 	"fmt"
 
-	"github.com/bitrise-io/go-android/v2/metaparser"
 	"github.com/bitrise-io/go-android/v2/metaparser/androidartifact"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
 
 // DeployAPK ...
-func DeployAPK(item deployment.DeployableItem, artifacts []string, buildURL, token, notifyUserGroups, notifyEmails string, isEnablePublicPage bool) (ArtifactURLs, error) {
+func (u *Uploader) DeployAPK(item deployment.DeployableItem, artifacts []string, buildURL, token, notifyUserGroups, notifyEmails string, isEnablePublicPage bool) (ArtifactURLs, error) {
 	pth := item.Path
 
-	logger := NewLogger()
-	parser := metaparser.New(logger, "")
-	apkInfo, err := parser.ParseAPKData(pth)
+	apkInfo, err := u.androidParser.ParseAPKData(pth)
 	if err != nil {
 		return ArtifactURLs{}, err
 	}
 
-	splitMeta, err := androidartifact.CreateSplitArtifactMeta(logger, pth, artifacts)
+	splitMeta, err := androidartifact.CreateSplitArtifactMeta(u.logger, pth, artifacts)
 	if err != nil {
-		logger.Errorf("Failed to create split meta, error: %s", err)
+		u.logger.Errorf("Failed to create split meta, error: %s", err)
 	} else {
 		apkInfo.Artifact = androidartifact.Artifact(splitMeta)
 	}

@@ -23,10 +23,10 @@ type Parser struct {
 }
 
 // New ...
-func New(logger androidartifact.Logger, bundletoolPath bundletool.Path) *Parser {
+func New(logger androidartifact.Logger, bundletoolPath bundletool.Path, fileManager fileutil.FileManager) *Parser {
 	return &Parser{
 		logger:         logger,
 		bundletoolPath: bundletoolPath,
-		fileManager:    fileutil.NewFileManager(),
+		fileManager:    fileManager,
 	}
 }

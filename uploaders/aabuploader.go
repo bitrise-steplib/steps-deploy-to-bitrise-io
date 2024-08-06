@@ -3,48 +3,44 @@ package uploaders
 import (
 	"fmt"
 
-	"github.com/bitrise-io/go-android/v2/metaparser"
 	"github.com/bitrise-io/go-android/v2/metaparser/androidartifact"
-	"github.com/bitrise-io/go-android/v2/metaparser/bundletool"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
 
 // DeployAAB ...
-func DeployAAB(item deployment.DeployableItem, artifacts []string, buildURL, token string, bt bundletool.Path) (ArtifactURLs, error) {
+func (u *Uploader) DeployAAB(item deployment.DeployableItem, artifacts []string, buildURL, token string) (ArtifactURLs, error) {
 	pth := item.Path
 
-	logger := NewLogger()
-	parser := metaparser.New(logger, bt)
-	aabInfo, err := parser.ParseAABData(pth)
+	aabInfo, err := u.androidParser.ParseAABData(pth)
 	if err != nil {
 		return ArtifactURLs{}, err
 	}
 
-	logger.Printf("aab infos: %v", aabInfo.AppInfo)
+	u.logger.Printf("aab infos: %v", aabInfo.AppInfo)
 
 	if aabInfo.AppInfo.PackageName == "" {
-		logger.Warnf("Package name is undefined, AndroidManifest.xml package content:\n%s", aabInfo.AppInfo.RawPackageContent)
+		u.logger.Warnf("Package name is undefined, AndroidManifest.xml package content:\n%s", aabInfo.AppInfo.RawPackageContent)
 	}
 
 	if aabInfo.AppInfo.VersionCode == "" {
-		logger.Warnf("Version code is undefined, AndroidManifest.xml package content:\n%s", aabInfo.AppInfo.RawPackageContent)
+		u.logger.Warnf("Version code is undefined, AndroidManifest.xml package content:\n%s", aabInfo.AppInfo.RawPackageContent)
 	}
 
 	if aabInfo.AppInfo.VersionName == "" {
-		logger.Warnf("Version name is undefined, AndroidManifest.xml package content:\n%s", aabInfo.AppInfo.RawPackageContent)
+		u.logger.Warnf("Version name is undefined, AndroidManifest.xml package content:\n%s", aabInfo.AppInfo.RawPackageContent)
 	}
 
 	if aabInfo.AppInfo.MinSDKVersion == "" {
-		logger.Warnf("Min SDK version is undefined, AndroidManifest.xml package content:\n%s", aabInfo.AppInfo.RawPackageContent)
+		u.logger.Warnf("Min SDK version is undefined, AndroidManifest.xml package content:\n%s", aabInfo.AppInfo.RawPackageContent)
 	}
 
 	if aabInfo.AppInfo.AppName == "" {
-		logger.Warnf("App name is undefined, AndroidManifest.xml package content:\n%s", aabInfo.AppInfo.RawPackageContent)
+		u.logger.Warnf("App name is undefined, AndroidManifest.xml package content:\n%s", aabInfo.AppInfo.RawPackageContent)
 	}
 
-	splitMeta, err := androidartifact.CreateSplitArtifactMeta(logger, pth, artifacts)
+	splitMeta, err := androidartifact.CreateSplitArtifactMeta(u.logger, pth, artifacts)
 	if err != nil {
-		logger.Warnf("Failed to create split meta, error: %s", err)
+		u.logger.Warnf("Failed to create split meta, error: %s", err)
 	} else {
 		aabInfo.Artifact = androidartifact.Artifact(splitMeta)
 	}

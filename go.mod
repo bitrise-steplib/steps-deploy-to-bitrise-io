@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/bitrise-io/bitrise v0.0.0-20220808135808-3483087dd853
 	github.com/bitrise-io/envman v0.0.0-20220401145857-d11e00a5dc55
-	github.com/bitrise-io/go-android/v2 v2.0.0-alpha.6.0.20240805130058-9bc60d816417
+	github.com/bitrise-io/go-android/v2 v2.0.0-alpha.6.0.20240806093601-4a7826c6c929
 	github.com/bitrise-io/go-steputils v1.0.6
 	github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.20
 	github.com/bitrise-io/go-utils v1.0.13
