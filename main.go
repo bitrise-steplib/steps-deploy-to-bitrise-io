@@ -10,18 +10,10 @@ import (
 	"strings"
 	"sync"
 
-	androidparser "github.com/bitrise-io/go-android/v2/metaparser"
-	iosparser "github.com/bitrise-io/go-xcode/v2/metaparser"
-
-	"github.com/bitrise-io/go-android/v2/metaparser/bundletool"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/fileredactor"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/report"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/uploaders"
-
 	"github.com/bitrise-io/bitrise/models"
 	"github.com/bitrise-io/envman/envman"
+	androidparser "github.com/bitrise-io/go-android/v2/metaparser"
+	"github.com/bitrise-io/go-android/v2/metaparser/bundletool"
 	"github.com/bitrise-io/go-steputils/stepconf"
 	"github.com/bitrise-io/go-steputils/tools"
 	"github.com/bitrise-io/go-steputils/v2/secretkeys"
@@ -34,6 +26,12 @@ import (
 	loggerV2 "github.com/bitrise-io/go-utils/v2/log"
 	pathutil2 "github.com/bitrise-io/go-utils/v2/pathutil"
 	"github.com/bitrise-io/go-utils/ziputil"
+	iosparser "github.com/bitrise-io/go-xcode/v2/metaparser"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/fileredactor"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/report"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/uploaders"
 )
 
 var fileBaseNamesToSkip = []string{".DS_Store"}
