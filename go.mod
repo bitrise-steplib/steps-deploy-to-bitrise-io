@@ -5,13 +5,13 @@ go 1.20
 require (
 	github.com/bitrise-io/bitrise v0.0.0-20220808135808-3483087dd853
 	github.com/bitrise-io/envman v0.0.0-20220401145857-d11e00a5dc55
-	github.com/bitrise-io/go-android/v2 v2.0.0-alpha.6.0.20240806104825-1fe8579781da
+	github.com/bitrise-io/go-android/v2 v2.0.0-alpha.7
 	github.com/bitrise-io/go-steputils v1.0.6
 	github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.20
 	github.com/bitrise-io/go-utils v1.0.13
 	github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.23
 	github.com/bitrise-io/go-xcode v1.0.18
-	github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.45.0.20240806092923-5e60361ee9fd
+	github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.45.0.20240806120859-762f59b5e0a3
 	github.com/docker/go-units v0.5.0
 	github.com/google/go-cmp v0.6.0
 	github.com/gorilla/mux v1.8.0

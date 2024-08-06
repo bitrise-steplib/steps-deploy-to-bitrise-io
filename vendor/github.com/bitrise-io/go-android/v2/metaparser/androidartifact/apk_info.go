@@ -3,7 +3,6 @@ package androidartifact
 import (
 	"bytes"
 	"encoding/xml"
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -78,12 +77,10 @@ func GetAPKInfo(apkPath string) (Info, error) {
 }
 
 func GetAPKInfoWithAapt(apkPth string) (Info, error) {
-	androidHome := os.Getenv("ANDROID_HOME")
-	if androidHome == "" {
-		return Info{}, errors.New("ANDROID_HOME environment not set")
-	}
-
-	sdkModel, err := sdk.New(androidHome)
+	sdkModel, err := sdk.NewDefaultModel(sdk.Environment{
+		AndroidHome:    os.Getenv("ANDROID_HOME"),
+		AndroidSDKRoot: os.Getenv("ANDROID_SDK_ROOT"),
+	})
 	if err != nil {
 		return Info{}, fmt.Errorf("failed to create sdk model, error: %s", err)
 	}
