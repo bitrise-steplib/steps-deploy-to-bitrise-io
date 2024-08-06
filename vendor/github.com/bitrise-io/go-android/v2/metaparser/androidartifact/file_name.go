@@ -8,6 +8,7 @@ import (
 
 	"github.com/bitrise-io/go-utils/pretty"
 	"github.com/bitrise-io/go-utils/sliceutil"
+	"github.com/bitrise-io/go-utils/v2/log"
 )
 
 const universalSplitParam = "universal"
@@ -171,7 +172,7 @@ func FindSameArtifact(pth string, pths []string) string {
 }
 
 // mapBuildArtifacts creates a module/buildType/productFlavour[artifactPaths] mapping.
-func mapBuildArtifacts(logger Logger, pths []string) ArtifactMap {
+func mapBuildArtifacts(logger log.Logger, pths []string) ArtifactMap {
 	buildArtifacts := map[string]map[string]map[string]Artifact{}
 	for _, pth := range pths {
 		info := ParseArtifactPath(pth)
@@ -240,7 +241,7 @@ func remove(slice []string, i uint) []string {
 type SplitArtifactMeta Artifact
 
 // CreateSplitArtifactMeta ...
-func CreateSplitArtifactMeta(logger Logger, pth string, pths []string) (SplitArtifactMeta, error) {
+func CreateSplitArtifactMeta(logger log.Logger, pth string, pths []string) (SplitArtifactMeta, error) {
 	artifactsMap := mapBuildArtifacts(logger, pths)
 	info := ParseArtifactPath(pth)
 

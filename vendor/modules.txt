@@ -8,7 +8,7 @@ github.com/bitrise-io/bitrise/models
 ## explicit; go 1.16
 github.com/bitrise-io/envman/envman
 github.com/bitrise-io/envman/models
-# github.com/bitrise-io/go-android/v2 v2.0.0-alpha.6.0.20240806093601-4a7826c6c929
+# github.com/bitrise-io/go-android/v2 v2.0.0-alpha.6.0.20240806104825-1fe8579781da
 ## explicit; go 1.16
 github.com/bitrise-io/go-android/v2/metaparser
 github.com/bitrise-io/go-android/v2/metaparser/androidartifact
