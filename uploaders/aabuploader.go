@@ -16,7 +16,7 @@ func (u *Uploader) DeployAAB(item deployment.DeployableItem, artifacts []string,
 		return ArtifactURLs{}, err
 	}
 
-	u.logger.Printf("aab infos: %+v", aabInfo.AppInfo)
+	u.logger.Printf("aab infos: %+v", printableAppInfo(aabInfo.AppInfo))
 
 	if aabInfo.AppInfo.PackageName == "" {
 		u.logger.Warnf("Package name is undefined, AndroidManifest.xml package content:\n%s", aabInfo.AppInfo.RawPackageContent)

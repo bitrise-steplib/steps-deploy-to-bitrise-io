@@ -22,7 +22,7 @@ func (u *Uploader) DeployIPA(item deployment.DeployableItem, buildURL, token, no
 		isEnablePublicPage = false
 	}
 
-	u.logger.Printf("ipa infos: %+v", ipaInfo.AppInfo)
+	u.logger.Printf("ipa infos: %+v", printableAppInfo(ipaInfo.AppInfo))
 
 	const IPAContentType = "application/octet-stream ipa"
 	artifact := ArtifactArgs{

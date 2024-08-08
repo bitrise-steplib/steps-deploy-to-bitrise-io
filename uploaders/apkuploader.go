@@ -16,7 +16,7 @@ func (u *Uploader) DeployAPK(item deployment.DeployableItem, artifacts []string,
 		return ArtifactURLs{}, err
 	}
 
-	u.logger.Printf("apk infos: %+v", apkInfo.AppInfo)
+	u.logger.Printf("apk infos: %+v", printableAppInfo(apkInfo.AppInfo))
 
 	splitMeta, err := androidartifact.CreateSplitArtifactMeta(u.logger, pth, artifacts)
 	if err != nil {

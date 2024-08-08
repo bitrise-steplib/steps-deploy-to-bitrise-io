@@ -309,3 +309,12 @@ func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDe
 
 	return urls, nil
 }
+
+func printableAppInfo(appInfo interface{}) string {
+	bytes, err := json.Marshal(appInfo)
+	if err != nil {
+		return fmt.Sprintf("failed to marshal app info: %+v, error: %s", appInfo, err)
+	}
+
+	return string(bytes)
+}
