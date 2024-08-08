@@ -21,7 +21,7 @@ func (u *Uploader) DeployXcarchive(item deployment.DeployableItem, buildURL, tok
 		}
 	}
 
-	u.logger.Printf("xcarchive infos: %v", xcarchiveInfo)
+	u.logger.Printf("xcarchive infos: %+v", xcarchiveInfo.AppInfo)
 
 	artifact := ArtifactArgs{
 		Path:     pth,
