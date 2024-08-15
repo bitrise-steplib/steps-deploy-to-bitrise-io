@@ -10,15 +10,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/bundletool"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/fileredactor"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/report"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/uploaders"
-
 	"github.com/bitrise-io/bitrise/models"
 	"github.com/bitrise-io/envman/envman"
+	androidparser "github.com/bitrise-io/go-android/v2/metaparser"
+	"github.com/bitrise-io/go-android/v2/metaparser/bundletool"
 	"github.com/bitrise-io/go-steputils/stepconf"
 	"github.com/bitrise-io/go-steputils/tools"
 	"github.com/bitrise-io/go-steputils/v2/secretkeys"
@@ -31,6 +26,12 @@ import (
 	loggerV2 "github.com/bitrise-io/go-utils/v2/log"
 	pathutil2 "github.com/bitrise-io/go-utils/v2/pathutil"
 	"github.com/bitrise-io/go-utils/ziputil"
+	iosparser "github.com/bitrise-io/go-xcode/v2/metaparser"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/fileredactor"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/report"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/uploaders"
 )
 
 var fileBaseNamesToSkip = []string{".DS_Store"}
@@ -502,6 +503,13 @@ func deploy(deployableItems []deployment.DeployableItem, config Config, logger l
 			errorCollection = handleDeploymentFailureError(err, errorCollection, logger)
 		}
 	}
+	fileManager := fileutil.NewFileManager()
+	uploader := uploaders.New(
+		logger,
+		fileManager,
+		androidparser.New(uploaders.NewLogger(), bTool, fileManager),
+		iosparser.New(logger, fileManager),
+	)
 
 	for _, item := range combinedItems {
 		wg.Add(1)
@@ -511,7 +519,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config, logger l
 
 			jobs <- true
 
-			artifactURLs, err := deploySingleItem(item, config, androidArtifacts, bTool, logger)
+			artifactURLs, err := deploySingleItem(logger, uploader, item, config, androidArtifacts)
 			if err != nil {
 				errLock.Lock()
 				errorCollection = handleDeploymentFailureError(err, errorCollection, logger)
@@ -529,7 +537,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config, logger l
 	return artifactURLCollection, errorCollection
 }
 
-func deploySingleItem(item deployment.DeployableItem, config Config, androidArtifacts []string, bt bundletool.Path, logger loggerV2.Logger) (uploaders.ArtifactURLs, error) {
+func deploySingleItem(logger loggerV2.Logger, uploader *uploaders.Uploader, item deployment.DeployableItem, config Config, androidArtifacts []string) (uploaders.ArtifactURLs, error) {
 	pth := item.Path
 	fileType := getFileType(pth)
 
@@ -539,21 +547,21 @@ func deploySingleItem(item deployment.DeployableItem, config Config, androidArti
 	case ".apk":
 		logger.Printf("Deploying apk file: %s", pth)
 
-		return uploaders.DeployAPK(item, androidArtifacts, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
+		return uploader.DeployAPK(item, androidArtifacts, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
 	case ".aab":
 		logger.Printf("Deploying aab file: %s", pth)
 
-		return uploaders.DeployAAB(item, androidArtifacts, config.BuildURL, config.APIToken, bt)
+		return uploader.DeployAAB(item, androidArtifacts, config.BuildURL, config.APIToken)
 	case ".ipa":
 		logger.Printf("Deploying ipa file: %s", pth)
 
-		return uploaders.DeployIPA(item, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
+		return uploader.DeployIPA(item, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
 	case zippedXcarchiveExt:
 		logger.Printf("Deploying xcarchive file: %s", pth)
 
-		return uploaders.DeployXcarchive(item, config.BuildURL, config.APIToken)
+		return uploader.DeployXcarchive(item, config.BuildURL, config.APIToken)
 	default:
-		return uploaders.DeployFile(item, config.BuildURL, config.APIToken)
+		return uploader.DeployFile(item, config.BuildURL, config.APIToken)
 	}
 }
 

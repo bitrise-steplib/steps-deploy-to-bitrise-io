@@ -94,8 +94,8 @@ func Test_uploadArtifact(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			fileInfo, err := os.Stat(tt.artifactPth)
 			require.NoError(t, err)
-			artifact := ArtifactArgs {
-				Path: tt.artifactPth,
+			artifact := ArtifactArgs{
+				Path:     tt.artifactPth,
 				FileSize: fileInfo.Size(),
 			}
 			if err := UploadArtifact(tt.uploadURL, artifact, tt.contentType); (err != nil) != tt.wantErr {

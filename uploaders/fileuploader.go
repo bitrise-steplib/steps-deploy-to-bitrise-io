@@ -14,9 +14,9 @@ import (
 const snapshotFileSizeLimitInBytes = 1024 * 1024 * 1024
 
 // DeployFile ...
-func DeployFile(item deployment.DeployableItem, buildURL, token string) (ArtifactURLs, error) {
+func (u *Uploader) DeployFile(item deployment.DeployableItem, buildURL, token string) (ArtifactURLs, error) {
 	pth := item.Path
-	fileSize, err := fileSizeInBytes(item.Path)
+	fileSize, err := u.fileManager.FileSizeInBytes(item.Path)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("get file size: %w", err)
 	}
@@ -27,11 +27,11 @@ func DeployFile(item deployment.DeployableItem, buildURL, token string) (Artifac
 	if fileSize <= snapshotFileSizeLimitInBytes {
 		snapshotPth, err := createSnapshot(pth)
 		if err != nil {
-			log.Warnf("failed to create snapshot of %s: %s", pth, err)
+			u.logger.Warnf("failed to create snapshot of %s: %s", pth, err)
 		} else {
 			defer func() {
 				if err := os.Remove(snapshotPth); err != nil {
-					log.Warnf("Failed to remove snapshot file: %s", err)
+					u.logger.Warnf("Failed to remove snapshot file: %s", err)
 				}
 			}()
 			pth = snapshotPth
@@ -40,9 +40,9 @@ func DeployFile(item deployment.DeployableItem, buildURL, token string) (Artifac
 	}
 
 	if deploySnapshot {
-		log.Printf("Deploying snapshot of original file: %s", pth)
+		u.logger.Printf("Deploying snapshot of original file: %s", pth)
 	} else {
-		log.Printf("Deploying file: %s", pth)
+		u.logger.Printf("Deploying file: %s", pth)
 	}
 
 	artifact := ArtifactArgs{
