@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/bitrise-io/bitrise v0.0.0-20220808135808-3483087dd853
 	github.com/bitrise-io/envman v0.0.0-20220401145857-d11e00a5dc55
-	github.com/bitrise-io/go-android/v2 v2.0.0-alpha.7
+	github.com/bitrise-io/go-android/v2 v2.0.0-alpha.9
 	github.com/bitrise-io/go-steputils v1.0.6
 	github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.20
 	github.com/bitrise-io/go-utils v1.0.13
@@ -23,7 +23,7 @@ require (
 
 require (
 	github.com/avast/apkparser v0.0.0-20240729092610-90591e0804ae // indirect
-	github.com/bitrise-io/go-pkcs12 v0.0.0-20230913085202-b40653eb06c7 // indirect
+	github.com/bitrise-io/go-pkcs12 v0.1.0 // indirect
 	github.com/bitrise-io/goinp v0.0.0-20211005113137-305e91b481f4 // indirect
 	github.com/bitrise-io/stepman v0.0.0-20220808095634-6e12d2726f30 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect

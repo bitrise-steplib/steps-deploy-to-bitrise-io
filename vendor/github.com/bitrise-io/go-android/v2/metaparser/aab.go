@@ -21,9 +21,9 @@ func (m *Parser) ParseAABData(pth string) (*ArtifactMetadata, error) {
 
 	info := androidartifact.ParseArtifactPath(pth)
 
-	signature, err := androidsignature.Read(pth)
+	signature, err := androidsignature.ReadAABSignature(pth)
 	if err != nil {
-		m.logger.Warnf("Failed to read signature: %s", err)
+		m.logger.Warnf("Failed to get signature of `%s`: %s", pth, err)
 	}
 
 	return &ArtifactMetadata{
