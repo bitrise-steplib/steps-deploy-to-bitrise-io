@@ -21,10 +21,10 @@ github.com/bitrise-io/colorstring v0.0.0-20180614154802-a8cd70115192/go.mod h1:C
 github.com/bitrise-io/envman v0.0.0-20211026063720-03283f9c3f32/go.mod h1:L4WQyg88d87Z4dxNwrYEa0Cwd9/W0gSfXsibw30r8Vw=
 github.com/bitrise-io/envman v0.0.0-20220401145857-d11e00a5dc55 h1:uU2j30ndTLUdtkAw/RicxczXlOiSh2Ng/if9D/1xtp8=
 github.com/bitrise-io/envman v0.0.0-20220401145857-d11e00a5dc55/go.mod h1:L4WQyg88d87Z4dxNwrYEa0Cwd9/W0gSfXsibw30r8Vw=
-github.com/bitrise-io/go-android/v2 v2.0.0-alpha.7 h1:rcqjO1R9/Yxuz0WBteBsupeRw9Hh2E830Oa8lwDXIaU=
-github.com/bitrise-io/go-android/v2 v2.0.0-alpha.7/go.mod h1:/BLtSonKGmZeJpVO/DsTm5Kr5dhDaTMsJ62ogWVP+V4=
-github.com/bitrise-io/go-pkcs12 v0.0.0-20230913085202-b40653eb06c7 h1:UgbAP2//OniQV9K5tHg7jnPfSYAy5ujXyH6E7L7CTBQ=
-github.com/bitrise-io/go-pkcs12 v0.0.0-20230913085202-b40653eb06c7/go.mod h1:fly5xmzjteedkhq4NJiEFbtC6KjvFdNeFxaTw2yF//k=
+github.com/bitrise-io/go-android/v2 v2.0.0-alpha.9 h1:/XgYPiU90gxTXXttwIJrtFmodZduwrrMpAVaoBww8RA=
+github.com/bitrise-io/go-android/v2 v2.0.0-alpha.9/go.mod h1:6K58Y8gmU+490RFRqk6VKMFtYnx0XPdHrrYsAL+ZgjA=
+github.com/bitrise-io/go-pkcs12 v0.1.0 h1:J8mViCXJVRdav5ZSPp47Esz7XP1wW3T3BFz+NgdJsq8=
+github.com/bitrise-io/go-pkcs12 v0.1.0/go.mod h1:fly5xmzjteedkhq4NJiEFbtC6KjvFdNeFxaTw2yF//k=
 github.com/bitrise-io/go-steputils v1.0.6 h1:eBRL70DWwEd7DWYGd5Ds7OSIY5HElzhoDOI6UuITKQg=
 github.com/bitrise-io/go-steputils v1.0.6/go.mod h1:YIUaQnIAyK4pCvQG0hYHVkSzKNT9uL2FWmkFNW4mfNI=
 github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.20 h1:ac+HUrl4H+2qM/0FmP6mOJQvoxSPpO68er3tKNJoM6E=
