@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"html/template"
 	"os"
@@ -340,6 +341,11 @@ func logDeployFiles(files []deployment.DeployableItem, logger loggerV2.Logger) {
 func clearDeployFiles(filesToDeploy []string, logger loggerV2.Logger) []string {
 	var clearedFilesToDeploy []string
 	for _, pth := range filesToDeploy {
+		_, err := os.Stat(pth)
+		if err != nil && errors.Is(err, os.ErrNotExist) {
+			logger.Warnf("file not found, skipping: %s", pth)
+			continue
+		}
 		for _, fileBaseNameToSkip := range fileBaseNamesToSkip {
 			if filepath.Base(pth) == fileBaseNameToSkip {
 				logger.Warnf("skipping: %s", pth)
