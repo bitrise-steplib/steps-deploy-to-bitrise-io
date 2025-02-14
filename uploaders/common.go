@@ -30,11 +30,12 @@ type ArtifactURLs struct {
 }
 
 type AppDeploymentMetaData struct {
-	AndroidArtifactInfo *androidparser.ArtifactMetadata
-	IOSArtifactInfo     *iosparser.ArtifactMetadata
-	NotifyUserGroups    string
-	NotifyEmails        string
-	IsEnablePublicPage  bool
+	AndroidArtifactInfo    *androidparser.ArtifactMetadata
+	IOSArtifactInfo        *iosparser.ArtifactMetadata
+	NotifyUserGroups       string
+	AlwaysNotifyUserGroups string
+	NotifyEmails           string
+	IsEnablePublicPage     bool
 }
 
 type ArtifactArgs struct {
@@ -218,6 +219,9 @@ func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDe
 		}
 		if appDeploymentMeta.NotifyUserGroups != "" {
 			data["notify_user_groups"] = []string{appDeploymentMeta.NotifyUserGroups}
+		}
+		if appDeploymentMeta.AlwaysNotifyUserGroups != "" {
+			data["always_notify_user_groups"] = []string{appDeploymentMeta.AlwaysNotifyUserGroups}
 		}
 		if appDeploymentMeta.NotifyEmails != "" {
 			data["notify_emails"] = []string{appDeploymentMeta.NotifyEmails}

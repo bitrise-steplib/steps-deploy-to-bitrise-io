@@ -37,10 +37,11 @@ func (u *Uploader) DeployXcarchive(item deployment.DeployableItem, buildURL, tok
 	}
 
 	buildArtifactMeta := AppDeploymentMetaData{
-		IOSArtifactInfo:    xcarchiveInfo,
-		NotifyUserGroups:   "",
-		NotifyEmails:       "",
-		IsEnablePublicPage: false,
+		IOSArtifactInfo:        xcarchiveInfo,
+		NotifyUserGroups:       "",
+		AlwaysNotifyUserGroups: "",
+		NotifyEmails:           "",
+		IsEnablePublicPage:     false,
 	}
 
 	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta, item.IntermediateFileMeta)

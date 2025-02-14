@@ -45,6 +45,7 @@ type Config struct {
 	ZipName                       string `env:"zip_name"`
 	DeployPath                    string `env:"deploy_path"`
 	NotifyUserGroups              string `env:"notify_user_groups"`
+	AlwaysNotifyUserGroups        string `env:"always_notify_user_groups"`
 	NotifyEmailList               string `env:"notify_email_list"`
 	IsPublicPageEnabled           bool   `env:"is_enable_public_page,opt[true,false]"`
 	PublicInstallPageMapFormat    string `env:"public_install_page_url_map_format,required"`
@@ -547,7 +548,7 @@ func deploySingleItem(logger loggerV2.Logger, uploader *uploaders.Uploader, item
 	case ".apk":
 		logger.Printf("Deploying apk file: %s", pth)
 
-		return uploader.DeployAPK(item, androidArtifacts, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
+		return uploader.DeployAPK(item, androidArtifacts, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.AlwaysNotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
 	case ".aab":
 		logger.Printf("Deploying aab file: %s", pth)
 
@@ -555,7 +556,7 @@ func deploySingleItem(logger loggerV2.Logger, uploader *uploaders.Uploader, item
 	case ".ipa":
 		logger.Printf("Deploying ipa file: %s", pth)
 
-		return uploader.DeployIPA(item, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
+		return uploader.DeployIPA(item, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.AlwaysNotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
 	case zippedXcarchiveExt:
 		logger.Printf("Deploying xcarchive file: %s", pth)
 
