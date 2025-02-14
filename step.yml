@@ -137,7 +137,7 @@ inputs:
     summary: Your App's user roles you want to notify.
     description: |
       Your App's user roles you want to notify.
-      Separate the role names with commas. 
+      Separate the role names with commas.
       Possible role names:
 
       * none
@@ -161,7 +161,7 @@ inputs:
     title: "Notify: User Roles regardless of project watching preferences"
     summary: Your App's user roles you want to notify regardless of the users' project watching preferences.
     description: |
-      Your App's user roles you want to notify regardless of the users' project watching preferences. 
+      Your App's user roles you want to notify regardless of the users' project watching preferences.
       Separate the role names with commas.
       Possible role names:
 
