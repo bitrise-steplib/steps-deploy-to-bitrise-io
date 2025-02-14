@@ -143,8 +143,9 @@ inputs:
       * none
       * testers
       * developers
+      * platform engineers
       * admins
-      * owner
+      * owners
       * everyone
 
       An example to notify your developers and testers:
@@ -167,8 +168,9 @@ inputs:
       * none
       * testers
       * developers
+      * platform engineers
       * admins
-      * owner
+      * owners
       * everyone
 
       An example to notify your developers and testers:
