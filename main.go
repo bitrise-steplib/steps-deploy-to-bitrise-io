@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -33,6 +34,19 @@ import (
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/uploaders"
 )
+
+// This is the list of user groups expected by the steps
+var validUserGroups = []string{"none", "testers", "developers", "platform engineers", "admins", "owners", "everyone"}
+
+// This is the list of user groups that are accepted by the backend
+var acceptedUserGroups = []string{
+	"testers", "tester", "qa", "tester / qa", "tester/qa",
+	"developers", "developer",
+	"platform engineer", "platform engineers",
+	"admins", "admin",
+	"owner", "owners",
+	"everyone", "all", "team",
+}
 
 var fileBaseNamesToSkip = []string{".DS_Store"}
 
@@ -96,8 +110,16 @@ func main() {
 	log.SetEnableDebugLog(config.DebugMode)
 	logger.EnableDebugLog(config.DebugMode)
 
+	if err := validateUserGroups(config.NotifyUserGroups, logger); err != nil {
+		fail(logger, "notify_user_groups - %s", err)
+	}
+
+	if err := validateUserGroups(config.AlwaysNotifyUserGroups, logger); err != nil {
+		fail(logger, "always_notify_user_groups - %s", err)
+	}
+
 	if err := validateGoTemplate(config.PublicInstallPageMapFormat); err != nil {
-		fail(logger, "PublicInstallPageMapFormat - %s", err)
+		fail(logger, "public_install_page_url_map_format - %s", err)
 	}
 
 	tmpDir, err := pathutil.NormalizedOSTempDirPath("__deploy-to-bitrise-io__")
@@ -621,4 +643,31 @@ func determineConcurrency(config Config) int {
 	}
 
 	return value
+}
+
+func validateUserGroups(userGroupsStr string, logger loggerV2.Logger) error {
+	if userGroupsStr == "" {
+		return nil
+	}
+
+	split := strings.Split(userGroupsStr, ",")
+	for _, item := range split {
+		item = strings.TrimSpace(item)
+		if item == "" {
+			continue
+		}
+
+		if slices.Contains(validUserGroups, item) {
+			continue
+		}
+
+		if slices.Contains(acceptedUserGroups, strings.ToLower(item)) {
+			logger.Warnf("User group %s is accepted by the backend, but it is not the recommended value. Please use one of the following values: %s", item, strings.Join(validUserGroups, ", "))
+			continue
+		}
+
+		return fmt.Errorf("invalid user group: %s", item)
+	}
+
+	return nil
 }
