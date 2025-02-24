@@ -8,7 +8,7 @@ import (
 )
 
 // DeployIPA ...
-func (u *Uploader) DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups, notifyEmails string, isEnablePublicPage bool) (ArtifactURLs, error) {
+func (u *Uploader) DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups, alwaysNotifyUserGroups, notifyEmails string, isEnablePublicPage bool) (ArtifactURLs, error) {
 	pth := item.Path
 
 	ipaInfo, err := u.iosParser.ParseIPAData(pth)
@@ -39,10 +39,11 @@ func (u *Uploader) DeployIPA(item deployment.DeployableItem, buildURL, token, no
 	}
 
 	buildArtifactMeta := AppDeploymentMetaData{
-		IOSArtifactInfo:    ipaInfo,
-		NotifyUserGroups:   notifyUserGroups,
-		NotifyEmails:       notifyEmails,
-		IsEnablePublicPage: isEnablePublicPage,
+		IOSArtifactInfo:        ipaInfo,
+		NotifyUserGroups:       notifyUserGroups,
+		AlwaysNotifyUserGroups: alwaysNotifyUserGroups,
+		NotifyEmails:           notifyEmails,
+		IsEnablePublicPage:     isEnablePublicPage,
 	}
 
 	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta, item.IntermediateFileMeta)

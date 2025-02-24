@@ -8,7 +8,7 @@ import (
 )
 
 // DeployAPK ...
-func (u *Uploader) DeployAPK(item deployment.DeployableItem, artifacts []string, buildURL, token, notifyUserGroups, notifyEmails string, isEnablePublicPage bool) (ArtifactURLs, error) {
+func (u *Uploader) DeployAPK(item deployment.DeployableItem, artifacts []string, buildURL, token, notifyUserGroups, alwaysNotifyUserGroups, notifyEmails string, isEnablePublicPage bool) (ArtifactURLs, error) {
 	pth := item.Path
 
 	apkInfo, err := u.androidParser.ParseAPKData(pth)
@@ -42,10 +42,11 @@ func (u *Uploader) DeployAPK(item deployment.DeployableItem, artifacts []string,
 	}
 
 	buildArtifactMeta := AppDeploymentMetaData{
-		AndroidArtifactInfo: apkInfo,
-		NotifyUserGroups:    notifyUserGroups,
-		NotifyEmails:        notifyEmails,
-		IsEnablePublicPage:  isEnablePublicPage,
+		AndroidArtifactInfo:    apkInfo,
+		NotifyUserGroups:       notifyUserGroups,
+		AlwaysNotifyUserGroups: alwaysNotifyUserGroups,
+		NotifyEmails:           notifyEmails,
+		IsEnablePublicPage:     isEnablePublicPage,
 	}
 
 	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta, item.IntermediateFileMeta)

@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -34,6 +35,19 @@ import (
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/uploaders"
 )
 
+// This is the list of user groups expected by the steps
+var validUserGroups = []string{"none", "testers", "developers", "platform engineers", "admins", "owners", "everyone"}
+
+// This is the list of user groups that are accepted by the backend
+var acceptedUserGroups = []string{
+	"testers", "tester", "qa", "tester / qa", "tester/qa",
+	"developers", "developer",
+	"platform engineer", "platform engineers",
+	"admins", "admin",
+	"owner", "owners",
+	"everyone", "all", "team",
+}
+
 var fileBaseNamesToSkip = []string{".DS_Store"}
 
 // Config ...
@@ -45,6 +59,7 @@ type Config struct {
 	ZipName                       string `env:"zip_name"`
 	DeployPath                    string `env:"deploy_path"`
 	NotifyUserGroups              string `env:"notify_user_groups"`
+	AlwaysNotifyUserGroups        string `env:"always_notify_user_groups"`
 	NotifyEmailList               string `env:"notify_email_list"`
 	IsPublicPageEnabled           bool   `env:"is_enable_public_page,opt[true,false]"`
 	PublicInstallPageMapFormat    string `env:"public_install_page_url_map_format,required"`
@@ -95,8 +110,16 @@ func main() {
 	log.SetEnableDebugLog(config.DebugMode)
 	logger.EnableDebugLog(config.DebugMode)
 
+	if err := validateUserGroups(config.NotifyUserGroups, logger); err != nil {
+		fail(logger, "notify_user_groups - %s", err)
+	}
+
+	if err := validateUserGroups(config.AlwaysNotifyUserGroups, logger); err != nil {
+		fail(logger, "always_notify_user_groups - %s", err)
+	}
+
 	if err := validateGoTemplate(config.PublicInstallPageMapFormat); err != nil {
-		fail(logger, "PublicInstallPageMapFormat - %s", err)
+		fail(logger, "public_install_page_url_map_format - %s", err)
 	}
 
 	tmpDir, err := pathutil.NormalizedOSTempDirPath("__deploy-to-bitrise-io__")
@@ -547,7 +570,7 @@ func deploySingleItem(logger loggerV2.Logger, uploader *uploaders.Uploader, item
 	case ".apk":
 		logger.Printf("Deploying apk file: %s", pth)
 
-		return uploader.DeployAPK(item, androidArtifacts, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
+		return uploader.DeployAPK(item, androidArtifacts, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.AlwaysNotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
 	case ".aab":
 		logger.Printf("Deploying aab file: %s", pth)
 
@@ -555,7 +578,7 @@ func deploySingleItem(logger loggerV2.Logger, uploader *uploaders.Uploader, item
 	case ".ipa":
 		logger.Printf("Deploying ipa file: %s", pth)
 
-		return uploader.DeployIPA(item, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
+		return uploader.DeployIPA(item, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.AlwaysNotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
 	case zippedXcarchiveExt:
 		logger.Printf("Deploying xcarchive file: %s", pth)
 
@@ -620,4 +643,31 @@ func determineConcurrency(config Config) int {
 	}
 
 	return value
+}
+
+func validateUserGroups(userGroupsStr string, logger loggerV2.Logger) error {
+	if userGroupsStr == "" {
+		return nil
+	}
+
+	split := strings.Split(userGroupsStr, ",")
+	for _, item := range split {
+		item = strings.TrimSpace(item)
+		if item == "" {
+			continue
+		}
+
+		if slices.Contains(validUserGroups, item) {
+			continue
+		}
+
+		if slices.Contains(acceptedUserGroups, strings.ToLower(item)) {
+			logger.Warnf("User group %s is accepted by the backend, but it is not the recommended value. Please use one of the following values: %s", item, strings.Join(validUserGroups, ", "))
+			continue
+		}
+
+		return fmt.Errorf("invalid user group: %s", item)
+	}
+
+	return nil
 }

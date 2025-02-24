@@ -134,15 +134,43 @@ inputs:
   opts:
     category: Build Artifact Deployment
     title: "Notify: User Roles"
+    summary: Your App's user roles you want to notify.
     description: |
-      Your App's user roles you want to notify. Separate the role names with commas.
+      Your App's user roles you want to notify.
+      Separate the role names with commas.
       Possible role names:
 
       * none
       * testers
       * developers
+      * platform engineers
       * admins
-      * owner
+      * owners
+      * everyone
+
+      An example to notify your developers and testers:
+
+      `testers, developers`
+
+      If you want to notify everyone in the app's team, just specify `everyone`.
+
+      If you don't want to notify anyone, set this to `none`.
+- always_notify_user_groups:
+  opts:
+    category: Build Artifact Deployment
+    title: "Notify: User Roles regardless of project watching preferences"
+    summary: Your App's user roles you want to notify regardless of the users' project watching preferences.
+    description: |
+      Your App's user roles you want to notify regardless of the users' project watching preferences.
+      Separate the role names with commas.
+      Possible role names:
+
+      * none
+      * testers
+      * developers
+      * platform engineers
+      * admins
+      * owners
       * everyone
 
       An example to notify your developers and testers:
