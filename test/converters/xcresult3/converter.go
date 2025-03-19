@@ -1,8 +1,10 @@
 package xcresult3
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -16,6 +18,7 @@ import (
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-xcode/xcodeproject/serialized"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3/model3"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
 )
 
@@ -91,14 +94,31 @@ func (c *Converter) Detect(files []string) bool {
 
 // XML ...
 func (c *Converter) XML() (junit.XML, error) {
+	supportsNewMethod, err := supportsNewExtractionMethods()
+	if err != nil {
+		return junit.XML{}, err
+	}
+
+	if supportsNewMethod {
+		log.Infof("Using new extraction method")
+
+		return parse(c.xcresultPth)
+	}
+
+	log.Infof("Using legacy extraction method")
+
+	return legacyParse(c.xcresultPth)
+}
+
+func legacyParse(path string) (junit.XML, error) {
 	var (
-		testResultDir = filepath.Dir(c.xcresultPth)
+		testResultDir = filepath.Dir(path)
 		maxParallel   = runtime.NumCPU() * 2
 	)
 
 	log.Debugf("Maximum parallelism: %d.", maxParallel)
 
-	_, summaries, err := Parse(c.xcresultPth)
+	_, summaries, err := Parse(path)
 	if err != nil {
 		return junit.XML{}, err
 	}
@@ -118,7 +138,7 @@ func (c *Converter) XML() (junit.XML, error) {
 		for _, name := range testSuiteOrder {
 			tests := testsByName[name]
 
-			testSuite, err := genTestSuite(name, summary, tests, testResultDir, c.xcresultPth, maxParallel)
+			testSuite, err := genTestSuite(name, summary, tests, testResultDir, path, maxParallel)
 			if err != nil {
 				return junit.XML{}, err
 			}
@@ -128,6 +148,108 @@ func (c *Converter) XML() (junit.XML, error) {
 	}
 
 	return xmlData, nil
+}
+
+func parse(path string) (junit.XML, error) {
+	results, err := ParseTestResults(path)
+	if err != nil {
+		return junit.XML{}, err
+	}
+
+	testSummary, err := model3.Convert(results)
+	if err != nil {
+		return junit.XML{}, err
+	}
+
+	var xml junit.XML
+
+	for _, plan := range testSummary.TestPlans {
+		for _, testBundle := range plan.TestBundles {
+			xml.TestSuites = append(xml.TestSuites, parseTestBundle(testBundle))
+		}
+	}
+
+	outputPath := filepath.Dir(path)
+	//outputPath := "/Users/szabi/Downloads/Net/xcresult/own/attachments"
+	if err := exportAttachments(path, outputPath); err != nil {
+		return junit.XML{}, err
+	}
+
+	return xml, nil
+}
+
+func parseTestBundle(testBundle model3.TestBundle) junit.TestSuite {
+	failedCount := 0
+	skippedCount := 0
+	var totalDuration time.Duration
+	var tests []junit.TestCase
+
+	for _, testSuite := range testBundle.TestSuites {
+		for _, testCase := range testSuite.TestCases {
+			test := junit.TestCase{
+				Name:      testCase.Name,
+				ClassName: testCase.ClassName,
+				Time:      testCase.Time.Seconds(),
+			}
+
+			if testCase.Result == model3.TestResultFailed {
+				test.Failure = &junit.Failure{Value: testCase.Message}
+				failedCount++
+			} else if testCase.Result == model3.TestResultSkipped {
+				test.Skipped = &junit.Skipped{}
+				skippedCount++
+			}
+
+			totalDuration += testCase.Time
+
+			tests = append(tests, test)
+		}
+	}
+
+	return junit.TestSuite{
+		Name:      testBundle.Name,
+		Tests:     len(tests),
+		Failures:  failedCount,
+		Skipped:   skippedCount,
+		Time:      totalDuration.Seconds(),
+		TestCases: tests,
+	}
+}
+
+func exportAttachments(xcresultPath, outputPath string) error {
+	if err := xcresulttoolExport(xcresultPath, "", outputPath); err != nil {
+		return err
+	}
+
+	manifestPath := filepath.Join(outputPath, "manifest.json")
+	bytes, err := os.ReadFile(manifestPath)
+	if err != nil {
+		return fmt.Errorf("failed to read manifest.json: %w", err)
+	}
+
+	var manifest []model3.TestAttachmentDetails
+	if err := json.Unmarshal(bytes, &manifest); err != nil {
+		return fmt.Errorf("failed to unmarshal manifest.json: %w", err)
+	}
+
+	for _, attachmentDetail := range manifest {
+		for _, attachment := range attachmentDetail.Attachments {
+			oldPath := filepath.Join(outputPath, attachment.ExportedFileName)
+			newPath := filepath.Join(outputPath, attachment.SuggestedHumanReadableName)
+
+			if err := os.Rename(oldPath, newPath); err != nil {
+				// It is not a critical error if the rename fails because the file will be still exported just by its
+				// unique ID.
+				log.Warnf("Failed to rename %s to %s", oldPath, newPath)
+			}
+		}
+	}
+	
+	if err := os.Remove(manifestPath); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func testSuiteCountInSummaries(summaries []ActionTestPlanRunSummaries) int {

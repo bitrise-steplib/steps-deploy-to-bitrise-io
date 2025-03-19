@@ -1,5 +1,7 @@
 package xcresult3
 
+import "github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3/model3"
+
 // Parse parses the given xcresult file's ActionsInvocationRecord and the list of ActionTestPlanRunSummaries.
 func Parse(pth string) (*ActionsInvocationRecord, []ActionTestPlanRunSummaries, error) {
 	var r ActionsInvocationRecord
@@ -17,4 +19,13 @@ func Parse(pth string) (*ActionsInvocationRecord, []ActionTestPlanRunSummaries, 
 		summaries = append(summaries, s)
 	}
 	return &r, summaries, nil
+}
+
+func ParseTestResults(pth string) (*model3.TestData, error) {
+	var data model3.TestData
+	if err := xcresulttoolGet(pth, "", &data); err != nil {
+		return nil, err
+	}
+
+	return &data, nil
 }
