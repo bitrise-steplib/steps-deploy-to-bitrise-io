@@ -170,7 +170,6 @@ func parse(path string) (junit.XML, error) {
 	}
 
 	outputPath := filepath.Dir(path)
-	//outputPath := "/Users/szabi/Downloads/Net/xcresult/own/attachments"
 	if err := exportAttachments(path, outputPath); err != nil {
 		return junit.XML{}, err
 	}
@@ -244,7 +243,7 @@ func exportAttachments(xcresultPath, outputPath string) error {
 			}
 		}
 	}
-	
+
 	if err := os.Remove(manifestPath); err != nil {
 		return err
 	}

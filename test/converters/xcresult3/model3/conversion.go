@@ -35,9 +35,16 @@ func Convert(data *TestData) (*TestSummary, error) {
 						return nil, fmt.Errorf("test case expected but got: %s", testCaseNode.Type)
 					}
 
+					className := strings.Split(testCaseNode.Identifier, "/")[0]
+					if className == "" {
+						// In rare cases the identifier is an empty string so we need to use the test suite name which is the
+						// same as the first part of the identifier in normal cases.
+						className = testSuiteNode.Name
+					}
+
 					testCase := TestCase{
 						Name:      testCaseNode.Name,
-						ClassName: strings.Split(testCaseNode.Identifier, "/")[0],
+						ClassName: className,
 						Time:      extractDuration(testCaseNode.Duration),
 						Result:    testCaseNode.Result,
 						Message:   extractFailureMessage(testCaseNode),

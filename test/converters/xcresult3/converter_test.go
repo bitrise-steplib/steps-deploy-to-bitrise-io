@@ -47,66 +47,60 @@ func TestConverter_XML(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, []junit.TestSuite{
 			{
-				Name: "BullsEyeTests", Tests: 5, Failures: 0, Skipped: 0, Errors: 0, Time: 0.9777920246124268,
+				Name: "BullsEyeTests", Tests: 5, Failures: 0, Skipped: 0, Errors: 0, Time: 0.9774,
 				TestCases: []junit.TestCase{
 					{
 						Name: "testStartNewRoundUsesRandomValueFromApiRequest()", ClassName: "BullsEyeFakeTests",
-						Time: 0.014459013938903809,
+						Time: 0.014,
 					},
 					{
 						Name: "testGameStyleCanBeChanged()", ClassName: "BullsEyeMockTests",
-						Time: 0.00929105281829834,
+						Time: 0.0093,
 					},
 					{
 						Name: "testScoreIsComputedPerformance()", ClassName: "BullsEyeTests",
-						Time: 0.7373920679092407,
+						Time: 0.74,
 					},
 					{
 						Name: "testScoreIsComputedWhenGuessIsHigherThanTarget()", ClassName: "BullsEyeTests",
-						Time: 0.004113912582397461,
+						Time: 0.0041,
 					},
 					{
 						Name: "testScoreIsComputedWhenGuessIsLowerThanTarget()", ClassName: "BullsEyeTests",
-						Time: 0.21253597736358643,
+						Time: 0.21,
 					},
 				},
 			},
 			{
-				Name: "BullsEyeSlowTests", Tests: 2, Failures: 0, Skipped: 0, Errors: 0, Time: 0.5334550142288208,
+				Name: "BullsEyeSlowTests", Tests: 2, Failures: 0, Skipped: 0, Errors: 0, Time: 0.53,
 				TestCases: []junit.TestCase{
 					{
 						Name: "testApiCallCompletes()", ClassName: "BullsEyeSlowTests",
-						Time: 0.2844870090484619,
+						Time: 0.28,
 					},
 					{
 						Name: "testValidApiCallGetsHTTPStatusCode200()", ClassName: "BullsEyeSlowTests",
-						Time: 0.2489680051803589,
+						Time: 0.25,
 					},
 				},
 			},
 			{
-				Name: "BullsEyeUITests", Tests: 1, Failures: 0, Skipped: 0, Errors: 0, Time: 9.606701016426086,
+				Name: "BullsEyeUITests", Tests: 1, Failures: 0, Skipped: 0, Errors: 0, Time: 9,
 				TestCases: []junit.TestCase{
 					{
 						Name: "testGameStyleSwitch()", ClassName: "BullsEyeUITests",
-						Time: 9.606701016426086,
+						Time: 9,
 					},
 				},
 			},
 			{ // testFlakyFeature() was flaky: failed once, and then passed the second run
-				Name: "BullsEyeFlakyTests", Tests: 3, Failures: 1, Skipped: 1, Errors: 0, Time: 0.22202682495117188,
+				Name: "BullsEyeFlakyTests", Tests: 2, Failures: 0, Skipped: 1, Errors: 0, Time: 0.12,
 				TestCases: []junit.TestCase{
 					{
-						Name: "testFlakyFeature()", ClassName: "BullsEyeFlakyTests", Time: 0.1958599090576172,
-						Failure: &junit.Failure{
-							Value: "/Users/vagrant/git/BullsEyeFlakyTests/BullsEyeFlakyTests.swift:43 - XCTAssertEqual failed: (\"1\") is not equal to (\"0\") - Number is not even",
-						},
+						Name: "testFlakyFeature()", ClassName: "BullsEyeFlakyTests", Time: 0.1,
 					},
 					{
-						Name: "testFlakyFeature()", ClassName: "BullsEyeFlakyTests", Time: 0.00603795051574707,
-					},
-					{
-						Name: "testFlakySkip()", ClassName: "BullsEyeSkippedTests", Time: 0.020128965377807617,
+						Name: "testFlakySkip()", ClassName: "BullsEyeSkippedTests", Time: 0.02,
 						Skipped: &junit.Skipped{},
 					},
 				},
@@ -138,26 +132,26 @@ func TestConverter_XML(t *testing.T) {
 				Failures: 1,
 				Skipped:  1,
 				Errors:   0,
-				Time:     0.43262600898742676,
+				Time:     0.435,
 				TestCases: []junit.TestCase{
 					{
 						Name:      "testFailure()",
 						ClassName: "testProjectUITests",
-						Time:      0.2580660581588745,
+						Time:      0.26,
 						Failure: &junit.Failure{
-							Value: "/Users/alexeysomov/Library/Autosave Information/testProject/testProjectUITests/testProjectUITests.swift:30 - XCTAssertTrue failed",
+							Value: "testProjectUITests.swift:30: XCTAssertTrue failed",
 						},
 					},
 					{
 						Name:      "testSkip()",
 						ClassName: "testProjectUITests",
-						Time:      0.08595001697540283,
+						Time:      0.086,
 						Skipped:   &junit.Skipped{},
 					},
 					{
 						Name:      "testSuccess()",
 						ClassName: "testProjectUITests",
-						Time:      0.08860993385314941,
+						Time:      0.089,
 					},
 				},
 			},

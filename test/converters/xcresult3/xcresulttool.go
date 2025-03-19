@@ -42,10 +42,6 @@ func supportsNewExtractionMethods() (bool, error) {
 	}
 
 	return version >= 23_021, nil // Xcode 16 beta3 has version 23021
-
-	//fmt.Println("xcresulttool version:", version)
-	//
-	//return false, nil
 }
 
 // xcresulttoolGet performs xcrun xcresulttool get with --id flag defined if id provided and marshals the output into v.
