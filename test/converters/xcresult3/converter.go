@@ -99,18 +99,31 @@ func (c *Converter) XML() (junit.XML, error) {
 		return junit.XML{}, err
 	}
 
+	useLegacyFlag := false
+
 	if supportsNewMethod {
 		log.Infof("Using new extraction method")
 
-		return parse(c.xcresultPth)
+		junitXml, err := parse(c.xcresultPth)
+		if err == nil {
+			return junitXml, nil
+		}
+
+		errorMessage := fmt.Sprintf("Failed to parse extraction method: %s", err)
+		log.Warnf(errorMessage)
+		log.Warnf("Falling back to legacy extraction method")
+
+		logWarn("xcresult3-parsing", nil, errorMessage)
+
+		useLegacyFlag = true
 	}
 
 	log.Infof("Using legacy extraction method")
 
-	return legacyParse(c.xcresultPth)
+	return legacyParse(c.xcresultPth, useLegacyFlag)
 }
 
-func legacyParse(path string) (junit.XML, error) {
+func legacyParse(path string, useLegacyFlag bool) (junit.XML, error) {
 	var (
 		testResultDir = filepath.Dir(path)
 		maxParallel   = runtime.NumCPU() * 2
@@ -118,7 +131,7 @@ func legacyParse(path string) (junit.XML, error) {
 
 	log.Debugf("Maximum parallelism: %d.", maxParallel)
 
-	_, summaries, err := Parse(path)
+	_, summaries, err := Parse(path, useLegacyFlag)
 	if err != nil {
 		return junit.XML{}, err
 	}
@@ -138,7 +151,7 @@ func legacyParse(path string) (junit.XML, error) {
 		for _, name := range testSuiteOrder {
 			tests := testsByName[name]
 
-			testSuite, err := genTestSuite(name, summary, tests, testResultDir, path, maxParallel)
+			testSuite, err := genTestSuite(name, summary, tests, testResultDir, path, maxParallel, useLegacyFlag)
 			if err != nil {
 				return junit.XML{}, err
 			}
@@ -216,7 +229,7 @@ func parseTestBundle(testBundle model3.TestBundle) junit.TestSuite {
 }
 
 func exportAttachments(xcresultPath, outputPath string) error {
-	if err := xcresulttoolExport(xcresultPath, "", outputPath); err != nil {
+	if err := xcresulttoolExport(xcresultPath, "", outputPath, false); err != nil {
 		return err
 	}
 
@@ -266,6 +279,7 @@ func genTestSuite(name string,
 	testResultDir string,
 	xcresultPath string,
 	maxParallel int,
+	useLegacyFlag bool,
 ) (junit.TestSuite, error) {
 	var (
 		start           = time.Now()
@@ -292,7 +306,7 @@ func genTestSuite(name string,
 			go func(test ActionTestSummaryGroup, testIdx int) {
 				defer wg.Done()
 
-				testCase, err := genTestCase(test, xcresultPath, testResultDir)
+				testCase, err := genTestCase(test, xcresultPath, testResultDir, useLegacyFlag)
 				if err != nil {
 					mtx.Lock()
 					genTestSuiteErr = err
@@ -313,7 +327,7 @@ func genTestSuite(name string,
 	return testSuite, genTestSuiteErr
 }
 
-func genTestCase(test ActionTestSummaryGroup, xcresultPath, testResultDir string) (junit.TestCase, error) {
+func genTestCase(test ActionTestSummaryGroup, xcresultPath, testResultDir string, useLegacyFlag bool) (junit.TestCase, error) {
 	var duartion float64
 	if test.Duration.Value != "" {
 		var err error
@@ -323,7 +337,7 @@ func genTestCase(test ActionTestSummaryGroup, xcresultPath, testResultDir string
 		}
 	}
 
-	testSummary, err := test.loadActionTestSummary(xcresultPath)
+	testSummary, err := test.loadActionTestSummary(xcresultPath, useLegacyFlag)
 	// Ignoring the SummaryNotFoundError error is on purpose because not having an action summary is a valid use case.
 	// For example, failed tests will always have a summary, but successful ones might have it or might not.
 	// If they do not have it, then that means that they did not log anything to the console,
@@ -355,7 +369,7 @@ func genTestCase(test ActionTestSummaryGroup, xcresultPath, testResultDir string
 		skipped = &junit.Skipped{}
 	}
 
-	if err := test.exportScreenshots(xcresultPath, testResultDir); err != nil {
+	if err := test.exportScreenshots(xcresultPath, testResultDir, useLegacyFlag); err != nil {
 		return junit.TestCase{}, err
 	}
 
