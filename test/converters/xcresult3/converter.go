@@ -169,9 +169,13 @@ func parse(path string) (junit.XML, error) {
 		return junit.XML{}, err
 	}
 
-	testSummary, err := model3.Convert(results)
+	testSummary, warnings, err := model3.Convert(results)
 	if err != nil {
 		return junit.XML{}, err
+	}
+
+	if len(warnings) > 0 {
+		logWarn("xcresults3-data", nil, fmt.Sprintf("warnings: %s", warnings))
 	}
 
 	var xml junit.XML
