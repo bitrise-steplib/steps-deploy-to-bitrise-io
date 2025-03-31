@@ -233,6 +233,10 @@ func exportAttachments(xcresultPath, outputPath string) error {
 		return err
 	}
 
+	return renameFiles(outputPath)
+}
+
+func renameFiles(outputPath string) error {
 	manifestPath := filepath.Join(outputPath, "manifest.json")
 	bytes, err := os.ReadFile(manifestPath)
 	if err != nil {
