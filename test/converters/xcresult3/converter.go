@@ -109,11 +109,10 @@ func (c *Converter) XML() (junit.XML, error) {
 			return junitXml, nil
 		}
 
-		errorMessage := fmt.Sprintf("Failed to parse extraction method: %s", err)
-		log.Warnf(errorMessage)
+		log.Warnf(fmt.Sprintf("Failed to parse extraction method: %s", err))
 		log.Warnf("Falling back to legacy extraction method")
 
-		logWarn("xcresult3-parsing", nil, errorMessage)
+		logWarn("xcresult3-parsing", nil, "error: %s", err)
 
 		useLegacyFlag = true
 	}
@@ -175,7 +174,7 @@ func parse(path string) (junit.XML, error) {
 	}
 
 	if len(warnings) > 0 {
-		logWarn("xcresults3-data", nil, fmt.Sprintf("warnings: %s", warnings))
+		logWarn("xcresults3-data", nil, "warnings: %s", warnings)
 	}
 
 	var xml junit.XML
