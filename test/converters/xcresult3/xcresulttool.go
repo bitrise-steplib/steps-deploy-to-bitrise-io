@@ -71,7 +71,7 @@ func xcresulttoolGet(xcresultPth, id string, useLegacyFlag bool, v interface{}) 
 		return err
 	}
 
-	if supportsNewMethod {
+	if supportsNewMethod && !useLegacyFlag {
 		args = append(args, "test-results", "tests")
 	} else {
 		args = append(args, "--format", "json")
@@ -110,7 +110,7 @@ func xcresulttoolExport(xcresultPth, id, outputPth string, useLegacyFlag bool) e
 		return err
 	}
 
-	if supportsNewMethod {
+	if supportsNewMethod && !useLegacyFlag {
 		args = append(args, "attachments")
 	} else {
 		args = append(args, "--type", "file")

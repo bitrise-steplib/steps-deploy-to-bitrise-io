@@ -31,34 +31,14 @@ func Convert(data *TestData) (*TestSummary, []string, error) {
 
 				testSuite := TestSuite{Name: testSuiteNode.Name}
 
-				for _, testCaseNode := range testSuiteNode.Children {
-					if testCaseNode.Type != TestNodeTypeTestCase {
-						return nil, warnings, fmt.Errorf("test case expected but got: %s", testCaseNode.Type)
-					}
+				testCases, testCaseWarnings, err := extractTestCases(testSuiteNode)
+				warnings = append(warnings, testCaseWarnings...)
 
-					className := strings.Split(testCaseNode.Identifier, "/")[0]
-					if className == "" {
-						// In rare cases the identifier is an empty string so we need to use the test suite name which is the
-						// same as the first part of the identifier in normal cases.
-						className = testSuiteNode.Name
-					}
-
-					message, failureMessageWarnings := extractFailureMessage(testCaseNode)
-
-					if len(failureMessageWarnings) > 0 {
-						warnings = append(warnings, failureMessageWarnings...)
-					}
-
-					testCase := TestCase{
-						Name:      testCaseNode.Name,
-						ClassName: className,
-						Time:      extractDuration(testCaseNode.Duration),
-						Result:    testCaseNode.Result,
-						Message:   message,
-					}
-					testSuite.TestCases = append(testSuite.TestCases, testCase)
+				if err != nil {
+					return nil, warnings, err
 				}
 
+				testSuite.TestCases = testCases
 				testBundle.TestSuites = append(testBundle.TestSuites, testSuite)
 			}
 
@@ -69,6 +49,55 @@ func Convert(data *TestData) (*TestSummary, []string, error) {
 	}
 
 	return &summary, warnings, nil
+}
+
+func extractTestCases(testSuiteNode TestNode) ([]TestCase, []string, error) {
+	var testCases []TestCase
+	var warnings []string
+
+	for _, testCaseNode := range testSuiteNode.Children {
+		// A customer's xcresult file contained this use case where a test suite is a child of a test suite.
+		if testCaseNode.Type == TestNodeTypeTestSuite {
+			nestedTestCases, nestedWarnings, err := extractTestCases(testCaseNode)
+			warnings = append(warnings, nestedWarnings...)
+
+			if err != nil {
+				return nil, warnings, err
+			}
+
+			testCases = append(testCases, nestedTestCases...)
+
+			continue
+		}
+
+		if testCaseNode.Type != TestNodeTypeTestCase {
+			return nil, warnings, fmt.Errorf("test case expected but got: %s", testCaseNode.Type)
+		}
+
+		className := strings.Split(testCaseNode.Identifier, "/")[0]
+		if className == "" {
+			// In rare cases the identifier is an empty string so we need to use the test suite name which is the
+			// same as the first part of the identifier in normal cases.
+			className = testSuiteNode.Name
+		}
+
+		message, failureMessageWarnings := extractFailureMessage(testCaseNode)
+
+		if len(failureMessageWarnings) > 0 {
+			warnings = append(warnings, failureMessageWarnings...)
+		}
+
+		testCase := TestCase{
+			Name:      testCaseNode.Name,
+			ClassName: className,
+			Time:      extractDuration(testCaseNode.Duration),
+			Result:    testCaseNode.Result,
+			Message:   message,
+		}
+		testCases = append(testCases, testCase)
+	}
+
+	return testCases, warnings, nil
 }
 
 func extractDuration(text string) time.Duration {
