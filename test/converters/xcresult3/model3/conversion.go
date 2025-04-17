@@ -25,11 +25,17 @@ func Convert(data *TestData) (*TestSummary, []string, error) {
 			testBundle := TestBundle{Name: testBundleNode.Name}
 
 			for _, testSuiteNode := range testBundleNode.Children {
-				if testSuiteNode.Type != TestNodeTypeTestSuite {
-					return nil, warnings, fmt.Errorf("test suite expected but got: %s", testSuiteNode.Type)
+				var name string
+				
+				if testSuiteNode.Type == TestNodeTypeTestCase {
+					name = testSuiteNode.Name
+				} else if testSuiteNode.Type == TestNodeTypeTestSuite {
+					name = testBundleNode.Name
+				} else {
+					return nil, warnings, fmt.Errorf("test suite or test case expected but got: %s", testSuiteNode.Type)
 				}
 
-				testSuite := TestSuite{Name: testSuiteNode.Name}
+				testSuite := TestSuite{Name: name}
 
 				testCases, testCaseWarnings, err := extractTestCases(testSuiteNode)
 				warnings = append(warnings, testCaseWarnings...)
