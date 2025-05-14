@@ -17,6 +17,8 @@ type Converter struct {
 	testSummariesPlistPath string
 }
 
+func (c *Converter) Setup(_ bool) {}
+
 // Detect ...
 func (h *Converter) Detect(files []string) bool {
 	h.files = files

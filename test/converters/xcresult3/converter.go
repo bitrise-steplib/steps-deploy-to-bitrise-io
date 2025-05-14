@@ -24,7 +24,8 @@ import (
 
 // Converter ...
 type Converter struct {
-	xcresultPth string
+	xcresultPth               string
+	useLegacyExtractionMethod bool
 }
 
 func majorVersion(document serialized.Object) (int, error) {
@@ -52,6 +53,10 @@ func documentMajorVersion(pth string) (int, error) {
 	}
 
 	return majorVersion(info)
+}
+
+func (c *Converter) Setup(useOldXCResultExtractionMethod bool) {
+	c.useLegacyExtractionMethod = useOldXCResultExtractionMethod
 }
 
 // Detect ...
@@ -99,9 +104,9 @@ func (c *Converter) XML() (junit.XML, error) {
 		return junit.XML{}, err
 	}
 
-	useLegacyFlag := false
+	useLegacyFlag := c.useLegacyExtractionMethod
 
-	if supportsNewMethod {
+	if supportsNewMethod && !useLegacyFlag {
 		log.Infof("Using new extraction method")
 
 		junitXml, err := parse(c.xcresultPth)

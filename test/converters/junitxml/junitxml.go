@@ -34,6 +34,8 @@ type Converter struct {
 	results []resultReader
 }
 
+func (c *Converter) Setup(_ bool) {}
+
 // Detect return true if the test results a Juni4 XML file
 func (h *Converter) Detect(files []string) bool {
 	h.results = nil

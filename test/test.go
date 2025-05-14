@@ -194,7 +194,9 @@ func ParseTestResults(testsRootDir string, useLegacyXCResultExtractionMethod boo
 			for _, converter := range converters.List() {
 				logger.Debugf("Running converter: %T", converter)
 
-				// skip if couldn't find converter for content type
+				converter.Setup(useLegacyXCResultExtractionMethod)
+
+				// skip if it couldn't find a converter for the content type
 				detected := converter.Detect(testFiles)
 
 				logger.Debugf("known test result detected: %v", detected)
