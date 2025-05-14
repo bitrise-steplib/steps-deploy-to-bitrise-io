@@ -85,7 +85,7 @@ func extractTestCases(nodes []TestNode, fallbackName string) ([]TestCase, []stri
 
 		className := strings.Split(testCaseNode.Identifier, "/")[0]
 		if className == "" {
-			// In rare cases the identifier is an empty string so we need to use the test suite name which is the
+			// In rare cases the identifier is an empty string, so we need to use the test suite name which is the
 			// same as the first part of the identifier in normal cases.
 			className = fallbackName
 		}
