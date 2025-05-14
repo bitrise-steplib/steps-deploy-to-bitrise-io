@@ -52,29 +52,30 @@ var fileBaseNamesToSkip = []string{".DS_Store"}
 
 // Config ...
 type Config struct {
-	PipelineIntermediateFiles     string `env:"pipeline_intermediate_files"`
-	BuildURL                      string `env:"build_url,required"`
-	APIToken                      string `env:"build_api_token,required"`
-	IsCompress                    bool   `env:"is_compress,opt[true,false]"`
-	ZipName                       string `env:"zip_name"`
-	DeployPath                    string `env:"deploy_path"`
-	NotifyUserGroups              string `env:"notify_user_groups"`
-	AlwaysNotifyUserGroups        string `env:"always_notify_user_groups"`
-	NotifyEmailList               string `env:"notify_email_list"`
-	IsPublicPageEnabled           bool   `env:"is_enable_public_page,opt[true,false]"`
-	PublicInstallPageMapFormat    string `env:"public_install_page_url_map_format,required"`
-	PermanentDownloadURLMapFormat string `env:"permanent_download_url_map_format,required"`
-	DetailsPageURLMapFormat       string `env:"details_page_url_map_format,required"`
-	BuildSlug                     string `env:"BITRISE_BUILD_SLUG,required"`
-	TestDeployDir                 string `env:"BITRISE_TEST_DEPLOY_DIR,required"`
-	AppSlug                       string `env:"BITRISE_APP_SLUG,required"`
-	AddonAPIBaseURL               string `env:"addon_api_base_url,required"`
-	AddonAPIToken                 string `env:"addon_api_token"`
-	FilesToRedact                 string `env:"files_to_redact"`
-	DebugMode                     bool   `env:"debug_mode,opt[true,false]"`
-	BundletoolVersion             string `env:"bundletool_version,required"`
-	UploadConcurrency             string `env:"BITRISE_DEPLOY_UPLOAD_CONCURRENCY"`
-	HTMLReportDir                 string `env:"BITRISE_HTML_REPORT_DIR"`
+	PipelineIntermediateFiles         string `env:"pipeline_intermediate_files"`
+	BuildURL                          string `env:"build_url,required"`
+	APIToken                          string `env:"build_api_token,required"`
+	IsCompress                        bool   `env:"is_compress,opt[true,false]"`
+	ZipName                           string `env:"zip_name"`
+	DeployPath                        string `env:"deploy_path"`
+	NotifyUserGroups                  string `env:"notify_user_groups"`
+	AlwaysNotifyUserGroups            string `env:"always_notify_user_groups"`
+	NotifyEmailList                   string `env:"notify_email_list"`
+	IsPublicPageEnabled               bool   `env:"is_enable_public_page,opt[true,false]"`
+	PublicInstallPageMapFormat        string `env:"public_install_page_url_map_format,required"`
+	PermanentDownloadURLMapFormat     string `env:"permanent_download_url_map_format,required"`
+	DetailsPageURLMapFormat           string `env:"details_page_url_map_format,required"`
+	BuildSlug                         string `env:"BITRISE_BUILD_SLUG,required"`
+	TestDeployDir                     string `env:"BITRISE_TEST_DEPLOY_DIR,required"`
+	AppSlug                           string `env:"BITRISE_APP_SLUG,required"`
+	AddonAPIBaseURL                   string `env:"addon_api_base_url,required"`
+	AddonAPIToken                     string `env:"addon_api_token"`
+	FilesToRedact                     string `env:"files_to_redact"`
+	DebugMode                         bool   `env:"debug_mode,opt[true,false]"`
+	UseLegacyXCResultExtractionMethod bool   `env:"use_legacy_xcresult_extraction_method,opt[true,false]"`
+	BundletoolVersion                 string `env:"bundletool_version,required"`
+	UploadConcurrency                 string `env:"BITRISE_DEPLOY_UPLOAD_CONCURRENCY"`
+	HTMLReportDir                     string `env:"BITRISE_HTML_REPORT_DIR"`
 }
 
 // PublicInstallPage ...
@@ -449,7 +450,7 @@ func stepNameWithIndex(stepInfo models.TestResultStepInfo) string {
 func deployTestResults(config Config, logger loggerV2.Logger) {
 	logger.Println()
 	logger.Infof("Collecting test results...")
-	testResults, err := test.ParseTestResults(config.TestDeployDir, logger)
+	testResults, err := test.ParseTestResults(config.TestDeployDir, config.UseLegacyXCResultExtractionMethod, logger)
 	if err != nil {
 		logger.Warnf("Failed to parse test results: %s", err)
 		return

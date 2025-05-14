@@ -129,7 +129,7 @@ The Test Deploy directory has the following directory structure:
 	        ├── screenshot_3.png
 	        └── test-info.json
 */
-func ParseTestResults(testsRootDir string, logger logV2.Logger) (results Results, err error) {
+func ParseTestResults(testsRootDir string, useLegacyXCResultExtractionMethod bool, logger logV2.Logger) (results Results, err error) {
 	// read dirs in base tests dir
 	// <root_tests_dir>
 

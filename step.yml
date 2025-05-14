@@ -336,6 +336,21 @@ inputs:
     value_options:
     - "false"
     - "true"
+- use_legacy_xcresult_extraction_method: "false"
+  opts:
+    category: Debugging
+    title: Legacy extraction method for Xcode test results
+    summary: |-
+      The Step will try to extract the test results with the older extraction method.
+    description: |-
+      The Step will try to extract the test results with the older extraction method.
+    
+      Some Xcode test results are not compatible with the new extraction method and cannot extract the test results. 
+      If you encounter this issue, please set this input to `true` and try again.
+    is_required: true
+    value_options:
+    - "false"
+    - "true"
 outputs:
 - BITRISE_PUBLIC_INSTALL_PAGE_URL:
   opts:
