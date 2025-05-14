@@ -37,15 +37,15 @@ type Converter struct {
 func (c *Converter) Setup(_ bool) {}
 
 // Detect return true if the test results a Juni4 XML file
-func (h *Converter) Detect(files []string) bool {
-	h.results = nil
+func (c *Converter) Detect(files []string) bool {
+	c.results = nil
 	for _, file := range files {
 		if strings.HasSuffix(file, ".xml") || strings.HasSuffix(file, ".junit") {
-			h.results = append(h.results, &fileReader{Filename: file})
+			c.results = append(c.results, &fileReader{Filename: file})
 		}
 	}
 
-	return len(h.results) > 0
+	return len(c.results) > 0
 }
 
 // merges Suites->Cases->Error and Suites->Cases->SystemErr field values into Suites->Cases->Failure field
@@ -119,10 +119,10 @@ func parseTestSuites(result resultReader) ([]junit.TestSuite, error) {
 }
 
 // XML returns the xml content bytes
-func (h *Converter) XML() (junit.XML, error) {
+func (c *Converter) XML() (junit.XML, error) {
 	var xmlContent junit.XML
 
-	for _, result := range h.results {
+	for _, result := range c.results {
 		testSuites, err := parseTestSuites(result)
 		if err != nil {
 			return junit.XML{}, err
