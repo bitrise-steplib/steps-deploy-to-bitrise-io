@@ -341,12 +341,14 @@ inputs:
     category: Debugging
     title: Legacy extraction method for Xcode test results
     summary: |-
-      The Step will try to extract the test results with the older extraction method.
+      The Step will try to extract the test results with the Xcode 15 extraction method.
     description: |-
-      The Step will try to extract the test results with the older extraction method.
+      The Step will try to extract the test results with the Xcode 15 extraction method.
 
-      Some Xcode test results are not compatible with the new extraction method and cannot extract the test results.
+      Some Xcode test results are not compatible with the new extraction method and cannot extract the test results. 
       If you encounter this issue, please set this input to `true` and try again.
+      
+      What does this input does is that it calls the `xcresulttool` command with the `--legacy` flag.
     is_required: true
     value_options:
     - "false"
