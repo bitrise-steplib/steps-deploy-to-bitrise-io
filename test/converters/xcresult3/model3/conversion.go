@@ -25,13 +25,22 @@ func Convert(data *TestData) (*TestSummary, []string, error) {
 			testBundle := TestBundle{Name: testBundleNode.Name}
 
 			for _, testSuiteNode := range testBundleNode.Children {
-				if testSuiteNode.Type != TestNodeTypeTestSuite {
-					return nil, warnings, fmt.Errorf("test suite expected but got: %s", testSuiteNode.Type)
+				var name string
+				var testNodes []TestNode
+
+				if testSuiteNode.Type == TestNodeTypeTestCase {
+					name = testBundleNode.Name
+					testNodes = []TestNode{testSuiteNode}
+				} else if testSuiteNode.Type == TestNodeTypeTestSuite {
+					name = testSuiteNode.Name
+					testNodes = testSuiteNode.Children
+				} else {
+					return nil, warnings, fmt.Errorf("test suite or test case expected but got: %s", testSuiteNode.Type)
 				}
 
-				testSuite := TestSuite{Name: testSuiteNode.Name}
+				testSuite := TestSuite{Name: name}
 
-				testCases, testCaseWarnings, err := extractTestCases(testSuiteNode)
+				testCases, testCaseWarnings, err := extractTestCases(testNodes, name)
 				warnings = append(warnings, testCaseWarnings...)
 
 				if err != nil {
@@ -51,14 +60,14 @@ func Convert(data *TestData) (*TestSummary, []string, error) {
 	return &summary, warnings, nil
 }
 
-func extractTestCases(testSuiteNode TestNode) ([]TestCase, []string, error) {
+func extractTestCases(nodes []TestNode, fallbackName string) ([]TestCase, []string, error) {
 	var testCases []TestCase
 	var warnings []string
 
-	for _, testCaseNode := range testSuiteNode.Children {
+	for _, testCaseNode := range nodes {
 		// A customer's xcresult file contained this use case where a test suite is a child of a test suite.
 		if testCaseNode.Type == TestNodeTypeTestSuite {
-			nestedTestCases, nestedWarnings, err := extractTestCases(testCaseNode)
+			nestedTestCases, nestedWarnings, err := extractTestCases(testCaseNode.Children, fallbackName)
 			warnings = append(warnings, nestedWarnings...)
 
 			if err != nil {
@@ -76,9 +85,9 @@ func extractTestCases(testSuiteNode TestNode) ([]TestCase, []string, error) {
 
 		className := strings.Split(testCaseNode.Identifier, "/")[0]
 		if className == "" {
-			// In rare cases the identifier is an empty string so we need to use the test suite name which is the
+			// In rare cases the identifier is an empty string, so we need to use the test suite name which is the
 			// same as the first part of the identifier in normal cases.
-			className = testSuiteNode.Name
+			className = fallbackName
 		}
 
 		message, failureMessageWarnings := extractFailureMessage(testCaseNode)
