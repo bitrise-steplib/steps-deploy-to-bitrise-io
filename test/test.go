@@ -129,7 +129,7 @@ The Test Deploy directory has the following directory structure:
 	        ├── screenshot_3.png
 	        └── test-info.json
 */
-func ParseTestResults(testsRootDir string, logger logV2.Logger) (results Results, err error) {
+func ParseTestResults(testsRootDir string, useLegacyXCResultExtractionMethod bool, logger logV2.Logger) (results Results, err error) {
 	// read dirs in base tests dir
 	// <root_tests_dir>
 
@@ -194,7 +194,9 @@ func ParseTestResults(testsRootDir string, logger logV2.Logger) (results Results
 			for _, converter := range converters.List() {
 				logger.Debugf("Running converter: %T", converter)
 
-				// skip if couldn't find converter for content type
+				converter.Setup(useLegacyXCResultExtractionMethod)
+
+				// skip if it couldn't find a converter for the content type
 				detected := converter.Detect(testFiles)
 
 				logger.Debugf("known test result detected: %v", detected)

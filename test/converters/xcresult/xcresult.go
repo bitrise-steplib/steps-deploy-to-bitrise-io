@@ -5,10 +5,11 @@ import (
 	"strings"
 	"unicode"
 
+	"howett.net/plist"
+
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
-	"howett.net/plist"
 )
 
 // Converter ...
@@ -17,17 +18,19 @@ type Converter struct {
 	testSummariesPlistPath string
 }
 
+func (c *Converter) Setup(_ bool) {}
+
 // Detect ...
-func (h *Converter) Detect(files []string) bool {
-	h.files = files
-	for _, file := range h.files {
+func (c *Converter) Detect(files []string) bool {
+	c.files = files
+	for _, file := range c.files {
 		if filepath.Ext(file) == ".xcresult" {
 			testSummariesPlistPath := filepath.Join(file, "TestSummaries.plist")
 			if exist, err := pathutil.IsPathExists(testSummariesPlistPath); err != nil || !exist {
 				continue
 			}
 
-			h.testSummariesPlistPath = testSummariesPlistPath
+			c.testSummariesPlistPath = testSummariesPlistPath
 			return true
 		}
 	}
@@ -62,8 +65,8 @@ func filterIllegalChars(data []byte) (filtered []byte) {
 }
 
 // XML ...
-func (h *Converter) XML() (junit.XML, error) {
-	data, err := fileutil.ReadBytesFromFile(h.testSummariesPlistPath)
+func (c *Converter) XML() (junit.XML, error) {
+	data, err := fileutil.ReadBytesFromFile(c.testSummariesPlistPath)
 	if err != nil {
 		return junit.XML{}, err
 	}
