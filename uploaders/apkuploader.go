@@ -32,7 +32,7 @@ func (u *Uploader) DeployAPK(item deployment.DeployableItem, artifacts []string,
 		Path:     pth,
 		FileSize: apkInfo.FileSizeBytes,
 	}
-	uploadURL, artifactID, err := createArtifact(buildURL, token, artifact, "android-apk", APKContentType)
+	uploadURL, artifactID, err := createArtifact(buildURL, token, artifact, "android-apk", APKContentType, item.IntermediateFileMeta)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to create apk artifact: %s %w", pth, err)
 	}
@@ -49,7 +49,7 @@ func (u *Uploader) DeployAPK(item deployment.DeployableItem, artifacts []string,
 		IsEnablePublicPage:     isEnablePublicPage,
 	}
 
-	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta, item.IntermediateFileMeta)
+	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to finish apk artifact, error: %s", err)
 	}
