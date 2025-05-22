@@ -26,6 +26,10 @@ type DeployableItem struct {
 	IntermediateFileMeta *IntermediateFileMetaData
 }
 
+func (d *DeployableItem) IsIntermediateFile() bool {
+	return d.IntermediateFileMeta != nil
+}
+
 // ConvertPaths ...
 func ConvertPaths(paths []string) []DeployableItem {
 	if len(paths) == 0 {

@@ -32,7 +32,10 @@ func (u *Uploader) DeployXcarchive(item deployment.DeployableItem, buildURL, tok
 		return ArtifactURLs{}, fmt.Errorf("failed to create xcarchive artifact from %s %w", pth, err)
 	}
 
-	if err := UploadArtifact(uploadURL, artifact, ""); err != nil {
+	details, err := UploadArtifact(uploadURL, artifact, "")
+	u.tracker.logFileTransfer(details, err, item.IsIntermediateFile())
+
+	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to upload xcarchive (%s): %w", pth, err)
 	}
 
