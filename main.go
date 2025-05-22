@@ -557,6 +557,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config, logger l
 	}
 
 	wg.Wait()
+	uploader.Wait()
 
 	return artifactURLCollection, errorCollection
 }
