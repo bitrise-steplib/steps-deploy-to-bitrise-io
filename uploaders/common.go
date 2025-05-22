@@ -43,6 +43,12 @@ type ArtifactArgs struct {
 	FileSize int64 // bytes
 }
 
+type TransferDetails struct {
+	Size     int64
+	Duration time.Duration
+	Hostname string
+}
+
 func createArtifact(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string) (string, string, error) {
 	// create form data
 	artifactName := filepath.Base(artifact.Path)
@@ -133,12 +139,14 @@ func createArtifact(buildURL, token string, artifact ArtifactArgs, artifactType,
 	return artifactResponse.UploadURL, fmt.Sprintf("%d", artifactResponse.ID), nil
 }
 
-func UploadArtifact(uploadURL string, artifact ArtifactArgs, contentType string) error {
+func UploadArtifact(uploadURL string, artifact ArtifactArgs, contentType string) (TransferDetails, error) {
 	netClient := &http.Client{
 		Timeout: 10 * time.Minute,
 	}
 
-	return retry.Times(3).Wait(5).Try(func(attempt uint) error {
+	start := time.Now()
+
+	err := retry.Times(3).Wait(5).Try(func(attempt uint) error {
 		file, err := os.Open(artifact.Path)
 		if err != nil {
 			return fmt.Errorf("failed to open artifact, error: %s", err)
@@ -193,6 +201,14 @@ func UploadArtifact(uploadURL string, artifact ArtifactArgs, contentType string)
 
 		return nil
 	})
+
+	details := TransferDetails{
+		Size:     artifact.FileSize,
+		Duration: time.Since(start),
+		Hostname: extractHost(uploadURL),
+	}
+
+	return details, err
 }
 
 func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDeploymentMetaData, pipelineMeta *deployment.IntermediateFileMetaData) (ArtifactURLs, error) {
@@ -321,4 +337,13 @@ func printableAppInfo(appInfo interface{}) string {
 	}
 
 	return string(bytes)
+}
+
+func extractHost(downloadURL string) string {
+	u, err := url.Parse(downloadURL)
+	if err != nil {
+		return "unknown"
+	}
+
+	return strings.TrimPrefix(u.Hostname(), "www.")
 }
