@@ -14,13 +14,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/docker/go-units"
+
 	androidparser "github.com/bitrise-io/go-android/v2/metaparser"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-io/go-utils/urlutil"
 	iosparser "github.com/bitrise-io/go-xcode/v2/metaparser"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
-	"github.com/docker/go-units"
 )
 
 type ArtifactURLs struct {
@@ -49,7 +50,8 @@ type TransferDetails struct {
 	Hostname string
 }
 
-func createArtifact(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string) (string, string, error) {
+
+func createArtifact(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, pipelineMeta *deployment.IntermediateFileMetaData) (string, string, error) {
 	// create form data
 	artifactName := filepath.Base(artifact.Path)
 
@@ -68,6 +70,15 @@ func createArtifact(buildURL, token string, artifact ArtifactArgs, artifactType,
 		"content_type":    {contentType},
 	}
 	// ---
+
+	if pipelineMeta != nil {
+		pipelineInfoBytes, err := json.Marshal(pipelineMeta)
+		if err != nil {
+			return "", "", fmt.Errorf("failed to marshal deployment meta: %s", err)
+		}
+
+		data["intermediate_file_info"] = []string{string(pipelineInfoBytes)}
+	}
 
 	// perform request
 	uri, err := urlutil.Join(buildURL, "artifacts.json")
@@ -211,7 +222,7 @@ func UploadArtifact(uploadURL string, artifact ArtifactArgs, contentType string)
 	return details, err
 }
 
-func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDeploymentMetaData, pipelineMeta *deployment.IntermediateFileMetaData) (ArtifactURLs, error) {
+func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDeploymentMetaData) (ArtifactURLs, error) {
 	// create form data
 	data := url.Values{"api_token": {token}}
 	isEnablePublicPage := false
@@ -246,15 +257,6 @@ func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDe
 			data["is_enable_public_page"] = []string{"yes"}
 			isEnablePublicPage = true
 		}
-	}
-
-	if pipelineMeta != nil {
-		pipelineInfoBytes, err := json.Marshal(pipelineMeta)
-		if err != nil {
-			return ArtifactURLs{}, fmt.Errorf("failed to marshal deployment meta: %s", err)
-		}
-
-		data["intermediate_file_info"] = []string{string(pipelineInfoBytes)}
 	}
 
 	// ---
