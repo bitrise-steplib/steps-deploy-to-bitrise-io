@@ -88,7 +88,8 @@ func (t *TestReportClient) UploadAsset(url, path, contentType string) error {
 		Path:     path,
 		FileSize: fileInfo.Size(),
 	}
-	return uploaders.UploadArtifact(url, artifact, contentType)
+	_, err = uploaders.UploadArtifact(url, artifact, contentType)
+	return err
 }
 
 // FinishReport ...

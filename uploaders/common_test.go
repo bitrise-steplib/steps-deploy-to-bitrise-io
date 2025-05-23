@@ -98,7 +98,7 @@ func Test_uploadArtifact(t *testing.T) {
 				Path:     tt.artifactPth,
 				FileSize: fileInfo.Size(),
 			}
-			if err := UploadArtifact(tt.uploadURL, artifact, tt.contentType); (err != nil) != tt.wantErr {
+			if _, err := UploadArtifact(tt.uploadURL, artifact, tt.contentType); (err != nil) != tt.wantErr {
 				t.Errorf("UploadArtifact() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})

@@ -55,7 +55,10 @@ func (u *Uploader) DeployFile(item deployment.DeployableItem, buildURL, token st
 		return ArtifactURLs{}, fmt.Errorf("create file artifact: %s %w", artifact.Path, err)
 	}
 
-	if err := UploadArtifact(uploadURL, artifact, ""); err != nil {
+	details, err := UploadArtifact(uploadURL, artifact, "")
+	u.tracker.logFileTransfer(details, err, item.IsIntermediateFile())
+
+	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to upload file artifact, error: %s", err)
 	}
 

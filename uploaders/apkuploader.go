@@ -37,7 +37,10 @@ func (u *Uploader) DeployAPK(item deployment.DeployableItem, artifacts []string,
 		return ArtifactURLs{}, fmt.Errorf("failed to create apk artifact: %s %w", pth, err)
 	}
 
-	if err := UploadArtifact(uploadURL, artifact, APKContentType); err != nil {
+	details, err := UploadArtifact(uploadURL, artifact, APKContentType)
+	u.tracker.logFileTransfer(details, err, item.IsIntermediateFile())
+
+	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to upload apk artifact, error: %s", err)
 	}
 

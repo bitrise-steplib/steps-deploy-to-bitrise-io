@@ -34,7 +34,10 @@ func (u *Uploader) DeployIPA(item deployment.DeployableItem, buildURL, token, no
 		return ArtifactURLs{}, fmt.Errorf("failed to create ipa artifact from %s: %w", pth, err)
 	}
 
-	if err := UploadArtifact(uploadURL, artifact, IPAContentType); err != nil {
+	details, err := UploadArtifact(uploadURL, artifact, IPAContentType)
+	u.tracker.logFileTransfer(details, err, item.IsIntermediateFile())
+
+	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to upload ipa (%s): %w", pth, err)
 	}
 
