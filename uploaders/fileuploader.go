@@ -50,7 +50,7 @@ func (u *Uploader) DeployFile(item deployment.DeployableItem, buildURL, token st
 		FileSize: fileSize,
 	}
 
-	uploadURL, artifactID, err := createArtifact(buildURL, token, artifact, "file", "")
+	uploadURL, artifactID, err := createArtifact(buildURL, token, artifact, "file", "", item.IntermediateFileMeta)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("create file artifact: %s %w", artifact.Path, err)
 	}
@@ -59,7 +59,7 @@ func (u *Uploader) DeployFile(item deployment.DeployableItem, buildURL, token st
 		return ArtifactURLs{}, fmt.Errorf("failed to upload file artifact, error: %s", err)
 	}
 
-	artifactURLs, err := finishArtifact(buildURL, token, artifactID, nil, item.IntermediateFileMeta)
+	artifactURLs, err := finishArtifact(buildURL, token, artifactID, nil)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to finish file artifact, error: %s", err)
 	}

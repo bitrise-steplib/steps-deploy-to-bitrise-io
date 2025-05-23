@@ -27,7 +27,7 @@ func (u *Uploader) DeployXcarchive(item deployment.DeployableItem, buildURL, tok
 		Path:     pth,
 		FileSize: xcarchiveInfo.FileSizeBytes,
 	}
-	uploadURL, artifactID, err := createArtifact(buildURL, token, artifact, "ios-xcarchive", "")
+	uploadURL, artifactID, err := createArtifact(buildURL, token, artifact, "ios-xcarchive", "", item.IntermediateFileMeta)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to create xcarchive artifact from %s %w", pth, err)
 	}
@@ -44,7 +44,7 @@ func (u *Uploader) DeployXcarchive(item deployment.DeployableItem, buildURL, tok
 		IsEnablePublicPage:     false,
 	}
 
-	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta, item.IntermediateFileMeta)
+	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta)
 	if err != nil {
 		return ArtifactURLs{}, fmt.Errorf("failed to finish xcarchive (%s) upload: %w", pth, err)
 	}
