@@ -14,11 +14,11 @@ import (
 const snapshotFileSizeLimitInBytes = 1024 * 1024 * 1024
 
 // DeployFile ...
-func (u *Uploader) DeployFile(item deployment.DeployableItem, buildURL, token string) (ArtifactURLs, error) {
+func (u *Uploader) DeployFile(item deployment.DeployableItem, buildURL, token string) ([]ArtifactURLs, error) {
 	pth := item.Path
 	fileSize, err := u.fileManager.FileSizeInBytes(item.Path)
 	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("get file size: %w", err)
+		return nil, fmt.Errorf("get file size: %w", err)
 	}
 
 	// TODO: This is a workaround to avoid uploading a file that is being modified during the upload process,
@@ -50,23 +50,12 @@ func (u *Uploader) DeployFile(item deployment.DeployableItem, buildURL, token st
 		FileSize: fileSize,
 	}
 
-	uploadURL, artifactID, err := createArtifact(buildURL, token, artifact, "file", "", item.IntermediateFileMeta)
+	urLs, err := u.upload(buildURL, token, artifact, "android-apk", "", &item, nil)
 	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("create file artifact: %s %w", artifact.Path, err)
+		return nil, fmt.Errorf("failed xcarchive deploy: %w", err)
 	}
 
-	details, err := UploadArtifact(uploadURL, artifact, "")
-	u.tracker.logFileTransfer(details, err, item.IsIntermediateFile())
-
-	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to upload file artifact, error: %s", err)
-	}
-
-	artifactURLs, err := finishArtifact(buildURL, token, artifactID, nil)
-	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to finish file artifact, error: %s", err)
-	}
-	return artifactURLs, nil
+	return urLs, nil
 }
 
 // createSnapshot copies a file to a temporary directory with the same file name.
