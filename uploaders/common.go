@@ -51,8 +51,9 @@ type TransferDetails struct {
 }
 
 type UploadTask struct {
-	URL string `json:"url"`
-	ID  int64  `json:"id"`
+	ErrorMessage string `json:"error_msg"`
+	URL          string `json:"upload_url"`
+	ID           int64  `json:"id"`
 }
 
 func (u UploadTask) Identifier() string {
@@ -96,14 +97,7 @@ func createArtifact(buildURL, token string, artifact ArtifactArgs, artifactType,
 	}
 
 	var response *http.Response
-
-	// process response
-	type createArtifactResponse struct {
-		ErrorMessage string       `json:"error_msg"`
-		UploadTasks  []UploadTask `json:"upload_tasks"`
-	}
-
-	var artifactResponse createArtifactResponse
+	var uploadTasks []UploadTask
 
 	if err := retry.Times(3).Wait(5 * time.Second).Try(func(attempt uint) error {
 		if attempt > 0 {
@@ -136,18 +130,19 @@ func createArtifact(buildURL, token string, artifact ArtifactArgs, artifactType,
 			return errors.New(createResponse.ErrorMessage)
 		}
 
-		if err := json.Unmarshal(body, &artifactResponse); err != nil {
+		if err := json.Unmarshal(body, &uploadTasks); err != nil {
 			return fmt.Errorf("failed to unmarshal response (%s), error: %s", string(body), err)
 		}
 
-		if artifactResponse.ErrorMessage != "" {
-			return fmt.Errorf("failed to create artifact on bitrise, error message: %s", artifactResponse.ErrorMessage)
-		}
-		if len(artifactResponse.UploadTasks) == 0 {
+		if len(uploadTasks) == 0 {
 			return fmt.Errorf("failed to create artifact on bitrise, error: no upload task received")
 		}
 
-		for _, task := range artifactResponse.UploadTasks {
+		for _, task := range uploadTasks {
+			if task.ErrorMessage != "" {
+				return fmt.Errorf("failed to create artifact on bitrise, error message: %s", task.ErrorMessage)
+			}
+
 			if task.URL == "" {
 				return fmt.Errorf("failed to create artifact on bitrise, error: missing upload url")
 			}
@@ -161,7 +156,7 @@ func createArtifact(buildURL, token string, artifact ArtifactArgs, artifactType,
 		return nil, err
 	}
 
-	return artifactResponse.UploadTasks, nil
+	return uploadTasks, nil
 }
 
 func UploadArtifact(uploadURL string, artifact ArtifactArgs, contentType string) (TransferDetails, error) {
