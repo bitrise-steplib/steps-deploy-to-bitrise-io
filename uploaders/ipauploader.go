@@ -39,7 +39,7 @@ func (u *Uploader) DeployIPA(item deployment.DeployableItem, buildURL, token, no
 
 	urLs, err := u.upload(buildURL, token, artifact, "ios-ipa", IPAContentType, &item, &buildArtifactMeta)
 	if err != nil {
-		return nil, fmt.Errorf("failed xcarchive deploy: %w", err)
+		return nil, fmt.Errorf("failed ipa deploy: %w", err)
 	}
 
 	return urLs, nil

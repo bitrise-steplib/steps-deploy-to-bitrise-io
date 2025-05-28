@@ -62,7 +62,7 @@ func (u *Uploader) DeployAAB(item deployment.DeployableItem, artifacts []string,
 
 	urLs, err := u.upload(buildURL, token, artifact, "android-apk", AABContentType, &item, &buildArtifactMeta)
 	if err != nil {
-		return nil, fmt.Errorf("failed xcarchive deploy: %w", err)
+		return nil, fmt.Errorf("failed aab deploy: %w", err)
 	}
 
 	return urLs, nil

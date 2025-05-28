@@ -42,7 +42,7 @@ func (u *Uploader) DeployAPK(item deployment.DeployableItem, artifacts []string,
 
 	urLs, err := u.upload(buildURL, token, artifact, "android-apk", APKContentType, &item, &buildArtifactMeta)
 	if err != nil {
-		return nil, fmt.Errorf("failed xcarchive deploy: %w", err)
+		return nil, fmt.Errorf("failed apk deploy: %w", err)
 	}
 
 	return urLs, nil
