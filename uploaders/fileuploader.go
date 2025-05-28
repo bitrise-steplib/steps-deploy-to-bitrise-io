@@ -50,7 +50,7 @@ func (u *Uploader) DeployFile(item deployment.DeployableItem, buildURL, token st
 		FileSize: fileSize,
 	}
 
-	urLs, err := u.upload(buildURL, token, artifact, "android-apk", "", &item, nil)
+	urLs, err := u.upload(buildURL, token, artifact, "file", "", &item, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed file deploy: %w", err)
 	}
