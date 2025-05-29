@@ -48,7 +48,13 @@ func (u *Uploader) upload(buildURL, token string, artifact ArtifactArgs, artifac
 
 	for _, task := range uploadTasks {
 		details, err := UploadArtifact(task.URL, artifact, contentType)
-		u.tracker.logFileTransfer(details, err, item.IsIntermediateFile())
+
+		var transferType = Artifact
+		if task.IsIntermediate {
+			transferType = Intermediate
+		}
+		
+		u.tracker.logFileTransfer(transferType, details, err, item.ArchiveAsArtifact, item.IsIntermediateFile())
 
 		if err != nil {
 			return nil, fmt.Errorf("failed to upload artifact (%s): %w", artifact.Path, err)

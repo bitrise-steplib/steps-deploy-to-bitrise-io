@@ -6,8 +6,16 @@ import (
 	"github.com/bitrise-io/go-utils/v2/log"
 )
 
+type TransferType int
+
+const (
+	Intermediate TransferType = iota
+	Artifact
+)
+
 type tracker struct {
 	tracker analytics.Tracker
+	logger  log.Logger
 }
 
 func newTracker(envRepo env.Repository, logger log.Logger) tracker {
@@ -18,10 +26,11 @@ func newTracker(envRepo env.Repository, logger log.Logger) tracker {
 	}
 	return tracker{
 		tracker: analytics.NewDefaultTracker(logger, p),
+		logger:  logger,
 	}
 }
 
-func (t *tracker) logFileTransfer(details TransferDetails, err error, intermediateFileTransfer bool) {
+func (t *tracker) logFileTransfer(transferType TransferType, details TransferDetails, err error, isArtifact, isIntermediateFile bool) {
 	properties := analytics.Properties{
 		"storage_host": details.Hostname,
 		"duration_ms":  details.Duration.Milliseconds(),
@@ -31,9 +40,16 @@ func (t *tracker) logFileTransfer(details TransferDetails, err error, intermedia
 		properties["error"] = err.Error()
 	}
 
-	eventName := "artifact_uploaded"
-	if intermediateFileTransfer {
+	var eventName string
+	if transferType == Intermediate {
 		eventName = "intermediate_file_uploaded"
+		properties["is_artifact"] = isArtifact
+	} else if transferType == Artifact {
+		eventName = "artifact_uploaded"
+		properties["is_intermediate_file"] = isIntermediateFile
+	} else {
+		t.logger.Warnf("Unknown transfer type: %d", transferType)
+		return
 	}
 
 	t.tracker.Enqueue(eventName, properties)
