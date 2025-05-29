@@ -51,9 +51,10 @@ type TransferDetails struct {
 }
 
 type UploadTask struct {
-	ErrorMessage string `json:"error_msg"`
-	URL          string `json:"upload_url"`
-	ID           int64  `json:"id"`
+	ErrorMessage   string `json:"error_msg"`
+	URL            string `json:"upload_url"`
+	ID             int64  `json:"id"`
+	IsIntermediate bool   `json:"is_intermediate_file"`
 }
 
 func (u UploadTask) Identifier() string {
