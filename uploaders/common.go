@@ -50,31 +50,41 @@ type TransferDetails struct {
 	Hostname string
 }
 
+type UploadTask struct {
+	ErrorMessage string `json:"error_msg"`
+	URL          string `json:"upload_url"`
+	ID           int64  `json:"id"`
+}
 
-func createArtifact(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, pipelineMeta *deployment.IntermediateFileMetaData) (string, string, error) {
+func (u UploadTask) Identifier() string {
+	return fmt.Sprintf("%d", u.ID)
+}
+
+func createArtifact(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, archiveAsArtifact bool, pipelineMeta *deployment.IntermediateFileMetaData) ([]UploadTask, error) {
 	// create form data
 	artifactName := filepath.Base(artifact.Path)
 
 	log.Printf("file size: %s", units.BytesSize(float64(artifact.FileSize)))
 
 	if strings.TrimSpace(token) == "" {
-		return "", "", fmt.Errorf("provided API token is empty")
+		return nil, fmt.Errorf("provided API token is empty")
 	}
 
 	data := url.Values{
-		"api_token":       {token},
-		"title":           {artifactName},
-		"filename":        {artifactName},
-		"artifact_type":   {artifactType},
-		"file_size_bytes": {fmt.Sprintf("%d", artifact.FileSize)},
-		"content_type":    {contentType},
+		"api_token":           {token},
+		"title":               {artifactName},
+		"filename":            {artifactName},
+		"artifact_type":       {artifactType},
+		"file_size_bytes":     {fmt.Sprintf("%d", artifact.FileSize)},
+		"content_type":        {contentType},
+		"archive_as_artifact": {strconv.FormatBool(archiveAsArtifact)},
 	}
 	// ---
 
 	if pipelineMeta != nil {
 		pipelineInfoBytes, err := json.Marshal(pipelineMeta)
 		if err != nil {
-			return "", "", fmt.Errorf("failed to marshal deployment meta: %s", err)
+			return nil, fmt.Errorf("failed to marshal deployment meta: %s", err)
 		}
 
 		data["intermediate_file_info"] = []string{string(pipelineInfoBytes)}
@@ -83,19 +93,11 @@ func createArtifact(buildURL, token string, artifact ArtifactArgs, artifactType,
 	// perform request
 	uri, err := urlutil.Join(buildURL, "artifacts.json")
 	if err != nil {
-		return "", "", fmt.Errorf("failed to generate create artifact url, error: %s", err)
+		return nil, fmt.Errorf("failed to generate create artifact url, error: %s", err)
 	}
 
 	var response *http.Response
-
-	// process response
-	type createArtifactResponse struct {
-		ErrorMessage string `json:"error_msg"`
-		UploadURL    string `json:"upload_url"`
-		ID           int    `json:"id"`
-	}
-
-	var artifactResponse createArtifactResponse
+	var uploadTasks []UploadTask
 
 	if err := retry.Times(3).Wait(5 * time.Second).Try(func(attempt uint) error {
 		if attempt > 0 {
@@ -128,26 +130,33 @@ func createArtifact(buildURL, token string, artifact ArtifactArgs, artifactType,
 			return errors.New(createResponse.ErrorMessage)
 		}
 
-		if err := json.Unmarshal(body, &artifactResponse); err != nil {
+		if err := json.Unmarshal(body, &uploadTasks); err != nil {
 			return fmt.Errorf("failed to unmarshal response (%s), error: %s", string(body), err)
 		}
 
-		if artifactResponse.ErrorMessage != "" {
-			return fmt.Errorf("failed to create artifact on bitrise, error message: %s", artifactResponse.ErrorMessage)
+		if len(uploadTasks) == 0 {
+			return fmt.Errorf("failed to create artifact on bitrise, error: no upload task received")
 		}
-		if artifactResponse.UploadURL == "" {
-			return fmt.Errorf("failed to create artifact on bitrise, error: no upload url received")
-		}
-		if artifactResponse.ID == 0 {
-			return fmt.Errorf("failed to create artifact on bitrise, error: no artifact id received")
+
+		for _, task := range uploadTasks {
+			if task.ErrorMessage != "" {
+				return fmt.Errorf("failed to create artifact on bitrise, error message: %s", task.ErrorMessage)
+			}
+
+			if task.URL == "" {
+				return fmt.Errorf("failed to create artifact on bitrise, error: missing upload url")
+			}
+			if task.ID == 0 {
+				return fmt.Errorf("failed to create artifact on bitrise, error: missing artifact id")
+			}
 		}
 
 		return nil
 	}); err != nil {
-		return "", "", err
+		return nil, err
 	}
 
-	return artifactResponse.UploadURL, fmt.Sprintf("%d", artifactResponse.ID), nil
+	return uploadTasks, nil
 }
 
 func UploadArtifact(uploadURL string, artifact ArtifactArgs, contentType string) (TransferDetails, error) {

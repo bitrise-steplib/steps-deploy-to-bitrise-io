@@ -562,7 +562,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config, logger l
 	return artifactURLCollection, errorCollection
 }
 
-func deploySingleItem(logger loggerV2.Logger, uploader *uploaders.Uploader, item deployment.DeployableItem, config Config, androidArtifacts []string) (uploaders.ArtifactURLs, error) {
+func deploySingleItem(logger loggerV2.Logger, uploader *uploaders.Uploader, item deployment.DeployableItem, config Config, androidArtifacts []string) ([]uploaders.ArtifactURLs, error) {
 	pth := item.Path
 	fileType := getFileType(pth)
 
@@ -597,18 +597,20 @@ func handleDeploymentFailureError(err error, errorCollection []error, logger log
 	return errorCollection
 }
 
-func fillURLMaps(lock *sync.RWMutex, artifactURLCollection ArtifactURLCollection, artifactURLs uploaders.ArtifactURLs, path string, tryPublic bool) {
+func fillURLMaps(lock *sync.RWMutex, artifactURLCollection ArtifactURLCollection, artifactURLs []uploaders.ArtifactURLs, path string, tryPublic bool) {
 	lock.Lock()
 	defer lock.Unlock()
 
-	if tryPublic && artifactURLs.PublicInstallPageURL != "" {
-		artifactURLCollection.PublicInstallPageURLs[filepath.Base(path)] = artifactURLs.PublicInstallPageURL
-	}
-	if artifactURLs.PermanentDownloadURL != "" {
-		artifactURLCollection.PermanentDownloadURLs[filepath.Base(path)] = artifactURLs.PermanentDownloadURL
-	}
-	if artifactURLs.DetailsPageURL != "" {
-		artifactURLCollection.DetailsPageURLs[filepath.Base(path)] = artifactURLs.DetailsPageURL
+	for _, urls := range artifactURLs {
+		if tryPublic && urls.PublicInstallPageURL != "" {
+			artifactURLCollection.PublicInstallPageURLs[filepath.Base(path)] = urls.PublicInstallPageURL
+		}
+		if urls.PermanentDownloadURL != "" {
+			artifactURLCollection.PermanentDownloadURLs[filepath.Base(path)] = urls.PermanentDownloadURL
+		}
+		if urls.DetailsPageURL != "" {
+			artifactURLCollection.DetailsPageURLs[filepath.Base(path)] = urls.DetailsPageURL
+		}
 	}
 }
 

@@ -184,7 +184,8 @@ func Test_GivenDeployFiles_WhenIntermediateFilesSpecified_ThenMergesThem(t *test
 			intermediateFiles: "/ios-app.ipa:IPA_PATH",
 			want: []DeployableItem{
 				{
-					Path: "/ios-app.ipa",
+					Path:              "/ios-app.ipa",
+					ArchiveAsArtifact: true,
 					IntermediateFileMeta: &IntermediateFileMetaData{
 						EnvKey: "IPA_PATH",
 						IsDir:  false,
@@ -200,7 +201,8 @@ func Test_GivenDeployFiles_WhenIntermediateFilesSpecified_ThenMergesThem(t *test
 			intermediateFiles: "test.xcresult:RESULT_PATH",
 			want: []DeployableItem{
 				{
-					Path: filepath.Join(currentDir, "test.xcresult"),
+					Path:              filepath.Join(currentDir, "test.xcresult"),
+					ArchiveAsArtifact: true,
 					IntermediateFileMeta: &IntermediateFileMetaData{
 						EnvKey: "RESULT_PATH",
 						IsDir:  false,
@@ -218,10 +220,12 @@ func Test_GivenDeployFiles_WhenIntermediateFilesSpecified_ThenMergesThem(t *test
 			want: []DeployableItem{
 				{
 					Path:                 filepath.Join(currentDir, "test.ipa"),
+					ArchiveAsArtifact:    true,
 					IntermediateFileMeta: nil,
 				},
 				{
-					Path: filepath.Join(currentDir, "test.xcresult"),
+					Path:              filepath.Join(currentDir, "test.xcresult"),
+					ArchiveAsArtifact: true,
 					IntermediateFileMeta: &IntermediateFileMetaData{
 						EnvKey: "RESULT_PATH",
 						IsDir:  false,
@@ -257,6 +261,7 @@ func Test_GivenDeployFiles_WhenIntermediateFilesSpecified_ThenMergesThem(t *test
 			want: []DeployableItem{
 				{
 					Path:                 "/test.xcresult",
+					ArchiveAsArtifact:    true,
 					IntermediateFileMeta: nil,
 				},
 			},
