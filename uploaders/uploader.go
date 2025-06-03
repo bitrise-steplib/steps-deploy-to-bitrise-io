@@ -45,7 +45,12 @@ func (u *Uploader) upload(buildURL, token string, artifact ArtifactArgs, artifac
 	}
 
 	var artifactURLs []ArtifactURLs
-
+	useIntermediateFileURLs := true
+	if item.ArchiveAsArtifact && item.IntermediateFileMeta != nil {
+		// If an item is both a Build Artifact and an Intermediate File,
+		// only use the artifact URLs of the Build Artifact's upload task.
+		useIntermediateFileURLs = false
+	}
 	for _, task := range uploadTasks {
 		details, err := UploadArtifact(task.URL, artifact, contentType)
 
@@ -53,7 +58,7 @@ func (u *Uploader) upload(buildURL, token string, artifact ArtifactArgs, artifac
 		if task.IsIntermediate {
 			transferType = Intermediate
 		}
-		
+
 		u.tracker.logFileTransfer(transferType, details, err, item.ArchiveAsArtifact, item.IsIntermediateFile())
 
 		if err != nil {
@@ -65,7 +70,9 @@ func (u *Uploader) upload(buildURL, token string, artifact ArtifactArgs, artifac
 			return nil, fmt.Errorf("failed to finish artifact upload (%s): %w", artifact.Path, err)
 		}
 
-		artifactURLs = append(artifactURLs, urls)
+		if !task.IsIntermediate || useIntermediateFileURLs {
+			artifactURLs = append(artifactURLs, urls)
+		}
 	}
 
 	return artifactURLs, nil
