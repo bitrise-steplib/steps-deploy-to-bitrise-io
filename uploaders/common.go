@@ -235,7 +235,6 @@ func UploadArtifact(uploadURL string, artifact ArtifactArgs, contentType string)
 func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDeploymentMetaData) (ArtifactURLs, error) {
 	// create form data
 	data := url.Values{"api_token": {token}}
-	isEnablePublicPage := false
 	if appDeploymentMeta != nil {
 		var artifactInfoBytes []byte
 		var err error
@@ -265,7 +264,6 @@ func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDe
 		}
 		if appDeploymentMeta.IsEnablePublicPage {
 			data["is_enable_public_page"] = []string{"yes"}
-			isEnablePublicPage = true
 		}
 	}
 
@@ -323,23 +321,11 @@ func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDe
 		log.Warnf("Invalid e-mail addresses: %s", strings.Join(artifactResponse.InvalidEmails, ", "))
 	}
 
-	urls := ArtifactURLs{
+	return ArtifactURLs{
 		PermanentDownloadURL: artifactResponse.PermanentDownloadURL,
-	}
-
-	if artifactResponse.DetailsPageURL != "" {
-		urls.DetailsPageURL = artifactResponse.DetailsPageURL
-	}
-
-	if isEnablePublicPage {
-		if artifactResponse.PublicInstallPageURL == "" {
-			return ArtifactURLs{}, fmt.Errorf("public install page was enabled, but no public install page generated")
-		}
-
-		urls.PublicInstallPageURL = artifactResponse.PublicInstallPageURL
-	}
-
-	return urls, nil
+		DetailsPageURL:       artifactResponse.DetailsPageURL,
+		PublicInstallPageURL: artifactResponse.PublicInstallPageURL,
+	}, nil
 }
 
 func printableAppInfo(appInfo interface{}) string {
