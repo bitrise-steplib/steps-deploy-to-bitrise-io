@@ -349,7 +349,7 @@ workflows:
             #!/bin/bash
             set -ex
 
-            echo "BITRISE_PERMANENT_DOWNLOAD_URL_MAP: BITRISE_PERMANENT_DOWNLOAD_URL_MAP"
+            echo "BITRISE_PERMANENT_DOWNLOAD_URL_MAP: $BITRISE_PERMANENT_DOWNLOAD_URL_MAP"
             if [ -z "${BITRISE_PERMANENT_DOWNLOAD_URL_MAP}" ]; then
                 echo "BITRISE_PERMANENT_DOWNLOAD_URL_MAP is empty"
                 exit 1
@@ -374,11 +374,11 @@ step_bundles:
             #!/bin/bash
             set -ex
 
-            echo "BITRISE_PUBLIC_INSTALL_PAGE_URL: $public_install_page_url"
-            if [ -z "${public_install_page_url}" ]; then
+            echo "BITRISE_PUBLIC_INSTALL_PAGE_URL: $BITRISE_PUBLIC_INSTALL_PAGE_URL"
+            if [ -z "${BITRISE_PUBLIC_INSTALL_PAGE_URL}" ]; then
                 echo "BITRISE_PUBLIC_INSTALL_PAGE_URL is empty"
                 exit 1
-            elif ! curl --head --silent --fail "${public_install_page_url}" > /dev/null; then
+            elif ! curl --head --silent --fail "${BITRISE_PUBLIC_INSTALL_PAGE_URL}" > /dev/null; then
                 echo "BITRISE_PUBLIC_INSTALL_PAGE_URL is invalid"
                 exit 1
             fi
