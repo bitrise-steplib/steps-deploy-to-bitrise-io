@@ -353,7 +353,7 @@ workflows:
             if [ -z "${BITRISE_PERMANENT_DOWNLOAD_URL_MAP}" ]; then
                 echo "BITRISE_PERMANENT_DOWNLOAD_URL_MAP is empty"
                 exit 1
-            elsif ! curl --head --silent --fail "${BITRISE_PERMANENT_DOWNLOAD_URL_MAP}" > /dev/null; then
+            elif ! curl --head --silent --fail "${BITRISE_PERMANENT_DOWNLOAD_URL_MAP}" > /dev/null; then
                 echo "BITRISE_PERMANENT_DOWNLOAD_URL_MAP is invalid"
                 exit 1
             fi
@@ -378,7 +378,7 @@ step_bundles:
             if [ -z "${public_install_page_url}" ]; then
                 echo "BITRISE_PUBLIC_INSTALL_PAGE_URL is empty"
                 exit 1
-            elsif ! curl --head --silent --fail "${public_install_page_url}" > /dev/null; then
+            elif ! curl --head --silent --fail "${public_install_page_url}" > /dev/null; then
                 echo "BITRISE_PUBLIC_INSTALL_PAGE_URL is invalid"
                 exit 1
             fi
@@ -387,7 +387,7 @@ step_bundles:
             if [ -z "${BITRISE_PERMANENT_DOWNLOAD_URL_MAP}" ]; then
                 echo "BITRISE_PERMANENT_DOWNLOAD_URL_MAP is empty"
                 exit 1
-            elsif ! curl --head --silent --fail "${BITRISE_PERMANENT_DOWNLOAD_URL_MAP}" > /dev/null; then
+            elif ! curl --head --silent --fail "${BITRISE_PERMANENT_DOWNLOAD_URL_MAP}" > /dev/null; then
                 echo "BITRISE_PERMANENT_DOWNLOAD_URL_MAP is invalid"
                 exit 1
             fi
@@ -396,7 +396,7 @@ step_bundles:
             if [ -z "${BITRISE_ARTIFACT_DETAILS_PAGE_URL}" ]; then
                 echo "BITRISE_ARTIFACT_DETAILS_PAGE_URL is empty"
                 exit 1
-            elsif ! curl --head --silent --fail "${BITRISE_ARTIFACT_DETAILS_PAGE_URL}" > /dev/null; then
+            elif ! curl --head --silent --fail "${BITRISE_ARTIFACT_DETAILS_PAGE_URL}" > /dev/null; then
                 echo "BITRISE_ARTIFACT_DETAILS_PAGE_URL is invalid"
                 exit 1
             fi
