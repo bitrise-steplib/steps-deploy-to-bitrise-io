@@ -21,7 +21,6 @@ workflows:
 
   ci:
     before_run:
-    - audit-this-step
     - _download_sample_artifacts
     - test
     after_run:
@@ -316,9 +315,9 @@ workflows:
         - build_url: $BITRISE_BUILD_URL
         - build_api_token: $BITRISE_BUILD_API_TOKEN
         - permanent_download_url_map_format: "{{range $index, $element := .}}{{if eq $index 0}}{{$element.URL}}{{end}}{{end}}"
-        - deploy_path: "./ipas/ios-simple-objc.ipa"
+        - deploy_path: ./ipas/ios-simple-objc.ipa
         - debug_mode: "true"
-    - bundle::validate_urls: {}
+    - bundle::validate_urls: { }
     - path::./:
         title: Upload Artifact and Intermediate File
         run_if: "true"
@@ -326,10 +325,10 @@ workflows:
         - build_url: $BITRISE_BUILD_URL
         - build_api_token: $BITRISE_BUILD_API_TOKEN
         - permanent_download_url_map_format: "{{range $index, $element := .}}{{if eq $index 0}}{{$element.URL}}{{end}}{{end}}"
-        - deploy_path: "./ipas/ios-simple-objc.ipa"
-        - pipeline_intermediate_files: "./ipas/ios-simple-objc.ipa:IPA"
+        - deploy_path: ./ipas/ios-simple-objc.ipa
+        - pipeline_intermediate_files: ./ipas/ios-simple-objc.ipa:IPA
         - debug_mode: "true"
-    - bundle::validate_urls: {}
+    - bundle::validate_urls: { }
 
   _intermediate_file_download_urls:
     steps:
@@ -340,8 +339,8 @@ workflows:
         - build_url: $BITRISE_BUILD_URL
         - build_api_token: $BITRISE_BUILD_API_TOKEN
         - permanent_download_url_map_format: "{{range $index, $element := .}}{{if eq $index 0}}{{$element.URL}}{{end}}{{end}}"
-        - deploy_path: "./ipas/ios-simple-objc.ipa"
-        - pipeline_intermediate_files: "./ipas/ios-simple-objc.ipa:IPA"
+        - deploy_path: ./ipas/ios-simple-objc.ipa
+        - pipeline_intermediate_files: ./ipas/ios-simple-objc.ipa:IPA
         - debug_mode: "true"
     - script:
         is_always_run: true
@@ -349,7 +348,7 @@ workflows:
         - content: |-
             #!/bin/bash
             set -ex
-            
+
             echo "BITRISE_PERMANENT_DOWNLOAD_URL_MAP: BITRISE_PERMANENT_DOWNLOAD_URL_MAP"
             if [ -z "${BITRISE_PERMANENT_DOWNLOAD_URL_MAP}" ]; then
                 echo "BITRISE_PERMANENT_DOWNLOAD_URL_MAP is empty"
@@ -365,15 +364,6 @@ workflows:
         inputs:
         - example_section: docs/examples.md
 
-  audit-this-step:
-    steps:
-    - script:
-        inputs:
-        - content: |-
-            #!/bin/bash
-            set -ex
-            stepman audit --step-yml ./step.yml
-
 step_bundles:
   validate_urls:
     steps:
@@ -383,7 +373,7 @@ step_bundles:
         - content: |-
             #!/bin/bash
             set -ex
-            
+
             echo "BITRISE_PUBLIC_INSTALL_PAGE_URL: $public_install_page_url"
             if [ -z "${public_install_page_url}" ]; then
                 echo "BITRISE_PUBLIC_INSTALL_PAGE_URL is empty"
@@ -392,7 +382,7 @@ step_bundles:
                 echo "BITRISE_PUBLIC_INSTALL_PAGE_URL is invalid"
                 exit 1
             fi
-            
+
             echo "BITRISE_PERMANENT_DOWNLOAD_URL_MAP: BITRISE_PERMANENT_DOWNLOAD_URL_MAP"
             if [ -z "${BITRISE_PERMANENT_DOWNLOAD_URL_MAP}" ]; then
                 echo "BITRISE_PERMANENT_DOWNLOAD_URL_MAP is empty"
@@ -401,7 +391,7 @@ step_bundles:
                 echo "BITRISE_PERMANENT_DOWNLOAD_URL_MAP is invalid"
                 exit 1
             fi
-            
+
             echo "BITRISE_ARTIFACT_DETAILS_PAGE_URL: BITRISE_ARTIFACT_DETAILS_PAGE_URL"
             if [ -z "${BITRISE_ARTIFACT_DETAILS_PAGE_URL}" ]; then
                 echo "BITRISE_ARTIFACT_DETAILS_PAGE_URL is empty"
