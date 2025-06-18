@@ -2,32 +2,11 @@ package junitxml
 
 import (
 	"encoding/xml"
-	"os"
 	"strings"
 
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
 	"github.com/pkg/errors"
 )
-
-type resultReader interface {
-	ReadAll() ([]byte, error)
-}
-
-type fileReader struct {
-	Filename string
-}
-
-func (r *fileReader) ReadAll() ([]byte, error) {
-	return os.ReadFile(r.Filename)
-}
-
-type stringReader struct {
-	Contents string
-}
-
-func (r *stringReader) ReadAll() ([]byte, error) {
-	return []byte(r.Contents), nil
-}
 
 // Converter holds data of the converter
 type Converter struct {
@@ -36,7 +15,7 @@ type Converter struct {
 
 func (c *Converter) Setup(_ bool) {}
 
-// Detect return true if the test results a Juni4 XML file
+// Detect return true if the test results a JUnit XML file
 func (c *Converter) Detect(files []string) bool {
 	c.results = nil
 	for _, file := range files {
@@ -46,6 +25,22 @@ func (c *Converter) Detect(files []string) bool {
 	}
 
 	return len(c.results) > 0
+}
+
+// XML returns the xml content bytes
+func (c *Converter) Convert() (junit.TestReport, error) {
+	var xmlContent junit.TestReport
+
+	for _, result := range c.results {
+		testSuites, err := parseTestSuites(result)
+		if err != nil {
+			return junit.TestReport{}, err
+		}
+
+		xmlContent.TestSuites = append(xmlContent.TestSuites, testSuites...)
+	}
+
+	return xmlContent, nil
 }
 
 // merges Suites->Cases->Error and Suites->Cases->SystemErr field values into Suites->Cases->Failure field
@@ -103,7 +98,7 @@ func parseTestSuites(result resultReader) ([]junit.TestSuite, error) {
 		return nil, err
 	}
 
-	var testSuites junit.XML
+	var testSuites junit.TestReport
 
 	testSuitesError := xml.Unmarshal(data, &testSuites)
 	if testSuitesError == nil {
@@ -116,20 +111,4 @@ func parseTestSuites(result resultReader) ([]junit.TestSuite, error) {
 	}
 
 	return regroupErrors([]junit.TestSuite{testSuite}), nil
-}
-
-// XML returns the xml content bytes
-func (c *Converter) XML() (junit.XML, error) {
-	var xmlContent junit.XML
-
-	for _, result := range c.results {
-		testSuites, err := parseTestSuites(result)
-		if err != nil {
-			return junit.XML{}, err
-		}
-
-		xmlContent.TestSuites = append(xmlContent.TestSuites, testSuites...)
-	}
-
-	return xmlContent, nil
 }

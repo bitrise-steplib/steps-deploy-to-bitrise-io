@@ -98,10 +98,10 @@ func (c *Converter) Detect(files []string) bool {
 }
 
 // XML ...
-func (c *Converter) XML() (junit.XML, error) {
+func (c *Converter) Convert() (junit.TestReport, error) {
 	supportsNewMethod, err := supportsNewExtractionMethods()
 	if err != nil {
-		return junit.XML{}, err
+		return junit.TestReport{}, err
 	}
 
 	useLegacyFlag := c.useLegacyExtractionMethod
@@ -127,7 +127,7 @@ func (c *Converter) XML() (junit.XML, error) {
 	return legacyParse(c.xcresultPth, useLegacyFlag)
 }
 
-func legacyParse(path string, useLegacyFlag bool) (junit.XML, error) {
+func legacyParse(path string, useLegacyFlag bool) (junit.TestReport, error) {
 	var (
 		testResultDir = filepath.Dir(path)
 		maxParallel   = runtime.NumCPU() * 2
@@ -137,10 +137,10 @@ func legacyParse(path string, useLegacyFlag bool) (junit.XML, error) {
 
 	_, summaries, err := Parse(path, useLegacyFlag)
 	if err != nil {
-		return junit.XML{}, err
+		return junit.TestReport{}, err
 	}
 
-	var xmlData junit.XML
+	var xmlData junit.TestReport
 	{
 		testSuiteCount := testSuiteCountInSummaries(summaries)
 		xmlData.TestSuites = make([]junit.TestSuite, 0, testSuiteCount)
@@ -157,7 +157,7 @@ func legacyParse(path string, useLegacyFlag bool) (junit.XML, error) {
 
 			testSuite, err := genTestSuite(name, summary, tests, testResultDir, path, maxParallel, useLegacyFlag)
 			if err != nil {
-				return junit.XML{}, err
+				return junit.TestReport{}, err
 			}
 
 			xmlData.TestSuites = append(xmlData.TestSuites, testSuite)
@@ -167,22 +167,22 @@ func legacyParse(path string, useLegacyFlag bool) (junit.XML, error) {
 	return xmlData, nil
 }
 
-func parse(path string) (junit.XML, error) {
+func parse(path string) (junit.TestReport, error) {
 	results, err := ParseTestResults(path)
 	if err != nil {
-		return junit.XML{}, err
+		return junit.TestReport{}, err
 	}
 
 	testSummary, warnings, err := model3.Convert(results)
 	if err != nil {
-		return junit.XML{}, err
+		return junit.TestReport{}, err
 	}
 
 	if len(warnings) > 0 {
 		sendRemoteWarning("xcresults3-data", "warnings: %s", warnings)
 	}
 
-	var xml junit.XML
+	var xml junit.TestReport
 
 	for _, plan := range testSummary.TestPlans {
 		for _, testBundle := range plan.TestBundles {
@@ -192,7 +192,7 @@ func parse(path string) (junit.XML, error) {
 
 	outputPath := filepath.Dir(path)
 	if err := exportAttachments(path, outputPath); err != nil {
-		return junit.XML{}, err
+		return junit.TestReport{}, err
 	}
 
 	return xml, nil

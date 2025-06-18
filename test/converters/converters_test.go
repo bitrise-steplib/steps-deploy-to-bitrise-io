@@ -20,7 +20,7 @@ import (
 
 func TestXCresult3Converters(t *testing.T) {
 	log.SetEnableDebugLog(true)
-	want := junit.XML{
+	want := junit.TestReport{
 		TestSuites: []junit.TestSuite{
 			{ // unit test
 				Name:     "rtgtrghtrgTests",
@@ -146,10 +146,10 @@ func TestXCresult3Converters(t *testing.T) {
 
 	for _, test := range []struct {
 		name          string
-		converter     Intf
+		converter     Converter
 		testFilePaths []string
 		wantDetect    bool
-		wantXML       junit.XML
+		wantXML       junit.TestReport
 		wantXMLError  bool
 	}{
 		{
@@ -166,7 +166,7 @@ func TestXCresult3Converters(t *testing.T) {
 				t.Fatalf("detect want: %v, got: %v", test.wantDetect, got)
 			}
 
-			got, err := test.converter.XML()
+			got, err := test.converter.Convert()
 			if test.wantXMLError && err == nil {
 				t.Fatalf("xml error want: %v, got: %v", test.wantXMLError, got)
 			}

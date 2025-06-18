@@ -310,7 +310,7 @@ func TestConverter_XML(t *testing.T) {
 	tests := []struct {
 		name    string
 		results []resultReader
-		want    junit.XML
+		want    junit.TestReport
 		wantErr bool
 	}{
 		{
@@ -328,7 +328,7 @@ func TestConverter_XML(t *testing.T) {
 	</testsuite>
 </testsuites>`,
 			}},
-			want: junit.XML{
+			want: junit.TestReport{
 				TestSuites: []junit.TestSuite{
 					{
 						XMLName:  xml.Name{Local: "testsuite"},
@@ -364,13 +364,13 @@ func TestConverter_XML(t *testing.T) {
 			h := &Converter{
 				results: tt.results,
 			}
-			got, err := h.XML()
+			got, err := h.Convert()
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Converter.XML() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Converter.Convert() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !cmp.Equal(got, tt.want) {
-				t.Errorf("Converter.XML() = %v, want %v, \n Diff: %s", got, tt.want, cmp.Diff(got, tt.want))
+				t.Errorf("Converter.Convert() = %v, want %v, \n Diff: %s", got, tt.want, cmp.Diff(got, tt.want))
 			}
 		})
 	}

@@ -12,20 +12,20 @@ import (
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
 )
 
-// Intf is the required interface a converter needs to match
-type Intf interface {
-	XML() (junit.XML, error)
-	Detect([]string) bool
+// Converter is the required interface a converter needs to match
+type Converter interface {
 	Setup(useOldXCResultExtractionMethod bool)
+	Detect([]string) bool
+	Convert() (junit.TestReport, error)
 }
 
-var converters = []Intf{
+var converters = []Converter{
 	&junitxml.Converter{},
 	&xcresult.Converter{},
 	&xcresult3.Converter{},
 }
 
 // List lists all supported converters
-func List() []Intf {
+func List() []Converter {
 	return converters
 }

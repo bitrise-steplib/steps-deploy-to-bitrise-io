@@ -43,7 +43,7 @@ func TestConverter_XML(t *testing.T) {
 		c := Converter{
 			xcresultPth: tempXCResultPath,
 		}
-		junitXML, err := c.XML()
+		junitXML, err := c.Convert()
 		require.NoError(t, err)
 		require.Equal(t, []junit.TestSuite{
 			{
@@ -123,7 +123,7 @@ func TestConverter_XML(t *testing.T) {
 		c := Converter{
 			xcresultPth: tempXCResultPath,
 		}
-		junitXML, err := c.XML()
+		junitXML, err := c.Convert()
 		require.NoError(t, err)
 		require.Equal(t, []junit.TestSuite{
 			{
@@ -174,6 +174,6 @@ func BenchmarkConverter_XML(b *testing.B) {
 	c := Converter{
 		xcresultPth: tempXCResultPath,
 	}
-	_, err = c.XML()
+	_, err = c.Convert()
 	require.NoError(b, err)
 }
