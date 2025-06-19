@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testreport"
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/bitrise-io/go-utils/log"
@@ -20,15 +20,15 @@ import (
 
 func TestXCresult3Converters(t *testing.T) {
 	log.SetEnableDebugLog(true)
-	want := junit.TestReport{
-		TestSuites: []junit.TestSuite{
+	want := testreport.TestReport{
+		TestSuites: []testreport.TestSuite{
 			{ // unit test
 				Name:     "rtgtrghtrgTests",
 				Tests:    2,
 				Failures: 0,
 				Errors:   0,
 				Time:     0.26063,
-				TestCases: []junit.TestCase{
+				TestCases: []testreport.TestCase{
 					{ // plain test case
 						Name:      "testExample()",
 						ClassName: "rtgtrghtrgTests",
@@ -47,7 +47,7 @@ func TestXCresult3Converters(t *testing.T) {
 				Failures: 3,
 				Errors:   0,
 				Time:     0.759,
-				TestCases: []junit.TestCase{
+				TestCases: []testreport.TestCase{
 					// class rtgtrghtrg3UITests: XCTestCase inside rtgtrghtrgUITests class
 					{
 						Name:      "testExample",
@@ -58,7 +58,7 @@ func TestXCresult3Converters(t *testing.T) {
 						Name:      "testFailMe",
 						ClassName: "_TtCC17rtgtrghtrgUITests17rtgtrghtrgUITests18rtgtrghtrg3UITests",
 						Time:      0.09,
-						Failure: &junit.Failure{
+						Failure: &testreport.Failure{
 							Value: "XCTAssertTrue failed",
 						},
 					},
@@ -78,7 +78,7 @@ func TestXCresult3Converters(t *testing.T) {
 						Name:      "testFailMe()",
 						ClassName: "rtgtrghtrg2UITests",
 						Time:      0.085,
-						Failure: &junit.Failure{
+						Failure: &testreport.Failure{
 							Value: "XCTAssertTrue failed",
 						},
 					},
@@ -108,7 +108,7 @@ func TestXCresult3Converters(t *testing.T) {
 						Name:      "testFailMe2()",
 						ClassName: "rtgtrghtrg4UITests",
 						Time:      0.084,
-						Failure: &junit.Failure{
+						Failure: &testreport.Failure{
 							Value: "XCTAssertTrue failed",
 						},
 					},
@@ -149,7 +149,7 @@ func TestXCresult3Converters(t *testing.T) {
 		converter     Converter
 		testFilePaths []string
 		wantDetect    bool
-		wantXML       junit.TestReport
+		wantXML       testreport.TestReport
 		wantXMLError  bool
 	}{
 		{
@@ -172,15 +172,15 @@ func TestXCresult3Converters(t *testing.T) {
 			}
 
 			opts := []cmp.Option{
-				cmp.Transformer("SortTestSuites", func(in []junit.TestSuite) []junit.TestSuite {
-					s := append([]junit.TestSuite{}, in...)
+				cmp.Transformer("SortTestSuites", func(in []testreport.TestSuite) []testreport.TestSuite {
+					s := append([]testreport.TestSuite{}, in...)
 					sort.Slice(s, func(i, j int) bool {
 						return s[i].Time > s[j].Time
 					})
 					return s
 				}),
-				cmp.Transformer("SortTestCases", func(in []junit.TestCase) []junit.TestCase {
-					s := append([]junit.TestCase{}, in...)
+				cmp.Transformer("SortTestCases", func(in []testreport.TestCase) []testreport.TestCase {
+					s := append([]testreport.TestCase{}, in...)
 					sort.Slice(s, func(i, j int) bool {
 						return s[i].Time > s[j].Time
 					})

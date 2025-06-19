@@ -9,7 +9,7 @@ import (
 
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/pathutil"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testreport"
 )
 
 // Converter ...
@@ -65,24 +65,24 @@ func filterIllegalChars(data []byte) (filtered []byte) {
 }
 
 // XML ...
-func (c *Converter) Convert() (junit.TestReport, error) {
+func (c *Converter) Convert() (testreport.TestReport, error) {
 	data, err := fileutil.ReadBytesFromFile(c.testSummariesPlistPath)
 	if err != nil {
-		return junit.TestReport{}, err
+		return testreport.TestReport{}, err
 	}
 
 	data = filterIllegalChars(data)
 
 	var plistData TestSummaryPlist
 	if _, err := plist.Unmarshal(data, &plistData); err != nil {
-		return junit.TestReport{}, err
+		return testreport.TestReport{}, err
 	}
 
-	var xmlData junit.TestReport
+	var xmlData testreport.TestReport
 	keyOrder, tests := plistData.Tests()
 	for _, testID := range keyOrder {
 		tests := tests[testID]
-		testSuite := junit.TestSuite{
+		testSuite := testreport.TestSuite{
 			Name:     testID,
 			Tests:    len(tests),
 			Failures: tests.FailuresCount(),
@@ -93,19 +93,19 @@ func (c *Converter) Convert() (junit.TestReport, error) {
 		for _, test := range tests {
 			failureMessage := test.Failure()
 
-			var failure *junit.Failure
+			var failure *testreport.Failure
 			if len(failureMessage) > 0 {
-				failure = &junit.Failure{
+				failure = &testreport.Failure{
 					Value: failureMessage,
 				}
 			}
 
-			var skipped *junit.Skipped
+			var skipped *testreport.Skipped
 			if test.Skipped() {
-				skipped = &junit.Skipped{}
+				skipped = &testreport.Skipped{}
 			}
 
-			testSuite.TestCases = append(testSuite.TestCases, junit.TestCase{
+			testSuite.TestCases = append(testSuite.TestCases, testreport.TestCase{
 				Name:      test.TestName,
 				ClassName: testID,
 				Failure:   failure,

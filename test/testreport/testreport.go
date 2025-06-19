@@ -1,4 +1,4 @@
-package junit
+package testreport
 
 import (
 	"encoding/xml"

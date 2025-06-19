@@ -9,14 +9,14 @@ import (
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/junitxml"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testreport"
 )
 
 // Converter is the required interface a converter needs to match
 type Converter interface {
 	Setup(useOldXCResultExtractionMethod bool)
 	Detect([]string) bool
-	Convert() (junit.TestReport, error)
+	Convert() (testreport.TestReport, error)
 }
 
 var converters = []Converter{

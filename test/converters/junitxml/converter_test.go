@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testreport"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -33,21 +33,21 @@ func Test_parseTestSuites(t *testing.T) {
 func Test_regroupErrors(t *testing.T) {
 	tests := []struct {
 		name   string
-		suites []junit.TestSuite
-		want   []junit.TestSuite
+		suites []TestSuite
+		want   []TestSuite
 	}{
 		{
 			name: "regroup error message",
-			suites: []junit.TestSuite{{TestCases: []junit.TestCase{
+			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Error: &junit.Error{
+					Error: &Error{
 						Message: "error message",
 					},
 				},
 			}}},
-			want: []junit.TestSuite{{TestCases: []junit.TestCase{
+			want: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &junit.Failure{
+					Failure: &Failure{
 						Value: "Error message:\nerror message",
 					},
 				},
@@ -55,16 +55,16 @@ func Test_regroupErrors(t *testing.T) {
 		},
 		{
 			name: "regroup error body",
-			suites: []junit.TestSuite{{TestCases: []junit.TestCase{
+			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Error: &junit.Error{
+					Error: &Error{
 						Value: "error message",
 					},
 				},
 			}}},
-			want: []junit.TestSuite{{TestCases: []junit.TestCase{
+			want: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &junit.Failure{
+					Failure: &Failure{
 						Value: "Error value:\nerror message",
 					},
 				},
@@ -72,14 +72,14 @@ func Test_regroupErrors(t *testing.T) {
 		},
 		{
 			name: "regroup system err",
-			suites: []junit.TestSuite{{TestCases: []junit.TestCase{
+			suites: []TestSuite{{TestCases: []TestCase{
 				{
 					SystemErr: "error message",
 				},
 			}}},
-			want: []junit.TestSuite{{TestCases: []junit.TestCase{
+			want: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &junit.Failure{
+					Failure: &Failure{
 						Value: "System error:\nerror message",
 					},
 				},
@@ -88,26 +88,26 @@ func Test_regroupErrors(t *testing.T) {
 
 		{
 			name: "regroup error message - multiple test cases",
-			suites: []junit.TestSuite{{TestCases: []junit.TestCase{
+			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Error: &junit.Error{
+					Error: &Error{
 						Message: "error message",
 					},
 				},
 				{
-					Error: &junit.Error{
+					Error: &Error{
 						Message: "error message2",
 					},
 				},
 			}}},
-			want: []junit.TestSuite{{TestCases: []junit.TestCase{
+			want: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &junit.Failure{
+					Failure: &Failure{
 						Value: "Error message:\nerror message",
 					},
 				},
 				{
-					Failure: &junit.Failure{
+					Failure: &Failure{
 						Value: "Error message:\nerror message2",
 					},
 				},
@@ -115,26 +115,26 @@ func Test_regroupErrors(t *testing.T) {
 		},
 		{
 			name: "regroup error body - multiple test cases",
-			suites: []junit.TestSuite{{TestCases: []junit.TestCase{
+			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Error: &junit.Error{
+					Error: &Error{
 						Value: "error message",
 					},
 				},
 				{
-					Error: &junit.Error{
+					Error: &Error{
 						Value: "error message2",
 					},
 				},
 			}}},
-			want: []junit.TestSuite{{TestCases: []junit.TestCase{
+			want: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &junit.Failure{
+					Failure: &Failure{
 						Value: "Error value:\nerror message",
 					},
 				},
 				{
-					Failure: &junit.Failure{
+					Failure: &Failure{
 						Value: "Error value:\nerror message2",
 					},
 				},
@@ -142,7 +142,7 @@ func Test_regroupErrors(t *testing.T) {
 		},
 		{
 			name: "regroup system err - multiple test cases",
-			suites: []junit.TestSuite{{TestCases: []junit.TestCase{
+			suites: []TestSuite{{TestCases: []TestCase{
 				{
 					SystemErr: "error message",
 				},
@@ -150,14 +150,14 @@ func Test_regroupErrors(t *testing.T) {
 					SystemErr: "error message2",
 				},
 			}}},
-			want: []junit.TestSuite{{TestCases: []junit.TestCase{
+			want: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &junit.Failure{
+					Failure: &Failure{
 						Value: "System error:\nerror message",
 					},
 				},
 				{
-					Failure: &junit.Failure{
+					Failure: &Failure{
 						Value: "System error:\nerror message2",
 					},
 				},
@@ -165,16 +165,16 @@ func Test_regroupErrors(t *testing.T) {
 		},
 		{
 			name: "should not touch failure",
-			suites: []junit.TestSuite{{TestCases: []junit.TestCase{
+			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &junit.Failure{
+					Failure: &Failure{
 						Value: "error message",
 					},
 				},
 			}}},
-			want: []junit.TestSuite{{TestCases: []junit.TestCase{
+			want: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &junit.Failure{
+					Failure: &Failure{
 						Value: "error message",
 					},
 				},
@@ -182,19 +182,19 @@ func Test_regroupErrors(t *testing.T) {
 		},
 		{
 			name: "should append error body to failure",
-			suites: []junit.TestSuite{{TestCases: []junit.TestCase{
+			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &junit.Failure{
+					Failure: &Failure{
 						Value: "failure message",
 					},
-					Error: &junit.Error{
+					Error: &Error{
 						Value: "error value",
 					},
 				},
 			}}},
-			want: []junit.TestSuite{{TestCases: []junit.TestCase{
+			want: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &junit.Failure{
+					Failure: &Failure{
 						Value: "failure message\n\nError value:\nerror value",
 					},
 				},
@@ -202,19 +202,19 @@ func Test_regroupErrors(t *testing.T) {
 		},
 		{
 			name: "should append error message to failure",
-			suites: []junit.TestSuite{{TestCases: []junit.TestCase{
+			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &junit.Failure{
+					Failure: &Failure{
 						Value: "Failure message",
 					},
-					Error: &junit.Error{
+					Error: &Error{
 						Message: "error value",
 					},
 				},
 			}}},
-			want: []junit.TestSuite{{TestCases: []junit.TestCase{
+			want: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &junit.Failure{
+					Failure: &Failure{
 						Value: "Failure message\n\nError message:\nerror value",
 					},
 				},
@@ -222,17 +222,17 @@ func Test_regroupErrors(t *testing.T) {
 		},
 		{
 			name: "should append system error to failure",
-			suites: []junit.TestSuite{{TestCases: []junit.TestCase{
+			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &junit.Failure{
+					Failure: &Failure{
 						Value: "failure message",
 					},
 					SystemErr: "error value",
 				},
 			}}},
-			want: []junit.TestSuite{{TestCases: []junit.TestCase{
+			want: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &junit.Failure{
+					Failure: &Failure{
 						Value: "failure message\n\nSystem error:\nerror value",
 					},
 				},
@@ -240,17 +240,17 @@ func Test_regroupErrors(t *testing.T) {
 		},
 		{
 			name: "should append system error, error message, error body to failure",
-			suites: []junit.TestSuite{{TestCases: []junit.TestCase{
+			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &junit.Failure{
+					Failure: &Failure{
 						Value: "failure message",
 					},
 					SystemErr: "error value",
 				},
 			}}},
-			want: []junit.TestSuite{{TestCases: []junit.TestCase{
+			want: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &junit.Failure{
+					Failure: &Failure{
 						Value: "failure message\n\nSystem error:\nerror value",
 					},
 				},
@@ -258,22 +258,22 @@ func Test_regroupErrors(t *testing.T) {
 		},
 		{
 			name: "should append system error, error message, error body to failure",
-			suites: []junit.TestSuite{{TestCases: []junit.TestCase{
+			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &junit.Failure{
+					Failure: &Failure{
 						Message: "failure message",
 						Value:   "failure content",
 					},
 					SystemErr: "error value",
-					Error: &junit.Error{
+					Error: &Error{
 						Message: "message",
 						Value:   "value",
 					},
 				},
 			}}},
-			want: []junit.TestSuite{{TestCases: []junit.TestCase{
+			want: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &junit.Failure{
+					Failure: &Failure{
 						Value: "failure message\n\nfailure content\n\nError message:\nmessage\n\nError value:\nvalue\n\nSystem error:\nerror value",
 					},
 				},
@@ -281,16 +281,16 @@ func Test_regroupErrors(t *testing.T) {
 		},
 		{
 			name: "Should convert Message attribute of Failure element to the value of a Failure element",
-			suites: []junit.TestSuite{{TestCases: []junit.TestCase{
+			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &junit.Failure{
+					Failure: &Failure{
 						Message: "ErrorMsg",
 					},
 				},
 			}}},
-			want: []junit.TestSuite{{TestCases: []junit.TestCase{
+			want: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &junit.Failure{
+					Failure: &Failure{
 						Value: "ErrorMsg",
 					},
 				},
@@ -310,7 +310,7 @@ func TestConverter_XML(t *testing.T) {
 	tests := []struct {
 		name    string
 		results []resultReader
-		want    junit.TestReport
+		want    testreport.TestReport
 		wantErr bool
 	}{
 		{
@@ -328,28 +328,28 @@ func TestConverter_XML(t *testing.T) {
 	</testsuite>
 </testsuites>`,
 			}},
-			want: junit.TestReport{
-				TestSuites: []junit.TestSuite{
+			want: testreport.TestReport{
+				TestSuites: []testreport.TestSuite{
 					{
 						XMLName:  xml.Name{Local: "testsuite"},
 						Name:     "MyApp-Unit-Tests",
 						Tests:    2,
 						Failures: 0,
 						Time:     0.398617148399353,
-						TestCases: []junit.TestCase{
-							junit.TestCase{
+						TestCases: []testreport.TestCase{
+							testreport.TestCase{
 								XMLName:   xml.Name{Local: "testcase"},
 								Name:      "testPaymentSuccessShowsTooltip()",
 								ClassName: "PaymentContextTests",
 								Time:      0.19384193420410156,
 								Failure:   nil,
 							},
-							junit.TestCase{
+							testreport.TestCase{
 								XMLName:   xml.Name{Local: "testcase"},
 								Name:      "testCannotCheckoutIfPaymentIsActive()",
 								ClassName: "PaymentContextTests",
 								Time:      0.17543494701385498,
-								Failure: &junit.Failure{
+								Failure: &testreport.Failure{
 									Value: "XCTAssertTrue failed",
 								},
 							},
