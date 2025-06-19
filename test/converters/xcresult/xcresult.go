@@ -65,20 +65,20 @@ func filterIllegalChars(data []byte) (filtered []byte) {
 }
 
 // XML ...
-func (c *Converter) XML() (testreport.XML, error) {
+func (c *Converter) XML() (testreport.TestReport, error) {
 	data, err := fileutil.ReadBytesFromFile(c.testSummariesPlistPath)
 	if err != nil {
-		return testreport.XML{}, err
+		return testreport.TestReport{}, err
 	}
 
 	data = filterIllegalChars(data)
 
 	var plistData TestSummaryPlist
 	if _, err := plist.Unmarshal(data, &plistData); err != nil {
-		return testreport.XML{}, err
+		return testreport.TestReport{}, err
 	}
 
-	var xmlData testreport.XML
+	var xmlData testreport.TestReport
 	keyOrder, tests := plistData.Tests()
 	for _, testID := range keyOrder {
 		tests := tests[testID]

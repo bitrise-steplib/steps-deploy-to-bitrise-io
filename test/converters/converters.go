@@ -14,7 +14,7 @@ import (
 
 // Intf is the required interface a converter needs to match
 type Intf interface {
-	XML() (testreport.XML, error)
+	XML() (testreport.TestReport, error)
 	Detect([]string) bool
 	Setup(useOldXCResultExtractionMethod bool)
 }

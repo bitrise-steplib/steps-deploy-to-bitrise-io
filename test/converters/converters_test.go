@@ -20,7 +20,7 @@ import (
 
 func TestXCresult3Converters(t *testing.T) {
 	log.SetEnableDebugLog(true)
-	want := testreport.XML{
+	want := testreport.TestReport{
 		TestSuites: []testreport.TestSuite{
 			{ // unit test
 				Name:     "rtgtrghtrgTests",
@@ -149,7 +149,7 @@ func TestXCresult3Converters(t *testing.T) {
 		converter     Intf
 		testFilePaths []string
 		wantDetect    bool
-		wantXML       testreport.XML
+		wantXML       testreport.TestReport
 		wantXMLError  bool
 	}{
 		{

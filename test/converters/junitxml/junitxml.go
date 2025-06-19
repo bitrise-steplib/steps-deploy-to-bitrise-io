@@ -103,7 +103,7 @@ func parseTestSuites(result resultReader) ([]testreport.TestSuite, error) {
 		return nil, err
 	}
 
-	var testSuites testreport.XML
+	var testSuites testreport.TestReport
 
 	testSuitesError := xml.Unmarshal(data, &testSuites)
 	if testSuitesError == nil {
@@ -119,13 +119,13 @@ func parseTestSuites(result resultReader) ([]testreport.TestSuite, error) {
 }
 
 // XML returns the xml content bytes
-func (c *Converter) XML() (testreport.XML, error) {
-	var xmlContent testreport.XML
+func (c *Converter) XML() (testreport.TestReport, error) {
+	var xmlContent testreport.TestReport
 
 	for _, result := range c.results {
 		testSuites, err := parseTestSuites(result)
 		if err != nil {
-			return testreport.XML{}, err
+			return testreport.TestReport{}, err
 		}
 
 		xmlContent.TestSuites = append(xmlContent.TestSuites, testSuites...)
