@@ -65,7 +65,7 @@ func filterIllegalChars(data []byte) (filtered []byte) {
 }
 
 // XML ...
-func (c *Converter) XML() (testreport.TestReport, error) {
+func (c *Converter) Convert() (testreport.TestReport, error) {
 	data, err := fileutil.ReadBytesFromFile(c.testSummariesPlistPath)
 	if err != nil {
 		return testreport.TestReport{}, err

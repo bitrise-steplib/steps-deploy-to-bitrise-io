@@ -364,7 +364,7 @@ func TestConverter_XML(t *testing.T) {
 			h := &Converter{
 				results: tt.results,
 			}
-			got, err := h.XML()
+			got, err := h.Convert()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Converter.TestReport() error = %v, wantErr %v", err, tt.wantErr)
 				return

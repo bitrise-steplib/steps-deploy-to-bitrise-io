@@ -215,7 +215,7 @@ func ParseTestResults(testsRootDir string, useLegacyXCResultExtractionMethod boo
 						return nil, err
 					}
 
-					junitXML, err := converter.XML()
+					junitXML, err := converter.Convert()
 					if err != nil {
 						return nil, err
 					}

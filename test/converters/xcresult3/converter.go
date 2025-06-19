@@ -98,7 +98,7 @@ func (c *Converter) Detect(files []string) bool {
 }
 
 // XML ...
-func (c *Converter) XML() (testreport.TestReport, error) {
+func (c *Converter) Convert() (testreport.TestReport, error) {
 	supportsNewMethod, err := supportsNewExtractionMethods()
 	if err != nil {
 		return testreport.TestReport{}, err

@@ -22,6 +22,43 @@ func (c *Converter) Detect(files []string) bool {
 	return len(c.results) > 0
 }
 
+// XML returns the xml content bytes
+func (c *Converter) Convert() (testreport.TestReport, error) {
+	var xmlContent testreport.TestReport
+
+	for _, result := range c.results {
+		testSuites, err := parseTestSuites(result)
+		if err != nil {
+			return testreport.TestReport{}, err
+		}
+
+		xmlContent.TestSuites = append(xmlContent.TestSuites, testSuites...)
+	}
+
+	return xmlContent, nil
+}
+
+func parseTestSuites(result resultReader) ([]testreport.TestSuite, error) {
+	data, err := result.ReadAll()
+	if err != nil {
+		return nil, err
+	}
+
+	var testSuites testreport.TestReport
+
+	testSuitesError := xml.Unmarshal(data, &testSuites)
+	if testSuitesError == nil {
+		return regroupErrors(testSuites.TestSuites), nil
+	}
+
+	var testSuite testreport.TestSuite
+	if err := xml.Unmarshal(data, &testSuite); err != nil {
+		return nil, errors.Wrap(errors.Wrap(err, string(data)), testSuitesError.Error())
+	}
+
+	return regroupErrors([]testreport.TestSuite{testSuite}), nil
+}
+
 // merges Suites->Cases->Error and Suites->Cases->SystemErr field values into Suites->Cases->Failure field
 // with 2 newlines and error category prefix
 // the two newlines applied only if there is a failure message already
@@ -69,41 +106,4 @@ func regroupErrors(suites []testreport.TestSuite) []testreport.TestSuite {
 	}
 
 	return suites
-}
-
-func parseTestSuites(result resultReader) ([]testreport.TestSuite, error) {
-	data, err := result.ReadAll()
-	if err != nil {
-		return nil, err
-	}
-
-	var testSuites testreport.TestReport
-
-	testSuitesError := xml.Unmarshal(data, &testSuites)
-	if testSuitesError == nil {
-		return regroupErrors(testSuites.TestSuites), nil
-	}
-
-	var testSuite testreport.TestSuite
-	if err := xml.Unmarshal(data, &testSuite); err != nil {
-		return nil, errors.Wrap(errors.Wrap(err, string(data)), testSuitesError.Error())
-	}
-
-	return regroupErrors([]testreport.TestSuite{testSuite}), nil
-}
-
-// XML returns the xml content bytes
-func (c *Converter) XML() (testreport.TestReport, error) {
-	var xmlContent testreport.TestReport
-
-	for _, result := range c.results {
-		testSuites, err := parseTestSuites(result)
-		if err != nil {
-			return testreport.TestReport{}, err
-		}
-
-		xmlContent.TestSuites = append(xmlContent.TestSuites, testSuites...)
-	}
-
-	return xmlContent, nil
 }

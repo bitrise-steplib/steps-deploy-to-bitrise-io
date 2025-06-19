@@ -6,8 +6,8 @@
 package converters
 
 import (
-	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"testing"
 
@@ -144,9 +144,15 @@ func TestXCresult3Converters(t *testing.T) {
 		},
 	}
 
+	_, b, _, _ := runtime.Caller(0)
+	convertersPackageDir := filepath.Dir(b)
+	testPackageDir := filepath.Dir(convertersPackageDir)
+	projectRootDir := filepath.Dir(testPackageDir)
+	testFilePath := filepath.Join(projectRootDir, "_tmp/xcresults/xcresult3_multi_level_UI_tests.xcresult")
+
 	for _, test := range []struct {
 		name          string
-		converter     Intf
+		converter     Converter
 		testFilePaths []string
 		wantDetect    bool
 		wantXML       testreport.TestReport
@@ -155,7 +161,7 @@ func TestXCresult3Converters(t *testing.T) {
 		{
 			name:          "xcresult3",
 			converter:     &xcresult3.Converter{},
-			testFilePaths: []string{filepath.Join(os.Getenv("BITRISE_SOURCE_DIR"), "_tmp/xcresults/xcresult3_multi_level_UI_tests.xcresult")},
+			testFilePaths: []string{testFilePath},
 			wantDetect:    true,
 			wantXMLError:  false,
 			wantXML:       want,
@@ -166,7 +172,7 @@ func TestXCresult3Converters(t *testing.T) {
 				t.Fatalf("detect want: %v, got: %v", test.wantDetect, got)
 			}
 
-			got, err := test.converter.XML()
+			got, err := test.converter.Convert()
 			if test.wantXMLError && err == nil {
 				t.Fatalf("xml error want: %v, got: %v", test.wantXMLError, got)
 			}
