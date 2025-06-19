@@ -10,7 +10,6 @@ import (
 
 func (c *Converter) Setup(_ bool) {}
 
-// Detect return true if the test results a Juni4 XML file
 func (c *Converter) Detect(files []string) bool {
 	c.results = nil
 	for _, file := range files {
@@ -22,9 +21,8 @@ func (c *Converter) Detect(files []string) bool {
 	return len(c.results) > 0
 }
 
-// XML returns the xml content bytes
 func (c *Converter) Convert() (testreport.TestReport, error) {
-	var xmlContent testreport.TestReport
+	var report TestReport
 
 	for _, result := range c.results {
 		testSuites, err := parseTestSuites(result)
@@ -32,38 +30,38 @@ func (c *Converter) Convert() (testreport.TestReport, error) {
 			return testreport.TestReport{}, err
 		}
 
-		xmlContent.TestSuites = append(xmlContent.TestSuites, testSuites...)
+		report.TestSuites = append(report.TestSuites, testSuites...)
 	}
 
-	return xmlContent, nil
+	return report.Convert(), nil
 }
 
-func parseTestSuites(result resultReader) ([]testreport.TestSuite, error) {
+func parseTestSuites(result resultReader) ([]TestSuite, error) {
 	data, err := result.ReadAll()
 	if err != nil {
 		return nil, err
 	}
 
-	var testSuites testreport.TestReport
+	var testSuites TestReport
 
 	testSuitesError := xml.Unmarshal(data, &testSuites)
 	if testSuitesError == nil {
 		return regroupErrors(testSuites.TestSuites), nil
 	}
 
-	var testSuite testreport.TestSuite
+	var testSuite TestSuite
 	if err := xml.Unmarshal(data, &testSuite); err != nil {
 		return nil, errors.Wrap(errors.Wrap(err, string(data)), testSuitesError.Error())
 	}
 
-	return regroupErrors([]testreport.TestSuite{testSuite}), nil
+	return regroupErrors([]TestSuite{testSuite}), nil
 }
 
 // merges Suites->Cases->Error and Suites->Cases->SystemErr field values into Suites->Cases->Failure field
 // with 2 newlines and error category prefix
 // the two newlines applied only if there is a failure message already
 // this is required because our testing addon currently handles failure field properly
-func regroupErrors(suites []testreport.TestSuite) []testreport.TestSuite {
+func regroupErrors(suites []TestSuite) []TestSuite {
 	for testSuiteIndex, suite := range suites {
 		for testCaseIndex, tc := range suite.TestCases {
 			var messages []string
@@ -94,7 +92,7 @@ func regroupErrors(suites []testreport.TestSuite) []testreport.TestSuite {
 
 			tc.Error, tc.SystemErr = nil, ""
 			if messages != nil {
-				tc.Failure = &testreport.Failure{
+				tc.Failure = &Failure{
 					Value: strings.Join(messages, "\n\n"),
 				}
 			}

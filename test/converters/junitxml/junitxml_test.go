@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testreport"
-	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_parseTestSuites(t *testing.T) {
@@ -33,21 +33,21 @@ func Test_parseTestSuites(t *testing.T) {
 func Test_regroupErrors(t *testing.T) {
 	tests := []struct {
 		name   string
-		suites []testreport.TestSuite
-		want   []testreport.TestSuite
+		suites []TestSuite
+		want   []TestSuite
 	}{
 		{
 			name: "regroup error message",
-			suites: []testreport.TestSuite{{TestCases: []testreport.TestCase{
+			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Error: &testreport.Error{
+					Error: &Error{
 						Message: "error message",
 					},
 				},
 			}}},
-			want: []testreport.TestSuite{{TestCases: []testreport.TestCase{
+			want: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &testreport.Failure{
+					Failure: &Failure{
 						Value: "Error message:\nerror message",
 					},
 				},
@@ -55,16 +55,16 @@ func Test_regroupErrors(t *testing.T) {
 		},
 		{
 			name: "regroup error body",
-			suites: []testreport.TestSuite{{TestCases: []testreport.TestCase{
+			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Error: &testreport.Error{
+					Error: &Error{
 						Value: "error message",
 					},
 				},
 			}}},
-			want: []testreport.TestSuite{{TestCases: []testreport.TestCase{
+			want: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &testreport.Failure{
+					Failure: &Failure{
 						Value: "Error value:\nerror message",
 					},
 				},
@@ -72,14 +72,14 @@ func Test_regroupErrors(t *testing.T) {
 		},
 		{
 			name: "regroup system err",
-			suites: []testreport.TestSuite{{TestCases: []testreport.TestCase{
+			suites: []TestSuite{{TestCases: []TestCase{
 				{
 					SystemErr: "error message",
 				},
 			}}},
-			want: []testreport.TestSuite{{TestCases: []testreport.TestCase{
+			want: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &testreport.Failure{
+					Failure: &Failure{
 						Value: "System error:\nerror message",
 					},
 				},
@@ -88,26 +88,26 @@ func Test_regroupErrors(t *testing.T) {
 
 		{
 			name: "regroup error message - multiple test cases",
-			suites: []testreport.TestSuite{{TestCases: []testreport.TestCase{
+			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Error: &testreport.Error{
+					Error: &Error{
 						Message: "error message",
 					},
 				},
 				{
-					Error: &testreport.Error{
+					Error: &Error{
 						Message: "error message2",
 					},
 				},
 			}}},
-			want: []testreport.TestSuite{{TestCases: []testreport.TestCase{
+			want: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &testreport.Failure{
+					Failure: &Failure{
 						Value: "Error message:\nerror message",
 					},
 				},
 				{
-					Failure: &testreport.Failure{
+					Failure: &Failure{
 						Value: "Error message:\nerror message2",
 					},
 				},
@@ -115,26 +115,26 @@ func Test_regroupErrors(t *testing.T) {
 		},
 		{
 			name: "regroup error body - multiple test cases",
-			suites: []testreport.TestSuite{{TestCases: []testreport.TestCase{
+			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Error: &testreport.Error{
+					Error: &Error{
 						Value: "error message",
 					},
 				},
 				{
-					Error: &testreport.Error{
+					Error: &Error{
 						Value: "error message2",
 					},
 				},
 			}}},
-			want: []testreport.TestSuite{{TestCases: []testreport.TestCase{
+			want: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &testreport.Failure{
+					Failure: &Failure{
 						Value: "Error value:\nerror message",
 					},
 				},
 				{
-					Failure: &testreport.Failure{
+					Failure: &Failure{
 						Value: "Error value:\nerror message2",
 					},
 				},
@@ -142,7 +142,7 @@ func Test_regroupErrors(t *testing.T) {
 		},
 		{
 			name: "regroup system err - multiple test cases",
-			suites: []testreport.TestSuite{{TestCases: []testreport.TestCase{
+			suites: []TestSuite{{TestCases: []TestCase{
 				{
 					SystemErr: "error message",
 				},
@@ -150,14 +150,14 @@ func Test_regroupErrors(t *testing.T) {
 					SystemErr: "error message2",
 				},
 			}}},
-			want: []testreport.TestSuite{{TestCases: []testreport.TestCase{
+			want: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &testreport.Failure{
+					Failure: &Failure{
 						Value: "System error:\nerror message",
 					},
 				},
 				{
-					Failure: &testreport.Failure{
+					Failure: &Failure{
 						Value: "System error:\nerror message2",
 					},
 				},
@@ -165,16 +165,16 @@ func Test_regroupErrors(t *testing.T) {
 		},
 		{
 			name: "should not touch failure",
-			suites: []testreport.TestSuite{{TestCases: []testreport.TestCase{
+			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &testreport.Failure{
+					Failure: &Failure{
 						Value: "error message",
 					},
 				},
 			}}},
-			want: []testreport.TestSuite{{TestCases: []testreport.TestCase{
+			want: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &testreport.Failure{
+					Failure: &Failure{
 						Value: "error message",
 					},
 				},
@@ -182,19 +182,19 @@ func Test_regroupErrors(t *testing.T) {
 		},
 		{
 			name: "should append error body to failure",
-			suites: []testreport.TestSuite{{TestCases: []testreport.TestCase{
+			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &testreport.Failure{
+					Failure: &Failure{
 						Value: "failure message",
 					},
-					Error: &testreport.Error{
+					Error: &Error{
 						Value: "error value",
 					},
 				},
 			}}},
-			want: []testreport.TestSuite{{TestCases: []testreport.TestCase{
+			want: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &testreport.Failure{
+					Failure: &Failure{
 						Value: "failure message\n\nError value:\nerror value",
 					},
 				},
@@ -202,19 +202,19 @@ func Test_regroupErrors(t *testing.T) {
 		},
 		{
 			name: "should append error message to failure",
-			suites: []testreport.TestSuite{{TestCases: []testreport.TestCase{
+			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &testreport.Failure{
+					Failure: &Failure{
 						Value: "Failure message",
 					},
-					Error: &testreport.Error{
+					Error: &Error{
 						Message: "error value",
 					},
 				},
 			}}},
-			want: []testreport.TestSuite{{TestCases: []testreport.TestCase{
+			want: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &testreport.Failure{
+					Failure: &Failure{
 						Value: "Failure message\n\nError message:\nerror value",
 					},
 				},
@@ -222,17 +222,17 @@ func Test_regroupErrors(t *testing.T) {
 		},
 		{
 			name: "should append system error to failure",
-			suites: []testreport.TestSuite{{TestCases: []testreport.TestCase{
+			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &testreport.Failure{
+					Failure: &Failure{
 						Value: "failure message",
 					},
 					SystemErr: "error value",
 				},
 			}}},
-			want: []testreport.TestSuite{{TestCases: []testreport.TestCase{
+			want: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &testreport.Failure{
+					Failure: &Failure{
 						Value: "failure message\n\nSystem error:\nerror value",
 					},
 				},
@@ -240,17 +240,17 @@ func Test_regroupErrors(t *testing.T) {
 		},
 		{
 			name: "should append system error, error message, error body to failure",
-			suites: []testreport.TestSuite{{TestCases: []testreport.TestCase{
+			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &testreport.Failure{
+					Failure: &Failure{
 						Value: "failure message",
 					},
 					SystemErr: "error value",
 				},
 			}}},
-			want: []testreport.TestSuite{{TestCases: []testreport.TestCase{
+			want: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &testreport.Failure{
+					Failure: &Failure{
 						Value: "failure message\n\nSystem error:\nerror value",
 					},
 				},
@@ -258,22 +258,22 @@ func Test_regroupErrors(t *testing.T) {
 		},
 		{
 			name: "should append system error, error message, error body to failure",
-			suites: []testreport.TestSuite{{TestCases: []testreport.TestCase{
+			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &testreport.Failure{
+					Failure: &Failure{
 						Message: "failure message",
 						Value:   "failure content",
 					},
 					SystemErr: "error value",
-					Error: &testreport.Error{
+					Error: &Error{
 						Message: "message",
 						Value:   "value",
 					},
 				},
 			}}},
-			want: []testreport.TestSuite{{TestCases: []testreport.TestCase{
+			want: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &testreport.Failure{
+					Failure: &Failure{
 						Value: "failure message\n\nfailure content\n\nError message:\nmessage\n\nError value:\nvalue\n\nSystem error:\nerror value",
 					},
 				},
@@ -281,16 +281,16 @@ func Test_regroupErrors(t *testing.T) {
 		},
 		{
 			name: "Should convert Message attribute of Failure element to the value of a Failure element",
-			suites: []testreport.TestSuite{{TestCases: []testreport.TestCase{
+			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &testreport.Failure{
+					Failure: &Failure{
 						Message: "ErrorMsg",
 					},
 				},
 			}}},
-			want: []testreport.TestSuite{{TestCases: []testreport.TestCase{
+			want: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &testreport.Failure{
+					Failure: &Failure{
 						Value: "ErrorMsg",
 					},
 				},
@@ -365,12 +365,10 @@ func TestConverter_XML(t *testing.T) {
 				results: tt.results,
 			}
 			got, err := h.Convert()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Converter.TestReport() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !cmp.Equal(got, tt.want) {
-				t.Errorf("Converter.TestReport() = %v, want %v, \n Diff: %s", got, tt.want, cmp.Diff(got, tt.want))
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.Equal(t, tt.want, got)
 			}
 		})
 	}
