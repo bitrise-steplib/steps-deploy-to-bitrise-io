@@ -110,7 +110,8 @@ func extractTestCases(nodes []TestNode, fallbackName string) ([]TestCase, []stri
 }
 
 func extractDuration(text string) time.Duration {
-	// Duration is in the format "123.456789s"
+	// Duration is in the format "123.456789s" or "123,456789s", so we need to replace the comma with a dot.
+	text = strings.Replace(text, ",", ".", -1)
 	duration, err := time.ParseDuration(text)
 	if err != nil {
 		return 0
