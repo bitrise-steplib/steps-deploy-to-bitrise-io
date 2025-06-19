@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testreport"
 	"github.com/stretchr/testify/require"
 
 	"github.com/bitrise-io/go-utils/command"
@@ -45,10 +45,10 @@ func TestConverter_XML(t *testing.T) {
 		}
 		junitXML, err := c.XML()
 		require.NoError(t, err)
-		require.Equal(t, []junit.TestSuite{
+		require.Equal(t, []testreport.TestSuite{
 			{
 				Name: "BullsEyeTests", Tests: 5, Failures: 0, Skipped: 0, Errors: 0, Time: 0.9774,
-				TestCases: []junit.TestCase{
+				TestCases: []testreport.TestCase{
 					{
 						Name: "testStartNewRoundUsesRandomValueFromApiRequest()", ClassName: "BullsEyeFakeTests",
 						Time: 0.014,
@@ -73,7 +73,7 @@ func TestConverter_XML(t *testing.T) {
 			},
 			{
 				Name: "BullsEyeSlowTests", Tests: 2, Failures: 0, Skipped: 0, Errors: 0, Time: 0.53,
-				TestCases: []junit.TestCase{
+				TestCases: []testreport.TestCase{
 					{
 						Name: "testApiCallCompletes()", ClassName: "BullsEyeSlowTests",
 						Time: 0.28,
@@ -86,7 +86,7 @@ func TestConverter_XML(t *testing.T) {
 			},
 			{
 				Name: "BullsEyeUITests", Tests: 1, Failures: 0, Skipped: 0, Errors: 0, Time: 9,
-				TestCases: []junit.TestCase{
+				TestCases: []testreport.TestCase{
 					{
 						Name: "testGameStyleSwitch()", ClassName: "BullsEyeUITests",
 						Time: 9,
@@ -95,13 +95,13 @@ func TestConverter_XML(t *testing.T) {
 			},
 			{
 				Name: "BullsEyeFlakyTests", Tests: 2, Failures: 0, Skipped: 1, Errors: 0, Time: 0.12,
-				TestCases: []junit.TestCase{
+				TestCases: []testreport.TestCase{
 					{
 						Name: "testFlakyFeature()", ClassName: "BullsEyeFlakyTests", Time: 0.1,
 					},
 					{
 						Name: "testFlakySkip()", ClassName: "BullsEyeSkippedTests", Time: 0.02,
-						Skipped: &junit.Skipped{},
+						Skipped: &testreport.Skipped{},
 					},
 				},
 			},
@@ -125,7 +125,7 @@ func TestConverter_XML(t *testing.T) {
 		}
 		junitXML, err := c.XML()
 		require.NoError(t, err)
-		require.Equal(t, []junit.TestSuite{
+		require.Equal(t, []testreport.TestSuite{
 			{
 				Name:     "testProjectUITests",
 				Tests:    3,
@@ -133,12 +133,12 @@ func TestConverter_XML(t *testing.T) {
 				Skipped:  1,
 				Errors:   0,
 				Time:     0.435,
-				TestCases: []junit.TestCase{
+				TestCases: []testreport.TestCase{
 					{
 						Name:      "testFailure()",
 						ClassName: "testProjectUITests",
 						Time:      0.26,
-						Failure: &junit.Failure{
+						Failure: &testreport.Failure{
 							Value: "testProjectUITests.swift:30: XCTAssertTrue failed",
 						},
 					},
@@ -146,7 +146,7 @@ func TestConverter_XML(t *testing.T) {
 						Name:      "testSkip()",
 						ClassName: "testProjectUITests",
 						Time:      0.086,
-						Skipped:   &junit.Skipped{},
+						Skipped:   &testreport.Skipped{},
 					},
 					{
 						Name:      "testSuccess()",

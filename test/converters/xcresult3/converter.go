@@ -19,7 +19,7 @@ import (
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-xcode/xcodeproject/serialized"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3/model3"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testreport"
 )
 
 // Converter ...
@@ -98,10 +98,10 @@ func (c *Converter) Detect(files []string) bool {
 }
 
 // XML ...
-func (c *Converter) XML() (junit.XML, error) {
+func (c *Converter) XML() (testreport.XML, error) {
 	supportsNewMethod, err := supportsNewExtractionMethods()
 	if err != nil {
-		return junit.XML{}, err
+		return testreport.XML{}, err
 	}
 
 	useLegacyFlag := c.useLegacyExtractionMethod
@@ -127,7 +127,7 @@ func (c *Converter) XML() (junit.XML, error) {
 	return legacyParse(c.xcresultPth, useLegacyFlag)
 }
 
-func legacyParse(path string, useLegacyFlag bool) (junit.XML, error) {
+func legacyParse(path string, useLegacyFlag bool) (testreport.XML, error) {
 	var (
 		testResultDir = filepath.Dir(path)
 		maxParallel   = runtime.NumCPU() * 2
@@ -137,13 +137,13 @@ func legacyParse(path string, useLegacyFlag bool) (junit.XML, error) {
 
 	_, summaries, err := Parse(path, useLegacyFlag)
 	if err != nil {
-		return junit.XML{}, err
+		return testreport.XML{}, err
 	}
 
-	var xmlData junit.XML
+	var xmlData testreport.XML
 	{
 		testSuiteCount := testSuiteCountInSummaries(summaries)
-		xmlData.TestSuites = make([]junit.TestSuite, 0, testSuiteCount)
+		xmlData.TestSuites = make([]testreport.TestSuite, 0, testSuiteCount)
 	}
 
 	summariesCount := len(summaries)
@@ -157,7 +157,7 @@ func legacyParse(path string, useLegacyFlag bool) (junit.XML, error) {
 
 			testSuite, err := genTestSuite(name, summary, tests, testResultDir, path, maxParallel, useLegacyFlag)
 			if err != nil {
-				return junit.XML{}, err
+				return testreport.XML{}, err
 			}
 
 			xmlData.TestSuites = append(xmlData.TestSuites, testSuite)
@@ -167,22 +167,22 @@ func legacyParse(path string, useLegacyFlag bool) (junit.XML, error) {
 	return xmlData, nil
 }
 
-func parse(path string) (junit.XML, error) {
+func parse(path string) (testreport.XML, error) {
 	results, err := ParseTestResults(path)
 	if err != nil {
-		return junit.XML{}, err
+		return testreport.XML{}, err
 	}
 
 	testSummary, warnings, err := model3.Convert(results)
 	if err != nil {
-		return junit.XML{}, err
+		return testreport.XML{}, err
 	}
 
 	if len(warnings) > 0 {
 		sendRemoteWarning("xcresults3-data", "warnings: %s", warnings)
 	}
 
-	var xml junit.XML
+	var xml testreport.XML
 
 	for _, plan := range testSummary.TestPlans {
 		for _, testBundle := range plan.TestBundles {
@@ -192,31 +192,31 @@ func parse(path string) (junit.XML, error) {
 
 	outputPath := filepath.Dir(path)
 	if err := exportAttachments(path, outputPath); err != nil {
-		return junit.XML{}, err
+		return testreport.XML{}, err
 	}
 
 	return xml, nil
 }
 
-func parseTestBundle(testBundle model3.TestBundle) junit.TestSuite {
+func parseTestBundle(testBundle model3.TestBundle) testreport.TestSuite {
 	failedCount := 0
 	skippedCount := 0
 	var totalDuration time.Duration
-	var tests []junit.TestCase
+	var tests []testreport.TestCase
 
 	for _, testSuite := range testBundle.TestSuites {
 		for _, testCase := range testSuite.TestCases {
-			test := junit.TestCase{
+			test := testreport.TestCase{
 				Name:      testCase.Name,
 				ClassName: testCase.ClassName,
 				Time:      testCase.Time.Seconds(),
 			}
 
 			if testCase.Result == model3.TestResultFailed {
-				test.Failure = &junit.Failure{Value: testCase.Message}
+				test.Failure = &testreport.Failure{Value: testCase.Message}
 				failedCount++
 			} else if testCase.Result == model3.TestResultSkipped {
-				test.Skipped = &junit.Skipped{}
+				test.Skipped = &testreport.Skipped{}
 				skippedCount++
 			}
 
@@ -226,7 +226,7 @@ func parseTestBundle(testBundle model3.TestBundle) junit.TestSuite {
 		}
 	}
 
-	return junit.TestSuite{
+	return testreport.TestSuite{
 		Name:      testBundle.Name,
 		Tests:     len(tests),
 		Failures:  failedCount,
@@ -292,7 +292,7 @@ func genTestSuite(name string,
 	xcresultPath string,
 	maxParallel int,
 	useLegacyFlag bool,
-) (junit.TestSuite, error) {
+) (testreport.TestSuite, error) {
 	var (
 		start           = time.Now()
 		genTestSuiteErr error
@@ -300,13 +300,13 @@ func genTestSuite(name string,
 		mtx             sync.RWMutex
 	)
 
-	testSuite := junit.TestSuite{
+	testSuite := testreport.TestSuite{
 		Name:      name,
 		Tests:     len(tests),
 		Failures:  summary.failuresCount(name),
 		Skipped:   summary.skippedCount(name),
 		Time:      summary.totalTime(name),
-		TestCases: make([]junit.TestCase, len(tests)),
+		TestCases: make([]testreport.TestCase, len(tests)),
 	}
 
 	testIdx := 0
@@ -339,13 +339,13 @@ func genTestSuite(name string,
 	return testSuite, genTestSuiteErr
 }
 
-func genTestCase(test ActionTestSummaryGroup, xcresultPath, testResultDir string, useLegacyFlag bool) (junit.TestCase, error) {
+func genTestCase(test ActionTestSummaryGroup, xcresultPath, testResultDir string, useLegacyFlag bool) (testreport.TestCase, error) {
 	var duartion float64
 	if test.Duration.Value != "" {
 		var err error
 		duartion, err = strconv.ParseFloat(test.Duration.Value, 64)
 		if err != nil {
-			return junit.TestCase{}, err
+			return testreport.TestCase{}, err
 		}
 	}
 
@@ -355,11 +355,11 @@ func genTestCase(test ActionTestSummaryGroup, xcresultPath, testResultDir string
 	// If they do not have it, then that means that they did not log anything to the console,
 	// and they were not executed as device configuration tests.
 	if err != nil && !errors.Is(err, ErrSummaryNotFound) {
-		return junit.TestCase{}, err
+		return testreport.TestCase{}, err
 	}
 
-	var failure *junit.Failure
-	var skipped *junit.Skipped
+	var failure *testreport.Failure
+	var skipped *testreport.Skipped
 	switch test.TestStatus.Value {
 	case "Failure":
 		failureMessage := ""
@@ -374,18 +374,18 @@ func genTestCase(test ActionTestSummaryGroup, xcresultPath, testResultDir string
 			failureMessage += fmt.Sprintf("%s:%s - %s", file, line, message)
 		}
 
-		failure = &junit.Failure{
+		failure = &testreport.Failure{
 			Value: failureMessage,
 		}
 	case "Skipped":
-		skipped = &junit.Skipped{}
+		skipped = &testreport.Skipped{}
 	}
 
 	if err := test.exportScreenshots(xcresultPath, testResultDir, useLegacyFlag); err != nil {
-		return junit.TestCase{}, err
+		return testreport.TestCase{}, err
 	}
 
-	return junit.TestCase{
+	return testreport.TestCase{
 		Name:              test.Name.Value,
 		ConfigurationHash: testSummary.Configuration.Hash,
 		ClassName:         strings.Split(test.Identifier.Value, "/")[0],

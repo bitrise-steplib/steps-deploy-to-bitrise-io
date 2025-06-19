@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testreport"
 	"github.com/pkg/errors"
 )
 
@@ -52,7 +52,7 @@ func (c *Converter) Detect(files []string) bool {
 // with 2 newlines and error category prefix
 // the two newlines applied only if there is a failure message already
 // this is required because our testing addon currently handles failure field properly
-func regroupErrors(suites []junit.TestSuite) []junit.TestSuite {
+func regroupErrors(suites []testreport.TestSuite) []testreport.TestSuite {
 	for testSuiteIndex, suite := range suites {
 		for testCaseIndex, tc := range suite.TestCases {
 			var messages []string
@@ -83,7 +83,7 @@ func regroupErrors(suites []junit.TestSuite) []junit.TestSuite {
 
 			tc.Error, tc.SystemErr = nil, ""
 			if messages != nil {
-				tc.Failure = &junit.Failure{
+				tc.Failure = &testreport.Failure{
 					Value: strings.Join(messages, "\n\n"),
 				}
 			}
@@ -97,35 +97,35 @@ func regroupErrors(suites []junit.TestSuite) []junit.TestSuite {
 	return suites
 }
 
-func parseTestSuites(result resultReader) ([]junit.TestSuite, error) {
+func parseTestSuites(result resultReader) ([]testreport.TestSuite, error) {
 	data, err := result.ReadAll()
 	if err != nil {
 		return nil, err
 	}
 
-	var testSuites junit.XML
+	var testSuites testreport.XML
 
 	testSuitesError := xml.Unmarshal(data, &testSuites)
 	if testSuitesError == nil {
 		return regroupErrors(testSuites.TestSuites), nil
 	}
 
-	var testSuite junit.TestSuite
+	var testSuite testreport.TestSuite
 	if err := xml.Unmarshal(data, &testSuite); err != nil {
 		return nil, errors.Wrap(errors.Wrap(err, string(data)), testSuitesError.Error())
 	}
 
-	return regroupErrors([]junit.TestSuite{testSuite}), nil
+	return regroupErrors([]testreport.TestSuite{testSuite}), nil
 }
 
 // XML returns the xml content bytes
-func (c *Converter) XML() (junit.XML, error) {
-	var xmlContent junit.XML
+func (c *Converter) XML() (testreport.XML, error) {
+	var xmlContent testreport.XML
 
 	for _, result := range c.results {
 		testSuites, err := parseTestSuites(result)
 		if err != nil {
-			return junit.XML{}, err
+			return testreport.XML{}, err
 		}
 
 		xmlContent.TestSuites = append(xmlContent.TestSuites, testSuites...)

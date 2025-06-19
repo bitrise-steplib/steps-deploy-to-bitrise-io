@@ -9,12 +9,12 @@ import (
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/junitxml"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testreport"
 )
 
 // Intf is the required interface a converter needs to match
 type Intf interface {
-	XML() (junit.XML, error)
+	XML() (testreport.XML, error)
 	Detect([]string) bool
 	Setup(useOldXCResultExtractionMethod bool)
 }
