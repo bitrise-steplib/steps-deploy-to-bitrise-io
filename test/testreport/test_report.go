@@ -31,8 +31,6 @@ type TestCase struct {
 	Time              float64  `xml:"time,attr"`
 	Failure           *Failure `xml:"failure,omitempty"`
 	Skipped           *Skipped `xml:"skipped,omitempty"`
-	Error             *Error   `xml:"error,omitempty"`
-	SystemErr         string   `xml:"system-err,omitempty"`
 }
 
 // Failure ...

@@ -2,7 +2,6 @@ package junitxml
 
 import (
 	"encoding/xml"
-	"reflect"
 	"testing"
 
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testreport"
@@ -21,9 +20,9 @@ func Test_parseTestSuites(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := parseTestSuites(&fileReader{Filename: tt.path})
+			_, err := parseTestReport(&fileReader{Filename: tt.path})
 			if (err != nil) != tt.wantErr {
-				t.Errorf("parseTestSuites() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("parseTestReport() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 		})
@@ -34,7 +33,7 @@ func Test_regroupErrors(t *testing.T) {
 	tests := []struct {
 		name   string
 		suites []TestSuite
-		want   []TestSuite
+		want   []testreport.TestSuite
 	}{
 		{
 			name: "regroup error message",
@@ -45,9 +44,9 @@ func Test_regroupErrors(t *testing.T) {
 					},
 				},
 			}}},
-			want: []TestSuite{{TestCases: []TestCase{
+			want: []testreport.TestSuite{{TestCases: []testreport.TestCase{
 				{
-					Failure: &Failure{
+					Failure: &testreport.Failure{
 						Value: "Error message:\nerror message",
 					},
 				},
@@ -62,9 +61,9 @@ func Test_regroupErrors(t *testing.T) {
 					},
 				},
 			}}},
-			want: []TestSuite{{TestCases: []TestCase{
+			want: []testreport.TestSuite{{TestCases: []testreport.TestCase{
 				{
-					Failure: &Failure{
+					Failure: &testreport.Failure{
 						Value: "Error value:\nerror message",
 					},
 				},
@@ -77,9 +76,9 @@ func Test_regroupErrors(t *testing.T) {
 					SystemErr: "error message",
 				},
 			}}},
-			want: []TestSuite{{TestCases: []TestCase{
+			want: []testreport.TestSuite{{TestCases: []testreport.TestCase{
 				{
-					Failure: &Failure{
+					Failure: &testreport.Failure{
 						Value: "System error:\nerror message",
 					},
 				},
@@ -100,14 +99,14 @@ func Test_regroupErrors(t *testing.T) {
 					},
 				},
 			}}},
-			want: []TestSuite{{TestCases: []TestCase{
+			want: []testreport.TestSuite{{TestCases: []testreport.TestCase{
 				{
-					Failure: &Failure{
+					Failure: &testreport.Failure{
 						Value: "Error message:\nerror message",
 					},
 				},
 				{
-					Failure: &Failure{
+					Failure: &testreport.Failure{
 						Value: "Error message:\nerror message2",
 					},
 				},
@@ -127,14 +126,14 @@ func Test_regroupErrors(t *testing.T) {
 					},
 				},
 			}}},
-			want: []TestSuite{{TestCases: []TestCase{
+			want: []testreport.TestSuite{{TestCases: []testreport.TestCase{
 				{
-					Failure: &Failure{
+					Failure: &testreport.Failure{
 						Value: "Error value:\nerror message",
 					},
 				},
 				{
-					Failure: &Failure{
+					Failure: &testreport.Failure{
 						Value: "Error value:\nerror message2",
 					},
 				},
@@ -150,14 +149,14 @@ func Test_regroupErrors(t *testing.T) {
 					SystemErr: "error message2",
 				},
 			}}},
-			want: []TestSuite{{TestCases: []TestCase{
+			want: []testreport.TestSuite{{TestCases: []testreport.TestCase{
 				{
-					Failure: &Failure{
+					Failure: &testreport.Failure{
 						Value: "System error:\nerror message",
 					},
 				},
 				{
-					Failure: &Failure{
+					Failure: &testreport.Failure{
 						Value: "System error:\nerror message2",
 					},
 				},
@@ -172,9 +171,9 @@ func Test_regroupErrors(t *testing.T) {
 					},
 				},
 			}}},
-			want: []TestSuite{{TestCases: []TestCase{
+			want: []testreport.TestSuite{{TestCases: []testreport.TestCase{
 				{
-					Failure: &Failure{
+					Failure: &testreport.Failure{
 						Value: "error message",
 					},
 				},
@@ -192,9 +191,9 @@ func Test_regroupErrors(t *testing.T) {
 					},
 				},
 			}}},
-			want: []TestSuite{{TestCases: []TestCase{
+			want: []testreport.TestSuite{{TestCases: []testreport.TestCase{
 				{
-					Failure: &Failure{
+					Failure: &testreport.Failure{
 						Value: "failure message\n\nError value:\nerror value",
 					},
 				},
@@ -212,9 +211,9 @@ func Test_regroupErrors(t *testing.T) {
 					},
 				},
 			}}},
-			want: []TestSuite{{TestCases: []TestCase{
+			want: []testreport.TestSuite{{TestCases: []testreport.TestCase{
 				{
-					Failure: &Failure{
+					Failure: &testreport.Failure{
 						Value: "Failure message\n\nError message:\nerror value",
 					},
 				},
@@ -230,9 +229,9 @@ func Test_regroupErrors(t *testing.T) {
 					SystemErr: "error value",
 				},
 			}}},
-			want: []TestSuite{{TestCases: []TestCase{
+			want: []testreport.TestSuite{{TestCases: []testreport.TestCase{
 				{
-					Failure: &Failure{
+					Failure: &testreport.Failure{
 						Value: "failure message\n\nSystem error:\nerror value",
 					},
 				},
@@ -248,9 +247,9 @@ func Test_regroupErrors(t *testing.T) {
 					SystemErr: "error value",
 				},
 			}}},
-			want: []TestSuite{{TestCases: []TestCase{
+			want: []testreport.TestSuite{{TestCases: []testreport.TestCase{
 				{
-					Failure: &Failure{
+					Failure: &testreport.Failure{
 						Value: "failure message\n\nSystem error:\nerror value",
 					},
 				},
@@ -271,9 +270,9 @@ func Test_regroupErrors(t *testing.T) {
 					},
 				},
 			}}},
-			want: []TestSuite{{TestCases: []TestCase{
+			want: []testreport.TestSuite{{TestCases: []testreport.TestCase{
 				{
-					Failure: &Failure{
+					Failure: &testreport.Failure{
 						Value: "failure message\n\nfailure content\n\nError message:\nmessage\n\nError value:\nvalue\n\nSystem error:\nerror value",
 					},
 				},
@@ -288,9 +287,9 @@ func Test_regroupErrors(t *testing.T) {
 					},
 				},
 			}}},
-			want: []TestSuite{{TestCases: []TestCase{
+			want: []testreport.TestSuite{{TestCases: []testreport.TestCase{
 				{
-					Failure: &Failure{
+					Failure: &testreport.Failure{
 						Value: "ErrorMsg",
 					},
 				},
@@ -299,9 +298,8 @@ func Test_regroupErrors(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := regroupErrors(tt.suites); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("regroupErrors() = %v, want %v", got, tt.want)
-			}
+			got := convertToReport(TestReport{TestSuites: tt.suites})
+			require.Equal(t, testreport.TestReport{TestSuites: tt.want}, got)
 		})
 	}
 }

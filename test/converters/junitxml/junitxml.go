@@ -22,48 +22,77 @@ func (c *Converter) Detect(files []string) bool {
 }
 
 func (c *Converter) Convert() (testreport.TestReport, error) {
-	var report TestReport
+	var mergedReport TestReport
 
 	for _, result := range c.results {
-		testSuites, err := parseTestSuites(result)
+		report, err := parseTestReport(result)
 		if err != nil {
 			return testreport.TestReport{}, err
 		}
 
-		report.TestSuites = append(report.TestSuites, testSuites...)
+		mergedReport.TestSuites = append(mergedReport.TestSuites, report.TestSuites...)
 	}
 
-	return report.Convert(), nil
+	return convertToReport(mergedReport), nil
 }
 
-func parseTestSuites(result resultReader) ([]TestSuite, error) {
+func parseTestReport(result resultReader) (TestReport, error) {
 	data, err := result.ReadAll()
 	if err != nil {
-		return nil, err
+		return TestReport{}, err
 	}
 
-	var testSuites TestReport
-
-	testSuitesError := xml.Unmarshal(data, &testSuites)
-	if testSuitesError == nil {
-		return regroupErrors(testSuites.TestSuites), nil
+	var testReport TestReport
+	testReportErr := xml.Unmarshal(data, &testReport)
+	if testReportErr == nil {
+		return testReport, nil
 	}
 
 	var testSuite TestSuite
-	if err := xml.Unmarshal(data, &testSuite); err != nil {
-		return nil, errors.Wrap(errors.Wrap(err, string(data)), testSuitesError.Error())
+	testSuiteErr := xml.Unmarshal(data, &testSuite)
+	if testSuiteErr == nil {
+		return TestReport{TestSuites: []TestSuite{testSuite}}, nil
 	}
 
-	return regroupErrors([]TestSuite{testSuite}), nil
+	return TestReport{}, errors.Wrap(errors.Wrap(testSuiteErr, string(data)), testReportErr.Error())
 }
 
 // merges Suites->Cases->Error and Suites->Cases->SystemErr field values into Suites->Cases->Failure field
 // with 2 newlines and error category prefix
 // the two newlines applied only if there is a failure message already
 // this is required because our testing addon currently handles failure field properly
-func regroupErrors(suites []TestSuite) []TestSuite {
-	for testSuiteIndex, suite := range suites {
-		for testCaseIndex, tc := range suite.TestCases {
+func convertToReport(report TestReport) testreport.TestReport {
+	convertedReport := testreport.TestReport{
+		XMLName: report.XMLName,
+	}
+
+	for _, suite := range report.TestSuites {
+		convertedTestSuite := testreport.TestSuite{
+			XMLName:  suite.XMLName,
+			Name:     suite.Name,
+			Tests:    suite.Tests,
+			Failures: suite.Failures,
+			Skipped:  suite.Skipped,
+			Errors:   0,
+			Time:     suite.Time,
+		}
+
+		for _, tc := range suite.TestCases {
+			convertedTestCase := testreport.TestCase{
+				XMLName:           tc.XMLName,
+				ConfigurationHash: tc.ConfigurationHash,
+				Name:              tc.Name,
+				ClassName:         tc.ClassName,
+				Time:              tc.Time,
+			}
+
+			if tc.Skipped != nil {
+				convertedTestCase.Skipped = &testreport.Skipped{
+					XMLName: tc.Skipped.XMLName,
+				}
+			}
+
+			// Converting Error and SystemErr fields into Failure field
 			var messages []string
 
 			if tc.Failure != nil {
@@ -90,18 +119,18 @@ func regroupErrors(suites []TestSuite) []TestSuite {
 				messages = append(messages, "System error:\n"+tc.SystemErr)
 			}
 
-			tc.Error, tc.SystemErr = nil, ""
-			if messages != nil {
-				tc.Failure = &Failure{
+			if len(messages) > 0 {
+				convertedTestCase.Failure = &testreport.Failure{
 					Value: strings.Join(messages, "\n\n"),
 				}
 			}
 
-			suites[testSuiteIndex].Failures += suites[testSuiteIndex].Errors
-			suites[testSuiteIndex].Errors = 0
-			suites[testSuiteIndex].TestCases[testCaseIndex] = tc
+			convertedTestSuite.Failures += suite.Errors
+			convertedTestSuite.TestCases = append(convertedTestSuite.TestCases, convertedTestCase)
 		}
+
+		convertedReport.TestSuites = append(convertedReport.TestSuites, convertedTestSuite)
 	}
 
-	return suites
+	return convertedReport
 }
