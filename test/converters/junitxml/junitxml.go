@@ -92,38 +92,7 @@ func convertToReport(report TestReport) testreport.TestReport {
 				}
 			}
 
-			// Converting Error and SystemErr fields into Failure field
-			var messages []string
-
-			if tc.Failure != nil {
-				if len(strings.TrimSpace(tc.Failure.Message)) > 0 {
-					messages = append(messages, tc.Failure.Message)
-				}
-
-				if len(strings.TrimSpace(tc.Failure.Value)) > 0 {
-					messages = append(messages, tc.Failure.Value)
-				}
-			}
-
-			if tc.Error != nil {
-				if len(strings.TrimSpace(tc.Error.Message)) > 0 {
-					messages = append(messages, "Error message:\n"+tc.Error.Message)
-				}
-
-				if len(strings.TrimSpace(tc.Error.Value)) > 0 {
-					messages = append(messages, "Error value:\n"+tc.Error.Value)
-				}
-			}
-
-			if len(tc.SystemErr) > 0 {
-				messages = append(messages, "System error:\n"+tc.SystemErr)
-			}
-
-			if len(messages) > 0 {
-				convertedTestCase.Failure = &testreport.Failure{
-					Value: strings.Join(messages, "\n\n"),
-				}
-			}
+			convertedTestCase.Failure = convertErrorsToFailure(tc.Failure, tc.Error, tc.SystemErr)
 
 			convertedTestSuite.Failures += suite.Errors
 			convertedTestSuite.TestCases = append(convertedTestSuite.TestCases, convertedTestCase)
@@ -133,4 +102,39 @@ func convertToReport(report TestReport) testreport.TestReport {
 	}
 
 	return convertedReport
+}
+
+func convertErrorsToFailure(failure *Failure, error *Error, systemErr string) *testreport.Failure {
+	var messages []string
+
+	if failure != nil {
+		if len(strings.TrimSpace(failure.Message)) > 0 {
+			messages = append(messages, failure.Message)
+		}
+
+		if len(strings.TrimSpace(failure.Value)) > 0 {
+			messages = append(messages, failure.Value)
+		}
+	}
+
+	if error != nil {
+		if len(strings.TrimSpace(error.Message)) > 0 {
+			messages = append(messages, "Error message:\n"+error.Message)
+		}
+
+		if len(strings.TrimSpace(error.Value)) > 0 {
+			messages = append(messages, "Error value:\n"+error.Value)
+		}
+	}
+
+	if len(systemErr) > 0 {
+		messages = append(messages, "System error:\n"+systemErr)
+	}
+
+	if len(messages) > 0 {
+		return &testreport.Failure{
+			Value: strings.Join(messages, "\n\n"),
+		}
+	}
+	return nil
 }
