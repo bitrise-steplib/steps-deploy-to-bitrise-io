@@ -47,7 +47,7 @@ func TestConverter_XML(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, []testreport.TestSuite{
 			{
-				Name: "BullsEyeTests", Tests: 5, Failures: 0, Skipped: 0, Errors: 0, Time: 0.9774,
+				Name: "BullsEyeTests", Tests: 5, Failures: 0, Skipped: 0, Time: 0.9774,
 				TestCases: []testreport.TestCase{
 					{
 						Name: "testStartNewRoundUsesRandomValueFromApiRequest()", ClassName: "BullsEyeFakeTests",
@@ -72,7 +72,7 @@ func TestConverter_XML(t *testing.T) {
 				},
 			},
 			{
-				Name: "BullsEyeSlowTests", Tests: 2, Failures: 0, Skipped: 0, Errors: 0, Time: 0.53,
+				Name: "BullsEyeSlowTests", Tests: 2, Failures: 0, Skipped: 0, Time: 0.53,
 				TestCases: []testreport.TestCase{
 					{
 						Name: "testApiCallCompletes()", ClassName: "BullsEyeSlowTests",
@@ -85,7 +85,7 @@ func TestConverter_XML(t *testing.T) {
 				},
 			},
 			{
-				Name: "BullsEyeUITests", Tests: 1, Failures: 0, Skipped: 0, Errors: 0, Time: 9,
+				Name: "BullsEyeUITests", Tests: 1, Failures: 0, Skipped: 0, Time: 9,
 				TestCases: []testreport.TestCase{
 					{
 						Name: "testGameStyleSwitch()", ClassName: "BullsEyeUITests",
@@ -94,7 +94,7 @@ func TestConverter_XML(t *testing.T) {
 				},
 			},
 			{
-				Name: "BullsEyeFlakyTests", Tests: 2, Failures: 0, Skipped: 1, Errors: 0, Time: 0.12,
+				Name: "BullsEyeFlakyTests", Tests: 2, Failures: 0, Skipped: 1, Time: 0.12,
 				TestCases: []testreport.TestCase{
 					{
 						Name: "testFlakyFeature()", ClassName: "BullsEyeFlakyTests", Time: 0.1,
@@ -131,7 +131,6 @@ func TestConverter_XML(t *testing.T) {
 				Tests:    3,
 				Failures: 1,
 				Skipped:  1,
-				Errors:   0,
 				Time:     0.435,
 				TestCases: []testreport.TestCase{
 					{

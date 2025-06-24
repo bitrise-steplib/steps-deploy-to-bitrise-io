@@ -33,7 +33,7 @@ func (c *Converter) Convert() (testreport.TestReport, error) {
 		mergedReport.TestSuites = append(mergedReport.TestSuites, report.TestSuites...)
 	}
 
-	return convertToReport(mergedReport), nil
+	return convertTestReport(mergedReport), nil
 }
 
 func parseTestReport(result resultReader) (TestReport, error) {
@@ -61,47 +61,55 @@ func parseTestReport(result resultReader) (TestReport, error) {
 // with 2 newlines and error category prefix
 // the two newlines applied only if there is a failure message already
 // this is required because our testing addon currently handles failure field properly
-func convertToReport(report TestReport) testreport.TestReport {
+func convertTestReport(report TestReport) testreport.TestReport {
 	convertedReport := testreport.TestReport{
 		XMLName: report.XMLName,
 	}
 
-	for _, suite := range report.TestSuites {
-		convertedTestSuite := testreport.TestSuite{
-			XMLName:  suite.XMLName,
-			Name:     suite.Name,
-			Tests:    suite.Tests,
-			Failures: suite.Failures,
-			Skipped:  suite.Skipped,
-			Errors:   0,
-			Time:     suite.Time,
-		}
-
-		for _, tc := range suite.TestCases {
-			convertedTestCase := testreport.TestCase{
-				XMLName:           tc.XMLName,
-				ConfigurationHash: tc.ConfigurationHash,
-				Name:              tc.Name,
-				ClassName:         tc.ClassName,
-				Time:              tc.Time,
-			}
-
-			if tc.Skipped != nil {
-				convertedTestCase.Skipped = &testreport.Skipped{
-					XMLName: tc.Skipped.XMLName,
-				}
-			}
-
-			convertedTestCase.Failure = convertErrorsToFailure(tc.Failure, tc.Error, tc.SystemErr)
-
-			convertedTestSuite.Failures += suite.Errors
-			convertedTestSuite.TestCases = append(convertedTestSuite.TestCases, convertedTestCase)
-		}
-
+	for _, testSuit := range report.TestSuites {
+		convertedTestSuite := convertTestSuit(testSuit)
 		convertedReport.TestSuites = append(convertedReport.TestSuites, convertedTestSuite)
 	}
 
 	return convertedReport
+}
+
+func convertTestSuit(testSuit TestSuite) testreport.TestSuite {
+	convertedTestSuite := testreport.TestSuite{
+		XMLName:  testSuit.XMLName,
+		Name:     testSuit.Name,
+		Tests:    testSuit.Tests,
+		Failures: testSuit.Failures + testSuit.Errors,
+		Skipped:  testSuit.Skipped,
+		Time:     testSuit.Time,
+	}
+
+	for _, testCase := range testSuit.TestCases {
+		convertedTestCase := convertTestCase(testCase)
+		convertedTestSuite.TestCases = append(convertedTestSuite.TestCases, convertedTestCase)
+	}
+
+	return convertedTestSuite
+}
+
+func convertTestCase(testCase TestCase) testreport.TestCase {
+	convertedTestCase := testreport.TestCase{
+		XMLName:           testCase.XMLName,
+		ConfigurationHash: testCase.ConfigurationHash,
+		Name:              testCase.Name,
+		ClassName:         testCase.ClassName,
+		Time:              testCase.Time,
+	}
+
+	if testCase.Skipped != nil {
+		convertedTestCase.Skipped = &testreport.Skipped{
+			XMLName: testCase.Skipped.XMLName,
+		}
+	}
+
+	convertedTestCase.Failure = convertErrorsToFailure(testCase.Failure, testCase.Error, testCase.SystemErr)
+
+	return convertedTestCase
 }
 
 func convertErrorsToFailure(failure *Failure, error *Error, systemErr string) *testreport.Failure {
