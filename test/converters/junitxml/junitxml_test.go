@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_parseTestSuites(t *testing.T) {
+func Test_parseTestReport(t *testing.T) {
 	tests := []struct {
 		name    string
 		path    string
@@ -29,7 +29,7 @@ func Test_parseTestSuites(t *testing.T) {
 	}
 }
 
-func Test_regroupErrors(t *testing.T) {
+func Test_convertTestReport(t *testing.T) {
 	tests := []struct {
 		name   string
 		suites []TestSuite
@@ -304,7 +304,7 @@ func Test_regroupErrors(t *testing.T) {
 	}
 }
 
-func TestConverter_XML(t *testing.T) {
+func TestConverter_Convert(t *testing.T) {
 	tests := []struct {
 		name    string
 		results []resultReader
@@ -312,7 +312,7 @@ func TestConverter_XML(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "Error message in Message atttribute of Failure element",
+			name: "Error message in Message attribute of Failure element",
 			results: []resultReader{&stringReader{
 				Contents: `<?xml version="1.0" encoding="UTF-8"?>
 <testsuites tests="2" failures="1">
@@ -367,6 +367,67 @@ func TestConverter_XML(t *testing.T) {
 				require.Error(t, err)
 			} else {
 				require.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
+func TestConverter_Convert_Grouped_report(t *testing.T) {
+	tests := []struct {
+		name    string
+		results []resultReader
+		want    testreport.TestReport
+		wantErr bool
+	}{
+		{
+			name:    "Error message in Message attribute of Failure element",
+			results: []resultReader{&fileReader{Filename: "./testdata/flaky_test.xml"}},
+			want: testreport.TestReport{
+				XMLName: xml.Name{Space: "", Local: ""},
+				TestSuites: []testreport.TestSuite{
+					{
+						XMLName: xml.Name{Space: "", Local: "testsuite"},
+						Name:    "My Test Suite",
+						Tests:   2, Failures: 0, Skipped: 0,
+						Time: 28.844,
+						TestCases: []testreport.TestCase{
+							{XMLName: xml.Name{Space: "", Local: "testcase"}, ConfigurationHash: "", Name: "Testcase number 1", ClassName: "example.exampleTest", Time: 0.764,
+								Failure: &testreport.Failure{XMLName: xml.Name{Space: "", Local: "failure"}, Value: "System error:\nSome error message 1"},
+								Skipped: nil},
+							{XMLName: xml.Name{Space: "", Local: "testcase"}, ConfigurationHash: "", Name: "Testcase number 2", ClassName: "example.exampleTest", Time: 0.164,
+								Failure: &testreport.Failure{XMLName: xml.Name{Space: "", Local: "failure"}, Value: "System error:\nSome error message 2"},
+								Skipped: nil},
+							{XMLName: xml.Name{Space: "", Local: "testcase"}, ConfigurationHash: "", Name: "Testcase number 3", ClassName: "example.exampleTest", Time: 0.445,
+								Failure: &testreport.Failure{XMLName: xml.Name{Space: "", Local: "failure"}, Value: "Failure message\n\nError value:\nError\n\nSystem error:\nSome error message 3"},
+								Skipped: &testreport.Skipped{XMLName: xml.Name{Space: "", Local: "skipped"}}},
+							{XMLName: xml.Name{Space: "", Local: "testcase"}, ConfigurationHash: "", Name: "Testcase number 3", ClassName: "example.exampleTest", Time: 0,
+								Failure: &testreport.Failure{XMLName: xml.Name{Space: "", Local: "failure"}, Value: "System error:\nFlaky failure system error"},
+								Skipped: nil},
+							{XMLName: xml.Name{Space: "", Local: "testcase"}, ConfigurationHash: "", Name: "Testcase number 3", ClassName: "example.exampleTest", Time: 0,
+								Failure: &testreport.Failure{XMLName: xml.Name{Space: "", Local: "failure"}, Value: "System error:\nFlaky error system error"},
+								Skipped: nil},
+							{XMLName: xml.Name{Space: "", Local: "testcase"}, ConfigurationHash: "", Name: "Testcase number 3", ClassName: "example.exampleTest", Time: 0,
+								Failure: &testreport.Failure{XMLName: xml.Name{Space: "", Local: "failure"}, Value: "System error:\nRerun failure system error"},
+								Skipped: nil},
+							{XMLName: xml.Name{Space: "", Local: "testcase"}, ConfigurationHash: "", Name: "Testcase number 3", ClassName: "example.exampleTest", Time: 0,
+								Failure: &testreport.Failure{XMLName: xml.Name{Space: "", Local: "failure"}, Value: "System error:\nRerun error system error"},
+								Skipped: nil},
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := &Converter{
+				results: tt.results,
+			}
+			got, err := h.Convert()
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.EqualValues(t, tt.want, got)
 			}
 		})
 	}

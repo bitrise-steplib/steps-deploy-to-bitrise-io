@@ -84,12 +84,169 @@ func convertTestSuit(testSuit TestSuite) testreport.TestSuite {
 		Time:     testSuit.Time,
 	}
 
-	for _, testCase := range testSuit.TestCases {
+	flattenedTestCases := flattenGroupedTestCases(testSuit.TestCases)
+
+	for _, testCase := range flattenedTestCases {
 		convertedTestCase := convertTestCase(testCase)
 		convertedTestSuite.TestCases = append(convertedTestSuite.TestCases, convertedTestCase)
 	}
 
 	return convertedTestSuite
+}
+
+func flattenGroupedTestCases(testCases []TestCase) []TestCase {
+	var flattenedTestCases []TestCase
+	for _, testCase := range testCases {
+		flattenedTestCases = append(flattenedTestCases, testCase)
+
+		if len(testCase.FlakyFailures) == 0 && len(testCase.FlakyErrors) == 0 &&
+			len(testCase.RerunFailures) == 0 && len(testCase.RerunErrors) == 0 {
+			continue
+		}
+
+		flattenedTestCase := TestCase{
+			XMLName:           testCase.XMLName,
+			ConfigurationHash: testCase.ConfigurationHash,
+			Name:              testCase.Name,
+			ClassName:         testCase.ClassName,
+			Time:              0,
+			Failure:           nil,
+			Skipped:           nil,
+			Error:             nil,
+			FlakyFailures:     nil,
+			RerunFailures:     nil,
+		}
+
+		for _, flakyFailure := range testCase.FlakyFailures {
+			flattenedTestCase.Failure = convertFlakyFailureToFailure(flakyFailure)
+			flattenedTestCases = append(flattenedTestCases, flattenedTestCase)
+		}
+
+		for _, flakyError := range testCase.FlakyErrors {
+			flattenedTestCase.Failure = convertFlakyErrorToFailure(flakyError)
+			flattenedTestCases = append(flattenedTestCases, flattenedTestCase)
+		}
+
+		for _, rerunfailure := range testCase.RerunFailures {
+			flattenedTestCase.Failure = convertRerunFailureToFailure(rerunfailure)
+			flattenedTestCases = append(flattenedTestCases, flattenedTestCase)
+		}
+
+		for _, rerunError := range testCase.RerunErrors {
+			flattenedTestCase.Failure = convertRerunErrorToFailure(rerunError)
+			flattenedTestCases = append(flattenedTestCases, flattenedTestCase)
+		}
+
+	}
+	return flattenedTestCases
+}
+
+func convertFlakyFailureToFailure(flakyFailure FlakyFailure) *Failure {
+	var message string
+	if len(strings.TrimSpace(flakyFailure.Type)) > 0 {
+		message = flakyFailure.Type
+	}
+	if len(strings.TrimSpace(flakyFailure.Message)) > 0 {
+		if len(message) > 0 {
+			message += ": "
+		}
+		message += flakyFailure.Message
+	}
+
+	if len(strings.TrimSpace(flakyFailure.SystemErr)) > 0 {
+		if len(message) > 0 {
+			message += "\n\n"
+		}
+		message += "System error:\n" + flakyFailure.SystemErr
+	}
+
+	if len(message) > 0 {
+		return &Failure{
+			Value: message,
+		}
+	}
+	return nil
+}
+
+func convertFlakyErrorToFailure(flakyError FlakyError) *Failure {
+	var message string
+	if len(strings.TrimSpace(flakyError.Type)) > 0 {
+		message = flakyError.Type
+	}
+	if len(strings.TrimSpace(flakyError.Message)) > 0 {
+		if len(message) > 0 {
+			message += ": "
+		}
+		message += flakyError.Message
+	}
+
+	if len(strings.TrimSpace(flakyError.SystemErr)) > 0 {
+		if len(message) > 0 {
+			message += "\n\n"
+		}
+		message += "System error:\n" + flakyError.SystemErr
+	}
+
+	if len(message) > 0 {
+		return &Failure{
+			Value: message,
+		}
+	}
+	return nil
+}
+
+func convertRerunFailureToFailure(rerunFailure RerunFailure) *Failure {
+	var message string
+	if len(strings.TrimSpace(rerunFailure.Type)) > 0 {
+		message = rerunFailure.Type
+	}
+	if len(strings.TrimSpace(rerunFailure.Message)) > 0 {
+		if len(message) > 0 {
+			message += ": "
+		}
+		message += rerunFailure.Message
+	}
+
+	if len(strings.TrimSpace(rerunFailure.SystemErr)) > 0 {
+		if len(message) > 0 {
+			message += "\n\n"
+		}
+		message += "System error:\n" + rerunFailure.SystemErr
+	}
+
+	if len(message) > 0 {
+		return &Failure{
+			Value: message,
+		}
+	}
+	return nil
+}
+
+func convertRerunErrorToFailure(rerunError RerunError) *Failure {
+	var message string
+	if len(strings.TrimSpace(rerunError.Type)) > 0 {
+		message = rerunError.Type
+	}
+	if len(strings.TrimSpace(rerunError.Message)) > 0 {
+		if len(message) > 0 {
+			message += ": "
+		}
+		message += rerunError.Message
+	}
+
+	if len(strings.TrimSpace(rerunError.SystemErr)) > 0 {
+		if len(message) > 0 {
+			message += "\n\n"
+		}
+		message += "System error:\n" + rerunError.SystemErr
+	}
+
+	if len(message) > 0 {
+		return &Failure{
+			Value: message,
+		}
+	}
+	return nil
 }
 
 func convertTestCase(testCase TestCase) testreport.TestCase {
@@ -141,7 +298,8 @@ func convertErrorsToFailure(failure *Failure, error *Error, systemErr string) *t
 
 	if len(messages) > 0 {
 		return &testreport.Failure{
-			Value: strings.Join(messages, "\n\n"),
+			XMLName: xml.Name{Local: "failure"},
+			Value:   strings.Join(messages, "\n\n"),
 		}
 	}
 	return nil
