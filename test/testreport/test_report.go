@@ -22,13 +22,16 @@ type TestSuite struct {
 
 type TestCase struct {
 	XMLName xml.Name `xml:"testcase"`
-	// ConfigurationHash is used to distinguish the same test case runs, performed with different build configurations (e.g., Debug vs. Release) or different devices/simulators
-	ConfigurationHash string   `xml:"configuration-hash,attr"`
-	Name              string   `xml:"name,attr"`
-	ClassName         string   `xml:"classname,attr"`
-	Time              float64  `xml:"time,attr"`
-	Failure           *Failure `xml:"failure,omitempty"`
-	Skipped           *Skipped `xml:"skipped,omitempty"`
+	// ConfigurationHash is used to distinguish the same test case runs,
+	// performed with different build configurations (e.g., Debug vs. Release) or different devices/simulators
+	ConfigurationHash string  `xml:"configuration-hash,attr"`
+	Name              string  `xml:"name,attr"`
+	ClassName         string  `xml:"classname,attr"`
+	Time              float64 `xml:"time,attr"`
+	// TODO: Currently a JUnit report's TestCase.Error and TestCase.SystemErr is merged into TestCase.Failure.Value field,
+	// this way test execution errors are not distinguished from test failures.
+	Failure *Failure `xml:"failure,omitempty"`
+	Skipped *Skipped `xml:"skipped,omitempty"`
 }
 
 type Failure struct {
