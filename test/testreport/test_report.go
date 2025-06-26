@@ -4,13 +4,12 @@ import (
 	"encoding/xml"
 )
 
-// TestReport ...
+// TestReport is the internal test report structure used to present test results.
 type TestReport struct {
 	XMLName    xml.Name    `xml:"testsuites"`
 	TestSuites []TestSuite `xml:"testsuite"`
 }
 
-// TestSuite ...
 type TestSuite struct {
 	XMLName   xml.Name   `xml:"testsuite"`
 	Name      string     `xml:"name,attr"`
@@ -21,9 +20,9 @@ type TestSuite struct {
 	TestCases []TestCase `xml:"testcase"`
 }
 
-// TestCase ...
 type TestCase struct {
-	XMLName           xml.Name `xml:"testcase"`
+	XMLName xml.Name `xml:"testcase"`
+	// ConfigurationHash is used to distinguish the same test case runs, performed with different build configurations (e.g., Debug vs. Release) or different devices/simulators
 	ConfigurationHash string   `xml:"configuration-hash,attr"`
 	Name              string   `xml:"name,attr"`
 	ClassName         string   `xml:"classname,attr"`
@@ -32,21 +31,11 @@ type TestCase struct {
 	Skipped           *Skipped `xml:"skipped,omitempty"`
 }
 
-// Failure ...
 type Failure struct {
 	XMLName xml.Name `xml:"failure,omitempty"`
-	Message string   `xml:"message,attr,omitempty"`
 	Value   string   `xml:",chardata"`
 }
 
-// Skipped ...
 type Skipped struct {
 	XMLName xml.Name `xml:"skipped,omitempty"`
-}
-
-// Error ...
-type Error struct {
-	XMLName xml.Name `xml:"error,omitempty"`
-	Message string   `xml:"message,attr,omitempty"`
-	Value   string   `xml:",chardata"`
 }
