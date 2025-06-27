@@ -66,26 +66,26 @@ func convertTestReport(report TestReport) testreport.TestReport {
 		XMLName: report.XMLName,
 	}
 
-	for _, testSuit := range report.TestSuites {
-		convertedTestSuite := convertTestSuit(testSuit)
+	for _, testSuite := range report.TestSuites {
+		convertedTestSuite := convertTestSuite(testSuite)
 		convertedReport.TestSuites = append(convertedReport.TestSuites, convertedTestSuite)
 	}
 
 	return convertedReport
 }
 
-func convertTestSuit(testSuit TestSuite) testreport.TestSuite {
+func convertTestSuite(testSuite TestSuite) testreport.TestSuite {
 	convertedTestSuite := testreport.TestSuite{
-		XMLName: testSuit.XMLName,
-		Name:    testSuit.Name,
-		Time:    testSuit.Time,
+		XMLName: testSuite.XMLName,
+		Name:    testSuite.Name,
+		Time:    testSuite.Time,
 	}
 
 	tests := 0
 	failures := 0
 	skipped := 0
 
-	flattenedTestCases := flattenGroupedTestCases(testSuit.TestCases)
+	flattenedTestCases := flattenGroupedTestCases(testSuite.TestCases)
 	for _, testCase := range flattenedTestCases {
 		convertedTestCase := convertTestCase(testCase)
 		convertedTestSuite.TestCases = append(convertedTestSuite.TestCases, convertedTestCase)
