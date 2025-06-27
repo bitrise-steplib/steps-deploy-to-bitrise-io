@@ -215,11 +215,11 @@ func ParseTestResults(testsRootDir string, useLegacyXCResultExtractionMethod boo
 						return nil, err
 					}
 
-					junitXML, err := converter.Convert()
+					testReport, err := converter.Convert()
 					if err != nil {
 						return nil, err
 					}
-					xmlData, err := xml.MarshalIndent(junitXML, "", " ")
+					xmlData, err := xml.MarshalIndent(testReport, "", " ")
 					if err != nil {
 						return nil, err
 					}

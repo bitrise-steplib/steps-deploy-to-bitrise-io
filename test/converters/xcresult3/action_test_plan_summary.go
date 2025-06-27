@@ -45,7 +45,7 @@ func (s ActionTestPlanRunSummaries) tests() ([]string, map[string][]ActionTestSu
 	var testSuiteOrder []string
 	for _, summary := range s.Summaries.Values {
 		for _, testableSummary := range summary.TestableSummaries.Values {
-			// test suit
+			// test suite
 			name := testableSummary.Name.Value
 			if _, found := summaryGroupsByName[name]; !found {
 				testSuiteOrder = append(testSuiteOrder, name)

@@ -14,6 +14,7 @@ import (
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testreport"
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
 
 	"github.com/bitrise-io/go-utils/log"
 )
@@ -146,7 +147,6 @@ func TestXCresult3Converters(t *testing.T) {
 	convertersPackageDir := filepath.Dir(b)
 	testPackageDir := filepath.Dir(convertersPackageDir)
 	projectRootDir := filepath.Dir(testPackageDir)
-	testFilePath := filepath.Join(projectRootDir, "_tmp/xcresults/xcresult3_multi_level_UI_tests.xcresult")
 
 	for _, test := range []struct {
 		name          string
@@ -159,20 +159,45 @@ func TestXCresult3Converters(t *testing.T) {
 		{
 			name:          "xcresult3",
 			converter:     &xcresult3.Converter{},
-			testFilePaths: []string{testFilePath},
+			testFilePaths: []string{filepath.Join(projectRootDir, "_tmp/xcresults/xcresult3_multi_level_UI_tests.xcresult")},
 			wantDetect:    true,
 			wantXMLError:  false,
 			wantXML:       want,
 		},
+		{
+			name:          "Long running test",
+			converter:     &xcresult3.Converter{},
+			testFilePaths: []string{filepath.Join(testPackageDir, "testdata/test_result_with_18m_long_test_case.xcresult")},
+			wantDetect:    true,
+			wantXMLError:  false,
+			wantXML: testreport.TestReport{
+				TestSuites: []testreport.TestSuite{
+					{
+						Name:     "BullsEyeSlowTests",
+						Tests:    1,
+						Failures: 0,
+						Time:     1080,
+						TestCases: []testreport.TestCase{
+							{
+								Name:      "testSleepingFor16mins()",
+								ClassName: "BullsEyeSlowTests",
+								Time:      1080,
+							},
+						},
+					},
+				},
+			},
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			if got := test.converter.Detect(test.testFilePaths); got != test.wantDetect {
-				t.Fatalf("detect want: %v, got: %v", test.wantDetect, got)
-			}
+			gotDetected := test.converter.Detect(test.testFilePaths)
+			require.Equal(t, test.wantDetect, gotDetected)
 
 			got, err := test.converter.Convert()
-			if test.wantXMLError && err == nil {
-				t.Fatalf("xml error want: %v, got: %v", test.wantXMLError, got)
+			if test.wantXMLError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
 			}
 
 			opts := []cmp.Option{
