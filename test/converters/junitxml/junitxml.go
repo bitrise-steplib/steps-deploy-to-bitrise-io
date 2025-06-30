@@ -121,31 +121,25 @@ func flattenGroupedTestCases(testCases []TestCase) []TestCase {
 			ConfigurationHash: testCase.ConfigurationHash,
 			Name:              testCase.Name,
 			ClassName:         testCase.ClassName,
-			Time:              0,
-			Failure:           nil,
-			Skipped:           nil,
-			Error:             nil,
-			FlakyFailures:     nil,
-			RerunFailures:     nil,
 		}
 
 		for _, flakyFailure := range testCase.FlakyFailures {
-			flattenedTestCase.Failure = convertFlakyFailureToFailure(flakyFailure)
+			flattenedTestCase.Failure = convertToFailure(flakyFailure.Type, flakyFailure.Message, flakyFailure.SystemErr)
 			flattenedTestCases = append(flattenedTestCases, flattenedTestCase)
 		}
 
 		for _, flakyError := range testCase.FlakyErrors {
-			flattenedTestCase.Failure = convertFlakyErrorToFailure(flakyError)
+			flattenedTestCase.Failure = convertToFailure(flakyError.Type, flakyError.Message, flakyError.SystemErr)
 			flattenedTestCases = append(flattenedTestCases, flattenedTestCase)
 		}
 
 		for _, rerunfailure := range testCase.RerunFailures {
-			flattenedTestCase.Failure = convertRerunFailureToFailure(rerunfailure)
+			flattenedTestCase.Failure = convertToFailure(rerunfailure.Type, rerunfailure.Message, rerunfailure.SystemErr)
 			flattenedTestCases = append(flattenedTestCases, flattenedTestCase)
 		}
 
 		for _, rerunError := range testCase.RerunErrors {
-			flattenedTestCase.Failure = convertRerunErrorToFailure(rerunError)
+			flattenedTestCase.Failure = convertToFailure(rerunError.Type, rerunError.Message, rerunError.SystemErr)
 			flattenedTestCases = append(flattenedTestCases, flattenedTestCase)
 		}
 
@@ -153,104 +147,23 @@ func flattenGroupedTestCases(testCases []TestCase) []TestCase {
 	return flattenedTestCases
 }
 
-func convertFlakyFailureToFailure(flakyFailure FlakyFailure) *Failure {
+func convertToFailure(itemType, failureMessage, systemErr string) *Failure {
 	var message string
-	if len(strings.TrimSpace(flakyFailure.Type)) > 0 {
-		message = flakyFailure.Type
+	if len(strings.TrimSpace(itemType)) > 0 {
+		message = itemType
 	}
-	if len(strings.TrimSpace(flakyFailure.Message)) > 0 {
+	if len(strings.TrimSpace(failureMessage)) > 0 {
 		if len(message) > 0 {
 			message += ": "
 		}
-		message += flakyFailure.Message
+		message += failureMessage
 	}
 
-	if len(strings.TrimSpace(flakyFailure.SystemErr)) > 0 {
+	if len(strings.TrimSpace(systemErr)) > 0 {
 		if len(message) > 0 {
 			message += "\n\n"
 		}
-		message += "System error:\n" + flakyFailure.SystemErr
-	}
-
-	if len(message) > 0 {
-		return &Failure{
-			Value: message,
-		}
-	}
-	return nil
-}
-
-func convertFlakyErrorToFailure(flakyError FlakyError) *Failure {
-	var message string
-	if len(strings.TrimSpace(flakyError.Type)) > 0 {
-		message = flakyError.Type
-	}
-	if len(strings.TrimSpace(flakyError.Message)) > 0 {
-		if len(message) > 0 {
-			message += ": "
-		}
-		message += flakyError.Message
-	}
-
-	if len(strings.TrimSpace(flakyError.SystemErr)) > 0 {
-		if len(message) > 0 {
-			message += "\n\n"
-		}
-		message += "System error:\n" + flakyError.SystemErr
-	}
-
-	if len(message) > 0 {
-		return &Failure{
-			Value: message,
-		}
-	}
-	return nil
-}
-
-func convertRerunFailureToFailure(rerunFailure RerunFailure) *Failure {
-	var message string
-	if len(strings.TrimSpace(rerunFailure.Type)) > 0 {
-		message = rerunFailure.Type
-	}
-	if len(strings.TrimSpace(rerunFailure.Message)) > 0 {
-		if len(message) > 0 {
-			message += ": "
-		}
-		message += rerunFailure.Message
-	}
-
-	if len(strings.TrimSpace(rerunFailure.SystemErr)) > 0 {
-		if len(message) > 0 {
-			message += "\n\n"
-		}
-		message += "System error:\n" + rerunFailure.SystemErr
-	}
-
-	if len(message) > 0 {
-		return &Failure{
-			Value: message,
-		}
-	}
-	return nil
-}
-
-func convertRerunErrorToFailure(rerunError RerunError) *Failure {
-	var message string
-	if len(strings.TrimSpace(rerunError.Type)) > 0 {
-		message = rerunError.Type
-	}
-	if len(strings.TrimSpace(rerunError.Message)) > 0 {
-		if len(message) > 0 {
-			message += ": "
-		}
-		message += rerunError.Message
-	}
-
-	if len(strings.TrimSpace(rerunError.SystemErr)) > 0 {
-		if len(message) > 0 {
-			message += "\n\n"
-		}
-		message += "System error:\n" + rerunError.SystemErr
+		message += "System error:\n" + systemErr
 	}
 
 	if len(message) > 0 {
