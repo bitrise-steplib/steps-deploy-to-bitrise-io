@@ -33,6 +33,44 @@ type TestCase struct {
 	Skipped           *Skipped `xml:"skipped,omitempty"`
 	Error             *Error   `xml:"error,omitempty"`
 	SystemErr         string   `xml:"system-err,omitempty"`
+	SystemOut         string   `xml:"system-out,omitempty"`
+
+	FlakyFailures []FlakyFailure `xml:"flakyFailure,omitempty"`
+	FlakyErrors   []FlakyError   `xml:"flakyError,omitempty"`
+	RerunFailures []RerunFailure `xml:"rerunFailure,omitempty"`
+	RerunErrors   []RerunError   `xml:"rerunError,omitempty"`
+}
+
+type FlakyFailure struct {
+	XMLName   xml.Name `xml:"flakyFailure"`
+	Message   string   `xml:"message,attr"`
+	Type      string   `xml:"type,attr"`
+	SystemErr string   `xml:"system-err,omitempty"`
+	SystemOut string   `xml:"system-out,omitempty"`
+}
+
+type FlakyError struct {
+	XMLName   xml.Name `xml:"flakyError"`
+	Message   string   `xml:"message,attr"`
+	Type      string   `xml:"type,attr"`
+	SystemErr string   `xml:"system-err,omitempty"`
+	SystemOut string   `xml:"system-out,omitempty"`
+}
+
+type RerunFailure struct {
+	XMLName   xml.Name `xml:"rerunFailure"`
+	Message   string   `xml:"message,attr"`
+	Type      string   `xml:"type,attr"`
+	SystemErr string   `xml:"system-err,omitempty"`
+	SystemOut string   `xml:"system-out,omitempty"`
+}
+
+type RerunError struct {
+	XMLName   xml.Name `xml:"rerunError"`
+	Message   string   `xml:"message,attr"`
+	Type      string   `xml:"type,attr"`
+	SystemErr string   `xml:"system-err,omitempty"`
+	SystemOut string   `xml:"system-out,omitempty"`
 }
 
 // Failure ...
