@@ -17,7 +17,7 @@ import (
 // run `bitrise run download_sample_artifacts` before running tests here,
 // which will download https://github.com/bitrise-io/sample-artifacts
 // into the _tmp dir.
-func copyTestdataToDir(t testing.TB, pathInTestdataDir, dirPathToCopyInto string) string {
+func copyTestdataToDir(t require.TestingT, pathInTestdataDir, dirPathToCopyInto string) string {
 	err := command.CopyDir(
 		filepath.Join("../../../_tmp/", pathInTestdataDir),
 		dirPathToCopyInto,
