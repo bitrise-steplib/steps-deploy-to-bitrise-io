@@ -244,16 +244,25 @@ func exportAttachments(xcresultPath, outputPath string) error {
 	return renameFiles(outputPath)
 }
 
-func renameFiles(outputPath string) error {
+func readManifest(outputPath string) ([]model3.TestAttachmentDetails, error) {
 	manifestPath := filepath.Join(outputPath, "manifest.json")
 	bytes, err := os.ReadFile(manifestPath)
 	if err != nil {
-		return fmt.Errorf("failed to read manifest.json: %w", err)
+		return nil, fmt.Errorf("failed to read manifest.json: %w", err)
 	}
 
 	var manifest []model3.TestAttachmentDetails
 	if err := json.Unmarshal(bytes, &manifest); err != nil {
-		return fmt.Errorf("failed to unmarshal manifest.json: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal manifest.json: %w", err)
+	}
+
+	return manifest, nil
+}
+
+func renameFiles(outputPath string) error {
+	manifest, err := readManifest(outputPath)
+	if err != nil {
+		return err
 	}
 
 	for _, attachmentDetail := range manifest {
@@ -267,10 +276,6 @@ func renameFiles(outputPath string) error {
 				log.Warnf("Failed to rename %s to %s", oldPath, newPath)
 			}
 		}
-	}
-
-	if err := os.Remove(manifestPath); err != nil {
-		return err
 	}
 
 	return nil

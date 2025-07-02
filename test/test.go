@@ -17,13 +17,15 @@ import (
 	logV2 "github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/retryhttp"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3/model3"
 	"github.com/hashicorp/go-retryablehttp"
 )
 
 // FileInfo ...
 type FileInfo struct {
-	FileName string `json:"filename"`
-	FileSize int    `json:"filesize"`
+	FileName   string `json:"filename"`
+	FileSize   int    `json:"filesize"`
+	TestCaseID string `json:"test_case_id,omitempty"` // Optional, used for test case attachments
 }
 
 // UploadURL ...
@@ -47,12 +49,17 @@ type UploadResponse struct {
 	UploadURL
 }
 
+type Attachment struct {
+	Path       string
+	TestCaseID string
+}
+
 // Result ...
 type Result struct {
-	Name       string
-	XMLContent []byte
-	ImagePaths []string
-	StepInfo   models.TestResultStepInfo
+	Name        string
+	XMLContent  []byte
+	Attachments []Attachment
+	StepInfo    models.TestResultStepInfo
 }
 
 // Results ...
@@ -94,15 +101,50 @@ func httpCall(apiToken, method, url string, input io.Reader, output interface{},
 	return nil
 }
 
-func findImages(testDir string) (imageFilePaths []string) {
-	for _, ext := range []string{".jpg", ".jpeg", ".png"} {
-		if paths, err := filepath.Glob(filepath.Join(testDir, "*"+ext)); err == nil {
-			imageFilePaths = append(imageFilePaths, paths...)
-		}
-		if paths, err := filepath.Glob(filepath.Join(testDir, "*"+strings.ToUpper(ext))); err == nil {
-			imageFilePaths = append(imageFilePaths, paths...)
+func findTestIdentifier(manifest []model3.TestAttachmentDetails, fileName string) string {
+	for _, attachmentDetail := range manifest {
+		for _, attachment := range attachmentDetail.Attachments {
+			if attachment.SuggestedHumanReadableName == fileName {
+				return attachmentDetail.TestIdentifier
+			}
+			if attachment.ExportedFileName == fileName {
+				return attachmentDetail.TestIdentifier
+			}
 		}
 	}
+	return ""
+}
+
+func findImages(testDir string) (imageFiles []Attachment) {
+	var manifest []model3.TestAttachmentDetails
+
+	manifestPath := filepath.Join(testDir, "manifest.json")
+	if isExists, err := pathutil.IsPathExists(manifestPath); err == nil && isExists {
+		if bytes, err := os.ReadFile(manifestPath); err == nil {
+			if err := json.Unmarshal(bytes, &manifest); err != nil {
+				manifest = nil // if manifest is not valid, reset it to nil
+			}
+		}
+		if err := os.Remove(manifestPath); err != nil {
+			fmt.Printf("Failed to remove manifest file: %s, error: %s\n", manifestPath, err)
+		}
+	}
+
+	for _, ext := range []string{".jpg", ".jpeg", ".png"} {
+		if paths, err := filepath.Glob(filepath.Join(testDir, "*"+ext)); err == nil {
+			for _, p := range paths {
+				fileName := filepath.Base(p)
+				imageFiles = append(imageFiles, Attachment{Path: p, TestCaseID: findTestIdentifier(manifest, fileName)})
+			}
+		}
+		if paths, err := filepath.Glob(filepath.Join(testDir, "*"+strings.ToUpper(ext))); err == nil {
+			for _, p := range paths {
+				fileName := filepath.Base(p)
+				imageFiles = append(imageFiles, Attachment{Path: p, TestCaseID: findTestIdentifier(manifest, fileName)})
+			}
+		}
+	}
+
 	return
 }
 
@@ -226,15 +268,14 @@ func ParseTestResults(testsRootDir string, useLegacyXCResultExtractionMethod boo
 					xmlData = append([]byte(`<?xml version="1.0" encoding="UTF-8"?>`+"\n"), xmlData...)
 
 					// so here I will have image paths, xml data, and step info per test dir in a bundle info
-					images := findImages(testPhaseDirPath)
-
-					logger.Debugf("found images: %d", len(images))
+					attachments := findImages(testPhaseDirPath)
+					logger.Debugf("found attachments: %d", len(attachments))
 
 					results = append(results, Result{
-						Name:       testInfo.Name,
-						XMLContent: xmlData,
-						ImagePaths: images,
-						StepInfo:   *stepInfo,
+						Name:        testInfo.Name,
+						XMLContent:  xmlData,
+						Attachments: attachments,
+						StepInfo:    *stepInfo,
 					})
 				}
 			}
@@ -256,14 +297,15 @@ func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug stri
 			Name: result.Name,
 			Step: result.StepInfo,
 		}
-		for _, asset := range result.ImagePaths {
-			fi, err := os.Stat(asset)
+		for _, asset := range result.Attachments {
+			fi, err := os.Stat(asset.Path)
 			if err != nil {
-				return fmt.Errorf("failed to get file info for %s: %w", asset, err)
+				return fmt.Errorf("failed to get file info for %s: %w", asset.Path, err)
 			}
 			uploadReq.Assets = append(uploadReq.Assets, FileInfo{
-				FileName: filepath.Base(asset),
-				FileSize: int(fi.Size()),
+				FileName:   filepath.Base(asset.Path),
+				FileSize:   int(fi.Size()),
+				TestCaseID: asset.TestCaseID,
 			})
 		}
 
@@ -285,14 +327,14 @@ func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug stri
 		}
 
 		for _, upload := range uploadResponse.Assets {
-			for _, file := range result.ImagePaths {
-				if filepath.Base(file) == upload.FileName {
-					fi, err := os.Open(file)
+			for _, file := range result.Attachments {
+				if filepath.Base(file.Path) == upload.FileName {
+					fi, err := os.Open(file.Path)
 					if err != nil {
-						return fmt.Errorf("failed to open test result attachment (%s): %w", file, err)
+						return fmt.Errorf("failed to open test result attachment (%s): %w", file.Path, err)
 					}
 					if err := httpCall("", http.MethodPut, upload.URL, fi, nil, logger); err != nil {
-						return fmt.Errorf("failed to upload test result attachment (%s): %w", file, err)
+						return fmt.Errorf("failed to upload test result attachment (%s): %w", file.Path, err)
 					}
 					break
 				}

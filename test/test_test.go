@@ -43,7 +43,11 @@ func Test_Upload(t *testing.T) {
 	testResponseID := "mock-test-id"
 	testXMLContent := []byte("test xml content")
 	testStepInfo := models.TestResultStepInfo{ID: "test-ID", Title: "test-Title", Version: "test-Version", Number: 19}
-	testAssetPaths := []string{filepath.Join(tempDir, "image1.png"), filepath.Join(tempDir, "image2.png"), filepath.Join(tempDir, "image3.png")}
+	testAssetPaths := []Attachment{
+		{Path: filepath.Join(tempDir, "image1.png"), TestCaseID: "test-case-1"},
+		{Path: filepath.Join(tempDir, "image2.png"), TestCaseID: "test-case-2"},
+		{Path: filepath.Join(tempDir, "image3.png"), TestCaseID: "test-case-3"},
+	}
 
 	if err := createDummyFilesInDirWithContent(tempDir, "dummy data", []string{"image1.png", "image2.png", "image3.png"}); err != nil {
 		t.Fatal(err)
@@ -51,9 +55,9 @@ func Test_Upload(t *testing.T) {
 
 	results := Results{
 		Result{
-			XMLContent: testXMLContent,
-			StepInfo:   testStepInfo,
-			ImagePaths: testAssetPaths,
+			XMLContent:  testXMLContent,
+			StepInfo:    testStepInfo,
+			Attachments: testAssetPaths,
 		},
 	}
 
@@ -115,8 +119,8 @@ func Test_Upload(t *testing.T) {
 			}
 
 			for _, assetPath := range testAssetPaths {
-				if filepath.Base(assetPath) == fName {
-					fileData, err := fileutil.ReadStringFromFile(assetPath)
+				if filepath.Base(assetPath.Path) == fName {
+					fileData, err := fileutil.ReadStringFromFile(assetPath.Path)
 					if err != nil {
 						t.Fatal(err) //nolint:govet // We should fix it one day, but it requires a bigger refactor
 					}
