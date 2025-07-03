@@ -125,9 +125,6 @@ func findImages(testDir string) (imageFiles []Attachment) {
 				manifest = nil // if manifest is not valid, reset it to nil
 			}
 		}
-		if err := os.Remove(manifestPath); err != nil {
-			fmt.Printf("Failed to remove manifest file: %s, error: %s\n", manifestPath, err)
-		}
 	}
 
 	for _, ext := range []string{".jpg", ".jpeg", ".png"} {

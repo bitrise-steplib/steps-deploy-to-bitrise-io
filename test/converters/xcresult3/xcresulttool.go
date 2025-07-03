@@ -3,12 +3,15 @@ package xcresult3
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/errorutil"
+	"github.com/bitrise-io/go-utils/pathutil"
 )
 
 func isXcresulttoolAvailable() bool {
@@ -125,6 +128,13 @@ func xcresulttoolExport(xcresultPth, id, outputPth string, useLegacyFlag bool) e
 
 	if id != "" {
 		args = append(args, "--id", id)
+	}
+
+	manifestPath := filepath.Join(outputPth, "manifest.json")
+	if isExists, err := pathutil.IsPathExists(manifestPath); err == nil && isExists {
+		if err := os.Remove(manifestPath); err != nil {
+			fmt.Printf("Failed to remove manifest file: %s, error: %s\n", manifestPath, err)
+		}
 	}
 
 	cmd := command.New("xcrun", args...)
