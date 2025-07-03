@@ -46,7 +46,7 @@ func Test_Upload(t *testing.T) {
 	testAssetPaths := []Attachment{
 		{Path: filepath.Join(tempDir, "image1.png"), TestCaseID: "test-case-1"},
 		{Path: filepath.Join(tempDir, "image2.png"), TestCaseID: "test-case-2"},
-		{Path: filepath.Join(tempDir, "image3.png"), TestCaseID: "test-case-3"},
+		{Path: filepath.Join(tempDir, "image3.png")},
 	}
 
 	if err := createDummyFilesInDirWithContent(tempDir, "dummy data", []string{"image1.png", "image2.png", "image3.png"}); err != nil {
@@ -84,6 +84,11 @@ func Test_Upload(t *testing.T) {
 			}
 
 			for _, asset := range uploadReq.Assets {
+				for _, testAsset := range testAssetPaths {
+					if filepath.Base(testAsset.Path) == asset.FileName && testAsset.TestCaseID != asset.TestCaseID {
+						t.Fatalf("test case ID mismatch: expected %s, got %s", testAsset.TestCaseID, asset.TestCaseID) //nolint:govet // We should fix it one day, but it requires a bigger refactor
+					}
+				}
 				response.Assets = append(response.Assets, UploadURL{
 					FileName: asset.FileName,
 					URL:      "http://localhost:8893/teststorage/" + asset.FileName,

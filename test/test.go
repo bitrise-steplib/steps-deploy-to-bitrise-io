@@ -101,47 +101,64 @@ func httpCall(apiToken, method, url string, input io.Reader, output interface{},
 	return nil
 }
 
-func findTestIdentifier(manifest []model3.TestAttachmentDetails, fileName string) string {
+func artifactMapping(manifestPath string) map[string]*string {
+	isExists, err := pathutil.IsPathExists(manifestPath)
+	if err != nil || !isExists {
+		return nil
+	}
+
+	b, err := os.ReadFile(manifestPath)
+	if err != nil {
+		return nil
+	}
+
+	var manifest []model3.TestAttachmentDetails
+	if err := json.Unmarshal(b, &manifest); err != nil {
+		return nil
+	}
+
+	mapping := map[string]*string{}
 	for _, attachmentDetail := range manifest {
 		for _, attachment := range attachmentDetail.Attachments {
-			if attachment.SuggestedHumanReadableName == fileName {
-				return attachmentDetail.TestIdentifier
+			if attachment.SuggestedHumanReadableName != "" {
+				mapping[attachment.SuggestedHumanReadableName] = &attachmentDetail.TestIdentifier
 			}
-			if attachment.ExportedFileName == fileName {
-				return attachmentDetail.TestIdentifier
+			if attachment.ExportedFileName != "" {
+				mapping[attachment.ExportedFileName] = &attachmentDetail.TestIdentifier
 			}
 		}
 	}
-	return ""
+	return mapping
 }
 
 func findImages(testDir string) (imageFiles []Attachment) {
-	var manifest []model3.TestAttachmentDetails
-
-	manifestPath := filepath.Join(testDir, "manifest.json")
-	if isExists, err := pathutil.IsPathExists(manifestPath); err == nil && isExists {
-		if bytes, err := os.ReadFile(manifestPath); err == nil {
-			if err := json.Unmarshal(bytes, &manifest); err != nil {
-				manifest = nil // if manifest is not valid, reset it to nil
-			}
-		}
-	}
+	mapping := artifactMapping(filepath.Join(testDir, "manifest.json"))
+	var imagePaths []string
 
 	for _, ext := range []string{".jpg", ".jpeg", ".png"} {
 		if paths, err := filepath.Glob(filepath.Join(testDir, "*"+ext)); err == nil {
-			for _, p := range paths {
-				fileName := filepath.Base(p)
-				imageFiles = append(imageFiles, Attachment{Path: p, TestCaseID: findTestIdentifier(manifest, fileName)})
-			}
+			imagePaths = append(imagePaths, paths...)
 		}
 		if paths, err := filepath.Glob(filepath.Join(testDir, "*"+strings.ToUpper(ext))); err == nil {
-			for _, p := range paths {
-				fileName := filepath.Base(p)
-				imageFiles = append(imageFiles, Attachment{Path: p, TestCaseID: findTestIdentifier(manifest, fileName)})
-			}
+			imagePaths = append(imagePaths, paths...)
 		}
 	}
 
+	for _, imagePath := range imagePaths {
+		var testCaseID string
+		if mapping != nil {
+			fileName := filepath.Base(imagePath)
+
+			if identifier, ok := mapping[fileName]; ok && identifier != nil {
+				testCaseID = *identifier
+			}
+		}
+
+		imageFiles = append(imageFiles, Attachment{
+			Path:       imagePath,
+			TestCaseID: testCaseID,
+		})
+	}
 	return
 }
 
