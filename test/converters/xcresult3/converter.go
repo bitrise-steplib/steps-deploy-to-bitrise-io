@@ -201,7 +201,7 @@ func parse(path string) (testreport.TestReport, error) {
 func parseTestBundle(testBundle model3.TestBundle) testreport.TestSuite {
 	failedCount := 0
 	skippedCount := 0
-	var totalDuration float64
+	var totalDuration time.Duration
 	var tests []testreport.TestCase
 
 	for _, testSuite := range testBundle.TestSuites {
@@ -215,7 +215,7 @@ func parseTestBundle(testBundle model3.TestBundle) testreport.TestSuite {
 					} else if test.Skipped != nil {
 						skippedCount++
 					}
-					totalDuration += test.Time
+					totalDuration += retry.Time
 
 					tests = append(tests, test)
 				}
@@ -227,7 +227,7 @@ func parseTestBundle(testBundle model3.TestBundle) testreport.TestSuite {
 				} else if test.Skipped != nil {
 					skippedCount++
 				}
-				totalDuration += test.Time
+				totalDuration += testCase.Time
 
 				tests = append(tests, test)
 			}
@@ -239,7 +239,7 @@ func parseTestBundle(testBundle model3.TestBundle) testreport.TestSuite {
 		Tests:     len(tests),
 		Failures:  failedCount,
 		Skipped:   skippedCount,
-		Time:      totalDuration,
+		Time:      totalDuration.Seconds(),
 		TestCases: tests,
 	}
 }
