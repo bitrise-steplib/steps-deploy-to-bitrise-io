@@ -201,28 +201,36 @@ func parse(path string) (testreport.TestReport, error) {
 func parseTestBundle(testBundle model3.TestBundle) testreport.TestSuite {
 	failedCount := 0
 	skippedCount := 0
-	var totalDuration time.Duration
+	var totalDuration float64
 	var tests []testreport.TestCase
 
 	for _, testSuite := range testBundle.TestSuites {
 		for _, testCase := range testSuite.TestCases {
-			test := testreport.TestCase{
-				Name:      testCase.Name,
-				ClassName: testCase.ClassName,
-				Time:      testCase.Time.Seconds(),
+			if len(testCase.Retries) > 0 {
+				for _, retry := range testCase.Retries {
+					test := parseTestCase(retry)
+
+					if test.Failure != nil {
+						failedCount++
+					} else if test.Skipped != nil {
+						skippedCount++
+					}
+					totalDuration += test.Time
+
+					tests = append(tests, test)
+				}
+			} else {
+				test := parseTestCase(testCase.TestCase)
+
+				if test.Failure != nil {
+					failedCount++
+				} else if test.Skipped != nil {
+					skippedCount++
+				}
+				totalDuration += test.Time
+
+				tests = append(tests, test)
 			}
-
-			if testCase.Result == model3.TestResultFailed {
-				test.Failure = &testreport.Failure{Value: testCase.Message}
-				failedCount++
-			} else if testCase.Result == model3.TestResultSkipped {
-				test.Skipped = &testreport.Skipped{}
-				skippedCount++
-			}
-
-			totalDuration += testCase.Time
-
-			tests = append(tests, test)
 		}
 	}
 
@@ -231,9 +239,25 @@ func parseTestBundle(testBundle model3.TestBundle) testreport.TestSuite {
 		Tests:     len(tests),
 		Failures:  failedCount,
 		Skipped:   skippedCount,
-		Time:      totalDuration.Seconds(),
+		Time:      totalDuration,
 		TestCases: tests,
 	}
+}
+
+func parseTestCase(testCase model3.TestCase) testreport.TestCase {
+	test := testreport.TestCase{
+		Name:      testCase.Name,
+		ClassName: testCase.ClassName,
+		Time:      testCase.Time.Seconds(),
+	}
+
+	if testCase.Result == model3.TestResultFailed {
+		test.Failure = &testreport.Failure{Value: testCase.Message}
+	} else if testCase.Result == model3.TestResultSkipped {
+		test.Skipped = &testreport.Skipped{}
+	}
+
+	return test
 }
 
 func exportAttachments(xcresultPath, outputPath string) error {

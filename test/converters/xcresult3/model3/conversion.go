@@ -60,8 +60,8 @@ func Convert(data *TestData) (*TestSummary, []string, error) {
 	return &summary, warnings, nil
 }
 
-func extractTestCases(nodes []TestNode, fallbackName string) ([]TestCase, []string, error) {
-	var testCases []TestCase
+func extractTestCases(nodes []TestNode, fallbackName string) ([]TestCaseWithRetries, []string, error) {
+	var testCases []TestCaseWithRetries
 	var warnings []string
 
 	for _, testCaseNode := range nodes {
@@ -83,38 +83,36 @@ func extractTestCases(nodes []TestNode, fallbackName string) ([]TestCase, []stri
 			return nil, warnings, fmt.Errorf("test case expected but got: %s", testCaseNode.Type)
 		}
 
+		className := strings.Split(testCaseNode.Identifier, "/")[0]
+		if className == "" {
+			// In rare cases the identifier is an empty string, so we need to use the test suite name which is the
+			// same as the first part of the identifier in normal cases.
+			className = fallbackName
+		}
+
+		message, failureMessageWarnings := extractFailureMessage(testCaseNode)
+		if len(failureMessageWarnings) > 0 {
+			warnings = append(warnings, failureMessageWarnings...)
+		}
+
 		retries, retryWarnings, err := extractRetries(testCaseNode, fallbackName)
 		if err != nil {
 			return nil, warnings, err
 		}
 		warnings = append(warnings, retryWarnings...)
 
-		if len(retries) > 0 {
-			// If the test case retried the root test node is a summary of all retries
-			// and child test cases are the individual retries.
-			testCases = append(testCases, retries...)
-		} else {
-			className := strings.Split(testCaseNode.Identifier, "/")[0]
-			if className == "" {
-				// In rare cases the identifier is an empty string, so we need to use the test suite name which is the
-				// same as the first part of the identifier in normal cases.
-				className = fallbackName
-			}
-
-			message, failureMessageWarnings := extractFailureMessage(testCaseNode)
-			if len(failureMessageWarnings) > 0 {
-				warnings = append(warnings, failureMessageWarnings...)
-			}
-
-			testCase := TestCase{
+		testCase := TestCaseWithRetries{
+			TestCase: TestCase{
 				Name:      testCaseNode.Name,
 				ClassName: className,
 				Time:      extractDuration(testCaseNode.Duration),
 				Result:    testCaseNode.Result,
 				Message:   message,
-			}
-			testCases = append(testCases, testCase)
+			},
+			Retries: retries,
 		}
+
+		testCases = append(testCases, testCase)
 	}
 
 	return testCases, warnings, nil
