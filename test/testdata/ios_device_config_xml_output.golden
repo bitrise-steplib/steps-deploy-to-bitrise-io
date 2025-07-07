@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
- <testsuite name="DarkAndLightModeTests" tests="2" failures="0" skipped="0" time="0.317">
-  <testcase configuration-hash="" name="testExample()" classname="DarkAndLightModeTests" time="0.057"></testcase>
+ <testsuite name="DarkAndLightModeTests" tests="3" failures="1" skipped="0" time="0.3711">
+  <testcase configuration-hash="" name="testExample()" classname="DarkAndLightModeTests" time="0.11">
+   <failure>DarkAndLightModeTests.swift:25: failed - Reached 1</failure>
+  </testcase>
+  <testcase configuration-hash="" name="testExample()" classname="DarkAndLightModeTests" time="0.0011"></testcase>
   <testcase configuration-hash="" name="testPerformanceExample()" classname="DarkAndLightModeTests" time="0.26"></testcase>
  </testsuite>
  <testsuite name="DarkAndLightModeUITests" tests="3" failures="1" skipped="0" time="36">
