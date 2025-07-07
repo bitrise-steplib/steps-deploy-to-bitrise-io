@@ -166,13 +166,8 @@ func extractRetries(testNode TestNode, fallbackName string) ([]TestCase, []strin
 
 	for _, child := range testNode.Children {
 		if child.Type == TestNodeTypeRepetition {
-			// Use the original test node's identifier, instead of the repetition's identifier (1, 2, ...).
-			identifierSplit := strings.Split(testNode.Identifier, "/")
-			if len(identifierSplit) != 2 {
-				// If the identifier does not contain a class name, we use the fallback name.
-				return nil, nil, fmt.Errorf("expected identifier to contain a '/' but got: %s", testNode.Identifier)
-			}
-			className := identifierSplit[0]
+			// Use the parent test node's identifier, instead of the repetition's identifier (1, 2, ...).
+			className := strings.Split(testNode.Identifier, "/")[0]
 			if className == "" {
 				// In rare cases the identifier is an empty string, so we need to use the test suite name which is the
 				// same as the first part of the identifier in normal cases.
