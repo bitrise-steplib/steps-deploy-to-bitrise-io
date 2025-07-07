@@ -206,28 +206,22 @@ func parseTestBundle(testBundle model3.TestBundle) testreport.TestSuite {
 
 	for _, testSuite := range testBundle.TestSuites {
 		for _, testCase := range testSuite.TestCases {
+			var testCasesToConvert []model3.TestCase
 			if len(testCase.Retries) > 0 {
-				for _, retry := range testCase.Retries {
-					test := parseTestCase(retry)
-
-					if test.Failure != nil {
-						failedCount++
-					} else if test.Skipped != nil {
-						skippedCount++
-					}
-					totalDuration += retry.Time
-
-					tests = append(tests, test)
-				}
+				testCasesToConvert = testCase.Retries
 			} else {
-				test := parseTestCase(testCase.TestCase)
+				testCasesToConvert = []model3.TestCase{testCase.TestCase}
+			}
+
+			for _, testCaseToConvert := range testCasesToConvert {
+				test := parseTestCase(testCaseToConvert)
 
 				if test.Failure != nil {
 					failedCount++
 				} else if test.Skipped != nil {
 					skippedCount++
 				}
-				totalDuration += testCase.Time
+				totalDuration += testCaseToConvert.Time
 
 				tests = append(tests, test)
 			}

@@ -83,7 +83,7 @@ func extractTestCases(nodes []TestNode, fallbackName string) ([]TestCaseWithRetr
 			return nil, warnings, fmt.Errorf("test case expected but got: %s", testCaseNode.Type)
 		}
 
-		testCase, testCaseWarnings := extractTestCase(testCaseNode, "", fallbackName)
+		testCase, testCaseWarnings := extractTestCase(testCaseNode, "", "", fallbackName)
 		warnings = append(warnings, testCaseWarnings...)
 
 		retries, retryWarnings, err := extractRetries(testCaseNode, fallbackName)
@@ -150,7 +150,7 @@ func extractRetries(testNode TestNode, fallbackName string) ([]TestCase, []strin
 	for _, child := range testNode.Children {
 		if child.Type == TestNodeTypeRepetition {
 			// Use the parent test node's identifier, instead of the repetition's identifier (1, 2, ...).
-			retry, testCaseWarnings := extractTestCase(child, testNode.Identifier, fallbackName)
+			retry, testCaseWarnings := extractTestCase(child, testNode.Identifier, testNode.Name, fallbackName)
 			warnings = append(warnings, testCaseWarnings...)
 			retries = append(retries, retry)
 		}
@@ -159,12 +159,17 @@ func extractRetries(testNode TestNode, fallbackName string) ([]TestCase, []strin
 	return retries, warnings, nil
 }
 
-func extractTestCase(testNode TestNode, customNodeIdentifier, fallbackClassName string) (TestCase, []string) {
+func extractTestCase(testNode TestNode, customNodeIdentifier, customName, fallbackClassName string) (TestCase, []string) {
 	var warnings []string
 
 	nodeIdentifier := testNode.Identifier
 	if customNodeIdentifier != "" {
 		nodeIdentifier = customNodeIdentifier
+	}
+
+	name := testNode.Name
+	if customName != "" {
+		name = customName
 	}
 
 	className := strings.Split(nodeIdentifier, "/")[0]
@@ -180,7 +185,7 @@ func extractTestCase(testNode TestNode, customNodeIdentifier, fallbackClassName 
 	}
 
 	return TestCase{
-		Name:      testNode.Name,
+		Name:      name,
 		ClassName: className,
 		Time:      extractDuration(testNode.Duration),
 		Result:    testNode.Result,
