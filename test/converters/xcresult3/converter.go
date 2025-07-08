@@ -190,8 +190,22 @@ func parse(path string) (testreport.TestReport, error) {
 		}
 	}
 
+	manifest, err := readManifest(path)
+	if err != nil {
+		return testreport.TestReport{}, err
+	}
+
 	outputPath := filepath.Dir(path)
-	if err := exportAttachments(path, outputPath); err != nil {
+	if err := exportAttachments(path, outputPath, manifest); err != nil {
+		return testreport.TestReport{}, err
+	}
+
+	xml, err = connectAttachmentsToTestCases(xml, manifest)
+	if err != nil {
+		return testreport.TestReport{}, err
+	}
+
+	if err := deleteManifest(outputPath); err != nil {
 		return testreport.TestReport{}, err
 	}
 
@@ -236,26 +250,40 @@ func parseTestBundle(testBundle model3.TestBundle) testreport.TestSuite {
 	}
 }
 
-func exportAttachments(xcresultPath, outputPath string) error {
+func exportAttachments(xcresultPath, outputPath string, manifest []model3.TestAttachmentDetails) error {
 	if err := xcresulttoolExport(xcresultPath, "", outputPath, false); err != nil {
 		return err
 	}
 
-	return renameFiles(outputPath)
+	return renameFiles(outputPath, manifest)
 }
 
-func renameFiles(outputPath string) error {
+func readManifest(outputPath string) ([]model3.TestAttachmentDetails, error) {
 	manifestPath := filepath.Join(outputPath, "manifest.json")
 	bytes, err := os.ReadFile(manifestPath)
 	if err != nil {
-		return fmt.Errorf("failed to read manifest.json: %w", err)
+		return nil, fmt.Errorf("failed to read manifest.json: %w", err)
 	}
 
 	var manifest []model3.TestAttachmentDetails
 	if err := json.Unmarshal(bytes, &manifest); err != nil {
-		return fmt.Errorf("failed to unmarshal manifest.json: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal manifest.json: %w", err)
 	}
 
+	return manifest, nil
+}
+
+func deleteManifest(outputPath string) error {
+	manifestPath := filepath.Join(outputPath, "manifest.json")
+
+	if err := os.Remove(manifestPath); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func renameFiles(outputPath string, manifest []model3.TestAttachmentDetails) error {
 	for _, attachmentDetail := range manifest {
 		for _, attachment := range attachmentDetail.Attachments {
 			oldPath := filepath.Join(outputPath, attachment.ExportedFileName)
@@ -269,11 +297,78 @@ func renameFiles(outputPath string) error {
 		}
 	}
 
-	if err := os.Remove(manifestPath); err != nil {
-		return err
+	return nil
+}
+
+func removeParentheses(s string) string {
+	return strings.NewReplacer("(", "", ")", "").Replace(s)
+}
+
+func buildTestIdentifier(className, testName string) string {
+	return removeParentheses(className + "/" + testName)
+}
+
+func connectAttachmentsToTestCases(xml testreport.TestReport, manifest []model3.TestAttachmentDetails) (testreport.TestReport, error) {
+	// Build a map of attachments by test ID and repetition
+	attachmentsMap := make(map[string]map[int][]string)
+
+	// Collect attachments from manifest
+	for _, detail := range manifest {
+		testID := removeParentheses(detail.TestIdentifier)
+
+		for _, attachment := range detail.Attachments {
+			if attachmentsMap[testID] == nil {
+				attachmentsMap[testID] = make(map[int][]string)
+			}
+
+			repetition := attachment.RepetitionNumber
+			fileName := attachment.SuggestedHumanReadableName
+
+			for _, existingFile := range attachmentsMap[testID][repetition] {
+				if existingFile == fileName {
+					continue
+				}
+			}
+
+			attachmentsMap[testID][repetition] = append(attachmentsMap[testID][repetition], fileName)
+		}
 	}
 
-	return nil
+	// Attach files to test cases
+	for i := range xml.TestSuites {
+		repetition := 1
+		lastTestID := ""
+
+		for j := range xml.TestSuites[i].TestCases {
+			testCase := &xml.TestSuites[i].TestCases[j]
+			currentTestID := buildTestIdentifier(testCase.ClassName, testCase.Name)
+
+			// Reset or increment repetition counter
+			if currentTestID != lastTestID {
+				repetition = 1
+				lastTestID = currentTestID
+			} else {
+				repetition++
+			}
+
+			// Add attachments if any exist for this test and repetition
+			if attachments, exists := attachmentsMap[currentTestID][repetition]; exists {
+				// Initialize Properties if needed
+				if testCase.Properties == nil {
+					testCase.Properties = &testreport.Properties{
+						Property: []testreport.Property{},
+					}
+				}
+
+				// Add each attachment as a property
+				for _, fileName := range attachments {
+					testCase.Properties.Property = append(testCase.Properties.Property, testreport.Property{Name: "attachment", Value: fileName})
+				}
+			}
+		}
+	}
+
+	return xml, nil
 }
 
 func testSuiteCountInSummaries(summaries []ActionTestPlanRunSummaries) int {
