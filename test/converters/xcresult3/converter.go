@@ -190,13 +190,17 @@ func parse(path string) (testreport.TestReport, error) {
 		}
 	}
 
-	manifest, err := readManifest(path)
+	outputPath := filepath.Dir(path)
+	if err := exportAttachments(path, outputPath); err != nil {
+		return testreport.TestReport{}, err
+	}
+
+	manifest, err := readManifest(outputPath)
 	if err != nil {
 		return testreport.TestReport{}, err
 	}
 
-	outputPath := filepath.Dir(path)
-	if err := exportAttachments(path, outputPath, manifest); err != nil {
+	if err := renameFiles(outputPath, manifest); err != nil {
 		return testreport.TestReport{}, err
 	}
 
@@ -250,12 +254,12 @@ func parseTestBundle(testBundle model3.TestBundle) testreport.TestSuite {
 	}
 }
 
-func exportAttachments(xcresultPath, outputPath string, manifest []model3.TestAttachmentDetails) error {
+func exportAttachments(xcresultPath, outputPath string) error {
 	if err := xcresulttoolExport(xcresultPath, "", outputPath, false); err != nil {
 		return err
 	}
 
-	return renameFiles(outputPath, manifest)
+	return nil
 }
 
 func readManifest(outputPath string) ([]model3.TestAttachmentDetails, error) {
