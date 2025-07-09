@@ -279,31 +279,21 @@ func extractAttachments(xcresultPath, outputPath string) (map[string][]string, e
 		return nil, err
 	}
 
+	var fileCounterMap = make(map[string]int)
 	for _, attachmentDetail := range manifest {
 		for _, attachment := range attachmentDetail.Attachments {
 			oldPath := filepath.Join(outputPath, attachment.ExportedFileName)
 			newPath := filepath.Join(outputPath, attachment.SuggestedHumanReadableName)
 
-			// Check if newPath file already exists. If exists, append a counter (eg.: filename (1).jpeg) to the filename.
-			counter := 1
-			for {
-				exists, err := pathutil.IsPathExists(newPath)
-				if exists {
-					// File exists, so we need to rename it
-					fileExtensionWithDot := filepath.Ext(attachment.SuggestedHumanReadableName)
-					fileNameWithoutExtension := strings.TrimSuffix(attachment.SuggestedHumanReadableName, fileExtensionWithDot)
-					fileWithCounter := fmt.Sprintf("%s (%d)%s", fileNameWithoutExtension, counter, fileExtensionWithDot)
-					newPath = filepath.Join(outputPath, fileWithCounter)
-					counter++
-				}
-				if err != nil {
-					log.Warnf("Failed to check if file exists: %s", err)
-					break
-				}
-				if !exists {
-					// File does not exist, we can use this name
-					break
-				}
+			// Check if newPath file already exists in fileCounterMap. If exists, append a counter (eg.: filename (1).jpeg) to the filename.
+			if counter, exists := fileCounterMap[attachment.SuggestedHumanReadableName]; exists {
+				fileExtensionWithDot := filepath.Ext(attachment.SuggestedHumanReadableName)
+				fileNameWithoutExtension := strings.TrimSuffix(attachment.SuggestedHumanReadableName, fileExtensionWithDot)
+				newPath = filepath.Join(outputPath, fmt.Sprintf("%s (%d)%s", fileNameWithoutExtension, counter, fileExtensionWithDot))
+				fileCounterMap[attachment.SuggestedHumanReadableName] = counter + 1
+			} else {
+				// If it does not exist, add it to the map with a counter of 1
+				fileCounterMap[attachment.SuggestedHumanReadableName] = 1
 			}
 
 			if err := os.Rename(oldPath, newPath); err != nil {
