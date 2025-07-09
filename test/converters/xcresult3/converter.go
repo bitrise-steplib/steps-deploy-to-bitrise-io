@@ -285,14 +285,13 @@ func extractAttachments(xcresultPath, outputPath string) (map[string][]string, e
 			oldPath := filepath.Join(outputPath, attachment.ExportedFileName)
 			newPath := filepath.Join(outputPath, attachment.SuggestedHumanReadableName)
 
-			// Check if newPath file already exists in fileCounterMap. If exists, append a counter (eg.: filename (1).jpeg) to the filename.
+			// If the file already exists, we need to rename it to avoid overwriting.
 			if counter, exists := fileCounterMap[attachment.SuggestedHumanReadableName]; exists {
 				fileExtensionWithDot := filepath.Ext(attachment.SuggestedHumanReadableName)
 				fileNameWithoutExtension := strings.TrimSuffix(attachment.SuggestedHumanReadableName, fileExtensionWithDot)
 				newPath = filepath.Join(outputPath, fmt.Sprintf("%s (%d)%s", fileNameWithoutExtension, counter, fileExtensionWithDot))
 				fileCounterMap[attachment.SuggestedHumanReadableName] = counter + 1
 			} else {
-				// If it does not exist, add it to the map with a counter of 1
 				fileCounterMap[attachment.SuggestedHumanReadableName] = 1
 			}
 
@@ -327,26 +326,25 @@ func appendRepetitionToTestIdentifier(testIdentifier string, repetition int) str
 }
 
 func connectAttachmentsToTestCases(xml testreport.TestReport, attachmentsMap map[string][]string) (testreport.TestReport, error) {
-	// Attach files to test cases
 	for i := range xml.TestSuites {
-		repetition := 1
-		prevTestIdentifier := ""
+		var testRepetitionMap = make(map[string]int)
 
 		for j := range xml.TestSuites[i].TestCases {
 			testCase := &xml.TestSuites[i].TestCases[j]
-			testIdentifier := appendRepetitionToTestIdentifier(buildTestIdentifier(testCase.ClassName, testCase.Name), repetition)
+			testIdentifier := buildTestIdentifier(testCase.ClassName, testCase.Name)
 
-			// Reset or increment repetition counter
-			if testIdentifier != prevTestIdentifier {
-				repetition = 1
-				prevTestIdentifier = testIdentifier
+			// If the test case has a repetition, we need to append it to the test identifier
+			// and keep track of how many times we have seen this test identifier.
+			if count, exists := testRepetitionMap[testIdentifier]; exists {
+				testRepetitionMap[testIdentifier] = count + 1
 			} else {
-				repetition++
+				testRepetitionMap[testIdentifier] = 1
 			}
+
+			testIdentifier = appendRepetitionToTestIdentifier(testIdentifier, testRepetitionMap[testIdentifier])
 
 			// Add attachments if any exist for this test and repetition
 			if attachments, exists := attachmentsMap[testIdentifier]; exists {
-				// Initialize Properties if needed
 				if testCase.Properties == nil {
 					testCase.Properties = &testreport.Properties{
 						Property: []testreport.Property{},
