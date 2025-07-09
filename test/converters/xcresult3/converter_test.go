@@ -121,10 +121,16 @@ func TestConverter_XML(t *testing.T) {
 				},
 			},
 			{
-				Name: "BullsEyeFlakyTests", Tests: 2, Failures: 0, Skipped: 1, Time: 0.12,
+				Name: "BullsEyeFlakyTests", Tests: 3, Failures: 1, Skipped: 1, Time: 0.226,
 				TestCases: []testreport.TestCase{
 					{
-						Name: "testFlakyFeature()", ClassName: "BullsEyeFlakyTests", Time: 0.1,
+						Name: "testFlakyFeature()", ClassName: "BullsEyeFlakyTests", Time: 0.2,
+						Failure: &testreport.Failure{
+							Value: `BullsEyeFlakyTests.swift:43: XCTAssertEqual failed: ("1") is not equal to ("0") - Number is not even`,
+						},
+					},
+					{
+						Name: "testFlakyFeature()", ClassName: "BullsEyeFlakyTests", Time: 0.006,
 					},
 					{
 						Name: "testFlakySkip()", ClassName: "BullsEyeSkippedTests", Time: 0.02,

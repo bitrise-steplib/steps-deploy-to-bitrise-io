@@ -95,35 +95,43 @@ func TestConversion(t *testing.T) {
 								TestSuites: []TestSuite{
 									{
 										Name: "TS1",
-										TestCases: []TestCase{
+										TestCases: []TestCaseWithRetries{
 											{
-												Name:      "TC1",
-												ClassName: "TS1",
-												Time:      500 * time.Millisecond,
-												Result:    "Passed",
+												TestCase: TestCase{
+													Name:      "TC1",
+													ClassName: "TS1",
+													Time:      500 * time.Millisecond,
+													Result:    "Passed",
+												},
 											},
 											{
-												Name:      "TC2",
-												ClassName: "TS1",
-												Time:      1 * time.Second,
-												Result:    "Failed",
+												TestCase: TestCase{
+													Name:      "TC2",
+													ClassName: "TS1",
+													Time:      1 * time.Second,
+													Result:    "Failed",
+												},
 											},
 										},
 									},
 									{
 										Name: "TS2",
-										TestCases: []TestCase{
+										TestCases: []TestCaseWithRetries{
 											{
-												Name:      "TC3",
-												ClassName: "TS2",
-												Time:      66 * time.Second,
-												Result:    "Skipped",
+												TestCase: TestCase{
+													Name:      "TC3",
+													ClassName: "TS2",
+													Time:      66 * time.Second,
+													Result:    "Skipped",
+												},
 											},
 											{
-												Name:      "TC4",
-												ClassName: "TS2",
-												Time:      30 * time.Millisecond,
-												Result:    "Passed",
+												TestCase: TestCase{
+													Name:      "TC4",
+													ClassName: "TS2",
+													Time:      30 * time.Millisecond,
+													Result:    "Passed",
+												},
 											},
 										},
 									},
@@ -134,12 +142,14 @@ func TestConversion(t *testing.T) {
 								TestSuites: []TestSuite{
 									{
 										Name: "TS3",
-										TestCases: []TestCase{
+										TestCases: []TestCaseWithRetries{
 											{
-												Name:      "TC5",
-												ClassName: "TS3",
-												Time:      15 * time.Second,
-												Result:    "Passed",
+												TestCase: TestCase{
+													Name:      "TC5",
+													ClassName: "TS3",
+													Time:      15 * time.Second,
+													Result:    "Passed",
+												},
 											},
 										},
 									},
@@ -184,12 +194,14 @@ func TestConversion(t *testing.T) {
 								TestSuites: []TestSuite{
 									{
 										Name: "TB1",
-										TestCases: []TestCase{
+										TestCases: []TestCaseWithRetries{
 											{
-												Name:      "TC1",
-												ClassName: "TB1",
-												Time:      500 * time.Millisecond,
-												Result:    "Passed",
+												TestCase: TestCase{
+													Name:      "TC1",
+													ClassName: "TB1",
+													Time:      500 * time.Millisecond,
+													Result:    "Passed",
+												},
 											},
 										},
 									},
