@@ -60,8 +60,8 @@ func Convert(data *TestData) (*TestSummary, []string, error) {
 	return &summary, warnings, nil
 }
 
-func extractTestCases(nodes []TestNode, fallbackName string) ([]TestCase, []string, error) {
-	var testCases []TestCase
+func extractTestCases(nodes []TestNode, fallbackName string) ([]TestCaseWithRetries, []string, error) {
+	var testCases []TestCaseWithRetries
 	var warnings []string
 
 	for _, testCaseNode := range nodes {
@@ -83,27 +83,19 @@ func extractTestCases(nodes []TestNode, fallbackName string) ([]TestCase, []stri
 			return nil, warnings, fmt.Errorf("test case expected but got: %s", testCaseNode.Type)
 		}
 
-		className := strings.Split(testCaseNode.Identifier, "/")[0]
-		if className == "" {
-			// In rare cases the identifier is an empty string, so we need to use the test suite name which is the
-			// same as the first part of the identifier in normal cases.
-			className = fallbackName
-		}
+		testCase, testCaseWarnings := extractTestCase(testCaseNode, "", "", fallbackName)
+		warnings = append(warnings, testCaseWarnings...)
 
-		message, failureMessageWarnings := extractFailureMessage(testCaseNode)
-
-		if len(failureMessageWarnings) > 0 {
-			warnings = append(warnings, failureMessageWarnings...)
+		retries, retryWarnings, err := extractRetries(testCaseNode, fallbackName)
+		if err != nil {
+			return nil, warnings, err
 		}
+		warnings = append(warnings, retryWarnings...)
 
-		testCase := TestCase{
-			Name:      testCaseNode.Name,
-			ClassName: className,
-			Time:      extractDuration(testCaseNode.Duration),
-			Result:    testCaseNode.Result,
-			Message:   message,
-		}
-		testCases = append(testCases, testCase)
+		testCases = append(testCases, TestCaseWithRetries{
+			TestCase: testCase,
+			Retries:  retries,
+		})
 	}
 
 	return testCases, warnings, nil
@@ -149,4 +141,54 @@ func extractFailureMessage(testNode TestNode) (string, []string) {
 	}
 
 	return failureMessage, warnings
+}
+
+func extractRetries(testNode TestNode, fallbackName string) ([]TestCase, []string, error) {
+	var retries []TestCase
+	var warnings []string
+
+	for _, child := range testNode.Children {
+		if child.Type == TestNodeTypeRepetition {
+			// Use the parent test node's identifier, instead of the repetition's identifier (1, 2, ...).
+			retry, testCaseWarnings := extractTestCase(child, testNode.Identifier, testNode.Name, fallbackName)
+			warnings = append(warnings, testCaseWarnings...)
+			retries = append(retries, retry)
+		}
+	}
+
+	return retries, warnings, nil
+}
+
+func extractTestCase(testNode TestNode, customNodeIdentifier, customName, fallbackClassName string) (TestCase, []string) {
+	var warnings []string
+
+	nodeIdentifier := testNode.Identifier
+	if customNodeIdentifier != "" {
+		nodeIdentifier = customNodeIdentifier
+	}
+
+	name := testNode.Name
+	if customName != "" {
+		name = customName
+	}
+
+	className := strings.Split(nodeIdentifier, "/")[0]
+	if className == "" {
+		// In rare cases the identifier is an empty string, so we need to use the test suite name which is the
+		// same as the first part of the identifier in normal cases.
+		className = fallbackClassName
+	}
+
+	message, failureMessageWarnings := extractFailureMessage(testNode)
+	if len(failureMessageWarnings) > 0 {
+		warnings = append(warnings, failureMessageWarnings...)
+	}
+
+	return TestCase{
+		Name:      name,
+		ClassName: className,
+		Time:      extractDuration(testNode.Duration),
+		Result:    testNode.Result,
+		Message:   message,
+	}, warnings
 }

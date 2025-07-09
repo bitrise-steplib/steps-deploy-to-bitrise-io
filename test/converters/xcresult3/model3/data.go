@@ -18,7 +18,12 @@ type TestBundle struct {
 
 type TestSuite struct {
 	Name      string
-	TestCases []TestCase
+	TestCases []TestCaseWithRetries
+}
+
+type TestCaseWithRetries struct {
+	TestCase
+	Retries []TestCase
 }
 
 type TestCase struct {

@@ -206,23 +206,25 @@ func parseTestBundle(testBundle model3.TestBundle) testreport.TestSuite {
 
 	for _, testSuite := range testBundle.TestSuites {
 		for _, testCase := range testSuite.TestCases {
-			test := testreport.TestCase{
-				Name:      testCase.Name,
-				ClassName: testCase.ClassName,
-				Time:      testCase.Time.Seconds(),
+			var testCasesToConvert []model3.TestCase
+			if len(testCase.Retries) > 0 {
+				testCasesToConvert = testCase.Retries
+			} else {
+				testCasesToConvert = []model3.TestCase{testCase.TestCase}
 			}
 
-			if testCase.Result == model3.TestResultFailed {
-				test.Failure = &testreport.Failure{Value: testCase.Message}
-				failedCount++
-			} else if testCase.Result == model3.TestResultSkipped {
-				test.Skipped = &testreport.Skipped{}
-				skippedCount++
+			for _, testCaseToConvert := range testCasesToConvert {
+				test := parseTestCase(testCaseToConvert)
+
+				if test.Failure != nil {
+					failedCount++
+				} else if test.Skipped != nil {
+					skippedCount++
+				}
+				totalDuration += testCaseToConvert.Time
+
+				tests = append(tests, test)
 			}
-
-			totalDuration += testCase.Time
-
-			tests = append(tests, test)
 		}
 	}
 
@@ -234,6 +236,22 @@ func parseTestBundle(testBundle model3.TestBundle) testreport.TestSuite {
 		Time:      totalDuration.Seconds(),
 		TestCases: tests,
 	}
+}
+
+func parseTestCase(testCase model3.TestCase) testreport.TestCase {
+	test := testreport.TestCase{
+		Name:      testCase.Name,
+		ClassName: testCase.ClassName,
+		Time:      testCase.Time.Seconds(),
+	}
+
+	if testCase.Result == model3.TestResultFailed {
+		test.Failure = &testreport.Failure{Value: testCase.Message}
+	} else if testCase.Result == model3.TestResultSkipped {
+		test.Skipped = &testreport.Skipped{}
+	}
+
+	return test
 }
 
 func exportAttachments(xcresultPath, outputPath string) error {
