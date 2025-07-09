@@ -191,25 +191,14 @@ func parse(path string) (testreport.TestReport, error) {
 	}
 
 	outputPath := filepath.Dir(path)
-	if err := exportAttachments(path, outputPath); err != nil {
-		return testreport.TestReport{}, err
-	}
 
-	manifest, err := readManifest(outputPath)
+	attachmentsMap, err := extractAttachments(path, outputPath)
 	if err != nil {
 		return testreport.TestReport{}, err
 	}
 
-	if err := renameFiles(outputPath, manifest); err != nil {
-		return testreport.TestReport{}, err
-	}
-
-	xml, err = connectAttachmentsToTestCases(xml, manifest)
+	xml, err = connectAttachmentsToTestCases(xml, attachmentsMap)
 	if err != nil {
-		return testreport.TestReport{}, err
-	}
-
-	if err := deleteManifest(outputPath); err != nil {
 		return testreport.TestReport{}, err
 	}
 
@@ -254,109 +243,99 @@ func parseTestBundle(testBundle model3.TestBundle) testreport.TestSuite {
 	}
 }
 
-func exportAttachments(xcresultPath, outputPath string) error {
+func extractAttachments(xcresultPath, outputPath string) (map[string][]string, error) {
+	var attachmentsMap = make(map[string][]string)
+
 	if err := xcresulttoolExport(xcresultPath, "", outputPath, false); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
-}
-
-func readManifest(outputPath string) ([]model3.TestAttachmentDetails, error) {
 	manifestPath := filepath.Join(outputPath, "manifest.json")
 	bytes, err := os.ReadFile(manifestPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read manifest.json: %w", err)
+		return nil, err
 	}
 
 	var manifest []model3.TestAttachmentDetails
 	if err := json.Unmarshal(bytes, &manifest); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal manifest.json: %w", err)
+		return nil, err
 	}
 
-	return manifest, nil
-}
-
-func deleteManifest(outputPath string) error {
-	manifestPath := filepath.Join(outputPath, "manifest.json")
-
-	if err := os.Remove(manifestPath); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func renameFiles(outputPath string, manifest []model3.TestAttachmentDetails) error {
 	for _, attachmentDetail := range manifest {
 		for _, attachment := range attachmentDetail.Attachments {
 			oldPath := filepath.Join(outputPath, attachment.ExportedFileName)
 			newPath := filepath.Join(outputPath, attachment.SuggestedHumanReadableName)
+
+			// Check if newPath file already exists. If exists, append a counter (eg.: filename (1).jpeg) to the filename.
+			counter := 1
+			for {
+				if _, err := os.Stat(newPath); err == nil {
+					// File exists, so we need to rename it
+					fileExtensionWithDot := filepath.Ext(attachment.SuggestedHumanReadableName)
+					fileNameWithoutExtension := strings.TrimSuffix(attachment.SuggestedHumanReadableName, fileExtensionWithDot)
+					fileWithCounter := fmt.Sprintf("%s (%d)%s", fileNameWithoutExtension, counter, fileExtensionWithDot)
+					newPath = filepath.Join(outputPath, fileWithCounter)
+					counter++
+				} else if !os.IsNotExist(err) {
+					// If there is an error other than "file does not exist", we log it
+					log.Warnf("Error checking existence of %s: %s", newPath, err)
+					break
+				} else {
+					// File does not exist, we can break the loop
+					break
+				}
+			}
 
 			if err := os.Rename(oldPath, newPath); err != nil {
 				// It is not a critical error if the rename fails because the file will be still exported just by its
 				// unique ID.
 				log.Warnf("Failed to rename %s to %s", oldPath, newPath)
 			}
+
+			testIdentifier := appendRepetitionToTestIdentifier(attachmentDetail.TestIdentifier, attachment.RepetitionNumber)
+			attachmentsMap[testIdentifier] = append(attachmentsMap[testIdentifier], filepath.Base(newPath))
 		}
 	}
 
-	return nil
+	if err := os.Remove(manifestPath); err != nil {
+		log.Warnf("Failed to remove manifest file %s: %s", manifestPath, err)
+	}
+
+	return attachmentsMap, nil
 }
 
-func removeParentheses(s string) string {
-	return strings.NewReplacer("(", "", ")", "").Replace(s)
+func stripTrailingParentheses(s string) string {
+	return strings.TrimSuffix(s, "()")
 }
 
 func buildTestIdentifier(className, testName string) string {
-	return removeParentheses(className + "/" + testName)
+	return className + "/" + testName
 }
 
-func connectAttachmentsToTestCases(xml testreport.TestReport, manifest []model3.TestAttachmentDetails) (testreport.TestReport, error) {
-	// Build a map of attachments by test ID and repetition
-	attachmentsMap := make(map[string]map[int][]string)
+func appendRepetitionToTestIdentifier(testIdentifier string, repetition int) string {
+	return fmt.Sprintf("%s (%d)", stripTrailingParentheses(testIdentifier), repetition)
+}
 
-	// Collect attachments from manifest
-	for _, detail := range manifest {
-		testID := removeParentheses(detail.TestIdentifier)
-
-		for _, attachment := range detail.Attachments {
-			if attachmentsMap[testID] == nil {
-				attachmentsMap[testID] = make(map[int][]string)
-			}
-
-			repetition := attachment.RepetitionNumber
-			fileName := attachment.SuggestedHumanReadableName
-
-			for _, existingFile := range attachmentsMap[testID][repetition] {
-				if existingFile == fileName {
-					continue
-				}
-			}
-
-			attachmentsMap[testID][repetition] = append(attachmentsMap[testID][repetition], fileName)
-		}
-	}
-
+func connectAttachmentsToTestCases(xml testreport.TestReport, attachmentsMap map[string][]string) (testreport.TestReport, error) {
 	// Attach files to test cases
 	for i := range xml.TestSuites {
 		repetition := 1
-		lastTestID := ""
+		prevTestIdentifier := ""
 
 		for j := range xml.TestSuites[i].TestCases {
 			testCase := &xml.TestSuites[i].TestCases[j]
-			currentTestID := buildTestIdentifier(testCase.ClassName, testCase.Name)
+			testIdentifier := appendRepetitionToTestIdentifier(buildTestIdentifier(testCase.ClassName, testCase.Name), repetition)
 
 			// Reset or increment repetition counter
-			if currentTestID != lastTestID {
+			if testIdentifier != prevTestIdentifier {
 				repetition = 1
-				lastTestID = currentTestID
+				prevTestIdentifier = testIdentifier
 			} else {
 				repetition++
 			}
 
 			// Add attachments if any exist for this test and repetition
-			if attachments, exists := attachmentsMap[currentTestID][repetition]; exists {
+			if attachments, exists := attachmentsMap[testIdentifier]; exists {
 				// Initialize Properties if needed
 				if testCase.Properties == nil {
 					testCase.Properties = &testreport.Properties{

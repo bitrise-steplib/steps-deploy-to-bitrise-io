@@ -97,11 +97,11 @@ func TestConverter_XML(t *testing.T) {
 								},
 								{
 									Name:  "attachment",
-									Value: "Screenshot 2022-02-10 at 02.57.47 PM.jpeg",
+									Value: "Screenshot 2022-02-10 at 02.57.47 PM (1).jpeg",
 								},
 								{
 									Name:  "attachment",
-									Value: "Screenshot 2022-02-10 at 02.57.47 PM.jpeg",
+									Value: "Screenshot 2022-02-10 at 02.57.47 PM (2).jpeg",
 								},
 								{
 									Name:  "attachment",
@@ -113,7 +113,7 @@ func TestConverter_XML(t *testing.T) {
 								},
 								{
 									Name:  "attachment",
-									Value: "Screenshot 2022-02-10 at 02.57.39 PM.jpeg",
+									Value: "Screenshot 2022-02-10 at 02.57.39 PM (1).jpeg",
 								},
 							},
 						},
