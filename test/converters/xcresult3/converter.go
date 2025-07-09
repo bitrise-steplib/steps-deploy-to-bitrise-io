@@ -287,19 +287,21 @@ func extractAttachments(xcresultPath, outputPath string) (map[string][]string, e
 			// Check if newPath file already exists. If exists, append a counter (eg.: filename (1).jpeg) to the filename.
 			counter := 1
 			for {
-				if _, err := os.Stat(newPath); err == nil {
+				exists, err := pathutil.IsPathExists(newPath)
+				if exists {
 					// File exists, so we need to rename it
 					fileExtensionWithDot := filepath.Ext(attachment.SuggestedHumanReadableName)
 					fileNameWithoutExtension := strings.TrimSuffix(attachment.SuggestedHumanReadableName, fileExtensionWithDot)
 					fileWithCounter := fmt.Sprintf("%s (%d)%s", fileNameWithoutExtension, counter, fileExtensionWithDot)
 					newPath = filepath.Join(outputPath, fileWithCounter)
 					counter++
-				} else if !os.IsNotExist(err) {
-					// If there is an error other than "file does not exist", we log it
-					log.Warnf("Error checking existence of %s: %s", newPath, err)
+				}
+				if err != nil {
+					log.Warnf("Failed to check if file exists: %s", err)
 					break
-				} else {
-					// File does not exist, we can break the loop
+				}
+				if !exists {
+					// File does not exist, we can use this name
 					break
 				}
 			}
