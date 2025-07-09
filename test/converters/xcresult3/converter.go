@@ -352,8 +352,11 @@ func connectAttachmentsToTestCases(xml testreport.TestReport, attachmentsMap map
 				}
 
 				// Add each attachment as a property
-				for _, fileName := range attachments {
-					testCase.Properties.Property = append(testCase.Properties.Property, testreport.Property{Name: "attachment", Value: fileName})
+				for i, fileName := range attachments {
+					testCase.Properties.Property = append(
+						testCase.Properties.Property,
+						testreport.Property{Name: fmt.Sprintf("attachment_%d", i), Value: fileName},
+					)
 				}
 			}
 		}

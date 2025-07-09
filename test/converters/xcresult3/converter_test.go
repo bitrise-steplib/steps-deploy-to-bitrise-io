@@ -92,27 +92,27 @@ func TestConverter_XML(t *testing.T) {
 						Properties: &testreport.Properties{
 							Property: []testreport.Property{
 								{
-									Name:  "attachment",
+									Name:  "attachment_0",
 									Value: "Screenshot 2022-02-10 at 02.57.47 PM.jpeg",
 								},
 								{
-									Name:  "attachment",
+									Name:  "attachment_1",
 									Value: "Screenshot 2022-02-10 at 02.57.47 PM (1).jpeg",
 								},
 								{
-									Name:  "attachment",
+									Name:  "attachment_2",
 									Value: "Screenshot 2022-02-10 at 02.57.47 PM (2).jpeg",
 								},
 								{
-									Name:  "attachment",
+									Name:  "attachment_3",
 									Value: "Screenshot 2022-02-10 at 02.57.39 PM.jpeg",
 								},
 								{
-									Name:  "attachment",
+									Name:  "attachment_4",
 									Value: "Screenshot 2022-02-10 at 02.57.44 PM.jpeg",
 								},
 								{
-									Name:  "attachment",
+									Name:  "attachment_5",
 									Value: "Screenshot 2022-02-10 at 02.57.39 PM (1).jpeg",
 								},
 							},
