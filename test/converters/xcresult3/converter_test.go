@@ -1,6 +1,7 @@
 package xcresult3
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -17,31 +18,29 @@ import (
 // run `bitrise run download_sample_artifacts` before running tests here,
 // which will download https://github.com/bitrise-io/sample-artifacts
 // into the _tmp dir.
-func copyTestdataToDir(t require.TestingT, pathInTestdataDir, dirPathToCopyInto string) string {
+func copyTestdataToDir(pathInTestdataDir, dirPathToCopyInto string) (string, error) {
 	err := command.CopyDir(
 		filepath.Join("../../../_tmp/", pathInTestdataDir),
 		dirPathToCopyInto,
 		true,
 	)
-	require.NoError(t, err)
-	return dirPathToCopyInto
+	return dirPathToCopyInto, err
 }
 
 func TestConverter_XML(t *testing.T) {
 	t.Run("xcresult3-flaky-with-rerun.xcresult", func(t *testing.T) {
-		// copy test data to tmp dir
-		tempTestdataDir, err := pathutil.NormalizedOSTempDirPath("test")
-		if err != nil {
-			t.Fatal("failed to create temp dir, error:", err)
-		}
+		fileName := "xcresult3-flaky-with-rerun.xcresult"
+		rootDir, xcresultPath, err := setupTestData(fileName)
+		require.NoError(t, err)
+
 		defer func() {
-			require.NoError(t, os.RemoveAll(tempTestdataDir))
+			require.NoError(t, os.RemoveAll(rootDir))
 		}()
-		t.Log("tempTestdataDir: ", tempTestdataDir)
-		tempXCResultPath := copyTestdataToDir(t, "./xcresults/xcresult3-flaky-with-rerun.xcresult", tempTestdataDir)
+
+		t.Log("tempTestdataDir: ", rootDir)
 
 		c := Converter{
-			xcresultPth: tempXCResultPath,
+			xcresultPth: xcresultPath,
 		}
 		junitXML, err := c.Convert()
 		require.NoError(t, err)
@@ -90,6 +89,34 @@ func TestConverter_XML(t *testing.T) {
 					{
 						Name: "testGameStyleSwitch()", ClassName: "BullsEyeUITests",
 						Time: 9,
+						Properties: &testreport.Properties{
+							Property: []testreport.Property{
+								{
+									Name:  "attachment_0",
+									Value: "Screenshot 2022-02-10 at 02.57.47 PM.jpeg",
+								},
+								{
+									Name:  "attachment_1",
+									Value: "Screenshot 2022-02-10 at 02.57.47 PM (1).jpeg",
+								},
+								{
+									Name:  "attachment_2",
+									Value: "Screenshot 2022-02-10 at 02.57.47 PM (2).jpeg",
+								},
+								{
+									Name:  "attachment_3",
+									Value: "Screenshot 2022-02-10 at 02.57.39 PM.jpeg",
+								},
+								{
+									Name:  "attachment_4",
+									Value: "Screenshot 2022-02-10 at 02.57.44 PM.jpeg",
+								},
+								{
+									Name:  "attachment_5",
+									Value: "Screenshot 2022-02-10 at 02.57.39 PM (1).jpeg",
+								},
+							},
+						},
 					},
 				},
 			},
@@ -115,19 +142,18 @@ func TestConverter_XML(t *testing.T) {
 	})
 
 	t.Run("xcresults3 success-failed-skipped-tests.xcresult", func(t *testing.T) {
-		// copy test data to tmp dir
-		tempTestdataDir, err := pathutil.NormalizedOSTempDirPath("test")
-		if err != nil {
-			t.Fatal("failed to create temp dir, error:", err)
-		}
+		fileName := "xcresult3-success-failed-skipped-tests.xcresult"
+		rootDir, xcresultPath, err := setupTestData(fileName)
+		require.NoError(t, err)
+
 		defer func() {
-			require.NoError(t, os.RemoveAll(tempTestdataDir))
+			require.NoError(t, os.RemoveAll(rootDir))
 		}()
-		t.Log("tempTestdataDir: ", tempTestdataDir)
-		tempXCResultPath := copyTestdataToDir(t, "./xcresults/xcresult3-success-failed-skipped-tests.xcresult", tempTestdataDir)
+
+		t.Log("tempTestdataDir: ", rootDir)
 
 		c := Converter{
-			xcresultPth: tempXCResultPath,
+			xcresultPth: xcresultPath,
 		}
 		junitXML, err := c.Convert()
 		require.NoError(t, err)
@@ -165,20 +191,33 @@ func TestConverter_XML(t *testing.T) {
 }
 
 func BenchmarkConverter_XML(b *testing.B) {
-	// copy test data to tmp dir
-	tempTestdataDir, err := pathutil.NormalizedOSTempDirPath("test")
-	if err != nil {
-		b.Fatal("failed to create temp dir, error:", err)
-	}
+	fileName := "xcresult3-flaky-with-rerun.xcresult"
+	rootDir, xcresultPath, err := setupTestData(fileName)
+	require.NoError(b, err)
+
 	defer func() {
-		require.NoError(b, os.RemoveAll(tempTestdataDir))
+		require.NoError(b, os.RemoveAll(rootDir))
 	}()
-	b.Log("tempTestdataDir: ", tempTestdataDir)
-	tempXCResultPath := copyTestdataToDir(b, "./xcresults/xcresult3-flaky-with-rerun.xcresult", tempTestdataDir)
+
+	b.Log("tempTestdataDir: ", rootDir)
 
 	c := Converter{
-		xcresultPth: tempXCResultPath,
+		xcresultPth: xcresultPath,
 	}
 	_, err = c.Convert()
 	require.NoError(b, err)
+}
+
+func setupTestData(fileName string) (string, string, error) {
+	tempTestdataDir, err := pathutil.NormalizedOSTempDirPath("test")
+	if err != nil {
+		return "", "", fmt.Errorf("failed to create temp dir: %w", err)
+	}
+
+	tempXCResultPath, err := copyTestdataToDir(fmt.Sprintf("./xcresults/%s", fileName), filepath.Join(tempTestdataDir, fileName))
+	if err != nil {
+		return "", "", err
+	}
+
+	return tempTestdataDir, tempXCResultPath, nil
 }

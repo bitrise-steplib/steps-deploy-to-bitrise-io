@@ -3,6 +3,7 @@ default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
 app:
   envs:
+  - TZ: UTC
   - STEP_ID_IN_STEPLIB: deploy-to-bitrise-io
 
   # define these in your .bitrise.secrets.yml
