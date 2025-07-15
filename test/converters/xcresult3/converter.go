@@ -19,6 +19,7 @@ import (
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-xcode/xcodeproject/serialized"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3/model3"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testasset"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testreport"
 )
 
@@ -299,6 +300,10 @@ func extractAttachments(xcresultPath, outputPath string) (map[string][]string, e
 				// It is not a critical error if the rename fails because the file will be still exported just by its
 				// unique ID.
 				log.Warnf("Failed to rename %s to %s", oldPath, newPath)
+			}
+
+			if !testasset.IsSupportedAssetType(newPath) {
+				continue
 			}
 
 			testIdentifier := appendRepetitionToTestIdentifier(attachmentDetail.TestIdentifier, attachment.RepetitionNumber)
