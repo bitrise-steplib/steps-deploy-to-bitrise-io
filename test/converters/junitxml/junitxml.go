@@ -181,6 +181,7 @@ func convertTestCase(testCase TestCase) testreport.TestCase {
 		Name:              testCase.Name,
 		ClassName:         testCase.ClassName,
 		Time:              testCase.Time,
+		Properties:        convertProperties(testCase.Properties),
 	}
 
 	if testCase.Skipped != nil {
@@ -192,6 +193,23 @@ func convertTestCase(testCase TestCase) testreport.TestCase {
 	convertedTestCase.Failure = convertErrorsToFailure(testCase.Failure, testCase.Error, testCase.SystemErr)
 
 	return convertedTestCase
+}
+
+func convertProperties(properties *Properties) *testreport.Properties {
+	var convertedProperties *testreport.Properties
+	if properties != nil && len(properties.Property) > 0 {
+		convertedProperties = &testreport.Properties{
+			XMLName: properties.XMLName,
+		}
+		for _, property := range properties.Property {
+			convertedProperties.Property = append(convertedProperties.Property, testreport.Property{
+				XMLName: property.XMLName,
+				Name:    property.Name,
+				Value:   property.Value,
+			})
+		}
+	}
+	return convertedProperties
 }
 
 func convertErrorsToFailure(failure *Failure, error *Error, systemErr string) *testreport.Failure {
