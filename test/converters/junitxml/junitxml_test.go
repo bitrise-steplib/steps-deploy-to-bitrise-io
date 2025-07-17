@@ -373,6 +373,51 @@ func TestConverter_Convert(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "Error message in Message attribute of Failure element",
+			results: []resultReader{&stringReader{
+				Contents: `<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+ <testsuite name="BitriseBasicUITest" tests="1" failures="0" errors="0" time="10">
+  <testcase name="testCollectionView()" classname="BitriseBasicUITest" time="10">
+   <properties>
+    <property name="attachment_1" value="some_attachment.png" />
+   </properties>
+  </testcase>
+ </testsuite>
+</testsuites>`,
+			}},
+			want: testreport.TestReport{
+				TestSuites: []testreport.TestSuite{
+					{
+						XMLName:  xml.Name{Local: "testsuite"},
+						Name:     "BitriseBasicUITest",
+						Tests:    1,
+						Failures: 0,
+						Time:     10,
+						TestCases: []testreport.TestCase{
+							testreport.TestCase{
+								XMLName:   xml.Name{Local: "testcase"},
+								Name:      "testCollectionView()",
+								ClassName: "BitriseBasicUITest",
+								Time:      10,
+								Failure:   nil,
+								Properties: &testreport.Properties{
+									XMLName: xml.Name{Local: "properties"},
+									Property: []testreport.Property{
+										{
+											XMLName: xml.Name{Local: "property"},
+											Name:    "attachment_1",
+											Value:   "some_attachment.png",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
