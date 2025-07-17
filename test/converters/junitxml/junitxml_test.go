@@ -374,7 +374,7 @@ func TestConverter_Convert(t *testing.T) {
 			},
 		},
 		{
-			name: "Error message in Message attribute of Failure element",
+			name: "Test properties are converted",
 			results: []resultReader{&stringReader{
 				Contents: `<?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
