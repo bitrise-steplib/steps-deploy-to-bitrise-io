@@ -17,6 +17,7 @@ import (
 	logV2 "github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/retryhttp"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testasset"
 	"github.com/hashicorp/go-retryablehttp"
 )
 
@@ -95,7 +96,7 @@ func httpCall(apiToken, method, url string, input io.Reader, output interface{},
 }
 
 func findImages(testDir string) (imageFilePaths []string) {
-	for _, ext := range []string{".jpg", ".jpeg", ".png"} {
+	for _, ext := range testasset.AssetTypes {
 		if paths, err := filepath.Glob(filepath.Join(testDir, "*"+ext)); err == nil {
 			imageFilePaths = append(imageFilePaths, paths...)
 		}
