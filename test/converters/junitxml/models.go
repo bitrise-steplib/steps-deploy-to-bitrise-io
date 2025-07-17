@@ -24,16 +24,17 @@ type TestSuite struct {
 
 // TestCase ...
 type TestCase struct {
-	XMLName           xml.Name `xml:"testcase"`
-	ConfigurationHash string   `xml:"configuration-hash,attr"`
-	Name              string   `xml:"name,attr"`
-	ClassName         string   `xml:"classname,attr"`
-	Time              float64  `xml:"time,attr"`
-	Failure           *Failure `xml:"failure,omitempty"`
-	Skipped           *Skipped `xml:"skipped,omitempty"`
-	Error             *Error   `xml:"error,omitempty"`
-	SystemErr         string   `xml:"system-err,omitempty"`
-	SystemOut         string   `xml:"system-out,omitempty"`
+	XMLName           xml.Name    `xml:"testcase"`
+	ConfigurationHash string      `xml:"configuration-hash,attr"`
+	Name              string      `xml:"name,attr"`
+	ClassName         string      `xml:"classname,attr"`
+	Time              float64     `xml:"time,attr"`
+	Failure           *Failure    `xml:"failure,omitempty"`
+	Properties        *Properties `xml:"properties,omitempty"`
+	Skipped           *Skipped    `xml:"skipped,omitempty"`
+	Error             *Error      `xml:"error,omitempty"`
+	SystemErr         string      `xml:"system-err,omitempty"`
+	SystemOut         string      `xml:"system-out,omitempty"`
 
 	FlakyFailures []FlakyFailure `xml:"flakyFailure,omitempty"`
 	FlakyErrors   []FlakyError   `xml:"flakyError,omitempty"`
@@ -90,4 +91,15 @@ type Error struct {
 	XMLName xml.Name `xml:"error,omitempty"`
 	Message string   `xml:"message,attr,omitempty"`
 	Value   string   `xml:",chardata"`
+}
+
+type Property struct {
+	XMLName xml.Name `xml:"property"`
+	Name    string   `xml:"name,attr"`
+	Value   string   `xml:"value,attr"`
+}
+
+type Properties struct {
+	XMLName  xml.Name   `xml:"properties"`
+	Property []Property `xml:"property"`
 }
