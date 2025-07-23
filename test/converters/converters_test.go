@@ -6,6 +6,8 @@
 package converters
 
 import (
+	"encoding/xml"
+	"fmt"
 	"path/filepath"
 	"runtime"
 	"sort"
@@ -235,6 +237,19 @@ func TestXCresult3Converters(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
+
+			wantXML, err := xml.MarshalIndent(test.wantXML, "", "  ")
+			if err != nil {
+				t.Fatalf("Failed to marshal expected XML: %v", err)
+			}
+
+			gotXML, err := xml.MarshalIndent(got, "", "  ")
+			if err != nil {
+				t.Fatalf("Failed to marshal actual XML: %v", err)
+			}
+
+			fmt.Printf("TTT | Want XML:\n%s\n", string(wantXML))
+			fmt.Printf("TTT | Got XML:\n%s\n", string(gotXML))
 
 			opts := []cmp.Option{
 				cmp.Transformer("SortTestSuites", func(in []testreport.TestSuite) []testreport.TestSuite {
