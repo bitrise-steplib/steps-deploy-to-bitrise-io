@@ -172,6 +172,22 @@ func TestConverter_XML(t *testing.T) {
 						Failure: &testreport.Failure{
 							Value: "testProjectUITests.swift:30: XCTAssertTrue failed",
 						},
+						Properties: &testreport.Properties{
+							Property: []testreport.Property{
+								{
+									Name:  "attachment_0",
+									Value: "Screenshot 2021-02-09 at 09.35.52 AM.jpeg",
+								},
+								{
+									Name:  "attachment_1",
+									Value: "Screenshot 2021-02-09 at 09.35.51 AM.jpeg",
+								},
+								{
+									Name:  "attachment_2",
+									Value: "Screenshot 2021-02-09 at 09.35.52 AM (1).jpeg",
+								},
+							},
+						},
 					},
 					{
 						Name:      "testSkip()",
