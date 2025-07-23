@@ -66,11 +66,11 @@ func TestXCresult3Converters(t *testing.T) {
 							Property: []testreport.Property{
 								{
 									Name:  "attachment_0",
-									Value: "Screenshot 2019-11-25 at 01.28.29 PM.jpeg",
+									Value: "Screenshot 2019-11-25 at 12.28.29 PM.jpeg",
 								},
 								{
 									Name:  "attachment_1",
-									Value: "Screenshot 2019-11-25 at 01.28.29 PM (1).jpeg",
+									Value: "Screenshot 2019-11-25 at 12.28.29 PM (1).jpeg",
 								},
 							},
 						},
@@ -98,11 +98,11 @@ func TestXCresult3Converters(t *testing.T) {
 							Property: []testreport.Property{
 								{
 									Name:  "attachment_0",
-									Value: "Screenshot 2019-11-25 at 01.28.29 PM (2).jpeg",
+									Value: "Screenshot 2019-11-25 at 12.28.29 PM (2).jpeg",
 								},
 								{
 									Name:  "attachment_1",
-									Value: "Screenshot 2019-11-25 at 01.28.29 PM (3).jpeg",
+									Value: "Screenshot 2019-11-25 at 12.28.29 PM (3).jpeg",
 								},
 							},
 						},
@@ -140,11 +140,11 @@ func TestXCresult3Converters(t *testing.T) {
 							Property: []testreport.Property{
 								{
 									Name:  "attachment_0",
-									Value: "Screenshot 2019-11-25 at 01.28.30 PM.jpeg",
+									Value: "Screenshot 2019-11-25 at 12.28.30 PM.jpeg",
 								},
 								{
 									Name:  "attachment_1",
-									Value: "Screenshot 2019-11-25 at 01.28.30 PM (1).jpeg",
+									Value: "Screenshot 2019-11-25 at 12.28.30 PM (1).jpeg",
 								},
 							},
 						},
