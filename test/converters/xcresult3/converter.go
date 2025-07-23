@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -327,7 +328,10 @@ func buildTestIdentifier(className, testName string) string {
 }
 
 func appendRepetitionToTestIdentifier(testIdentifier string, repetition int) string {
-	return fmt.Sprintf("%s (%d)", stripTrailingParentheses(testIdentifier), repetition)
+	// Non-retried tests have an empty repetition, but later we treat them as a test with a repetition of 1.
+	// So we need to ensure that the repetition is at least 1.
+	value := int(math.Max(1, float64(repetition)))
+	return fmt.Sprintf("%s (%d)", stripTrailingParentheses(testIdentifier), value)
 }
 
 func connectAttachmentsToTestCases(xml testreport.TestReport, attachmentsMap map[string][]string) (testreport.TestReport, error) {
