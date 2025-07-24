@@ -60,6 +60,18 @@ func TestXCresult3Converters(t *testing.T) {
 						Failure: &testreport.Failure{
 							Value: "XCTAssertTrue failed",
 						},
+						Properties: &testreport.Properties{
+							Property: []testreport.Property{
+								{
+									Name:  "attachment_0",
+									Value: "Screenshot 2019-11-25 at 12.28.29 PM.jpeg",
+								},
+								{
+									Name:  "attachment_1",
+									Value: "Screenshot 2019-11-25 at 12.28.29 PM (1).jpeg",
+								},
+							},
+						},
 					},
 					{
 						Name:      "testLaunchPerformance",
@@ -79,6 +91,18 @@ func TestXCresult3Converters(t *testing.T) {
 						Time:      0.085,
 						Failure: &testreport.Failure{
 							Value: "XCTAssertTrue failed",
+						},
+						Properties: &testreport.Properties{
+							Property: []testreport.Property{
+								{
+									Name:  "attachment_0",
+									Value: "Screenshot 2019-11-25 at 12.28.29 PM (2).jpeg",
+								},
+								{
+									Name:  "attachment_1",
+									Value: "Screenshot 2019-11-25 at 12.28.29 PM (3).jpeg",
+								},
+							},
 						},
 					},
 					{
@@ -109,6 +133,18 @@ func TestXCresult3Converters(t *testing.T) {
 						Time:      0.084,
 						Failure: &testreport.Failure{
 							Value: "XCTAssertTrue failed",
+						},
+						Properties: &testreport.Properties{
+							Property: []testreport.Property{
+								{
+									Name:  "attachment_0",
+									Value: "Screenshot 2019-11-25 at 12.28.30 PM.jpeg",
+								},
+								{
+									Name:  "attachment_1",
+									Value: "Screenshot 2019-11-25 at 12.28.30 PM (1).jpeg",
+								},
+							},
 						},
 					},
 					{
@@ -199,7 +235,7 @@ func TestXCresult3Converters(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
-
+			
 			opts := []cmp.Option{
 				cmp.Transformer("SortTestSuites", func(in []testreport.TestSuite) []testreport.TestSuite {
 					s := append([]testreport.TestSuite{}, in...)
