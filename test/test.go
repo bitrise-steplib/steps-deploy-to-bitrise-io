@@ -17,6 +17,7 @@ import (
 	logV2 "github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/retryhttp"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testasset"
 	"github.com/hashicorp/go-retryablehttp"
 )
 
@@ -95,7 +96,7 @@ func httpCall(apiToken, method, url string, input io.Reader, output interface{},
 }
 
 func findImages(testDir string) (imageFilePaths []string) {
-	for _, ext := range []string{".jpg", ".jpeg", ".png"} {
+	for _, ext := range testasset.AssetTypes {
 		if paths, err := filepath.Glob(filepath.Join(testDir, "*"+ext)); err == nil {
 			imageFilePaths = append(imageFilePaths, paths...)
 		}
@@ -129,7 +130,7 @@ The Test Deploy directory has the following directory structure:
 	        ├── screenshot_3.png
 	        └── test-info.json
 */
-func ParseTestResults(testsRootDir string, logger logV2.Logger) (results Results, err error) {
+func ParseTestResults(testsRootDir string, useLegacyXCResultExtractionMethod bool, logger logV2.Logger) (results Results, err error) {
 	// read dirs in base tests dir
 	// <root_tests_dir>
 
@@ -194,7 +195,9 @@ func ParseTestResults(testsRootDir string, logger logV2.Logger) (results Results
 			for _, converter := range converters.List() {
 				logger.Debugf("Running converter: %T", converter)
 
-				// skip if couldn't find converter for content type
+				converter.Setup(useLegacyXCResultExtractionMethod)
+
+				// skip if it couldn't find a converter for the content type
 				detected := converter.Detect(testFiles)
 
 				logger.Debugf("known test result detected: %v", detected)
@@ -213,11 +216,11 @@ func ParseTestResults(testsRootDir string, logger logV2.Logger) (results Results
 						return nil, err
 					}
 
-					junitXML, err := converter.XML()
+					testReport, err := converter.Convert()
 					if err != nil {
 						return nil, err
 					}
-					xmlData, err := xml.MarshalIndent(junitXML, "", " ")
+					xmlData, err := xml.MarshalIndent(testReport, "", " ")
 					if err != nil {
 						return nil, err
 					}

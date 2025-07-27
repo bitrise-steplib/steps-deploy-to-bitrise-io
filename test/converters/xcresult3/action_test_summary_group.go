@@ -74,20 +74,20 @@ func (g ActionTestSummaryGroup) testsWithStatus() (tests []ActionTestSummaryGrou
 }
 
 // loadActionTestSummary ...
-func (g ActionTestSummaryGroup) loadActionTestSummary(xcresultPath string) (ActionTestSummary, error) {
+func (g ActionTestSummaryGroup) loadActionTestSummary(xcresultPath string, useLegacyFlag bool) (ActionTestSummary, error) {
 	if g.SummaryRef.ID.Value == "" {
 		return ActionTestSummary{}, ErrSummaryNotFound
 	}
 
 	var summary ActionTestSummary
-	if err := xcresulttoolGet(xcresultPath, g.SummaryRef.ID.Value, &summary); err != nil {
+	if err := xcresulttoolGet(xcresultPath, g.SummaryRef.ID.Value, useLegacyFlag, &summary); err != nil {
 		return ActionTestSummary{}, fmt.Errorf("failed to load ActionTestSummary: %w", err)
 	}
 	return summary, nil
 }
 
 // exportScreenshots ...
-func (g ActionTestSummaryGroup) exportScreenshots(resultPth, outputDir string) error {
+func (g ActionTestSummaryGroup) exportScreenshots(resultPth, outputDir string, useLegacyFlag bool) error {
 	if g.TestStatus.Value == "" {
 		return nil
 	}
@@ -97,7 +97,7 @@ func (g ActionTestSummaryGroup) exportScreenshots(resultPth, outputDir string) e
 	}
 
 	var summary ActionTestSummary
-	if err := xcresulttoolGet(resultPth, g.SummaryRef.ID.Value, &summary); err != nil {
+	if err := xcresulttoolGet(resultPth, g.SummaryRef.ID.Value, useLegacyFlag, &summary); err != nil {
 		return err
 	}
 
@@ -110,7 +110,7 @@ func (g ActionTestSummaryGroup) exportScreenshots(resultPth, outputDir string) e
 				}
 
 				pth := filepath.Join(outputDir, value.Filename.Value)
-				if err := xcresulttoolExport(resultPth, value.PayloadRef.ID.Value, pth); err != nil {
+				if err := xcresulttoolExport(resultPth, value.PayloadRef.ID.Value, pth, useLegacyFlag); err != nil {
 					return err
 				}
 				exported[value.PayloadRef.ID.Value] = true

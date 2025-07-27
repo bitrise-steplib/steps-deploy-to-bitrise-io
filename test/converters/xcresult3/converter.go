@@ -1,8 +1,11 @@
 package xcresult3
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -16,12 +19,15 @@ import (
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-xcode/xcodeproject/serialized"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3/model3"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testasset"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testreport"
 )
 
 // Converter ...
 type Converter struct {
-	xcresultPth string
+	xcresultPth               string
+	useLegacyExtractionMethod bool
 }
 
 func majorVersion(document serialized.Object) (int, error) {
@@ -49,6 +55,10 @@ func documentMajorVersion(pth string) (int, error) {
 	}
 
 	return majorVersion(info)
+}
+
+func (c *Converter) Setup(useOldXCResultExtractionMethod bool) {
+	c.useLegacyExtractionMethod = useOldXCResultExtractionMethod
 }
 
 // Detect ...
@@ -90,23 +100,52 @@ func (c *Converter) Detect(files []string) bool {
 }
 
 // XML ...
-func (c *Converter) XML() (junit.XML, error) {
+func (c *Converter) Convert() (testreport.TestReport, error) {
+	supportsNewMethod, err := supportsNewExtractionMethods()
+	if err != nil {
+		return testreport.TestReport{}, err
+	}
+
+	useLegacyFlag := c.useLegacyExtractionMethod
+
+	if supportsNewMethod && !useLegacyFlag {
+		log.Infof("Using new extraction method")
+
+		junitXml, err := parse(c.xcresultPth)
+		if err == nil {
+			return junitXml, nil
+		}
+
+		log.Warnf(fmt.Sprintf("Failed to parse extraction method: %s", err))
+		log.Warnf("Falling back to legacy extraction method")
+
+		sendRemoteWarning("xcresult3-parsing", "error: %s", err)
+
+		useLegacyFlag = true
+	}
+
+	log.Infof("Using legacy extraction method")
+
+	return legacyParse(c.xcresultPth, useLegacyFlag)
+}
+
+func legacyParse(path string, useLegacyFlag bool) (testreport.TestReport, error) {
 	var (
-		testResultDir = filepath.Dir(c.xcresultPth)
+		testResultDir = filepath.Dir(path)
 		maxParallel   = runtime.NumCPU() * 2
 	)
 
 	log.Debugf("Maximum parallelism: %d.", maxParallel)
 
-	_, summaries, err := Parse(c.xcresultPth)
+	_, summaries, err := Parse(path, useLegacyFlag)
 	if err != nil {
-		return junit.XML{}, err
+		return testreport.TestReport{}, err
 	}
 
-	var xmlData junit.XML
+	var xmlData testreport.TestReport
 	{
 		testSuiteCount := testSuiteCountInSummaries(summaries)
-		xmlData.TestSuites = make([]junit.TestSuite, 0, testSuiteCount)
+		xmlData.TestSuites = make([]testreport.TestSuite, 0, testSuiteCount)
 	}
 
 	summariesCount := len(summaries)
@@ -118,9 +157,9 @@ func (c *Converter) XML() (junit.XML, error) {
 		for _, name := range testSuiteOrder {
 			tests := testsByName[name]
 
-			testSuite, err := genTestSuite(name, summary, tests, testResultDir, c.xcresultPth, maxParallel)
+			testSuite, err := genTestSuite(name, summary, tests, testResultDir, path, maxParallel, useLegacyFlag)
 			if err != nil {
-				return junit.XML{}, err
+				return testreport.TestReport{}, err
 			}
 
 			xmlData.TestSuites = append(xmlData.TestSuites, testSuite)
@@ -128,6 +167,211 @@ func (c *Converter) XML() (junit.XML, error) {
 	}
 
 	return xmlData, nil
+}
+
+func parse(path string) (testreport.TestReport, error) {
+	results, err := ParseTestResults(path)
+	if err != nil {
+		return testreport.TestReport{}, err
+	}
+
+	testSummary, warnings, err := model3.Convert(results)
+	if err != nil {
+		return testreport.TestReport{}, err
+	}
+
+	if len(warnings) > 0 {
+		sendRemoteWarning("xcresults3-data", "warnings: %s", warnings)
+	}
+
+	var xml testreport.TestReport
+
+	for _, plan := range testSummary.TestPlans {
+		for _, testBundle := range plan.TestBundles {
+			xml.TestSuites = append(xml.TestSuites, parseTestBundle(testBundle))
+		}
+	}
+
+	outputPath := filepath.Dir(path)
+
+	attachmentsMap, err := extractAttachments(path, outputPath)
+	if err != nil {
+		return testreport.TestReport{}, err
+	}
+
+	xml, err = connectAttachmentsToTestCases(xml, attachmentsMap)
+	if err != nil {
+		return testreport.TestReport{}, err
+	}
+
+	return xml, nil
+}
+
+func parseTestBundle(testBundle model3.TestBundle) testreport.TestSuite {
+	failedCount := 0
+	skippedCount := 0
+	var totalDuration time.Duration
+	var tests []testreport.TestCase
+
+	for _, testSuite := range testBundle.TestSuites {
+		for _, testCase := range testSuite.TestCases {
+			var testCasesToConvert []model3.TestCase
+			if len(testCase.Retries) > 0 {
+				testCasesToConvert = testCase.Retries
+			} else {
+				testCasesToConvert = []model3.TestCase{testCase.TestCase}
+			}
+
+			for _, testCaseToConvert := range testCasesToConvert {
+				test := parseTestCase(testCaseToConvert)
+
+				if test.Failure != nil {
+					failedCount++
+				} else if test.Skipped != nil {
+					skippedCount++
+				}
+				totalDuration += testCaseToConvert.Time
+
+				tests = append(tests, test)
+			}
+		}
+	}
+
+	return testreport.TestSuite{
+		Name:      testBundle.Name,
+		Tests:     len(tests),
+		Failures:  failedCount,
+		Skipped:   skippedCount,
+		Time:      totalDuration.Seconds(),
+		TestCases: tests,
+	}
+}
+
+func parseTestCase(testCase model3.TestCase) testreport.TestCase {
+	test := testreport.TestCase{
+		Name:      testCase.Name,
+		ClassName: testCase.ClassName,
+		Time:      testCase.Time.Seconds(),
+	}
+
+	if testCase.Result == model3.TestResultFailed {
+		test.Failure = &testreport.Failure{Value: testCase.Message}
+	} else if testCase.Result == model3.TestResultSkipped {
+		test.Skipped = &testreport.Skipped{}
+	}
+
+	return test
+}
+
+func extractAttachments(xcresultPath, outputPath string) (map[string][]string, error) {
+	var attachmentsMap = make(map[string][]string)
+
+	if err := xcresulttoolExport(xcresultPath, "", outputPath, false); err != nil {
+		return nil, err
+	}
+
+	manifestPath := filepath.Join(outputPath, "manifest.json")
+	bytes, err := os.ReadFile(manifestPath)
+	if err != nil {
+		return nil, err
+	}
+
+	var manifest []model3.TestAttachmentDetails
+	if err := json.Unmarshal(bytes, &manifest); err != nil {
+		return nil, err
+	}
+
+	var fileCounterMap = make(map[string]int)
+	for _, attachmentDetail := range manifest {
+		for _, attachment := range attachmentDetail.Attachments {
+			oldPath := filepath.Join(outputPath, attachment.ExportedFileName)
+			newPath := filepath.Join(outputPath, attachment.SuggestedHumanReadableName)
+
+			// If the file already exists, we need to rename it to avoid overwriting.
+			if counter, exists := fileCounterMap[attachment.SuggestedHumanReadableName]; exists {
+				fileExtensionWithDot := filepath.Ext(attachment.SuggestedHumanReadableName)
+				fileNameWithoutExtension := strings.TrimSuffix(attachment.SuggestedHumanReadableName, fileExtensionWithDot)
+				newPath = filepath.Join(outputPath, fmt.Sprintf("%s (%d)%s", fileNameWithoutExtension, counter, fileExtensionWithDot))
+				fileCounterMap[attachment.SuggestedHumanReadableName] = counter + 1
+			} else {
+				fileCounterMap[attachment.SuggestedHumanReadableName] = 1
+			}
+
+			if err := os.Rename(oldPath, newPath); err != nil {
+				// It is not a critical error if the rename fails because the file will be still exported just by its
+				// unique ID.
+				log.Warnf("Failed to rename %s to %s", oldPath, newPath)
+			}
+
+			if !testasset.IsSupportedAssetType(newPath) {
+				continue
+			}
+
+			testIdentifier := appendRepetitionToTestIdentifier(attachmentDetail.TestIdentifier, attachment.RepetitionNumber)
+			attachmentsMap[testIdentifier] = append(attachmentsMap[testIdentifier], filepath.Base(newPath))
+		}
+	}
+
+	if err := os.Remove(manifestPath); err != nil {
+		log.Warnf("Failed to remove manifest file %s: %s", manifestPath, err)
+	}
+
+	return attachmentsMap, nil
+}
+
+func stripTrailingParentheses(s string) string {
+	return strings.TrimSuffix(s, "()")
+}
+
+func buildTestIdentifier(className, testName string) string {
+	return className + "/" + testName
+}
+
+func appendRepetitionToTestIdentifier(testIdentifier string, repetition int) string {
+	// Non-retried tests have an empty repetition, but later we treat them as a test with a repetition of 1.
+	// So we need to ensure that the repetition is at least 1.
+	value := int(math.Max(1, float64(repetition)))
+	return fmt.Sprintf("%s (%d)", stripTrailingParentheses(testIdentifier), value)
+}
+
+func connectAttachmentsToTestCases(xml testreport.TestReport, attachmentsMap map[string][]string) (testreport.TestReport, error) {
+	for i := range xml.TestSuites {
+		var testRepetitionMap = make(map[string]int)
+
+		for j := range xml.TestSuites[i].TestCases {
+			testCase := &xml.TestSuites[i].TestCases[j]
+			testIdentifier := buildTestIdentifier(testCase.ClassName, testCase.Name)
+
+			// If the test case has a repetition, we need to append it to the test identifier
+			// and keep track of how many times we have seen this test identifier.
+			if count, exists := testRepetitionMap[testIdentifier]; exists {
+				testRepetitionMap[testIdentifier] = count + 1
+			} else {
+				testRepetitionMap[testIdentifier] = 1
+			}
+
+			testIdentifier = appendRepetitionToTestIdentifier(testIdentifier, testRepetitionMap[testIdentifier])
+
+			// Add attachments if any exist for this test and repetition
+			if attachments, exists := attachmentsMap[testIdentifier]; exists {
+				if testCase.Properties == nil {
+					testCase.Properties = &testreport.Properties{
+						Property: []testreport.Property{},
+					}
+				}
+
+				// Add each attachment as a property
+				for i, fileName := range attachments {
+					testCase.Properties.Property = append(
+						testCase.Properties.Property,
+						testreport.Property{Name: fmt.Sprintf("attachment_%d", i), Value: fileName},
+					)
+				}
+			}
+		}
+	}
+
+	return xml, nil
 }
 
 func testSuiteCountInSummaries(summaries []ActionTestPlanRunSummaries) int {
@@ -145,7 +389,8 @@ func genTestSuite(name string,
 	testResultDir string,
 	xcresultPath string,
 	maxParallel int,
-) (junit.TestSuite, error) {
+	useLegacyFlag bool,
+) (testreport.TestSuite, error) {
 	var (
 		start           = time.Now()
 		genTestSuiteErr error
@@ -153,13 +398,13 @@ func genTestSuite(name string,
 		mtx             sync.RWMutex
 	)
 
-	testSuite := junit.TestSuite{
+	testSuite := testreport.TestSuite{
 		Name:      name,
 		Tests:     len(tests),
 		Failures:  summary.failuresCount(name),
 		Skipped:   summary.skippedCount(name),
 		Time:      summary.totalTime(name),
-		TestCases: make([]junit.TestCase, len(tests)),
+		TestCases: make([]testreport.TestCase, len(tests)),
 	}
 
 	testIdx := 0
@@ -171,7 +416,7 @@ func genTestSuite(name string,
 			go func(test ActionTestSummaryGroup, testIdx int) {
 				defer wg.Done()
 
-				testCase, err := genTestCase(test, xcresultPath, testResultDir)
+				testCase, err := genTestCase(test, xcresultPath, testResultDir, useLegacyFlag)
 				if err != nil {
 					mtx.Lock()
 					genTestSuiteErr = err
@@ -192,27 +437,27 @@ func genTestSuite(name string,
 	return testSuite, genTestSuiteErr
 }
 
-func genTestCase(test ActionTestSummaryGroup, xcresultPath, testResultDir string) (junit.TestCase, error) {
+func genTestCase(test ActionTestSummaryGroup, xcresultPath, testResultDir string, useLegacyFlag bool) (testreport.TestCase, error) {
 	var duartion float64
 	if test.Duration.Value != "" {
 		var err error
 		duartion, err = strconv.ParseFloat(test.Duration.Value, 64)
 		if err != nil {
-			return junit.TestCase{}, err
+			return testreport.TestCase{}, err
 		}
 	}
 
-	testSummary, err := test.loadActionTestSummary(xcresultPath)
+	testSummary, err := test.loadActionTestSummary(xcresultPath, useLegacyFlag)
 	// Ignoring the SummaryNotFoundError error is on purpose because not having an action summary is a valid use case.
 	// For example, failed tests will always have a summary, but successful ones might have it or might not.
 	// If they do not have it, then that means that they did not log anything to the console,
 	// and they were not executed as device configuration tests.
 	if err != nil && !errors.Is(err, ErrSummaryNotFound) {
-		return junit.TestCase{}, err
+		return testreport.TestCase{}, err
 	}
 
-	var failure *junit.Failure
-	var skipped *junit.Skipped
+	var failure *testreport.Failure
+	var skipped *testreport.Skipped
 	switch test.TestStatus.Value {
 	case "Failure":
 		failureMessage := ""
@@ -227,18 +472,18 @@ func genTestCase(test ActionTestSummaryGroup, xcresultPath, testResultDir string
 			failureMessage += fmt.Sprintf("%s:%s - %s", file, line, message)
 		}
 
-		failure = &junit.Failure{
+		failure = &testreport.Failure{
 			Value: failureMessage,
 		}
 	case "Skipped":
-		skipped = &junit.Skipped{}
+		skipped = &testreport.Skipped{}
 	}
 
-	if err := test.exportScreenshots(xcresultPath, testResultDir); err != nil {
-		return junit.TestCase{}, err
+	if err := test.exportScreenshots(xcresultPath, testResultDir, useLegacyFlag); err != nil {
+		return testreport.TestCase{}, err
 	}
 
-	return junit.TestCase{
+	return testreport.TestCase{
 		Name:              test.Name.Value,
 		ConfigurationHash: testSummary.Configuration.Hash,
 		ClassName:         strings.Split(test.Identifier.Value, "/")[0],

@@ -8,12 +8,12 @@ import (
 )
 
 // DeployIPA ...
-func (u *Uploader) DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups, notifyEmails string, isEnablePublicPage bool) (ArtifactURLs, error) {
+func (u *Uploader) DeployIPA(item deployment.DeployableItem, buildURL, token, notifyUserGroups, alwaysNotifyUserGroups, notifyEmails string, isEnablePublicPage bool) ([]ArtifactURLs, error) {
 	pth := item.Path
 
 	ipaInfo, err := u.iosParser.ParseIPAData(pth)
 	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to parse deployment info for %s: %w", pth, err)
+		return nil, fmt.Errorf("failed to parse deployment info for %s: %w", pth, err)
 	}
 
 	if ipaInfo.ProvisioningInfo.IPAExportMethod == exportoptions.MethodAppStore {
@@ -29,26 +29,18 @@ func (u *Uploader) DeployIPA(item deployment.DeployableItem, buildURL, token, no
 		Path:     pth,
 		FileSize: ipaInfo.FileSizeBytes,
 	}
-	uploadURL, artifactID, err := createArtifact(buildURL, token, artifact, "ios-ipa", IPAContentType)
-	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to create ipa artifact from %s: %w", pth, err)
-	}
-
-	if err := UploadArtifact(uploadURL, artifact, IPAContentType); err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to upload ipa (%s): %w", pth, err)
-	}
-
 	buildArtifactMeta := AppDeploymentMetaData{
-		IOSArtifactInfo:    ipaInfo,
-		NotifyUserGroups:   notifyUserGroups,
-		NotifyEmails:       notifyEmails,
-		IsEnablePublicPage: isEnablePublicPage,
+		IOSArtifactInfo:        ipaInfo,
+		NotifyUserGroups:       notifyUserGroups,
+		AlwaysNotifyUserGroups: alwaysNotifyUserGroups,
+		NotifyEmails:           notifyEmails,
+		IsEnablePublicPage:     isEnablePublicPage,
 	}
 
-	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta, item.IntermediateFileMeta)
+	urLs, err := u.upload(buildURL, token, artifact, "ios-ipa", IPAContentType, &item, &buildArtifactMeta)
 	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to finish ipa (%s) upload: %w", pth, err)
+		return nil, fmt.Errorf("failed ipa deploy: %w", err)
 	}
 
-	return artifactURLs, nil
+	return urLs, nil
 }

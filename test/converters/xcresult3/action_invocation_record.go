@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testreport"
 )
 
 // ActionsInvocationRecord ...
@@ -75,9 +75,9 @@ func testCaseMatching(test ActionTestSummaryGroup, testCaseName string) bool {
 }
 
 // failure returns the ActionTestSummaryGroup's failure reason from the ActionsInvocationRecord.
-func (r ActionsInvocationRecord) failure(test ActionTestSummaryGroup, testSuit junit.TestSuite) string {
+func (r ActionsInvocationRecord) failure(test ActionTestSummaryGroup, testSuite testreport.TestSuite) string {
 	for _, failureSummary := range r.Issues.TestFailureSummaries.Values {
-		if failureSummary.ProducingTarget.Value == testSuit.Name && testCaseMatching(test, failureSummary.TestCaseName.Value) {
+		if failureSummary.ProducingTarget.Value == testSuite.Name && testCaseMatching(test, failureSummary.TestCaseName.Value) {
 			file, line := failureSummary.fileAndLineNumber()
 			return fmt.Sprintf("%s:%s - %s", file, line, failureSummary.Message.Value)
 		}

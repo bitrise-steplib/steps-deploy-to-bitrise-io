@@ -23,7 +23,12 @@ type IntermediateFileMetaData struct {
 // DeployableItem ...
 type DeployableItem struct {
 	Path                 string
+	ArchiveAsArtifact    bool
 	IntermediateFileMeta *IntermediateFileMetaData
+}
+
+func (d *DeployableItem) IsIntermediateFile() bool {
+	return d.IntermediateFileMeta != nil
 }
 
 // ConvertPaths ...
@@ -36,6 +41,7 @@ func ConvertPaths(paths []string) []DeployableItem {
 	for _, path := range paths {
 		items = append(items, DeployableItem{
 			Path:                 path,
+			ArchiveAsArtifact:    true,
 			IntermediateFileMeta: nil,
 		})
 	}
@@ -166,7 +172,8 @@ func (c Collector) mergeItems(items []DeployableItem, files map[string]string) (
 
 		if index == -1 {
 			item := DeployableItem{
-				Path: path,
+				Path:              path,
+				ArchiveAsArtifact: false,
 				IntermediateFileMeta: &IntermediateFileMetaData{
 					EnvKey: envKey,
 					IsDir:  isDirectory,

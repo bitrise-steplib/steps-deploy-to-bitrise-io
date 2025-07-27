@@ -8,12 +8,12 @@ import (
 )
 
 // DeployAPK ...
-func (u *Uploader) DeployAPK(item deployment.DeployableItem, artifacts []string, buildURL, token, notifyUserGroups, notifyEmails string, isEnablePublicPage bool) (ArtifactURLs, error) {
+func (u *Uploader) DeployAPK(item deployment.DeployableItem, artifacts []string, buildURL, token, notifyUserGroups, alwaysNotifyUserGroups, notifyEmails string, isEnablePublicPage bool) ([]ArtifactURLs, error) {
 	pth := item.Path
 
 	apkInfo, err := u.androidParser.ParseAPKData(pth)
 	if err != nil {
-		return ArtifactURLs{}, err
+		return nil, err
 	}
 
 	u.logger.Printf("APK metadata: %+v", printableAppInfo(apkInfo.AppInfo))
@@ -32,26 +32,18 @@ func (u *Uploader) DeployAPK(item deployment.DeployableItem, artifacts []string,
 		Path:     pth,
 		FileSize: apkInfo.FileSizeBytes,
 	}
-	uploadURL, artifactID, err := createArtifact(buildURL, token, artifact, "android-apk", APKContentType)
-	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to create apk artifact: %s %w", pth, err)
-	}
-
-	if err := UploadArtifact(uploadURL, artifact, APKContentType); err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to upload apk artifact, error: %s", err)
-	}
-
 	buildArtifactMeta := AppDeploymentMetaData{
-		AndroidArtifactInfo: apkInfo,
-		NotifyUserGroups:    notifyUserGroups,
-		NotifyEmails:        notifyEmails,
-		IsEnablePublicPage:  isEnablePublicPage,
+		AndroidArtifactInfo:    apkInfo,
+		NotifyUserGroups:       notifyUserGroups,
+		AlwaysNotifyUserGroups: alwaysNotifyUserGroups,
+		NotifyEmails:           notifyEmails,
+		IsEnablePublicPage:     isEnablePublicPage,
 	}
 
-	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta, item.IntermediateFileMeta)
+	urLs, err := u.upload(buildURL, token, artifact, "android-apk", APKContentType, &item, &buildArtifactMeta)
 	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to finish apk artifact, error: %s", err)
+		return nil, fmt.Errorf("failed apk deploy: %w", err)
 	}
 
-	return artifactURLs, nil
+	return urLs, nil
 }

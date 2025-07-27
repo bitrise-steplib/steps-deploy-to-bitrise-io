@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -35,32 +36,47 @@ import (
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/uploaders"
 )
 
+// This is the list of user groups expected by the steps
+var validUserGroups = []string{"none", "testers", "developers", "platform engineers", "admins", "owners", "everyone"}
+
+// This is the list of user groups that are accepted by the backend
+var acceptedUserGroups = []string{
+	"testers", "tester", "qa", "tester / qa", "tester/qa",
+	"developers", "developer",
+	"platform engineer", "platform engineers",
+	"admins", "admin",
+	"owner", "owners",
+	"everyone", "all", "team",
+}
+
 var fileBaseNamesToSkip = []string{".DS_Store"}
 
 // Config ...
 type Config struct {
-	PipelineIntermediateFiles     string `env:"pipeline_intermediate_files"`
-	BuildURL                      string `env:"build_url,required"`
-	APIToken                      string `env:"build_api_token,required"`
-	IsCompress                    bool   `env:"is_compress,opt[true,false]"`
-	ZipName                       string `env:"zip_name"`
-	DeployPath                    string `env:"deploy_path"`
-	NotifyUserGroups              string `env:"notify_user_groups"`
-	NotifyEmailList               string `env:"notify_email_list"`
-	IsPublicPageEnabled           bool   `env:"is_enable_public_page,opt[true,false]"`
-	PublicInstallPageMapFormat    string `env:"public_install_page_url_map_format,required"`
-	PermanentDownloadURLMapFormat string `env:"permanent_download_url_map_format,required"`
-	DetailsPageURLMapFormat       string `env:"details_page_url_map_format,required"`
-	BuildSlug                     string `env:"BITRISE_BUILD_SLUG,required"`
-	TestDeployDir                 string `env:"BITRISE_TEST_DEPLOY_DIR,required"`
-	AppSlug                       string `env:"BITRISE_APP_SLUG,required"`
-	AddonAPIBaseURL               string `env:"addon_api_base_url,required"`
-	AddonAPIToken                 string `env:"addon_api_token"`
-	FilesToRedact                 string `env:"files_to_redact"`
-	DebugMode                     bool   `env:"debug_mode,opt[true,false]"`
-	BundletoolVersion             string `env:"bundletool_version,required"`
-	UploadConcurrency             string `env:"BITRISE_DEPLOY_UPLOAD_CONCURRENCY"`
-	HTMLReportDir                 string `env:"BITRISE_HTML_REPORT_DIR"`
+	PipelineIntermediateFiles         string `env:"pipeline_intermediate_files"`
+	BuildURL                          string `env:"build_url,required"`
+	APIToken                          string `env:"build_api_token,required"`
+	IsCompress                        bool   `env:"is_compress,opt[true,false]"`
+	ZipName                           string `env:"zip_name"`
+	DeployPath                        string `env:"deploy_path"`
+	NotifyUserGroups                  string `env:"notify_user_groups"`
+	AlwaysNotifyUserGroups            string `env:"always_notify_user_groups"`
+	NotifyEmailList                   string `env:"notify_email_list"`
+	IsPublicPageEnabled               bool   `env:"is_enable_public_page,opt[true,false]"`
+	PublicInstallPageMapFormat        string `env:"public_install_page_url_map_format,required"`
+	PermanentDownloadURLMapFormat     string `env:"permanent_download_url_map_format,required"`
+	DetailsPageURLMapFormat           string `env:"details_page_url_map_format,required"`
+	BuildSlug                         string `env:"BITRISE_BUILD_SLUG,required"`
+	TestDeployDir                     string `env:"BITRISE_TEST_DEPLOY_DIR,required"`
+	AppSlug                           string `env:"BITRISE_APP_SLUG,required"`
+	AddonAPIBaseURL                   string `env:"addon_api_base_url,required"`
+	AddonAPIToken                     string `env:"addon_api_token"`
+	FilesToRedact                     string `env:"files_to_redact"`
+	DebugMode                         bool   `env:"debug_mode,opt[true,false]"`
+	UseLegacyXCResultExtractionMethod bool   `env:"use_legacy_xcresult_extraction_method,opt[true,false]"`
+	BundletoolVersion                 string `env:"bundletool_version,required"`
+	UploadConcurrency                 string `env:"BITRISE_DEPLOY_UPLOAD_CONCURRENCY"`
+	HTMLReportDir                     string `env:"BITRISE_HTML_REPORT_DIR"`
 }
 
 // PublicInstallPage ...
@@ -96,8 +112,16 @@ func main() {
 	log.SetEnableDebugLog(config.DebugMode)
 	logger.EnableDebugLog(config.DebugMode)
 
+	if err := validateUserGroups(config.NotifyUserGroups, logger); err != nil {
+		fail(logger, "notify_user_groups - %s", err)
+	}
+
+	if err := validateUserGroups(config.AlwaysNotifyUserGroups, logger); err != nil {
+		fail(logger, "always_notify_user_groups - %s", err)
+	}
+
 	if err := validateGoTemplate(config.PublicInstallPageMapFormat); err != nil {
-		fail(logger, "PublicInstallPageMapFormat - %s", err)
+		fail(logger, "public_install_page_url_map_format - %s", err)
 	}
 
 	tmpDir, err := pathutil.NormalizedOSTempDirPath("__deploy-to-bitrise-io__")
@@ -432,7 +456,7 @@ func stepNameWithIndex(stepInfo models.TestResultStepInfo) string {
 func deployTestResults(config Config, logger loggerV2.Logger) {
 	logger.Println()
 	logger.Infof("Collecting test results...")
-	testResults, err := test.ParseTestResults(config.TestDeployDir, logger)
+	testResults, err := test.ParseTestResults(config.TestDeployDir, config.UseLegacyXCResultExtractionMethod, logger)
 	if err != nil {
 		logger.Warnf("Failed to parse test results: %s", err)
 		return
@@ -539,11 +563,12 @@ func deploy(deployableItems []deployment.DeployableItem, config Config, logger l
 	}
 
 	wg.Wait()
+	uploader.Wait()
 
 	return artifactURLCollection, errorCollection
 }
 
-func deploySingleItem(logger loggerV2.Logger, uploader *uploaders.Uploader, item deployment.DeployableItem, config Config, androidArtifacts []string) (uploaders.ArtifactURLs, error) {
+func deploySingleItem(logger loggerV2.Logger, uploader *uploaders.Uploader, item deployment.DeployableItem, config Config, androidArtifacts []string) ([]uploaders.ArtifactURLs, error) {
 	pth := item.Path
 	fileType := getFileType(pth)
 
@@ -553,7 +578,7 @@ func deploySingleItem(logger loggerV2.Logger, uploader *uploaders.Uploader, item
 	case ".apk":
 		logger.Printf("Deploying apk file: %s", pth)
 
-		return uploader.DeployAPK(item, androidArtifacts, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
+		return uploader.DeployAPK(item, androidArtifacts, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.AlwaysNotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
 	case ".aab":
 		logger.Printf("Deploying aab file: %s", pth)
 
@@ -561,7 +586,7 @@ func deploySingleItem(logger loggerV2.Logger, uploader *uploaders.Uploader, item
 	case ".ipa":
 		logger.Printf("Deploying ipa file: %s", pth)
 
-		return uploader.DeployIPA(item, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
+		return uploader.DeployIPA(item, config.BuildURL, config.APIToken, config.NotifyUserGroups, config.AlwaysNotifyUserGroups, config.NotifyEmailList, config.IsPublicPageEnabled)
 	case zippedXcarchiveExt:
 		logger.Printf("Deploying xcarchive file: %s", pth)
 
@@ -578,18 +603,20 @@ func handleDeploymentFailureError(err error, errorCollection []error, logger log
 	return errorCollection
 }
 
-func fillURLMaps(lock *sync.RWMutex, artifactURLCollection ArtifactURLCollection, artifactURLs uploaders.ArtifactURLs, path string, tryPublic bool) {
+func fillURLMaps(lock *sync.RWMutex, artifactURLCollection ArtifactURLCollection, artifactURLs []uploaders.ArtifactURLs, path string, tryPublic bool) {
 	lock.Lock()
 	defer lock.Unlock()
 
-	if tryPublic && artifactURLs.PublicInstallPageURL != "" {
-		artifactURLCollection.PublicInstallPageURLs[filepath.Base(path)] = artifactURLs.PublicInstallPageURL
-	}
-	if artifactURLs.PermanentDownloadURL != "" {
-		artifactURLCollection.PermanentDownloadURLs[filepath.Base(path)] = artifactURLs.PermanentDownloadURL
-	}
-	if artifactURLs.DetailsPageURL != "" {
-		artifactURLCollection.DetailsPageURLs[filepath.Base(path)] = artifactURLs.DetailsPageURL
+	for _, urls := range artifactURLs {
+		if tryPublic && urls.PublicInstallPageURL != "" {
+			artifactURLCollection.PublicInstallPageURLs[filepath.Base(path)] = urls.PublicInstallPageURL
+		}
+		if urls.PermanentDownloadURL != "" {
+			artifactURLCollection.PermanentDownloadURLs[filepath.Base(path)] = urls.PermanentDownloadURL
+		}
+		if urls.DetailsPageURL != "" {
+			artifactURLCollection.DetailsPageURLs[filepath.Base(path)] = urls.DetailsPageURL
+		}
 	}
 }
 
@@ -626,4 +653,31 @@ func determineConcurrency(config Config) int {
 	}
 
 	return value
+}
+
+func validateUserGroups(userGroupsStr string, logger loggerV2.Logger) error {
+	if userGroupsStr == "" {
+		return nil
+	}
+
+	split := strings.Split(userGroupsStr, ",")
+	for _, item := range split {
+		item = strings.TrimSpace(item)
+		if item == "" {
+			continue
+		}
+
+		if slices.Contains(validUserGroups, item) {
+			continue
+		}
+
+		if slices.Contains(acceptedUserGroups, strings.ToLower(item)) {
+			logger.Warnf("User group %s is accepted by the backend, but it is not the recommended value. Please use one of the following values: %s", item, strings.Join(validUserGroups, ", "))
+			continue
+		}
+
+		return fmt.Errorf("invalid user group: %s", item)
+	}
+
+	return nil
 }

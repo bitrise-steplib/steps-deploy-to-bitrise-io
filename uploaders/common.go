@@ -14,13 +14,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/docker/go-units"
+
 	androidparser "github.com/bitrise-io/go-android/v2/metaparser"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-io/go-utils/urlutil"
 	iosparser "github.com/bitrise-io/go-xcode/v2/metaparser"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
-	"github.com/docker/go-units"
 )
 
 type ArtifactURLs struct {
@@ -30,11 +31,12 @@ type ArtifactURLs struct {
 }
 
 type AppDeploymentMetaData struct {
-	AndroidArtifactInfo *androidparser.ArtifactMetadata
-	IOSArtifactInfo     *iosparser.ArtifactMetadata
-	NotifyUserGroups    string
-	NotifyEmails        string
-	IsEnablePublicPage  bool
+	AndroidArtifactInfo    *androidparser.ArtifactMetadata
+	IOSArtifactInfo        *iosparser.ArtifactMetadata
+	NotifyUserGroups       string
+	AlwaysNotifyUserGroups string
+	NotifyEmails           string
+	IsEnablePublicPage     bool
 }
 
 type ArtifactArgs struct {
@@ -42,42 +44,61 @@ type ArtifactArgs struct {
 	FileSize int64 // bytes
 }
 
-func createArtifact(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string) (string, string, error) {
+type TransferDetails struct {
+	Size     int64
+	Duration time.Duration
+	Hostname string
+}
+
+type UploadTask struct {
+	ErrorMessage   string `json:"error_msg"`
+	URL            string `json:"upload_url"`
+	ID             int64  `json:"id"`
+	IsIntermediate bool   `json:"is_intermediate_file"`
+}
+
+func (u UploadTask) Identifier() string {
+	return fmt.Sprintf("%d", u.ID)
+}
+
+func createArtifact(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, archiveAsArtifact bool, pipelineMeta *deployment.IntermediateFileMetaData) ([]UploadTask, error) {
 	// create form data
 	artifactName := filepath.Base(artifact.Path)
 
 	log.Printf("file size: %s", units.BytesSize(float64(artifact.FileSize)))
 
 	if strings.TrimSpace(token) == "" {
-		return "", "", fmt.Errorf("provided API token is empty")
+		return nil, fmt.Errorf("provided API token is empty")
 	}
 
 	data := url.Values{
-		"api_token":       {token},
-		"title":           {artifactName},
-		"filename":        {artifactName},
-		"artifact_type":   {artifactType},
-		"file_size_bytes": {fmt.Sprintf("%d", artifact.FileSize)},
-		"content_type":    {contentType},
+		"api_token":           {token},
+		"title":               {artifactName},
+		"filename":            {artifactName},
+		"artifact_type":       {artifactType},
+		"file_size_bytes":     {fmt.Sprintf("%d", artifact.FileSize)},
+		"content_type":        {contentType},
+		"archive_as_artifact": {strconv.FormatBool(archiveAsArtifact)},
 	}
 	// ---
+
+	if pipelineMeta != nil {
+		pipelineInfoBytes, err := json.Marshal(pipelineMeta)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal deployment meta: %s", err)
+		}
+
+		data["intermediate_file_info"] = []string{string(pipelineInfoBytes)}
+	}
 
 	// perform request
 	uri, err := urlutil.Join(buildURL, "artifacts.json")
 	if err != nil {
-		return "", "", fmt.Errorf("failed to generate create artifact url, error: %s", err)
+		return nil, fmt.Errorf("failed to generate create artifact url, error: %s", err)
 	}
 
 	var response *http.Response
-
-	// process response
-	type createArtifactResponse struct {
-		ErrorMessage string `json:"error_msg"`
-		UploadURL    string `json:"upload_url"`
-		ID           int    `json:"id"`
-	}
-
-	var artifactResponse createArtifactResponse
+	var uploadTasks []UploadTask
 
 	if err := retry.Times(3).Wait(5 * time.Second).Try(func(attempt uint) error {
 		if attempt > 0 {
@@ -110,34 +131,43 @@ func createArtifact(buildURL, token string, artifact ArtifactArgs, artifactType,
 			return errors.New(createResponse.ErrorMessage)
 		}
 
-		if err := json.Unmarshal(body, &artifactResponse); err != nil {
+		if err := json.Unmarshal(body, &uploadTasks); err != nil {
 			return fmt.Errorf("failed to unmarshal response (%s), error: %s", string(body), err)
 		}
 
-		if artifactResponse.ErrorMessage != "" {
-			return fmt.Errorf("failed to create artifact on bitrise, error message: %s", artifactResponse.ErrorMessage)
+		if len(uploadTasks) == 0 {
+			return fmt.Errorf("failed to create artifact on bitrise, error: no upload task received")
 		}
-		if artifactResponse.UploadURL == "" {
-			return fmt.Errorf("failed to create artifact on bitrise, error: no upload url received")
-		}
-		if artifactResponse.ID == 0 {
-			return fmt.Errorf("failed to create artifact on bitrise, error: no artifact id received")
+
+		for _, task := range uploadTasks {
+			if task.ErrorMessage != "" {
+				return fmt.Errorf("failed to create artifact on bitrise, error message: %s", task.ErrorMessage)
+			}
+
+			if task.URL == "" {
+				return fmt.Errorf("failed to create artifact on bitrise, error: missing upload url")
+			}
+			if task.ID == 0 {
+				return fmt.Errorf("failed to create artifact on bitrise, error: missing artifact id")
+			}
 		}
 
 		return nil
 	}); err != nil {
-		return "", "", err
+		return nil, err
 	}
 
-	return artifactResponse.UploadURL, fmt.Sprintf("%d", artifactResponse.ID), nil
+	return uploadTasks, nil
 }
 
-func UploadArtifact(uploadURL string, artifact ArtifactArgs, contentType string) error {
+func UploadArtifact(uploadURL string, artifact ArtifactArgs, contentType string) (TransferDetails, error) {
 	netClient := &http.Client{
 		Timeout: 10 * time.Minute,
 	}
 
-	return retry.Times(3).Wait(5).Try(func(attempt uint) error {
+	start := time.Now()
+
+	err := retry.Times(3).Wait(5).Try(func(attempt uint) error {
 		file, err := os.Open(artifact.Path)
 		if err != nil {
 			return fmt.Errorf("failed to open artifact, error: %s", err)
@@ -192,12 +222,19 @@ func UploadArtifact(uploadURL string, artifact ArtifactArgs, contentType string)
 
 		return nil
 	})
+
+	details := TransferDetails{
+		Size:     artifact.FileSize,
+		Duration: time.Since(start),
+		Hostname: extractHost(uploadURL),
+	}
+
+	return details, err
 }
 
-func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDeploymentMetaData, pipelineMeta *deployment.IntermediateFileMetaData) (ArtifactURLs, error) {
+func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDeploymentMetaData) (ArtifactURLs, error) {
 	// create form data
 	data := url.Values{"api_token": {token}}
-	isEnablePublicPage := false
 	if appDeploymentMeta != nil {
 		var artifactInfoBytes []byte
 		var err error
@@ -219,22 +256,15 @@ func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDe
 		if appDeploymentMeta.NotifyUserGroups != "" {
 			data["notify_user_groups"] = []string{appDeploymentMeta.NotifyUserGroups}
 		}
+		if appDeploymentMeta.AlwaysNotifyUserGroups != "" {
+			data["always_notify_user_groups"] = []string{appDeploymentMeta.AlwaysNotifyUserGroups}
+		}
 		if appDeploymentMeta.NotifyEmails != "" {
 			data["notify_emails"] = []string{appDeploymentMeta.NotifyEmails}
 		}
 		if appDeploymentMeta.IsEnablePublicPage {
 			data["is_enable_public_page"] = []string{"yes"}
-			isEnablePublicPage = true
 		}
-	}
-
-	if pipelineMeta != nil {
-		pipelineInfoBytes, err := json.Marshal(pipelineMeta)
-		if err != nil {
-			return ArtifactURLs{}, fmt.Errorf("failed to marshal deployment meta: %s", err)
-		}
-
-		data["intermediate_file_info"] = []string{string(pipelineInfoBytes)}
 	}
 
 	// ---
@@ -291,23 +321,11 @@ func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDe
 		log.Warnf("Invalid e-mail addresses: %s", strings.Join(artifactResponse.InvalidEmails, ", "))
 	}
 
-	urls := ArtifactURLs{
+	return ArtifactURLs{
 		PermanentDownloadURL: artifactResponse.PermanentDownloadURL,
-	}
-
-	if artifactResponse.DetailsPageURL != "" {
-		urls.DetailsPageURL = artifactResponse.DetailsPageURL
-	}
-
-	if isEnablePublicPage {
-		if artifactResponse.PublicInstallPageURL == "" {
-			return ArtifactURLs{}, fmt.Errorf("public install page was enabled, but no public install page generated")
-		}
-
-		urls.PublicInstallPageURL = artifactResponse.PublicInstallPageURL
-	}
-
-	return urls, nil
+		DetailsPageURL:       artifactResponse.DetailsPageURL,
+		PublicInstallPageURL: artifactResponse.PublicInstallPageURL,
+	}, nil
 }
 
 func printableAppInfo(appInfo interface{}) string {
@@ -317,4 +335,13 @@ func printableAppInfo(appInfo interface{}) string {
 	}
 
 	return string(bytes)
+}
+
+func extractHost(downloadURL string) string {
+	u, err := url.Parse(downloadURL)
+	if err != nil {
+		return "unknown"
+	}
+
+	return strings.TrimPrefix(u.Hostname(), "www.")
 }

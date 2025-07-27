@@ -3,7 +3,7 @@ package xcresult3
 import (
 	"testing"
 
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testreport"
 )
 
 func TestTestFailureSummary_fileAndLineNumber(t *testing.T) {
@@ -116,7 +116,7 @@ func TestActionsInvocationRecord_failure(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.record.failure(tt.test, junit.TestSuite{Name: "Xcode11TestUITests2"}); got != tt.want {
+			if got := tt.record.failure(tt.test, testreport.TestSuite{Name: "Xcode11TestUITests2"}); got != tt.want {
 				t.Errorf("ActionsInvocationRecord.failure() = %v, want %v", got, tt.want)
 			}
 		})

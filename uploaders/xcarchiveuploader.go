@@ -9,7 +9,7 @@ import (
 )
 
 // DeployXcarchive ...
-func (u *Uploader) DeployXcarchive(item deployment.DeployableItem, buildURL, token string) (ArtifactURLs, error) {
+func (u *Uploader) DeployXcarchive(item deployment.DeployableItem, buildURL, token string) ([]ArtifactURLs, error) {
 	pth := item.Path
 
 	xcarchiveInfo, err := u.iosParser.ParseXCArchiveData(pth)
@@ -17,7 +17,7 @@ func (u *Uploader) DeployXcarchive(item deployment.DeployableItem, buildURL, tok
 		if errors.Is(err, metaparser.MacOSProjectIsNotSupported) {
 			u.logger.Warnf("macOS archive deployment is not supported, skipping xcarchive")
 		} else {
-			return ArtifactURLs{}, fmt.Errorf("failed to parse deployment info for %s: %w", pth, err)
+			return nil, fmt.Errorf("failed to parse deployment info for %s: %w", pth, err)
 		}
 	}
 
@@ -27,26 +27,18 @@ func (u *Uploader) DeployXcarchive(item deployment.DeployableItem, buildURL, tok
 		Path:     pth,
 		FileSize: xcarchiveInfo.FileSizeBytes,
 	}
-	uploadURL, artifactID, err := createArtifact(buildURL, token, artifact, "ios-xcarchive", "")
-	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to create xcarchive artifact from %s %w", pth, err)
-	}
-
-	if err := UploadArtifact(uploadURL, artifact, ""); err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to upload xcarchive (%s): %w", pth, err)
-	}
-
 	buildArtifactMeta := AppDeploymentMetaData{
-		IOSArtifactInfo:    xcarchiveInfo,
-		NotifyUserGroups:   "",
-		NotifyEmails:       "",
-		IsEnablePublicPage: false,
+		IOSArtifactInfo:        xcarchiveInfo,
+		NotifyUserGroups:       "",
+		AlwaysNotifyUserGroups: "",
+		NotifyEmails:           "",
+		IsEnablePublicPage:     false,
 	}
 
-	artifactURLs, err := finishArtifact(buildURL, token, artifactID, &buildArtifactMeta, item.IntermediateFileMeta)
+	urLs, err := u.upload(buildURL, token, artifact, "ios-xcarchive", "", &item, &buildArtifactMeta)
 	if err != nil {
-		return ArtifactURLs{}, fmt.Errorf("failed to finish xcarchive (%s) upload: %w", pth, err)
+		return nil, fmt.Errorf("failed xcarchive deploy: %w", err)
 	}
 
-	return artifactURLs, nil
+	return urLs, nil
 }

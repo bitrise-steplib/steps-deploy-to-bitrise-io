@@ -6,38 +6,38 @@
 package converters
 
 import (
-	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"testing"
 
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/junit"
+	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testreport"
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
 
 	"github.com/bitrise-io/go-utils/log"
 )
 
 func TestXCresult3Converters(t *testing.T) {
 	log.SetEnableDebugLog(true)
-	want := junit.XML{
-		TestSuites: []junit.TestSuite{
+	want := testreport.TestReport{
+		TestSuites: []testreport.TestSuite{
 			{ // unit test
 				Name:     "rtgtrghtrgTests",
 				Tests:    2,
 				Failures: 0,
-				Errors:   0,
-				Time:     0.26388001441955566,
-				TestCases: []junit.TestCase{
+				Time:     0.26063,
+				TestCases: []testreport.TestCase{
 					{ // plain test case
 						Name:      "testExample()",
 						ClassName: "rtgtrghtrgTests",
-						Time:      0.0006339550018310547,
+						Time:      0.00063,
 					},
 					{ // plain test case
 						Name:      "testPerformanceExample()",
 						ClassName: "rtgtrghtrgTests",
-						Time:      0.2632460594177246,
+						Time:      0.26,
 					},
 				},
 			},
@@ -45,142 +45,207 @@ func TestXCresult3Converters(t *testing.T) {
 				Name:     "rtgtrghtrgUITests",
 				Tests:    15,
 				Failures: 3,
-				Errors:   0,
-				Time:     0.7596049308776855,
-				TestCases: []junit.TestCase{
+				Time:     0.759,
+				TestCases: []testreport.TestCase{
 					// class rtgtrghtrg3UITests: XCTestCase inside rtgtrghtrgUITests class
 					{
 						Name:      "testExample",
 						ClassName: "_TtCC17rtgtrghtrgUITests17rtgtrghtrgUITests18rtgtrghtrg3UITests",
-						Time:      0.031695008277893066,
+						Time:      0.032,
 					},
 					{
 						Name:      "testFailMe",
 						ClassName: "_TtCC17rtgtrghtrgUITests17rtgtrghtrgUITests18rtgtrghtrg3UITests",
-						Time:      0.09049093723297119,
-						Failure: &junit.Failure{
-							Value: "/Users/tamaspapik/Develop/ios/rtgtrghtrg/rtgtrghtrgUITests/rtgtrghtrgUITests.swift:68 - XCTAssertTrue failed",
+						Time:      0.09,
+						Failure: &testreport.Failure{
+							Value: "XCTAssertTrue failed",
+						},
+						Properties: &testreport.Properties{
+							Property: []testreport.Property{
+								{
+									Name:  "attachment_0",
+									Value: "Screenshot 2019-11-25 at 12.28.29 PM.jpeg",
+								},
+								{
+									Name:  "attachment_1",
+									Value: "Screenshot 2019-11-25 at 12.28.29 PM (1).jpeg",
+								},
+							},
 						},
 					},
 					{
 						Name:      "testLaunchPerformance",
 						ClassName: "_TtCC17rtgtrghtrgUITests17rtgtrghtrgUITests18rtgtrghtrg3UITests",
-						Time:      0.036438941955566406,
+						Time:      0.036,
 					},
 
 					// class rtgtrghtrg2UITests: XCTestCase
 					{
 						Name:      "testExample()",
 						ClassName: "rtgtrghtrg2UITests",
-						Time:      0.06093001365661621,
+						Time:      0.061,
 					},
 					{
 						Name:      "testFailMe()",
 						ClassName: "rtgtrghtrg2UITests",
-						Time:      0.08525991439819336,
-						Failure: &junit.Failure{
-							Value: "/Users/tamaspapik/Develop/ios/rtgtrghtrg/rtgtrghtrgUITests/rtgtrghtrgUITests.swift:105 - XCTAssertTrue failed",
+						Time:      0.085,
+						Failure: &testreport.Failure{
+							Value: "XCTAssertTrue failed",
+						},
+						Properties: &testreport.Properties{
+							Property: []testreport.Property{
+								{
+									Name:  "attachment_0",
+									Value: "Screenshot 2019-11-25 at 12.28.29 PM (2).jpeg",
+								},
+								{
+									Name:  "attachment_1",
+									Value: "Screenshot 2019-11-25 at 12.28.29 PM (3).jpeg",
+								},
+							},
 						},
 					},
 					{
 						Name:      "testLaunchPerformance()",
 						ClassName: "rtgtrghtrg2UITests",
-						Time:      0.041545987129211426,
+						Time:      0.042,
 					},
 
 					// class rtgtrghtrg4UITests: rtgtrghtrgUITests (so rtgtrghtrg4UITests inherits rtgtrghtrgUITests -> test cases merged and the base class name is rtgtrghtrg4UITests)
 					{
 						Name:      "testExample()",
 						ClassName: "rtgtrghtrg4UITests",
-						Time:      0.07126104831695557,
+						Time:      0.071,
 					},
 					{
 						Name:      "testExample2()",
 						ClassName: "rtgtrghtrg4UITests",
-						Time:      0.043392062187194824,
+						Time:      0.043,
 					},
 					{
 						Name:      "testFailMe()",
 						ClassName: "rtgtrghtrg4UITests",
-						Time:      0.04290807247161865,
+						Time:      0.043,
 					},
 					{
 						Name:      "testFailMe2()",
 						ClassName: "rtgtrghtrg4UITests",
-						Time:      0.08395206928253174,
-						Failure: &junit.Failure{
-							Value: "/Users/tamaspapik/Develop/ios/rtgtrghtrg/rtgtrghtrgUITests/rtgtrghtrgUITests.swift:130 - XCTAssertTrue failed",
+						Time:      0.084,
+						Failure: &testreport.Failure{
+							Value: "XCTAssertTrue failed",
+						},
+						Properties: &testreport.Properties{
+							Property: []testreport.Property{
+								{
+									Name:  "attachment_0",
+									Value: "Screenshot 2019-11-25 at 12.28.30 PM.jpeg",
+								},
+								{
+									Name:  "attachment_1",
+									Value: "Screenshot 2019-11-25 at 12.28.30 PM (1).jpeg",
+								},
+							},
 						},
 					},
 					{
 						Name:      "testLaunchPerformance()",
 						ClassName: "rtgtrghtrg4UITests",
-						Time:      0.048184990882873535,
+						Time:      0.048,
 					},
 					{
 						Name:      "testLaunchPerformance2()",
 						ClassName: "rtgtrghtrg4UITests",
-						Time:      0.030627012252807617,
+						Time:      0.031,
 					},
 
 					// class rtgtrghtrgUITests: XCTestCase
 					{
 						Name:      "testExample()",
 						ClassName: "rtgtrghtrgUITests",
-						Time:      0.030849933624267578,
+						Time:      0.031,
 					},
 					{
 						Name:      "testFailMe()",
 						ClassName: "rtgtrghtrgUITests",
-						Time:      0.030683040618896484,
+						Time:      0.031,
 					},
 					{
 						Name:      "testLaunchPerformance()",
 						ClassName: "rtgtrghtrgUITests",
-						Time:      0.03138589859008789,
+						Time:      0.031,
 					},
 				},
 			},
 		},
 	}
 
+	_, b, _, _ := runtime.Caller(0)
+	convertersPackageDir := filepath.Dir(b)
+	testPackageDir := filepath.Dir(convertersPackageDir)
+	projectRootDir := filepath.Dir(testPackageDir)
+
 	for _, test := range []struct {
 		name          string
-		converter     Intf
+		converter     Converter
 		testFilePaths []string
 		wantDetect    bool
-		wantXML       junit.XML
+		wantXML       testreport.TestReport
 		wantXMLError  bool
 	}{
 		{
 			name:          "xcresult3",
 			converter:     &xcresult3.Converter{},
-			testFilePaths: []string{filepath.Join(os.Getenv("BITRISE_SOURCE_DIR"), "_tmp/xcresults/xcresult3_multi_level_UI_tests.xcresult")},
+			testFilePaths: []string{filepath.Join(projectRootDir, "_tmp/xcresults/xcresult3_multi_level_UI_tests.xcresult")},
 			wantDetect:    true,
 			wantXMLError:  false,
 			wantXML:       want,
 		},
+		{
+			name:          "Long running test",
+			converter:     &xcresult3.Converter{},
+			testFilePaths: []string{filepath.Join(testPackageDir, "testdata/test_result_with_18m_long_test_case.xcresult")},
+			wantDetect:    true,
+			wantXMLError:  false,
+			wantXML: testreport.TestReport{
+				TestSuites: []testreport.TestSuite{
+					{
+						Name:     "BullsEyeSlowTests",
+						Tests:    1,
+						Failures: 0,
+						Time:     1080,
+						TestCases: []testreport.TestCase{
+							{
+								Name:      "testSleepingFor16mins()",
+								ClassName: "BullsEyeSlowTests",
+								Time:      1080,
+							},
+						},
+					},
+				},
+			},
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			if got := test.converter.Detect(test.testFilePaths); got != test.wantDetect {
-				t.Fatalf("detect want: %v, got: %v", test.wantDetect, got)
-			}
+			gotDetected := test.converter.Detect(test.testFilePaths)
+			require.Equal(t, test.wantDetect, gotDetected)
 
-			got, err := test.converter.XML()
-			if test.wantXMLError && err == nil {
-				t.Fatalf("xml error want: %v, got: %v", test.wantXMLError, got)
+			got, err := test.converter.Convert()
+			if test.wantXMLError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
 			}
-
+			
 			opts := []cmp.Option{
-				cmp.Transformer("SortTestSuites", func(in []junit.TestSuite) []junit.TestSuite {
-					s := append([]junit.TestSuite{}, in...)
+				cmp.Transformer("SortTestSuites", func(in []testreport.TestSuite) []testreport.TestSuite {
+					s := append([]testreport.TestSuite{}, in...)
 					sort.Slice(s, func(i, j int) bool {
 						return s[i].Time > s[j].Time
 					})
 					return s
 				}),
-				cmp.Transformer("SortTestCases", func(in []junit.TestCase) []junit.TestCase {
-					s := append([]junit.TestCase{}, in...)
+				cmp.Transformer("SortTestCases", func(in []testreport.TestCase) []testreport.TestCase {
+					s := append([]testreport.TestCase{}, in...)
 					sort.Slice(s, func(i, j int) bool {
 						return s[i].Time > s[j].Time
 					})
