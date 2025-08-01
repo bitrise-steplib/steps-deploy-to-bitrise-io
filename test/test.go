@@ -50,10 +50,10 @@ type UploadResponse struct {
 
 // Result ...
 type Result struct {
-	Name       string
-	XMLContent []byte
-	ImagePaths []string
-	StepInfo   models.TestResultStepInfo
+	Name            string
+	XMLContent      []byte
+	AttachmentPaths []string
+	StepInfo        models.TestResultStepInfo
 }
 
 // Results ...
@@ -95,7 +95,7 @@ func httpCall(apiToken, method, url string, input io.Reader, output interface{},
 	return nil
 }
 
-func findImages(testDir string) (imageFilePaths []string) {
+func findSupportedAttachments(testDir string) (imageFilePaths []string) {
 	for _, ext := range testasset.AssetTypes {
 		if paths, err := filepath.Glob(filepath.Join(testDir, "*"+ext)); err == nil {
 			imageFilePaths = append(imageFilePaths, paths...)
@@ -227,15 +227,15 @@ func ParseTestResults(testsRootDir string, useLegacyXCResultExtractionMethod boo
 					xmlData = append([]byte(`<?xml version="1.0" encoding="UTF-8"?>`+"\n"), xmlData...)
 
 					// so here I will have image paths, xml data, and step info per test dir in a bundle info
-					images := findImages(testPhaseDirPath)
+					attachments := findSupportedAttachments(testPhaseDirPath)
 
-					logger.Debugf("found images: %d", len(images))
+					logger.Debugf("found attachments: %d", len(attachments))
 
 					results = append(results, Result{
-						Name:       testInfo.Name,
-						XMLContent: xmlData,
-						ImagePaths: images,
-						StepInfo:   *stepInfo,
+						Name:            testInfo.Name,
+						XMLContent:      xmlData,
+						AttachmentPaths: attachments,
+						StepInfo:        *stepInfo,
 					})
 				}
 			}
@@ -257,7 +257,7 @@ func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug stri
 			Name: result.Name,
 			Step: result.StepInfo,
 		}
-		for _, asset := range result.ImagePaths {
+		for _, asset := range result.AttachmentPaths {
 			fi, err := os.Stat(asset)
 			if err != nil {
 				return fmt.Errorf("failed to get file info for %s: %w", asset, err)
@@ -286,7 +286,7 @@ func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug stri
 		}
 
 		for _, upload := range uploadResponse.Assets {
-			for _, file := range result.ImagePaths {
+			for _, file := range result.AttachmentPaths {
 				if filepath.Base(file) == upload.FileName {
 					fi, err := os.Open(file)
 					if err != nil {
