@@ -51,9 +51,9 @@ func Test_Upload(t *testing.T) {
 
 	results := Results{
 		Result{
-			XMLContent: testXMLContent,
-			StepInfo:   testStepInfo,
-			ImagePaths: testAssetPaths,
+			XMLContent:      testXMLContent,
+			StepInfo:        testStepInfo,
+			AttachmentPaths: testAssetPaths,
 		},
 	}
 
