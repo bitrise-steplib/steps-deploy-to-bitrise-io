@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -218,7 +219,7 @@ func Test_ParseXctestResults(t *testing.T) {
 		if err := createDummyFilesInDirWithContent(phaseDir, `{"name": "test name"}`, []string{"test-info.json"}); err != nil {
 			t.Fatal("failed to create dummy files in dir, error:", err)
 		}
-		if err := createDummyFilesInDirWithContent(phaseDir, "test content", []string{"image.png", "image3.jpeg", "dirty.gif", "dirty.html"}); err != nil {
+		if err := createDummyFilesInDirWithContent(phaseDir, "test content", []string{"image.png", "image3.jpeg", "dirty.gif", "dirty.html", "logs.txt"}); err != nil {
 			t.Fatal("failed to create dummy files in dir, error:", err)
 		}
 		if err := createDummyFilesInDirWithContent(phaseDir, sampleIOSXmlOutput, []string{"result.xml"}); err != nil {
@@ -234,6 +235,11 @@ func Test_ParseXctestResults(t *testing.T) {
 		}
 
 		assert.Equal(t, sampleIOSXmlOutput, string(bundle[0].XMLContent))
+		// Check if the attachments are correctly by the end of paths
+		assert.Equal(t, 3, len(bundle[0].AttachmentPaths))
+		assert.True(t, strings.HasSuffix(bundle[0].AttachmentPaths[0], "image3.jpeg"))
+		assert.True(t, strings.HasSuffix(bundle[0].AttachmentPaths[1], "image.png"))
+		assert.True(t, strings.HasSuffix(bundle[0].AttachmentPaths[2], "logs.txt"))
 	}
 
 	// creating ios test results
