@@ -5,7 +5,7 @@ import (
 	"slices"
 )
 
-var AssetTypes = []string{".jpg", ".jpeg", ".png", ".txt", ".log"}
+var AssetTypes = []string{".jpg", ".jpeg", ".png", ".txt", ".log", ".mp4"}
 
 func IsSupportedAssetType(fileName string) bool {
 	ext := filepath.Ext(fileName)
