@@ -284,7 +284,6 @@ func extractAttachments(xcresultPath, outputPath string) (map[string][]string, e
 
 	var fileCounterMap = make(map[string]int)
 	for _, attachmentDetail := range manifest {
-		// Sort attachments by Timestamp ascending (oldest first)
 		attachments := attachmentDetail.Attachments
 
 		sort.Slice(attachments, func(i, j int) bool {
