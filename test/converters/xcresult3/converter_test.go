@@ -93,27 +93,27 @@ func TestConverter_XML(t *testing.T) {
 							Property: []testreport.Property{
 								{
 									Name:  "attachment_0",
-									Value: "Screenshot 2022-02-10 at 02.57.47 PM.jpeg",
-								},
-								{
-									Name:  "attachment_1",
-									Value: "Screenshot 2022-02-10 at 02.57.47 PM (1).jpeg",
-								},
-								{
-									Name:  "attachment_2",
-									Value: "Screenshot 2022-02-10 at 02.57.47 PM (2).jpeg",
-								},
-								{
-									Name:  "attachment_3",
 									Value: "Screenshot 2022-02-10 at 02.57.39 PM.jpeg",
 								},
 								{
-									Name:  "attachment_4",
+									Name:  "attachment_1",
+									Value: "Screenshot 2022-02-10 at 02.57.39 PM (1).jpeg",
+								},
+								{
+									Name:  "attachment_2",
 									Value: "Screenshot 2022-02-10 at 02.57.44 PM.jpeg",
 								},
 								{
+									Name:  "attachment_3",
+									Value: "Screenshot 2022-02-10 at 02.57.47 PM.jpeg",
+								},
+								{
+									Name:  "attachment_4",
+									Value: "Screenshot 2022-02-10 at 02.57.47 PM (1).jpeg",
+								},
+								{
 									Name:  "attachment_5",
-									Value: "Screenshot 2022-02-10 at 02.57.39 PM (1).jpeg",
+									Value: "Screenshot 2022-02-10 at 02.57.47 PM (2).jpeg",
 								},
 							},
 						},
@@ -176,11 +176,11 @@ func TestConverter_XML(t *testing.T) {
 							Property: []testreport.Property{
 								{
 									Name:  "attachment_0",
-									Value: "Screenshot 2021-02-09 at 08.35.52 AM.jpeg",
+									Value: "Screenshot 2021-02-09 at 08.35.51 AM.jpeg",
 								},
 								{
 									Name:  "attachment_1",
-									Value: "Screenshot 2021-02-09 at 08.35.51 AM.jpeg",
+									Value: "Screenshot 2021-02-09 at 08.35.52 AM.jpeg",
 								},
 								{
 									Name:  "attachment_2",

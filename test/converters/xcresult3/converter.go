@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -283,7 +284,13 @@ func extractAttachments(xcresultPath, outputPath string) (map[string][]string, e
 
 	var fileCounterMap = make(map[string]int)
 	for _, attachmentDetail := range manifest {
-		for _, attachment := range attachmentDetail.Attachments {
+		attachments := attachmentDetail.Attachments
+
+		sort.Slice(attachments, func(i, j int) bool {
+			return time.Time(attachments[i].Timestamp).Before(time.Time(attachments[j].Timestamp))
+		})
+
+		for _, attachment := range attachments {
 			oldPath := filepath.Join(outputPath, attachment.ExportedFileName)
 			newPath := filepath.Join(outputPath, attachment.SuggestedHumanReadableName)
 
