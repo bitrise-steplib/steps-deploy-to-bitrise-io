@@ -282,7 +282,6 @@ func extractAttachments(xcresultPath, outputPath string) (map[string][]string, e
 		return nil, err
 	}
 
-	var fileCounterMap = make(map[string]int)
 	for _, attachmentDetail := range manifest {
 		attachments := attachmentDetail.Attachments
 
@@ -292,17 +291,8 @@ func extractAttachments(xcresultPath, outputPath string) (map[string][]string, e
 
 		for _, attachment := range attachments {
 			oldPath := filepath.Join(outputPath, attachment.ExportedFileName)
-			newPath := filepath.Join(outputPath, attachment.SuggestedHumanReadableName)
-
-			// If the file already exists, we need to rename it to avoid overwriting.
-			if counter, exists := fileCounterMap[attachment.SuggestedHumanReadableName]; exists {
-				fileExtensionWithDot := filepath.Ext(attachment.SuggestedHumanReadableName)
-				fileNameWithoutExtension := strings.TrimSuffix(attachment.SuggestedHumanReadableName, fileExtensionWithDot)
-				newPath = filepath.Join(outputPath, fmt.Sprintf("%s (%d)%s", fileNameWithoutExtension, counter, fileExtensionWithDot))
-				fileCounterMap[attachment.SuggestedHumanReadableName] = counter + 1
-			} else {
-				fileCounterMap[attachment.SuggestedHumanReadableName] = 1
-			}
+			newFilename := createUniqueFilename(attachment)
+			newPath := filepath.Join(outputPath, newFilename)
 
 			if err := os.Rename(oldPath, newPath); err != nil {
 				// It is not a critical error if the rename fails because the file will be still exported just by its
@@ -324,6 +314,18 @@ func extractAttachments(xcresultPath, outputPath string) (map[string][]string, e
 	}
 
 	return attachmentsMap, nil
+}
+
+// Create unique filename using timestamp as suffix
+func createUniqueFilename(attachment model3.Attachment) string {
+	timestamp := time.Time(attachment.Timestamp).UnixNano()
+
+	originalName := attachment.SuggestedHumanReadableName
+	ext := filepath.Ext(originalName)
+	nameWithoutExt := strings.TrimSuffix(originalName, ext)
+
+	// Format: originalname_timestamp.ext
+	return fmt.Sprintf("%s_%d%s", nameWithoutExt, timestamp, ext)
 }
 
 func stripTrailingParentheses(s string) string {

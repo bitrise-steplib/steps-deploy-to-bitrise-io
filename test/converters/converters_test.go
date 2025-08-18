@@ -11,12 +11,11 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testreport"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
-
-	"github.com/bitrise-io/go-utils/log"
 )
 
 func TestXCresult3Converters(t *testing.T) {
@@ -64,11 +63,11 @@ func TestXCresult3Converters(t *testing.T) {
 							Property: []testreport.Property{
 								{
 									Name:  "attachment_0",
-									Value: "Screenshot 2019-11-25 at 12.28.29 PM.jpeg",
+									Value: "Screenshot 2019-11-25 at 12.28.29 PM_1574684909530999898.jpeg",
 								},
 								{
 									Name:  "attachment_1",
-									Value: "Screenshot 2019-11-25 at 12.28.29 PM (1).jpeg",
+									Value: "Screenshot 2019-11-25 at 12.28.29 PM_1574684909592000007.jpeg",
 								},
 							},
 						},
@@ -78,7 +77,6 @@ func TestXCresult3Converters(t *testing.T) {
 						ClassName: "_TtCC17rtgtrghtrgUITests17rtgtrghtrgUITests18rtgtrghtrg3UITests",
 						Time:      0.036,
 					},
-
 					// class rtgtrghtrg2UITests: XCTestCase
 					{
 						Name:      "testExample()",
@@ -96,11 +94,11 @@ func TestXCresult3Converters(t *testing.T) {
 							Property: []testreport.Property{
 								{
 									Name:  "attachment_0",
-									Value: "Screenshot 2019-11-25 at 12.28.29 PM (2).jpeg",
+									Value: "Screenshot 2019-11-25 at 12.28.29 PM_1574684909736999988.jpeg",
 								},
 								{
 									Name:  "attachment_1",
-									Value: "Screenshot 2019-11-25 at 12.28.29 PM (3).jpeg",
+									Value: "Screenshot 2019-11-25 at 12.28.29 PM_1574684909776999950.jpeg",
 								},
 							},
 						},
@@ -110,7 +108,6 @@ func TestXCresult3Converters(t *testing.T) {
 						ClassName: "rtgtrghtrg2UITests",
 						Time:      0.042,
 					},
-
 					// class rtgtrghtrg4UITests: rtgtrghtrgUITests (so rtgtrghtrg4UITests inherits rtgtrghtrgUITests -> test cases merged and the base class name is rtgtrghtrg4UITests)
 					{
 						Name:      "testExample()",
@@ -138,11 +135,11 @@ func TestXCresult3Converters(t *testing.T) {
 							Property: []testreport.Property{
 								{
 									Name:  "attachment_0",
-									Value: "Screenshot 2019-11-25 at 12.28.30 PM.jpeg",
+									Value: "Screenshot 2019-11-25 at 12.28.30 PM_1574684910020999908.jpeg",
 								},
 								{
 									Name:  "attachment_1",
-									Value: "Screenshot 2019-11-25 at 12.28.30 PM (1).jpeg",
+									Value: "Screenshot 2019-11-25 at 12.28.30 PM_1574684910062000036.jpeg",
 								},
 							},
 						},
@@ -157,7 +154,6 @@ func TestXCresult3Converters(t *testing.T) {
 						ClassName: "rtgtrghtrg4UITests",
 						Time:      0.031,
 					},
-
 					// class rtgtrghtrgUITests: XCTestCase
 					{
 						Name:      "testExample()",
@@ -235,7 +231,7 @@ func TestXCresult3Converters(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
-			
+
 			opts := []cmp.Option{
 				cmp.Transformer("SortTestSuites", func(in []testreport.TestSuite) []testreport.TestSuite {
 					s := append([]testreport.TestSuite{}, in...)
@@ -253,8 +249,8 @@ func TestXCresult3Converters(t *testing.T) {
 				}),
 			}
 
-			if !cmp.Equal(got, test.wantXML, opts...) {
-				t.Fatalf("xml want: %+v, got: %+v", test.wantXML, got)
+			if diff := cmp.Diff(test.wantXML, got, opts...); diff != "" {
+				t.Fatalf("Test report mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
