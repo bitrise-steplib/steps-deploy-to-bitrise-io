@@ -13,10 +13,10 @@
   <testcase configuration-hash="" name="testLaunch()" classname="DarkAndLightModeUITestsLaunchTests" time="5">
    <failure></failure>
    <properties>
-    <property name="attachment_0" value="Launch Screen_1_FD1B9BC4-364B-4191-88F9-48DD5B4B251F.png"></property>
-    <property name="attachment_1" value="Launch Screen_1_1FDDCFCB-A490-4773-ABC1-96BC97459F6A.png"></property>
-    <property name="attachment_2" value="Launch Screen_1_CEFDE93C-2C43-4D5B-80B5-0B27AD09CCC5.png"></property>
-    <property name="attachment_3" value="Launch Screen_1_6CD9C2FF-7FFC-4C37-B82A-D208F800193B.png"></property>
+    <property name="attachment_0" value="Launch Screen_1_FD1B9BC4-364B-4191-88F9-48DD5B4B251F_1702394166035000085.png"></property>
+    <property name="attachment_1" value="Launch Screen_1_1FDDCFCB-A490-4773-ABC1-96BC97459F6A_1702394182316999912.png"></property>
+    <property name="attachment_2" value="Launch Screen_1_CEFDE93C-2C43-4D5B-80B5-0B27AD09CCC5_1702394197773999929.png"></property>
+    <property name="attachment_3" value="Launch Screen_1_6CD9C2FF-7FFC-4C37-B82A-D208F800193B_1702394211733000040.png"></property>
    </properties>
   </testcase>
  </testsuite>
