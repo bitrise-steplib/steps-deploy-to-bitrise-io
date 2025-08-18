@@ -247,25 +247,6 @@ func TestXCresult3Converters(t *testing.T) {
 					})
 					return s
 				}),
-				// Handle pointer comparisons properly
-				cmp.Comparer(func(x, y *testreport.Failure) bool {
-					if x == nil && y == nil {
-						return true
-					}
-					if x == nil || y == nil {
-						return false
-					}
-					return x.Value == y.Value
-				}),
-				cmp.Comparer(func(x, y *testreport.Properties) bool {
-					if x == nil && y == nil {
-						return true
-					}
-					if x == nil || y == nil {
-						return false
-					}
-					return cmp.Equal(x.Property, y.Property)
-				}),
 			}
 
 			if diff := cmp.Diff(test.wantXML, got, opts...); diff != "" {
