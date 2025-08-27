@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"unicode"
 
 	"github.com/avast/apkparser"
 	"github.com/bitrise-io/go-android/v2/sdk"
@@ -14,14 +15,21 @@ import (
 
 func GetAPKInfoWithFallback(logger Logger, apkPth string) (Info, error) {
 	parsedInfo, err := GetAPKInfo(apkPth)
-	if err == nil {
-		return parsedInfo, nil
-	}
-	// err != nil
-	logger.Warnf("Failed to parse APK info: %s", err)
-	logger.APKParseWarnf("apk-parse", "apkparser package failed to parse APK, error: %s", err)
+	if err != nil {
+		logger.Warnf("Falling back to aapt, failed to parse APK info: %s", err)
+		logger.APKParseWarnf("apk-parse", "apkparser package failed to parse APK, error: %s", err)
 
-	return GetAPKInfoWithAapt(apkPth)
+		return GetAPKInfoWithAapt(apkPth)
+	}
+
+	if strings.ContainsRune(parsedInfo.AppName, unicode.ReplacementChar) {
+		logger.Warnf("Falling back to aapt, failed to parse app name (%s) with Unicode characters.", parsedInfo.AppName)
+		logger.APKParseWarnf("apk-parse", "apkparser package failed to parse Unicode characters in app name: %s", parsedInfo.AppName)
+
+		return GetAPKInfoWithAapt(apkPth)
+	}
+
+	return parsedInfo, nil
 }
 
 type manifest struct {
