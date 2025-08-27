@@ -61,12 +61,14 @@ func ParseXml(r io.Reader, enc ManifestEncoder, resources *ResourceTable) error 
 
 	defer x.encoder.Flush()
 
-	totalLen -= chunkHeaderSize
+	totalLen -= uint32(headerLen)
+	// 29f82928c630897576aa0c9c3d2f36d722a94ec574bd5ca4aaf4ba5f9d014a32
+	io.CopyN(ioutil.Discard, r, int64(headerLen)-chunkHeaderSize)
 
 	var len uint32
 	var lastId uint16
 	for i := uint32(0); i < totalLen; i += len {
-		id, _, len, err = parseChunkHeader(r)
+		id, headerLen, len, err = parseChunkHeader(r)
 		if err != nil {
 			return fmt.Errorf("Error parsing header at 0x%08x of 0x%08x %08x: %s", i, totalLen, lastId, err.Error())
 		}
@@ -82,12 +84,14 @@ func ParseXml(r io.Reader, enc ManifestEncoder, resources *ResourceTable) error 
 			err = x.parseResourceIds(lm)
 		default:
 			if (id & chunkMaskXml) == 0 {
-				err = fmt.Errorf("Unknown chunk id 0x%x", id)
+				// Android ignores it
+				// A9842ACCCE9D21549479EEB84F5E2033DA5E479EE1E183D48445BC99324ED983
+				//err = fmt.Errorf("Unknown chunk id 0x%x %d", id, len)
 				break
 			}
 
 			// skip line number and unknown 0xFFFFFFFF
-			if _, err = io.CopyN(ioutil.Discard, lm, 2*4); err != nil {
+			if _, err = io.CopyN(ioutil.Discard, lm, int64(headerLen)-8); err != nil {
 				break
 			}
 
@@ -102,6 +106,8 @@ func ParseXml(r io.Reader, enc ManifestEncoder, resources *ResourceTable) error 
 				err = x.parseTagEnd(lm)
 			case chunkXmlText:
 				err = x.parseText(lm)
+			case chunkXmlLastChunk: // unimplemented
+			case chunkXmlResourceMap: // unimplemented
 			default:
 				err = fmt.Errorf("Unknown chunk id 0x%x", id)
 			}
@@ -172,6 +178,43 @@ func (x *binxmlParseInfo) parseNsEnd(r *io.LimitedReader) error {
 	return nil
 }
 
+func mapDisallowedNameRunes(r rune) rune {
+	// https://www.w3.org/TR/REC-xml/#NT-Name
+	// ":" | [A-Z] | "_" | [a-z] | [#xC0-#xD6] | [#xD8-#xF6] | [#xF8-#x2FF] | [#x370-#x37D] | [#x37F-#x1FFF] | [#x200C-#x200D] | [#x2070-#x218F] | [#x2C00-#x2FEF] | [#x3001-#xD7FF] | [#xF900-#xFDCF] | [#xFDF0-#xFFFD] | [#x10000-#xEFFFF]
+	//NameStartChar | "-" | "." | [0-9] | #xB7 | [#x0300-#x036F] | [#x203F-#x2040]
+
+	switch r {
+	case ':' | '_' | '-' | '.' | '\u00B7':
+		return r
+	}
+
+	if (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+		return r
+	}
+
+	if (r >= '\u00C0' && r <= '\u00D6') || (r >= '\u00D8' && r <= '\u00F6') || (r >= '\u00F8' && r <= '\u02FF') {
+		return r
+	}
+
+	if (r >= '\u0300' && r <= '\u037D') || (r >= '\u037F' && r <= '\u1FFF') || (r >= '\u200C' && r <= '\u200D') {
+		return r
+	}
+
+	if (r >= '\u203F' && r <= '\u2040') || (r >= '\u2070' && r <= '\u218F') || (r >= '\u2C00' && r <= '\u2FEF') {
+		return r
+	}
+
+	if (r >= '\u3001' && r <= '\uD7FF') || (r >= '\uF900' && r <= '\uFDCF') || (r >= '\uFDF0' && r <= '\uFFFD') {
+		return r
+	}
+
+	if r >= '\U00010000' && r <= '\U000EFFFF' {
+		return r
+	}
+
+	return '_'
+}
+
 func (x *binxmlParseInfo) parseTagStart(r *io.LimitedReader) error {
 	var namespaceIdx, nameIdx uint32
 	var attrStart, attrSize, attrCount uint16
@@ -193,10 +236,12 @@ func (x *binxmlParseInfo) parseTagStart(r *io.LimitedReader) error {
 	}
 
 	if err := binary.Read(r, binary.LittleEndian, &attrCount); err != nil {
-		return fmt.Errorf("error reading classAttr: %s", err.Error())
+		return fmt.Errorf("error reading attrCount: %s", err.Error())
 	}
 
-	io.CopyN(io.Discard, r, 2*3) // discard idIndex, classIndex, styleIndex
+	// attrStart - Byte offset from the start of this structure where the attributes start.
+	// A9842ACCCE9D21549479EEB84F5E2033DA5E479EE1E183D48445BC99324ED983
+	io.CopyN(io.Discard, r, int64(attrStart)-14)
 
 	namespace, err := x.strings.get(namespaceIdx)
 	if err != nil {
@@ -262,7 +307,7 @@ func (x *binxmlParseInfo) parseTagStart(r *io.LimitedReader) error {
 		}
 
 		if attrNameFromStrings != "" {
-			attrName = attrNameFromStrings
+			attrName = strings.Map(mapDisallowedNameRunes, attrNameFromStrings)
 		} else if attrNameSpace == "" {
 			attrNameSpace = "http://schemas.android.com/apk/res/android"
 		}
@@ -309,6 +354,7 @@ func (x *binxmlParseInfo) parseTagStart(r *io.LimitedReader) error {
 		default:
 			resultAttr.Value = strconv.FormatInt(int64(int32(attr.Res.Data)), 10)
 		}
+
 		tok.Attr = append(tok.Attr, resultAttr)
 	}
 
