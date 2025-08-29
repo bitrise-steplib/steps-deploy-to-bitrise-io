@@ -17,14 +17,12 @@ const (
 	chunkTableTypeSpec = 0x0202
 	chunkTableLibrary  = 0x0203
 
-	chunkMaskXml        = 0x0100
-	chunkXmlNsStart     = 0x0100
-	chunkXmlNsEnd       = 0x0101
-	chunkXmlTagStart    = 0x0102
-	chunkXmlTagEnd      = 0x0103
-	chunkXmlText        = 0x0104
-	chunkXmlLastChunk   = 0x017f
-	chunkXmlResourceMap = 0x0180
+	chunkMaskXml     = 0x0100
+	chunkXmlNsStart  = 0x0100
+	chunkXmlNsEnd    = 0x0101
+	chunkXmlTagStart = 0x0102
+	chunkXmlTagEnd   = 0x0103
+	chunkXmlText     = 0x0104
 
 	chunkHeaderSize = (2 + 2 + 4)
 )

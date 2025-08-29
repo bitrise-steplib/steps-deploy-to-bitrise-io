@@ -16,18 +16,15 @@ type ExitStatusError struct {
 // NewExitStatusError ...
 func NewExitStatusError(printableCmdArgs string, exitErr *exec.ExitError, errorLines []string) error {
 	reasonMsg := fmt.Sprintf("command failed with exit status %d (%s)", exitErr.ExitCode(), printableCmdArgs)
-
-	errorOutput := strings.Join(errorLines, "\n")
-	if len(errorOutput) == 0 {
-		if len(exitErr.Stderr) != 0 {
-			errorOutput = string(exitErr.Stderr)
-		} else {
-			errorOutput = "check the command's output for details"
+	if len(errorLines) == 0 {
+		return &ExitStatusError{
+			readableReason:  fmt.Errorf("%s: %w", reasonMsg, errors.New("check the command's output for details")),
+			originalExitErr: exitErr,
 		}
 	}
 
 	return &ExitStatusError{
-		readableReason:  fmt.Errorf("%s: %w", reasonMsg, errors.New(errorOutput)),
+		readableReason:  fmt.Errorf("%s: %w", reasonMsg, errors.New(strings.Join(errorLines, "\n"))),
 		originalExitErr: exitErr,
 	}
 }

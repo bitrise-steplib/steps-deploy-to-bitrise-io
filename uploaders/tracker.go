@@ -25,7 +25,7 @@ func newTracker(envRepo env.Repository, logger log.Logger) tracker {
 		"app_slug":   envRepo.Get("BITRISE_APP_SLUG"),
 	}
 	return tracker{
-		tracker: analytics.NewDefaultTracker(logger, envRepo, p),
+		tracker: analytics.NewDefaultTracker(logger, p),
 		logger:  logger,
 	}
 }
@@ -41,14 +41,13 @@ func (t *tracker) logFileTransfer(transferType TransferType, details TransferDet
 	}
 
 	var eventName string
-	switch transferType {
-	case Intermediate:
+	if transferType == Intermediate {
 		eventName = "intermediate_file_uploaded"
 		properties["is_artifact"] = isArtifact
-	case Artifact:
+	} else if transferType == Artifact {
 		eventName = "artifact_uploaded"
 		properties["is_intermediate_file"] = isIntermediateFile
-	default:
+	} else {
 		t.logger.Warnf("Unknown transfer type: %d", transferType)
 		return
 	}
