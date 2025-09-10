@@ -246,9 +246,9 @@ func ParseTestResults(testsRootDir string, useLegacyXCResultExtractionMethod boo
 
 // Upload ...
 func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug string, logger logV2.Logger) error {
-	const maxTotalXMLSize = 100 * 1024 * 1024 // 100MB
+	const maxTotalXMLSize = 100 * 1024 * 1024 // 100 MiB
 	if results.calculateTotalSizeOfXMLContent() > maxTotalXMLSize {
-		return fmt.Errorf("the total size of the test result XML files (%dMB) exceeds the maximum allowed size of 100MB", results.calculateTotalSizeOfXMLContent()/1024/1024)
+		return fmt.Errorf("the total size of the test result XML files (%d MiB) exceeds the maximum allowed size of 100 MiB", results.calculateTotalSizeOfXMLContent()/1024/1024)
 	}
 
 	for _, result := range results {
