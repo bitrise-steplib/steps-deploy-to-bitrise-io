@@ -21,6 +21,9 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
+// maxTotalXMLSize limits the total size of all XML files uploaded in a single run
+const maxTotalXMLSize = 100 * 1024 * 1024 // 100 MiB
+
 // FileInfo ...
 type FileInfo struct {
 	FileName string `json:"filename"`
@@ -246,6 +249,10 @@ func ParseTestResults(testsRootDir string, useLegacyXCResultExtractionMethod boo
 
 // Upload ...
 func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug string, logger logV2.Logger) error {
+	if results.calculateTotalSizeOfXMLContent() > maxTotalXMLSize {
+		return fmt.Errorf("the total size of the test result XML files (%d MiB) exceeds the maximum allowed size of 100 MiB", results.calculateTotalSizeOfXMLContent()/1024/1024)
+	}
+
 	for _, result := range results {
 		logger.Printf("Uploading: %s", result.Name)
 
@@ -307,4 +314,12 @@ func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug stri
 	}
 
 	return nil
+}
+
+func (results Results) calculateTotalSizeOfXMLContent() int {
+	totalSize := 0
+	for _, result := range results {
+		totalSize += len(result.XMLContent)
+	}
+	return totalSize
 }
