@@ -99,6 +99,12 @@ func convertTestSuite(testSuite TestSuite) testreport.TestSuite {
 		tests++
 	}
 
+	for _, childSuite := range testSuite.TestSuites {
+		convertedChildSuite := convertTestSuite(childSuite)
+		
+		convertedTestSuite.TestSuites = append(convertedTestSuite.TestSuites, convertedChildSuite)
+	}
+
 	convertedTestSuite.Tests = tests
 	convertedTestSuite.Failures = failures
 	convertedTestSuite.Skipped = skipped
