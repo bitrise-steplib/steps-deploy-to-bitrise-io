@@ -115,7 +115,6 @@ inputs:
       found in the Deploy directory folder will be deployed
       separately.
     is_required: true
-    is_expand: false
     value_options:
     - "true"
     - "false"
