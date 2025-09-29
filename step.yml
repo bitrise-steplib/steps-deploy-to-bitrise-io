@@ -205,7 +205,6 @@ inputs:
       be ignored and the **Notify: User Roles** users will receive the build's
       URL instead of the public page's URL!
     is_required: true
-    is_expand: false
     value_options:
     - "true"
     - "false"
