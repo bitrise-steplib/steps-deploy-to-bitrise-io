@@ -71,7 +71,7 @@ workflows:
               echo "iOS archive was not deployed"
               exit 1
             fi
-            
+
             if [[ "$BITRISE_PERMANENT_DOWNLOAD_URL_MAP" != *"macos.xcarchive.zip"* ]]; then
               echo "macOS archive was not deployed"
               exit 1
