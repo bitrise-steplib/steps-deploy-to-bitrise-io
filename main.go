@@ -590,7 +590,14 @@ func deploySingleItem(logger loggerV2.Logger, uploader *uploaders.Uploader, item
 	case zippedXcarchiveExt:
 		logger.Printf("Deploying xcarchive file: %s", pth)
 
-		return uploader.DeployXcarchive(item, config.BuildURL, config.APIToken)
+		URLs, err := uploader.DeployXcarchive(item, config.BuildURL, config.APIToken)
+		if errors.Is(err, iosparser.MacOSProjectIsNotSupported) {
+			logger.Printf("Deploying macOS xcarchive without metdata, as not yet supported.")
+
+			return uploader.DeployFile(item, config.BuildURL, config.APIToken)
+		}
+
+		return URLs, err
 	default:
 		return uploader.DeployFile(item, config.BuildURL, config.APIToken)
 	}

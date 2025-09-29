@@ -49,7 +49,7 @@ workflows:
         - is_enable_public_page: "true"
         - debug_mode: "true"
     - path::./:
-        title: IOS Test XcArchive
+        title: IOS and macOS XcArchive
         run_if: true
         inputs:
         - build_url: $BITRISE_BUILD_URL
@@ -60,6 +60,22 @@ workflows:
         - notify_email_list: $NOTIFY_EMAIL_LIST
         - is_enable_public_page: "true"
         - debug_mode: "true"
+    - script:
+        is_always_run: true
+        inputs:
+        - content: |-
+            #!/bin/bash
+            set -ex
+
+            if [[ "$BITRISE_ARTIFACT_DETAILS_PAGE_URL_MAP" != *"ios.xcarchive.zip"* ]]; then
+              echo "iOS archive was not deployed"
+              exit 1
+            fi
+            
+            if [[ "$BITRISE_PERMANENT_DOWNLOAD_URL_MAP" != *"macos.xcarchive.zip"* ]]; then
+              echo "macOS archive was not deployed"
+              exit 1
+            fi
     - path::./:
         title: IOS Test compressed with default name
         run_if: true
