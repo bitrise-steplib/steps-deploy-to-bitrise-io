@@ -351,14 +351,14 @@ func TestConverter_Convert(t *testing.T) {
 						Failures: 1,
 						Time:     0.398617148399353,
 						TestCases: []testreport.TestCase{
-							testreport.TestCase{
+							{
 								XMLName:   xml.Name{Local: "testcase"},
 								Name:      "testPaymentSuccessShowsTooltip()",
 								ClassName: "PaymentContextTests",
 								Time:      0.19384193420410156,
 								Failure:   nil,
 							},
-							testreport.TestCase{
+							{
 								XMLName:   xml.Name{Local: "testcase"},
 								Name:      "testCannotCheckoutIfPaymentIsActive()",
 								ClassName: "PaymentContextTests",
@@ -396,7 +396,7 @@ func TestConverter_Convert(t *testing.T) {
 						Failures: 0,
 						Time:     10,
 						TestCases: []testreport.TestCase{
-							testreport.TestCase{
+							{
 								XMLName:   xml.Name{Local: "testcase"},
 								Name:      "testCollectionView()",
 								ClassName: "BitriseBasicUITest",
@@ -410,6 +410,132 @@ func TestConverter_Convert(t *testing.T) {
 											Name:    "attachment_1",
 											Value:   "some_attachment.png",
 										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Tests in nested test suites are converted",
+			results: []resultReader{&stringReader{
+				Contents: `<?xml version="1.0" encoding="UTF-8"?>
+<!--
+This is a basic JUnit-style XML example to highlight the basis structure.
+
+Example by Testmo. Copyright 2023 Testmo GmbH. All rights reserved.
+Testmo test management software - https://www.testmo.com/
+-->
+<testsuites time="15.682687">
+    <testsuite name="Tests.Registration" time="6.605871">
+        <testcase name="testCase1" classname="Tests.Registration" time="2.113871" />
+        <testcase name="testCase2" classname="Tests.Registration" time="1.051" />
+        <testcase name="testCase3" classname="Tests.Registration" time="3.441" />
+    </testsuite>
+    <testsuite name="Tests.Authentication" time="9.076816">
+        <testsuite name="Tests.Authentication.Login" time="4.356">
+            <testcase name="testCase4" classname="Tests.Authentication.Login" time="2.244" />
+            <testcase name="testCase5" classname="Tests.Authentication.Login" time="0.781" />
+            <testcase name="testCase6" classname="Tests.Authentication.Login" time="1.331" />
+        </testsuite>
+        <testcase name="testCase7" classname="Tests.Authentication" time="2.508" />
+        <testcase name="testCase8" classname="Tests.Authentication" time="1.230816" />
+        <testcase name="testCase9" classname="Tests.Authentication" time="0.982">
+            <failure message="Assertion error message" type="AssertionError">
+                <!-- Call stack printed here -->
+            </failure>
+        </testcase>
+    </testsuite>
+</testsuites>`,
+			}},
+			want: testreport.TestReport{
+				TestSuites: []testreport.TestSuite{
+					{
+						XMLName:  xml.Name{Local: "testsuite"},
+						Name:     "Tests.Registration",
+						Tests:    3,
+						Failures: 0,
+						Time:     6.605871,
+						TestCases: []testreport.TestCase{
+							{
+								XMLName:   xml.Name{Local: "testcase"},
+								Name:      "testCase1",
+								ClassName: "Tests.Registration",
+								Time:      2.113871,
+							},
+							{
+								XMLName:   xml.Name{Local: "testcase"},
+								Name:      "testCase2",
+								ClassName: "Tests.Registration",
+								Time:      1.051,
+							},
+							{
+								XMLName:   xml.Name{Local: "testcase"},
+								Name:      "testCase3",
+								ClassName: "Tests.Registration",
+								Time:      3.441,
+							},
+						},
+					},
+					{
+						XMLName:  xml.Name{Local: "testsuite"},
+						Name:     "Tests.Authentication",
+						Tests:    3,
+						Failures: 1,
+						Time:     9.076816,
+						TestCases: []testreport.TestCase{
+							{
+								XMLName:   xml.Name{Local: "testcase"},
+								Name:      "testCase7",
+								ClassName: "Tests.Authentication",
+								Time:      2.508,
+							},
+							{
+								XMLName:   xml.Name{Local: "testcase"},
+								Name:      "testCase8",
+								ClassName: "Tests.Authentication",
+								Time:      1.230816,
+							},
+							{
+								XMLName:   xml.Name{Local: "testcase"},
+								Name:      "testCase9",
+								ClassName: "Tests.Authentication",
+								Time:      0.982,
+								Failure: &testreport.Failure{
+									XMLName: xml.Name{
+										Local: "failure",
+									},
+									Value: "Assertion error message",
+								},
+							},
+						},
+						TestSuites: []testreport.TestSuite{
+							{
+								XMLName:  xml.Name{Local: "testsuite"},
+								Name:     "Tests.Authentication.Login",
+								Tests:    3,
+								Failures: 0,
+								Time:     4.356,
+								TestCases: []testreport.TestCase{
+									{
+										XMLName:   xml.Name{Local: "testcase"},
+										Name:      "testCase4",
+										ClassName: "Tests.Authentication.Login",
+										Time:      2.244,
+									},
+									{
+										XMLName:   xml.Name{Local: "testcase"},
+										Name:      "testCase5",
+										ClassName: "Tests.Authentication.Login",
+										Time:      0.781,
+									},
+									{
+										XMLName:   xml.Name{Local: "testcase"},
+										Name:      "testCase6",
+										ClassName: "Tests.Authentication.Login",
+										Time:      1.331,
 									},
 								},
 							},

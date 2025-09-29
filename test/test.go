@@ -117,21 +117,21 @@ The Test Deploy directory has the following directory structure:
 
 	test_results ($BITRISE_TEST_DEPLOY_DIR)
 	├── step_1_test_results ($BITRISE_TEST_RESULT_DIR)
-	│		 ├── step-info.json
-	│		 ├── test_run_1
-	│		 │		 ├── UnitTest.xml
-	│		 │		 └── test-info.json
-	│		 └── test_run_2
-	│		     ├── UITest.xml
-	│		     └── test-info.json
+	│	├── step-info.json
+	│	├── test_run_1
+	│	│	├── UnitTest.xml
+	│	│	└── test-info.json
+	│	└── test_run_2
+	│		├── UITest.xml
+	│		└── test-info.json
 	└── step_2_test_results ($BITRISE_TEST_RESULT_DIR)
-	    ├── step-info.json
-	    └── test_run
-	        ├── results.xml
-	        ├── screenshot_1.jpg
-	        ├── screenshot_2.jpeg
-	        ├── screenshot_3.png
-	        └── test-info.json
+		├── step-info.json
+		└── test_run
+			├── results.xml
+			├── screenshot_1.jpg
+			├── screenshot_2.jpeg
+			├── screenshot_3.png
+			└── test-info.json
 */
 func ParseTestResults(testsRootDir string, useLegacyXCResultExtractionMethod bool, logger logV2.Logger) (results Results, err error) {
 	// read dirs in base tests dir
