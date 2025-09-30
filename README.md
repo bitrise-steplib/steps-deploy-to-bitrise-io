@@ -40,9 +40,9 @@ Provide a language template description using [https://golang.org/pkg/text/templ
 
 ### Configuring the Pipeline Intermediate File Sharing section of the Step
 
-The **Files to share between Pipeline Stages** input specifies the files meant to be intermediate files shared between the Pipeline Stages. When uploading the Pipeline intermediate files, you must assign environment variable keys to them in the **Files to share between Pipeline Stages** input.
+The **Files to share between Pipeline Workflows** input specifies the files meant to be intermediate files shared between the Pipeline Workflows. When uploading the Pipeline intermediate files, you must assign environment variable keys to them in the **Files to share between Pipeline Workflows** input.
 The inputs `path:env_key` values will be saved together with the file and later automatically reconstructed by the [Pull Pipeline intermediate files Step](https://www.bitrise.io/integrations/steps/pull-intermediate-files).
-You can use a shorthand of just `env_var` for `$env_var:env_var`, when the `env_var` holds the path to the file(s) you want to share with subsequent stages.
+You can use a shorthand of just `env_var` for `$env_var:env_var`, when the `env_var` holds the path to the file(s) you want to share with subsequent Workflows.
 The directories you specify will be archived and uploaded as a single file.
 
 #### Configuring the Debug section of the Step
@@ -114,7 +114,7 @@ The Step can handle multiple file uploads in one go. In this case the **deploy_p
         $BITRISE_SOURCE_DIR/deploy_dir:DEPLOY_DIR
 ```
 
-The Step supports sharing files between Pipeline Stages. The input needs to be a newline (`\n`) separated list of file path - env key pairs (`{path}:{env_key}`).
+The Step supports sharing files between Pipeline Workflows. The input needs to be a newline (`\n`) separated list of file path - env key pairs (`{path}:{env_key}`).
 A shorthand syntax is available when the env var names are the same, e.g. `BITRISE_IPA_PATH` instead of `$BITRISE_IPA_PATH:BITRISE_IPA_PATH`. 
 This metadata will be saved with the individual files and restored by the [Pull Pipeline intermediate files Step](https://www.bitrise.io/integrations/steps/pull-intermediate-files).
 
