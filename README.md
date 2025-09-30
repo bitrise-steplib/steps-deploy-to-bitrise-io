@@ -115,7 +115,7 @@ The Step can handle multiple file uploads in one go. In this case the **deploy_p
 ```
 
 The Step supports sharing files between Pipeline Workflows. The input needs to be a newline (`\n`) separated list of file path - env key pairs (`{path}:{env_key}`).
-A shorthand syntax is available when the env var names are the same, e.g. `BITRISE_IPA_PATH` instead of `$BITRISE_IPA_PATH:BITRISE_IPA_PATH`.
+A shorthand syntax is available when the env var names are the same, e.g. `BITRISE_IPA_PATH` instead of `$BITRISE_IPA_PATH:BITRISE_IPA_PATH`. 
 This metadata will be saved with the individual files and restored by the [Pull Pipeline intermediate files Step](https://www.bitrise.io/integrations/steps/pull-intermediate-files).
 
 
@@ -144,6 +144,7 @@ This metadata will be saved with the individual files and restored by the [Pull 
 | `details_page_url_map_format` | Provide a language template description using [Golang templates](https://golang.org/pkg/text/template) so that the **Deploy to Bitrise.io** Step can build the required custom output for the details page URL. | required | `{{range $index, $element := .}}{{if $index}}\|{{end}}{{$element.File}}=>{{$element.URL}}{{end}}` |
 | `files_to_redact` | A newline (`\n`) separated list of file paths to redact secrets from before the step deploys them. |  |  |
 | `debug_mode` | The Step will print more verbose logs if enabled. | required | `false` |
+| `use_legacy_xcresult_extraction_method` | The Step will try to extract the test results with the Xcode 15 extraction method.  Some Xcode test results are not compatible with the new extraction method and cannot extract the test results. If you encounter this issue, please set this input to `true` and try again.  What does this input does is that it calls the `xcresulttool` command with the `--legacy` flag. | required | `false` |
 </details>
 
 <details>
