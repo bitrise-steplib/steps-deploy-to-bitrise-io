@@ -60,7 +60,7 @@ func parseTestReport(result resultReader) (TestReport, error) {
 // merges Suites->Cases->Error and Suites->Cases->SystemErr field values into Suites->Cases->Failure field
 // with 2 newlines and error category prefix
 // the two newlines applied only if there is a failure message already
-// this is required because our testing addon currently handles failure field properly
+// this is required because our testing service currently handles failure field properly
 func convertTestReport(report TestReport) testreport.TestReport {
 	convertedReport := testreport.TestReport{
 		XMLName: report.XMLName,
