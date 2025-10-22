@@ -204,6 +204,30 @@ func TestConverter_XML(t *testing.T) {
 			},
 		}, junitXML.TestSuites)
 	})
+
+	t.Run("xcresult3-multiple-test-plan-configurations.xcresult", func(t *testing.T) {
+		fileName := "xcresult3-multiple-test-plan-configurations.xcresult"
+		rootDir, xcresultPath, err := setupTestData(fileName)
+		require.NoError(t, err)
+		require.NotEmpty(t, rootDir)
+		require.NotEmpty(t, xcresultPath)
+
+		t.Log("tempTestdataDir: ", rootDir)
+
+		c := Converter{xcresultPth: xcresultPath}
+		junitXML, err := c.Convert()
+		require.NoError(t, err)
+		require.NotNil(t, junitXML)
+
+		require.EqualValues(
+			t,
+			junitXML.TestSuites[0].TestCases[0].Failure.Value,
+			`English: swift_testingTests.swift:20: Expectation failed: true == false - // This test is intended to fail to demonstrate test failure reporting.
+German: swift_testingTests.swift:20: Expectation failed: true == false - // This test is intended to fail to demonstrate test failure reporting.
+`,
+		)
+
+	})
 }
 
 func BenchmarkConverter_XML(b *testing.B) {

@@ -5,3 +5,4 @@ _tmp
 steps-deploy-to-bitrise-io
 /.idea/
 .env
+.DS_Store
