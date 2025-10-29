@@ -395,7 +395,7 @@ step_bundles:
             if [ -z "${BITRISE_PUBLIC_INSTALL_PAGE_URL}" ]; then
                 echo "BITRISE_PUBLIC_INSTALL_PAGE_URL is empty"
                 exit 1
-            elif ! curl --head --silent --fail "${BITRISE_PUBLIC_INSTALL_PAGE_URL}" > /dev/null; then
+            elif ! curl -v --silent --fail "${BITRISE_PUBLIC_INSTALL_PAGE_URL}" > /dev/null; then
                 echo "BITRISE_PUBLIC_INSTALL_PAGE_URL is invalid"
                 exit 1
             fi
@@ -413,7 +413,7 @@ step_bundles:
             if [ -z "${BITRISE_ARTIFACT_DETAILS_PAGE_URL}" ]; then
                 echo "BITRISE_ARTIFACT_DETAILS_PAGE_URL is empty"
                 exit 1
-            elif ! curl --head --silent --fail "${BITRISE_ARTIFACT_DETAILS_PAGE_URL}" > /dev/null; then
+            elif ! curl -v --silent --fail "${BITRISE_ARTIFACT_DETAILS_PAGE_URL}" > /dev/null; then
                 echo "BITRISE_ARTIFACT_DETAILS_PAGE_URL is invalid"
                 exit 1
             fi
