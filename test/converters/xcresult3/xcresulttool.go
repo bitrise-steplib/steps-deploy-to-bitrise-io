@@ -1,14 +1,17 @@
 package xcresult3
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os/exec"
 	"regexp"
 	"strconv"
 
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/errorutil"
+	"github.com/bitrise-io/go-utils/v2/log"
 )
 
 func isXcresulttoolAvailable() bool {
@@ -87,15 +90,24 @@ func xcresulttoolGet(xcresultPth, id string, useLegacyFlag bool, v interface{}) 
 		args = append(args, "--id", id)
 	}
 
+	var outBuffer, errBuffer, combinedBuffer bytes.Buffer
+	outWriter := io.MultiWriter(&outBuffer, &combinedBuffer)
+	errWriter := io.MultiWriter(&errBuffer, &combinedBuffer)
+
 	cmd := command.New("xcrun", args...)
-	out, err := cmd.RunAndReturnTrimmedCombinedOutput()
-	if err != nil {
+	cmd.SetStdout(outWriter)
+	cmd.SetStderr(errWriter)
+	if err := cmd.Run(); err != nil {
 		if errorutil.IsExitStatusError(err) {
-			return fmt.Errorf("%s failed: %s", cmd.PrintableCommandArgs(), out)
+			return fmt.Errorf("%s failed: %s", cmd.PrintableCommandArgs(), combinedBuffer.String())
 		}
 		return fmt.Errorf("%s failed: %s", cmd.PrintableCommandArgs(), err)
 	}
-	if err := json.Unmarshal([]byte(out), v); err != nil {
+	if stdErr := errBuffer.String(); stdErr != "" {
+		log.NewLogger().Warnf("%s: %s", cmd.PrintableCommandArgs(), stdErr)
+	}
+
+	if err := json.Unmarshal(outBuffer.Bytes(), v); err != nil {
 		return err
 	}
 	return nil
