@@ -1,6 +1,7 @@
 package xcresult3
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"os/exec"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/errorutil"
@@ -67,6 +69,8 @@ func supportsNewExtractionMethods() (bool, error) {
 
 // xcresulttoolGet performs xcrun xcresulttool get with --id flag defined if id provided and marshals the output into v.
 func xcresulttoolGet(xcresultPth, id string, useLegacyFlag bool, v interface{}) error {
+	logger := log.NewLogger()
+
 	args := []string{"xcresulttool", "get"}
 
 	supportsNewMethod, err := supportsNewExtractionMethods()
@@ -104,13 +108,27 @@ func xcresulttoolGet(xcresultPth, id string, useLegacyFlag bool, v interface{}) 
 		return fmt.Errorf("%s failed: %s", cmd.PrintableCommandArgs(), err)
 	}
 	if stdErr := errBuffer.String(); stdErr != "" {
-		log.NewLogger().Warnf("%s: %s", cmd.PrintableCommandArgs(), stdErr)
+		logger.Warnf("%s: %s", cmd.PrintableCommandArgs(), stdErr)
 	}
 
-	if err := json.Unmarshal(outBuffer.Bytes(), v); err != nil {
+	stdout := outBuffer.Bytes()
+	if err := json.Unmarshal(stdout, v); err != nil {
+		logger.Warnf("Failed to parse %s command output, first lines:\n%s", cmd.PrintableCommandArgs(), firstLines(string(stdout)))
 		return err
 	}
 	return nil
+}
+
+func firstLines(out string) string {
+	var lines []string
+	scanner := bufio.NewScanner(strings.NewReader(out))
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+		if len(lines) == 3 {
+			break
+		}
+	}
+	return strings.Join(lines, "\n")
 }
 
 // xcresulttoolExport exports a file with the given id at the given output path.
