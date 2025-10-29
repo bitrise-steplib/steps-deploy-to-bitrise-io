@@ -370,7 +370,7 @@ workflows:
             if [ -z "${BITRISE_PERMANENT_DOWNLOAD_URL_MAP}" ]; then
                 echo "BITRISE_PERMANENT_DOWNLOAD_URL_MAP is empty"
                 exit 1
-            elif ! curl -v --silent --fail "${BITRISE_PERMANENT_DOWNLOAD_URL_MAP}" > /dev/null; then
+            elif ! curl --head --silent --fail -H "Accept: text/html" "${BITRISE_PERMANENT_DOWNLOAD_URL_MAP}" > /dev/null; then
                 echo "BITRISE_PERMANENT_DOWNLOAD_URL_MAP is invalid"
                 exit 1
             fi
@@ -395,7 +395,7 @@ step_bundles:
             if [ -z "${BITRISE_PUBLIC_INSTALL_PAGE_URL}" ]; then
                 echo "BITRISE_PUBLIC_INSTALL_PAGE_URL is empty"
                 exit 1
-            elif ! curl -v --silent --fail "${BITRISE_PUBLIC_INSTALL_PAGE_URL}" > /dev/null; then
+            elif ! curl --head --silent --fail -H "Accept: text/html" "${BITRISE_PUBLIC_INSTALL_PAGE_URL}" > /dev/null; then
                 echo "BITRISE_PUBLIC_INSTALL_PAGE_URL is invalid"
                 exit 1
             fi
@@ -404,7 +404,7 @@ step_bundles:
             if [ -z "${BITRISE_PERMANENT_DOWNLOAD_URL_MAP}" ]; then
                 echo "BITRISE_PERMANENT_DOWNLOAD_URL_MAP is empty"
                 exit 1
-            elif ! curl -v --silent --fail "${BITRISE_PERMANENT_DOWNLOAD_URL_MAP}" > /dev/null; then
+            elif ! curl --head --silent --fail -H "Accept: text/html" "${BITRISE_PERMANENT_DOWNLOAD_URL_MAP}" > /dev/null; then
                 echo "BITRISE_PERMANENT_DOWNLOAD_URL_MAP is invalid"
                 exit 1
             fi
@@ -413,7 +413,7 @@ step_bundles:
             if [ -z "${BITRISE_ARTIFACT_DETAILS_PAGE_URL}" ]; then
                 echo "BITRISE_ARTIFACT_DETAILS_PAGE_URL is empty"
                 exit 1
-            elif ! curl -v --silent --fail "${BITRISE_ARTIFACT_DETAILS_PAGE_URL}" > /dev/null; then
+            elif ! curl --head --silent --fail -H "Accept: text/html" "${BITRISE_ARTIFACT_DETAILS_PAGE_URL}" > /dev/null; then
                 echo "BITRISE_ARTIFACT_DETAILS_PAGE_URL is invalid"
                 exit 1
             fi
