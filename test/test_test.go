@@ -334,7 +334,7 @@ func Test_findSupportedAttachments(t *testing.T) {
 		defer os.RemoveAll(tempDir)
 
 		files := []string{
-			"screenshot1.jpg",
+			"screenshot1.JPG",
 			"screenshot2.png",
 			"log.txt",
 			"video.mp4",
@@ -360,7 +360,7 @@ func Test_findSupportedAttachments(t *testing.T) {
 		defer os.RemoveAll(tempDir)
 
 		files := []string{
-			"screenshot.jpg",
+			"screenshot.JPG",
 			"video.mp4",
 			"recording.webm",
 			"subfolder/nested.png",
