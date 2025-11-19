@@ -328,7 +328,6 @@ func Test_ParseXctest3Results(t *testing.T) {
 func Test_findSupportedAttachments(t *testing.T) {
 	t.Run("without video upload enabled", func(t *testing.T) {
 		os.Unsetenv("ENABLE_TEST_VIDEO_UPLOAD")
-		defer os.Unsetenv("ENABLE_TEST_VIDEO_UPLOAD")
 
 		tempDir, err := pathutil.NormalizedOSTempDirPath("test_attachments")
 		require.NoError(t, err)
