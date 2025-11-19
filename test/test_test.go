@@ -237,8 +237,8 @@ func Test_ParseXctestResults(t *testing.T) {
 		assert.Equal(t, sampleIOSXmlOutput, string(bundle[0].XMLContent))
 		// Check if the attachments are correctly by the end of paths
 		assert.Equal(t, 4, len(bundle[0].AttachmentPaths))
-		assert.True(t, strings.HasSuffix(bundle[0].AttachmentPaths[0], "image3.jpeg"))
-		assert.True(t, strings.HasSuffix(bundle[0].AttachmentPaths[1], "image.png"))
+		assert.True(t, strings.HasSuffix(bundle[0].AttachmentPaths[0], "image.png"))
+		assert.True(t, strings.HasSuffix(bundle[0].AttachmentPaths[1], "image3.jpeg"))
 		assert.True(t, strings.HasSuffix(bundle[0].AttachmentPaths[2], "logs.txt"))
 		assert.True(t, strings.HasSuffix(bundle[0].AttachmentPaths[3], "zzz.log"))
 	}
