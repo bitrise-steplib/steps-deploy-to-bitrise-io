@@ -324,3 +324,56 @@ func Test_ParseXctest3Results(t *testing.T) {
 	assert.Equal(t, 1, len(bundle))
 	assert.Equal(t, want, string(bundle[0].XMLContent))
 }
+
+func Test_findSupportedAttachments(t *testing.T) {
+	t.Run("without video upload enabled", func(t *testing.T) {
+		os.Unsetenv("ENABLE_TEST_VIDEO_UPLOAD")
+		defer os.Unsetenv("ENABLE_TEST_VIDEO_UPLOAD")
+
+		tempDir, err := pathutil.NormalizedOSTempDirPath("test_attachments")
+		require.NoError(t, err)
+		defer os.RemoveAll(tempDir)
+
+		files := []string{
+			"screenshot1.jpg",
+			"screenshot2.png",
+			"log.txt",
+			"video.mp4",
+			"recording.webm",
+			"subfolder/nested.jpg",
+			"subfolder/nested.mp4",
+			"subfolder/deep/image.png",
+		}
+		err = createDummyFilesInDirWithContent(tempDir, "test", files)
+		require.NoError(t, err)
+
+		result := findSupportedAttachments(tempDir, logV2.NewLogger())
+
+		assert.Len(t, result, 5) // jpg, png, txt, nested jpg, nested png (no videos)
+	})
+
+	t.Run("with video upload enabled", func(t *testing.T) {
+		os.Setenv("ENABLE_TEST_VIDEO_UPLOAD", "true")
+		defer os.Unsetenv("ENABLE_TEST_VIDEO_UPLOAD")
+
+		tempDir, err := pathutil.NormalizedOSTempDirPath("test_attachments")
+		require.NoError(t, err)
+		defer os.RemoveAll(tempDir)
+
+		files := []string{
+			"screenshot.jpg",
+			"video.mp4",
+			"recording.webm",
+			"subfolder/nested.png",
+			"subfolder/clip.ogg",
+			"subfolder/deep/image.jpg",
+			"subfolder/deep/movie.mp4",
+		}
+		err = createDummyFilesInDirWithContent(tempDir, "test", files)
+		require.NoError(t, err)
+
+		result := findSupportedAttachments(tempDir, logV2.NewLogger())
+
+		assert.Len(t, result, 7) // all files including videos
+	})
+}

@@ -98,15 +98,28 @@ func httpCall(apiToken, method, url string, input io.Reader, output interface{},
 	return nil
 }
 
-func findSupportedAttachments(testDir string) (imageFilePaths []string) {
-	for _, ext := range testasset.AssetTypes {
-		if paths, err := filepath.Glob(filepath.Join(testDir, "*"+ext)); err == nil {
-			imageFilePaths = append(imageFilePaths, paths...)
+func findSupportedAttachments(testDir string, logger logV2.Logger) (attachmentPaths []string) {
+	err := filepath.WalkDir(testDir, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
 		}
-		if paths, err := filepath.Glob(filepath.Join(testDir, "*"+strings.ToUpper(ext))); err == nil {
-			imageFilePaths = append(imageFilePaths, paths...)
+
+		if d.IsDir() {
+			return nil
 		}
+
+		if testasset.IsSupportedAssetType(path) {
+			attachmentPaths = append(attachmentPaths, path)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		logger.Warnf("Failed to walk test dir (%s): %s", testDir, err)
+		return nil
 	}
+
 	return
 }
 
@@ -229,8 +242,7 @@ func ParseTestResults(testsRootDir string, useLegacyXCResultExtractionMethod boo
 					}
 					xmlData = append([]byte(`<?xml version="1.0" encoding="UTF-8"?>`+"\n"), xmlData...)
 
-					// so here I will have image paths, xml data, and step info per test dir in a bundle info
-					attachments := findSupportedAttachments(testPhaseDirPath)
+					attachments := findSupportedAttachments(testPhaseDirPath, logger)
 
 					logger.Debugf("found attachments: %d", len(attachments))
 
