@@ -337,9 +337,9 @@ func (results Results) calculateTotalSizeOfXMLContent() int {
 }
 
 func relativeFilePath(absoluteFilePath, reportName string) string {
-	separator := string(filepath.Separator) + reportName + string(filepath.Separator)
-	if strings.Contains(absoluteFilePath, separator) {
-		return strings.SplitN(absoluteFilePath, separator, 2)[1]
+	pathComponent := string(filepath.Separator) + reportName + string(filepath.Separator)
+	if strings.Contains(absoluteFilePath, pathComponent) {
+		return strings.SplitN(absoluteFilePath, pathComponent, 2)[1]
 	}
 	return filepath.Base(absoluteFilePath)
 }
