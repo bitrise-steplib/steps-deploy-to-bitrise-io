@@ -281,12 +281,8 @@ func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug stri
 			if err != nil {
 				return fmt.Errorf("failed to get file info for %s: %w", asset, err)
 			}
-			fileName := filepath.Base(asset)
-			if strings.Contains(asset, "/"+result.Name+"/") {
-				fileName = strings.Split(asset, "/"+result.Name+"/")[1]
-			}
 			uploadReq.Assets = append(uploadReq.Assets, FileInfo{
-				FileName: fileName,
+				FileName: retrieveRelativeFilePath(asset, result.Name),
 				FileSize: int(fi.Size()),
 			})
 		}
@@ -310,11 +306,7 @@ func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug stri
 
 		for _, upload := range uploadResponse.Assets {
 			for _, file := range result.AttachmentPaths {
-				fileName := filepath.Base(file)
-				if strings.Contains(file, "/"+result.Name+"/") {
-					fileName = strings.Split(file, "/"+result.Name+"/")[1]
-				}
-				if fileName == upload.FileName {
+				if retrieveRelativeFilePath(file, result.Name) == upload.FileName {
 					fi, err := os.Open(file)
 					if err != nil {
 						return fmt.Errorf("failed to open test result attachment (%s): %w", file, err)
@@ -342,4 +334,12 @@ func (results Results) calculateTotalSizeOfXMLContent() int {
 		totalSize += len(result.XMLContent)
 	}
 	return totalSize
+}
+
+func retrieveRelativeFilePath(absoluteFilePath, reportName string) string {
+	separator := "/" + reportName + "/"
+	if strings.Contains(absoluteFilePath, separator) {
+		return strings.SplitN(absoluteFilePath, separator, 2)[1]
+	}
+	return filepath.Base(absoluteFilePath)
 }
