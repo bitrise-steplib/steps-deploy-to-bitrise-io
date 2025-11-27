@@ -281,8 +281,12 @@ func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug stri
 			if err != nil {
 				return fmt.Errorf("failed to get file info for %s: %w", asset, err)
 			}
+			fileName := filepath.Base(asset)
+			if strings.Contains(asset, "/"+result.Name+"/") {
+				fileName = strings.Split(asset, "/"+result.Name+"/")[1]
+			}
 			uploadReq.Assets = append(uploadReq.Assets, FileInfo{
-				FileName: filepath.Base(asset),
+				FileName: fileName,
 				FileSize: int(fi.Size()),
 			})
 		}
@@ -306,7 +310,11 @@ func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug stri
 
 		for _, upload := range uploadResponse.Assets {
 			for _, file := range result.AttachmentPaths {
-				if filepath.Base(file) == upload.FileName {
+				fileName := filepath.Base(file)
+				if strings.Contains(file, "/"+result.Name+"/") {
+					fileName = strings.Split(file, "/"+result.Name+"/")[1]
+				}
+				if fileName == upload.FileName {
 					fi, err := os.Open(file)
 					if err != nil {
 						return fmt.Errorf("failed to open test result attachment (%s): %w", file, err)
