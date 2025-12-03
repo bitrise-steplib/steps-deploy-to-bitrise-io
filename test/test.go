@@ -21,6 +21,9 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
+// maxTotalXMLSize limits the total size of all XML files uploaded in a single run
+const maxTotalXMLSize = 100 * 1024 * 1024 // 100 MiB
+
 // FileInfo ...
 type FileInfo struct {
 	FileName string `json:"filename"`
@@ -95,15 +98,28 @@ func httpCall(apiToken, method, url string, input io.Reader, output interface{},
 	return nil
 }
 
-func findSupportedAttachments(testDir string) (imageFilePaths []string) {
-	for _, ext := range testasset.AssetTypes {
-		if paths, err := filepath.Glob(filepath.Join(testDir, "*"+ext)); err == nil {
-			imageFilePaths = append(imageFilePaths, paths...)
+func findSupportedAttachments(testDir string, logger logV2.Logger) (attachmentPaths []string) {
+	err := filepath.WalkDir(testDir, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
 		}
-		if paths, err := filepath.Glob(filepath.Join(testDir, "*"+strings.ToUpper(ext))); err == nil {
-			imageFilePaths = append(imageFilePaths, paths...)
+
+		if d.IsDir() {
+			return nil
 		}
+
+		if testasset.IsSupportedAssetType(path) {
+			attachmentPaths = append(attachmentPaths, path)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		logger.Warnf("Failed to walk test dir (%s): %s", testDir, err)
+		return nil
 	}
+
 	return
 }
 
@@ -114,21 +130,21 @@ The Test Deploy directory has the following directory structure:
 
 	test_results ($BITRISE_TEST_DEPLOY_DIR)
 	├── step_1_test_results ($BITRISE_TEST_RESULT_DIR)
-	│		 ├── step-info.json
-	│		 ├── test_run_1
-	│		 │		 ├── UnitTest.xml
-	│		 │		 └── test-info.json
-	│		 └── test_run_2
-	│		     ├── UITest.xml
-	│		     └── test-info.json
+	│	├── step-info.json
+	│	├── test_run_1
+	│	│	├── UnitTest.xml
+	│	│	└── test-info.json
+	│	└── test_run_2
+	│		├── UITest.xml
+	│		└── test-info.json
 	└── step_2_test_results ($BITRISE_TEST_RESULT_DIR)
-	    ├── step-info.json
-	    └── test_run
-	        ├── results.xml
-	        ├── screenshot_1.jpg
-	        ├── screenshot_2.jpeg
-	        ├── screenshot_3.png
-	        └── test-info.json
+		├── step-info.json
+		└── test_run
+			├── results.xml
+			├── screenshot_1.jpg
+			├── screenshot_2.jpeg
+			├── screenshot_3.png
+			└── test-info.json
 */
 func ParseTestResults(testsRootDir string, useLegacyXCResultExtractionMethod bool, logger logV2.Logger) (results Results, err error) {
 	// read dirs in base tests dir
@@ -226,8 +242,7 @@ func ParseTestResults(testsRootDir string, useLegacyXCResultExtractionMethod boo
 					}
 					xmlData = append([]byte(`<?xml version="1.0" encoding="UTF-8"?>`+"\n"), xmlData...)
 
-					// so here I will have image paths, xml data, and step info per test dir in a bundle info
-					attachments := findSupportedAttachments(testPhaseDirPath)
+					attachments := findSupportedAttachments(testPhaseDirPath, logger)
 
 					logger.Debugf("found attachments: %d", len(attachments))
 
@@ -246,6 +261,10 @@ func ParseTestResults(testsRootDir string, useLegacyXCResultExtractionMethod boo
 
 // Upload ...
 func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug string, logger logV2.Logger) error {
+	if results.calculateTotalSizeOfXMLContent() > maxTotalXMLSize {
+		return fmt.Errorf("the total size of the test result XML files (%d MiB) exceeds the maximum allowed size of 100 MiB", results.calculateTotalSizeOfXMLContent()/1024/1024)
+	}
+
 	for _, result := range results {
 		logger.Printf("Uploading: %s", result.Name)
 
@@ -263,7 +282,7 @@ func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug stri
 				return fmt.Errorf("failed to get file info for %s: %w", asset, err)
 			}
 			uploadReq.Assets = append(uploadReq.Assets, FileInfo{
-				FileName: filepath.Base(asset),
+				FileName: relativeFilePath(asset, result.Name),
 				FileSize: int(fi.Size()),
 			})
 		}
@@ -287,7 +306,7 @@ func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug stri
 
 		for _, upload := range uploadResponse.Assets {
 			for _, file := range result.AttachmentPaths {
-				if filepath.Base(file) == upload.FileName {
+				if relativeFilePath(file, result.Name) == upload.FileName {
 					fi, err := os.Open(file)
 					if err != nil {
 						return fmt.Errorf("failed to open test result attachment (%s): %w", file, err)
@@ -307,4 +326,20 @@ func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug stri
 	}
 
 	return nil
+}
+
+func (results Results) calculateTotalSizeOfXMLContent() int {
+	totalSize := 0
+	for _, result := range results {
+		totalSize += len(result.XMLContent)
+	}
+	return totalSize
+}
+
+func relativeFilePath(absoluteFilePath, reportName string) string {
+	pathComponent := string(filepath.Separator) + reportName + string(filepath.Separator)
+	if strings.Contains(absoluteFilePath, pathComponent) {
+		return strings.SplitN(absoluteFilePath, pathComponent, 2)[1]
+	}
+	return filepath.Base(absoluteFilePath)
 }

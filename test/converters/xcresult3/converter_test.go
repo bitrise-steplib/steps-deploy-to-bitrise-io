@@ -93,27 +93,27 @@ func TestConverter_XML(t *testing.T) {
 							Property: []testreport.Property{
 								{
 									Name:  "attachment_0",
-									Value: "Screenshot 2022-02-10 at 02.57.47 PM.jpeg",
+									Value: "Screenshot 2022-02-10 at 02.57.39 PM_1644505059194999933.jpeg",
 								},
 								{
 									Name:  "attachment_1",
-									Value: "Screenshot 2022-02-10 at 02.57.47 PM (1).jpeg",
+									Value: "Screenshot 2022-02-10 at 02.57.39 PM_1644505059388999938.jpeg",
 								},
 								{
 									Name:  "attachment_2",
-									Value: "Screenshot 2022-02-10 at 02.57.47 PM (2).jpeg",
+									Value: "Screenshot 2022-02-10 at 02.57.44 PM_1644505064670000076.jpeg",
 								},
 								{
 									Name:  "attachment_3",
-									Value: "Screenshot 2022-02-10 at 02.57.39 PM.jpeg",
+									Value: "Screenshot 2022-02-10 at 02.57.47 PM_1644505067144000053.jpeg",
 								},
 								{
 									Name:  "attachment_4",
-									Value: "Screenshot 2022-02-10 at 02.57.44 PM.jpeg",
+									Value: "Screenshot 2022-02-10 at 02.57.47 PM_1644505067476000070.jpeg",
 								},
 								{
 									Name:  "attachment_5",
-									Value: "Screenshot 2022-02-10 at 02.57.39 PM (1).jpeg",
+									Value: "Screenshot 2022-02-10 at 02.57.47 PM_1644505067992000102.jpeg",
 								},
 							},
 						},
@@ -176,15 +176,15 @@ func TestConverter_XML(t *testing.T) {
 							Property: []testreport.Property{
 								{
 									Name:  "attachment_0",
-									Value: "Screenshot 2021-02-09 at 08.35.52 AM.jpeg",
+									Value: "Screenshot 2021-02-09 at 08.35.51 AM_1612859751989000082.jpeg",
 								},
 								{
 									Name:  "attachment_1",
-									Value: "Screenshot 2021-02-09 at 08.35.51 AM.jpeg",
+									Value: "Screenshot 2021-02-09 at 08.35.52 AM_1612859752052999973.jpeg",
 								},
 								{
 									Name:  "attachment_2",
-									Value: "Screenshot 2021-02-09 at 08.35.52 AM (1).jpeg",
+									Value: "Screenshot 2021-02-09 at 08.35.52 AM_1612859752052999973.jpeg",
 								},
 							},
 						},
@@ -203,6 +203,30 @@ func TestConverter_XML(t *testing.T) {
 				},
 			},
 		}, junitXML.TestSuites)
+	})
+
+	t.Run("xcresult3-multiple-test-plan-configurations.xcresult", func(t *testing.T) {
+		fileName := "xcresult3-multiple-test-plan-configurations.xcresult"
+		rootDir, xcresultPath, err := setupTestData(fileName)
+		require.NoError(t, err)
+		require.NotEmpty(t, rootDir)
+		require.NotEmpty(t, xcresultPath)
+
+		t.Log("tempTestdataDir: ", rootDir)
+
+		c := Converter{xcresultPth: xcresultPath}
+		junitXML, err := c.Convert()
+		require.NoError(t, err)
+		require.NotNil(t, junitXML)
+
+		require.EqualValues(
+			t,
+			junitXML.TestSuites[0].TestCases[0].Failure.Value,
+			`English: swift_testingTests.swift:20: Expectation failed: true == false - // This test is intended to fail to demonstrate test failure reporting.
+German: swift_testingTests.swift:20: Expectation failed: true == false - // This test is intended to fail to demonstrate test failure reporting.
+`,
+		)
+
 	})
 }
 

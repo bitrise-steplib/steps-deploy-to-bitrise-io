@@ -11,13 +11,14 @@ type TestReport struct {
 }
 
 type TestSuite struct {
-	XMLName   xml.Name   `xml:"testsuite"`
-	Name      string     `xml:"name,attr"`
-	Tests     int        `xml:"tests,attr"`
-	Failures  int        `xml:"failures,attr"`
-	Skipped   int        `xml:"skipped,attr"`
-	Time      float64    `xml:"time,attr"`
-	TestCases []TestCase `xml:"testcase"`
+	XMLName    xml.Name    `xml:"testsuite"`
+	Name       string      `xml:"name,attr"`
+	Tests      int         `xml:"tests,attr"`
+	Failures   int         `xml:"failures,attr"`
+	Skipped    int         `xml:"skipped,attr"`
+	Time       float64     `xml:"time,attr"`
+	TestCases  []TestCase  `xml:"testcase"`
+	TestSuites []TestSuite `xml:"testsuite"`
 }
 
 type TestCase struct {

@@ -15,7 +15,7 @@ func (u *Uploader) DeployXcarchive(item deployment.DeployableItem, buildURL, tok
 	xcarchiveInfo, err := u.iosParser.ParseXCArchiveData(pth)
 	if err != nil {
 		if errors.Is(err, metaparser.MacOSProjectIsNotSupported) {
-			u.logger.Warnf("macOS archive deployment is not supported, skipping xcarchive")
+			return nil, fmt.Errorf("macOS archive deployment is not supported: %w", err)
 		} else {
 			return nil, fmt.Errorf("failed to parse deployment info for %s: %w", pth, err)
 		}
