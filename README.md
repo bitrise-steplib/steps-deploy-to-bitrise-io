@@ -63,7 +63,6 @@ Bundletool generates an APK from an Android App Bundle so that you can test the 
 
 ### Useful links
 
-- [Deployment on Bitrise](https://devcenter.bitrise.io/deploy/deployment-index/)
 - [Watching an app](https://devcenter.bitrise.io/builds/configuring-notifications/#watching-an-app)
 - [Sharing files between Workflows in a Pipeline](https://devcenter.bitrise.io/en/steps-and-workflows/build-pipelines/configuring-a-bitrise-pipeline.html#sharing-files-between-workflows-in-a-pipeline)
 - [Viewing HTML reports](https://devcenter.bitrise.io/en/builds/build-data-and-troubleshooting/viewing-html-reports)
