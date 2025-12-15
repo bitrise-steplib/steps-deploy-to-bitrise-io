@@ -57,10 +57,11 @@ func parseTestReport(result resultReader) (TestReport, error) {
 	return TestReport{}, errors.Wrap(errors.Wrap(testSuiteErr, string(data)), testReportErr.Error())
 }
 
-// merges Suites->Cases->Error and Suites->Cases->SystemErr field values into Suites->Cases->Failure field
-// with 2 newlines and error category prefix
-// the two newlines applied only if there is a failure message already
-// this is required because our testing service currently handles failure field properly
+// convertTestReport converts the JUnit XML test report to the internal test report format.
+// It preserves the distinction between test failures and test execution errors:
+// - Failure elements remain as Failure in the output
+// - Error elements are converted to Error in the output
+// - SystemErr and SystemOut are preserved in their respective fields
 func convertTestReport(report TestReport) testreport.TestReport {
 	convertedReport := testreport.TestReport{
 		XMLName: report.XMLName,
@@ -90,7 +91,7 @@ func convertTestSuite(testSuite TestSuite) testreport.TestSuite {
 		convertedTestCase := convertTestCase(testCase)
 		convertedTestSuite.TestCases = append(convertedTestSuite.TestCases, convertedTestCase)
 
-		if convertedTestCase.Failure != nil {
+		if convertedTestCase.Failure != nil || convertedTestCase.Error != nil {
 			failures++
 		}
 		if convertedTestCase.Skipped != nil {
@@ -122,30 +123,51 @@ func flattenGroupedTestCases(testCases []TestCase) []TestCase {
 			continue
 		}
 
-		flattenedTestCase := TestCase{
-			XMLName:           testCase.XMLName,
-			ConfigurationHash: testCase.ConfigurationHash,
-			Name:              testCase.Name,
-			ClassName:         testCase.ClassName,
-		}
-
 		for _, flakyFailure := range testCase.FlakyFailures {
-			flattenedTestCase.Failure = convertToFailure(flakyFailure.Type, flakyFailure.Message, flakyFailure.SystemErr)
+			flattenedTestCase := TestCase{
+				XMLName:           testCase.XMLName,
+				ConfigurationHash: testCase.ConfigurationHash,
+				Name:              testCase.Name,
+				ClassName:         testCase.ClassName,
+				Failure:           convertToFailure(flakyFailure.Type, flakyFailure.Message),
+				SystemErr:         flakyFailure.SystemErr,
+			}
 			flattenedTestCases = append(flattenedTestCases, flattenedTestCase)
 		}
 
 		for _, flakyError := range testCase.FlakyErrors {
-			flattenedTestCase.Failure = convertToFailure(flakyError.Type, flakyError.Message, flakyError.SystemErr)
+			flattenedTestCase := TestCase{
+				XMLName:           testCase.XMLName,
+				ConfigurationHash: testCase.ConfigurationHash,
+				Name:              testCase.Name,
+				ClassName:         testCase.ClassName,
+				Error:             convertToError(flakyError.Type, flakyError.Message),
+				SystemErr:         flakyError.SystemErr,
+			}
 			flattenedTestCases = append(flattenedTestCases, flattenedTestCase)
 		}
 
-		for _, rerunfailure := range testCase.RerunFailures {
-			flattenedTestCase.Failure = convertToFailure(rerunfailure.Type, rerunfailure.Message, rerunfailure.SystemErr)
+		for _, rerunFailure := range testCase.RerunFailures {
+			flattenedTestCase := TestCase{
+				XMLName:           testCase.XMLName,
+				ConfigurationHash: testCase.ConfigurationHash,
+				Name:              testCase.Name,
+				ClassName:         testCase.ClassName,
+				Failure:           convertToFailure(rerunFailure.Type, rerunFailure.Message),
+				SystemErr:         rerunFailure.SystemErr,
+			}
 			flattenedTestCases = append(flattenedTestCases, flattenedTestCase)
 		}
 
 		for _, rerunError := range testCase.RerunErrors {
-			flattenedTestCase.Failure = convertToFailure(rerunError.Type, rerunError.Message, rerunError.SystemErr)
+			flattenedTestCase := TestCase{
+				XMLName:           testCase.XMLName,
+				ConfigurationHash: testCase.ConfigurationHash,
+				Name:              testCase.Name,
+				ClassName:         testCase.ClassName,
+				Error:             convertToError(rerunError.Type, rerunError.Message),
+				SystemErr:         rerunError.SystemErr,
+			}
 			flattenedTestCases = append(flattenedTestCases, flattenedTestCase)
 		}
 
@@ -153,7 +175,7 @@ func flattenGroupedTestCases(testCases []TestCase) []TestCase {
 	return flattenedTestCases
 }
 
-func convertToFailure(itemType, failureMessage, systemErr string) *Failure {
+func convertToFailure(itemType, failureMessage string) *Failure {
 	var message string
 	if len(strings.TrimSpace(itemType)) > 0 {
 		message = itemType
@@ -165,15 +187,28 @@ func convertToFailure(itemType, failureMessage, systemErr string) *Failure {
 		message += failureMessage
 	}
 
-	if len(strings.TrimSpace(systemErr)) > 0 {
-		if len(message) > 0 {
-			message += "\n\n"
+	if len(message) > 0 {
+		return &Failure{
+			Value: message,
 		}
-		message += "System error:\n" + systemErr
+	}
+	return nil
+}
+
+func convertToError(itemType, errorMessage string) *Error {
+	var message string
+	if len(strings.TrimSpace(itemType)) > 0 {
+		message = itemType
+	}
+	if len(strings.TrimSpace(errorMessage)) > 0 {
+		if len(message) > 0 {
+			message += ": "
+		}
+		message += errorMessage
 	}
 
 	if len(message) > 0 {
-		return &Failure{
+		return &Error{
 			Value: message,
 		}
 	}
@@ -188,6 +223,8 @@ func convertTestCase(testCase TestCase) testreport.TestCase {
 		ClassName:         testCase.ClassName,
 		Time:              testCase.Time,
 		Properties:        convertProperties(testCase.Properties),
+		SystemErr:         testCase.SystemErr,
+		SystemOut:         testCase.SystemOut,
 	}
 
 	if testCase.Skipped != nil {
@@ -196,7 +233,8 @@ func convertTestCase(testCase TestCase) testreport.TestCase {
 		}
 	}
 
-	convertedTestCase.Failure = convertErrorsToFailure(testCase.Failure, testCase.Error, testCase.SystemErr)
+	convertedTestCase.Failure = convertFailure(testCase.Failure)
+	convertedTestCase.Error = convertError(testCase.Error)
 
 	return convertedTestCase
 }
@@ -218,36 +256,46 @@ func convertProperties(properties *Properties) *testreport.Properties {
 	return convertedProperties
 }
 
-func convertErrorsToFailure(failure *Failure, error *Error, systemErr string) *testreport.Failure {
+func convertFailure(failure *Failure) *testreport.Failure {
+	if failure == nil {
+		return nil
+	}
+
 	var messages []string
-
-	if failure != nil {
-		if len(strings.TrimSpace(failure.Message)) > 0 {
-			messages = append(messages, failure.Message)
-		}
-
-		if len(strings.TrimSpace(failure.Value)) > 0 {
-			messages = append(messages, failure.Value)
-		}
+	if len(strings.TrimSpace(failure.Message)) > 0 {
+		messages = append(messages, failure.Message)
 	}
 
-	if error != nil {
-		if len(strings.TrimSpace(error.Message)) > 0 {
-			messages = append(messages, "Error message:\n"+error.Message)
-		}
-
-		if len(strings.TrimSpace(error.Value)) > 0 {
-			messages = append(messages, "Error value:\n"+error.Value)
-		}
-	}
-
-	if len(systemErr) > 0 {
-		messages = append(messages, "System error:\n"+systemErr)
+	if len(strings.TrimSpace(failure.Value)) > 0 {
+		messages = append(messages, failure.Value)
 	}
 
 	if len(messages) > 0 {
 		return &testreport.Failure{
 			XMLName: xml.Name{Local: "failure"},
+			Value:   strings.Join(messages, "\n\n"),
+		}
+	}
+	return nil
+}
+
+func convertError(error *Error) *testreport.Error {
+	if error == nil {
+		return nil
+	}
+
+	var messages []string
+	if len(strings.TrimSpace(error.Message)) > 0 {
+		messages = append(messages, error.Message)
+	}
+
+	if len(strings.TrimSpace(error.Value)) > 0 {
+		messages = append(messages, error.Value)
+	}
+
+	if len(messages) > 0 {
+		return &testreport.Error{
+			XMLName: xml.Name{Local: "error"},
 			Value:   strings.Join(messages, "\n\n"),
 		}
 	}

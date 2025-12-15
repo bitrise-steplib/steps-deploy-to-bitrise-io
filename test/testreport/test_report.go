@@ -29,17 +29,21 @@ type TestCase struct {
 	Name              string  `xml:"name,attr"`
 	ClassName         string  `xml:"classname,attr"`
 	Time              float64 `xml:"time,attr"`
-	// TODO: Currently a JUnit report's TestCase.Error and TestCase.SystemErr is merged into TestCase.Failure.Value field,
-	// this way test execution errors are not distinguished from test failures.
-	Failure    *Failure    `xml:"failure,omitempty"`
-	Skipped    *Skipped    `xml:"skipped,omitempty"`
-	Properties *Properties `xml:"properties,omitempty"`
-	SystemErr  string      `xml:"system-err,omitempty"`
-	SystemOut  string      `xml:"system-out,omitempty"`
+	Failure           *Failure    `xml:"failure,omitempty"`
+	Error             *Error      `xml:"error,omitempty"`
+	Skipped           *Skipped    `xml:"skipped,omitempty"`
+	Properties        *Properties `xml:"properties,omitempty"`
+	SystemErr         string      `xml:"system-err,omitempty"`
+	SystemOut         string      `xml:"system-out,omitempty"`
 }
 
 type Failure struct {
 	XMLName xml.Name `xml:"failure,omitempty"`
+	Value   string   `xml:",chardata"`
+}
+
+type Error struct {
+	XMLName xml.Name `xml:"error,omitempty"`
 	Value   string   `xml:",chardata"`
 }
 

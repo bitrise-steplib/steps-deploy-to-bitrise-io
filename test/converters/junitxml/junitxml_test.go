@@ -36,7 +36,7 @@ func Test_convertTestReport(t *testing.T) {
 		want   []testreport.TestSuite
 	}{
 		{
-			name: "regroup error message",
+			name: "convert error message",
 			suites: []TestSuite{{TestCases: []TestCase{
 				{
 					Error: &Error{
@@ -46,15 +46,15 @@ func Test_convertTestReport(t *testing.T) {
 			}}},
 			want: []testreport.TestSuite{{Tests: 1, Failures: 1, Skipped: 0, TestCases: []testreport.TestCase{
 				{
-					Failure: &testreport.Failure{
-						XMLName: xml.Name{Local: "failure"},
-						Value:   "Error message:\nerror message",
+					Error: &testreport.Error{
+						XMLName: xml.Name{Local: "error"},
+						Value:   "error message",
 					},
 				},
 			}}},
 		},
 		{
-			name: "regroup error body",
+			name: "convert error body",
 			suites: []TestSuite{{TestCases: []TestCase{
 				{
 					Error: &Error{
@@ -64,32 +64,29 @@ func Test_convertTestReport(t *testing.T) {
 			}}},
 			want: []testreport.TestSuite{{Tests: 1, Failures: 1, Skipped: 0, TestCases: []testreport.TestCase{
 				{
-					Failure: &testreport.Failure{
-						XMLName: xml.Name{Local: "failure"},
-						Value:   "Error value:\nerror message",
+					Error: &testreport.Error{
+						XMLName: xml.Name{Local: "error"},
+						Value:   "error message",
 					},
 				},
 			}}},
 		},
 		{
-			name: "regroup system err",
+			name: "preserve system err",
 			suites: []TestSuite{{TestCases: []TestCase{
 				{
 					SystemErr: "error message",
 				},
 			}}},
-			want: []testreport.TestSuite{{Tests: 1, Failures: 1, Skipped: 0, TestCases: []testreport.TestCase{
+			want: []testreport.TestSuite{{Tests: 1, Failures: 0, Skipped: 0, TestCases: []testreport.TestCase{
 				{
-					Failure: &testreport.Failure{
-						XMLName: xml.Name{Local: "failure"},
-						Value:   "System error:\nerror message",
-					},
+					SystemErr: "error message",
 				},
 			}}},
 		},
 
 		{
-			name: "regroup error message - multiple test cases",
+			name: "convert error message - multiple test cases",
 			suites: []TestSuite{{TestCases: []TestCase{
 				{
 					Error: &Error{
@@ -104,21 +101,21 @@ func Test_convertTestReport(t *testing.T) {
 			}}},
 			want: []testreport.TestSuite{{Tests: 2, Failures: 2, Skipped: 0, TestCases: []testreport.TestCase{
 				{
-					Failure: &testreport.Failure{
-						XMLName: xml.Name{Local: "failure"},
-						Value:   "Error message:\nerror message",
+					Error: &testreport.Error{
+						XMLName: xml.Name{Local: "error"},
+						Value:   "error message",
 					},
 				},
 				{
-					Failure: &testreport.Failure{
-						XMLName: xml.Name{Local: "failure"},
-						Value:   "Error message:\nerror message2",
+					Error: &testreport.Error{
+						XMLName: xml.Name{Local: "error"},
+						Value:   "error message2",
 					},
 				},
 			}}},
 		},
 		{
-			name: "regroup error body - multiple test cases",
+			name: "convert error body - multiple test cases",
 			suites: []TestSuite{{TestCases: []TestCase{
 				{
 					Error: &Error{
@@ -133,21 +130,21 @@ func Test_convertTestReport(t *testing.T) {
 			}}},
 			want: []testreport.TestSuite{{Tests: 2, Failures: 2, Skipped: 0, TestCases: []testreport.TestCase{
 				{
-					Failure: &testreport.Failure{
-						XMLName: xml.Name{Local: "failure"},
-						Value:   "Error value:\nerror message",
+					Error: &testreport.Error{
+						XMLName: xml.Name{Local: "error"},
+						Value:   "error message",
 					},
 				},
 				{
-					Failure: &testreport.Failure{
-						XMLName: xml.Name{Local: "failure"},
-						Value:   "Error value:\nerror message2",
+					Error: &testreport.Error{
+						XMLName: xml.Name{Local: "error"},
+						Value:   "error message2",
 					},
 				},
 			}}},
 		},
 		{
-			name: "regroup system err - multiple test cases",
+			name: "preserve system err - multiple test cases",
 			suites: []TestSuite{{TestCases: []TestCase{
 				{
 					SystemErr: "error message",
@@ -156,18 +153,12 @@ func Test_convertTestReport(t *testing.T) {
 					SystemErr: "error message2",
 				},
 			}}},
-			want: []testreport.TestSuite{{Tests: 2, Failures: 2, Skipped: 0, TestCases: []testreport.TestCase{
+			want: []testreport.TestSuite{{Tests: 2, Failures: 0, Skipped: 0, TestCases: []testreport.TestCase{
 				{
-					Failure: &testreport.Failure{
-						XMLName: xml.Name{Local: "failure"},
-						Value:   "System error:\nerror message",
-					},
+					SystemErr: "error message",
 				},
 				{
-					Failure: &testreport.Failure{
-						XMLName: xml.Name{Local: "failure"},
-						Value:   "System error:\nerror message2",
-					},
+					SystemErr: "error message2",
 				},
 			}}},
 		},
@@ -190,7 +181,7 @@ func Test_convertTestReport(t *testing.T) {
 			}}},
 		},
 		{
-			name: "should append error body to failure",
+			name: "should keep error separate from failure",
 			suites: []TestSuite{{TestCases: []TestCase{
 				{
 					Failure: &Failure{
@@ -205,13 +196,17 @@ func Test_convertTestReport(t *testing.T) {
 				{
 					Failure: &testreport.Failure{
 						XMLName: xml.Name{Local: "failure"},
-						Value:   "failure message\n\nError value:\nerror value",
+						Value:   "failure message",
+					},
+					Error: &testreport.Error{
+						XMLName: xml.Name{Local: "error"},
+						Value:   "error value",
 					},
 				},
 			}}},
 		},
 		{
-			name: "should append error message to failure",
+			name: "should keep error message separate from failure",
 			suites: []TestSuite{{TestCases: []TestCase{
 				{
 					Failure: &Failure{
@@ -226,13 +221,17 @@ func Test_convertTestReport(t *testing.T) {
 				{
 					Failure: &testreport.Failure{
 						XMLName: xml.Name{Local: "failure"},
-						Value:   "Failure message\n\nError message:\nerror value",
+						Value:   "Failure message",
+					},
+					Error: &testreport.Error{
+						XMLName: xml.Name{Local: "error"},
+						Value:   "error value",
 					},
 				},
 			}}},
 		},
 		{
-			name: "should append system error to failure",
+			name: "should preserve system error separately from failure",
 			suites: []TestSuite{{TestCases: []TestCase{
 				{
 					Failure: &Failure{
@@ -245,13 +244,14 @@ func Test_convertTestReport(t *testing.T) {
 				{
 					Failure: &testreport.Failure{
 						XMLName: xml.Name{Local: "failure"},
-						Value:   "failure message\n\nSystem error:\nerror value",
+						Value:   "failure message",
 					},
+					SystemErr: "error value",
 				},
 			}}},
 		},
 		{
-			name: "should append system error, error message, error body to failure",
+			name: "should preserve system error separately from failure (duplicate test)",
 			suites: []TestSuite{{TestCases: []TestCase{
 				{
 					Failure: &Failure{
@@ -264,13 +264,14 @@ func Test_convertTestReport(t *testing.T) {
 				{
 					Failure: &testreport.Failure{
 						XMLName: xml.Name{Local: "failure"},
-						Value:   "failure message\n\nSystem error:\nerror value",
+						Value:   "failure message",
 					},
+					SystemErr: "error value",
 				},
 			}}},
 		},
 		{
-			name: "should append system error, error message, error body to failure",
+			name: "should keep all fields separate",
 			suites: []TestSuite{{TestCases: []TestCase{
 				{
 					Failure: &Failure{
@@ -288,8 +289,13 @@ func Test_convertTestReport(t *testing.T) {
 				{
 					Failure: &testreport.Failure{
 						XMLName: xml.Name{Local: "failure"},
-						Value:   "failure message\n\nfailure content\n\nError message:\nmessage\n\nError value:\nvalue\n\nSystem error:\nerror value",
+						Value:   "failure message\n\nfailure content",
 					},
+					Error: &testreport.Error{
+						XMLName: xml.Name{Local: "error"},
+						Value:   "message\n\nvalue",
+					},
+					SystemErr: "error value",
 				},
 			}}},
 		},
@@ -568,7 +574,7 @@ func TestConverter_Convert_Grouped_report(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "Error message in Message attribute of Failure element",
+			name:    "Flaky test with separate error and system error fields",
 			results: []resultReader{&fileReader{Filename: "./testdata/flaky_test.xml"}},
 			want: testreport.TestReport{
 				XMLName: xml.Name{Space: "", Local: ""},
@@ -576,30 +582,46 @@ func TestConverter_Convert_Grouped_report(t *testing.T) {
 					{
 						XMLName: xml.Name{Space: "", Local: "testsuite"},
 						Name:    "My Test Suite",
-						Tests:   7, Failures: 6, Skipped: 1,
+						Tests:   7, Failures: 1, Skipped: 1,
 						Time: 28.844,
 						TestCases: []testreport.TestCase{
 							{XMLName: xml.Name{Space: "", Local: "testcase"}, ConfigurationHash: "", Name: "Testcase number 1", ClassName: "example.exampleTest", Time: 0.764,
-								Failure: nil,
-								Skipped: &testreport.Skipped{XMLName: xml.Name{Space: "", Local: "skipped"}}},
+								Failure:   nil,
+								Error:     nil,
+								Skipped:   &testreport.Skipped{XMLName: xml.Name{Space: "", Local: "skipped"}},
+								SystemOut: "[INFO] 13:12:43:\n[INFO] 13:12:43:\tLog line 1 1\n[INFO] 13:12:43:\tLog line 2 1\n"},
 							{XMLName: xml.Name{Space: "", Local: "testcase"}, ConfigurationHash: "", Name: "Testcase number 2", ClassName: "example.exampleTest", Time: 0.164,
-								Failure: &testreport.Failure{XMLName: xml.Name{Space: "", Local: "failure"}, Value: "System error:\nSome error message 2"},
-								Skipped: nil},
+								Failure:   nil,
+								Error:     nil,
+								Skipped:   nil,
+								SystemErr: "Some error message 2",
+								SystemOut: "[INFO] 13:12:43:\n[INFO] 13:12:43:\tLog line 1 2\n[INFO] 13:12:43:\tLog line 2 2\n"},
 							{XMLName: xml.Name{Space: "", Local: "testcase"}, ConfigurationHash: "", Name: "Testcase number 3", ClassName: "example.exampleTest", Time: 0.445,
-								Failure: &testreport.Failure{XMLName: xml.Name{Space: "", Local: "failure"}, Value: "Failure message\n\nError value:\nError\n\nSystem error:\nSome error message 3"},
-								Skipped: nil},
+								Failure:   &testreport.Failure{XMLName: xml.Name{Space: "", Local: "failure"}, Value: "Failure message"},
+								Error:     &testreport.Error{XMLName: xml.Name{Space: "", Local: "error"}, Value: "Error"},
+								Skipped:   nil,
+								SystemErr: "Some error message 3",
+								SystemOut: "[INFO] 13:12:43:\n[INFO] 13:12:43:\tLog line 1 3\n[INFO] 13:12:43:\tLog line 2 3\n"},
 							{XMLName: xml.Name{Space: "", Local: "testcase"}, ConfigurationHash: "", Name: "Testcase number 3", ClassName: "example.exampleTest", Time: 0,
-								Failure: &testreport.Failure{XMLName: xml.Name{Space: "", Local: "failure"}, Value: "System error:\nFlaky failure system error"},
-								Skipped: nil},
+								Failure:   nil,
+								Error:     nil,
+								Skipped:   nil,
+								SystemErr: "Flaky failure system error"},
 							{XMLName: xml.Name{Space: "", Local: "testcase"}, ConfigurationHash: "", Name: "Testcase number 3", ClassName: "example.exampleTest", Time: 0,
-								Failure: &testreport.Failure{XMLName: xml.Name{Space: "", Local: "failure"}, Value: "System error:\nFlaky error system error"},
-								Skipped: nil},
+								Failure:   nil,
+								Error:     nil,
+								Skipped:   nil,
+								SystemErr: "Flaky error system error"},
 							{XMLName: xml.Name{Space: "", Local: "testcase"}, ConfigurationHash: "", Name: "Testcase number 3", ClassName: "example.exampleTest", Time: 0,
-								Failure: &testreport.Failure{XMLName: xml.Name{Space: "", Local: "failure"}, Value: "System error:\nRerun failure system error"},
-								Skipped: nil},
+								Failure:   nil,
+								Error:     nil,
+								Skipped:   nil,
+								SystemErr: "Rerun failure system error"},
 							{XMLName: xml.Name{Space: "", Local: "testcase"}, ConfigurationHash: "", Name: "Testcase number 3", ClassName: "example.exampleTest", Time: 0,
-								Failure: &testreport.Failure{XMLName: xml.Name{Space: "", Local: "failure"}, Value: "System error:\nRerun error system error"},
-								Skipped: nil},
+								Failure:   nil,
+								Error:     nil,
+								Skipped:   nil,
+								SystemErr: "Rerun error system error"},
 						},
 					},
 				},
