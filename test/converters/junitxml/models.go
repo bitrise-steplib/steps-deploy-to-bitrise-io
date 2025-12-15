@@ -79,18 +79,21 @@ type RerunError struct {
 type Failure struct {
 	XMLName xml.Name `xml:"failure,omitempty"`
 	Message string   `xml:"message,attr,omitempty"`
+	Type    string   `xml:"type,attr,omitempty"`
 	Value   string   `xml:",chardata"`
 }
 
 // Skipped ...
 type Skipped struct {
 	XMLName xml.Name `xml:"skipped,omitempty"`
+	Message string   `xml:"message,attr,omitempty"`
 }
 
 // Error ...
 type Error struct {
 	XMLName xml.Name `xml:"error,omitempty"`
 	Message string   `xml:"message,attr,omitempty"`
+	Type    string   `xml:"type,attr,omitempty"`
 	Value   string   `xml:",chardata"`
 }
 
