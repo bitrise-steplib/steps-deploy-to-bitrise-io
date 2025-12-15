@@ -34,6 +34,8 @@ type TestCase struct {
 	Failure    *Failure    `xml:"failure,omitempty"`
 	Skipped    *Skipped    `xml:"skipped,omitempty"`
 	Properties *Properties `xml:"properties,omitempty"`
+	SystemErr  string      `xml:"system-err,omitempty"`
+	SystemOut  string      `xml:"system-out,omitempty"`
 }
 
 type Failure struct {
