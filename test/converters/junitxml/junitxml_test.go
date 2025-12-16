@@ -35,279 +35,341 @@ func Test_convertTestReport(t *testing.T) {
 		suites []TestSuite
 		want   []testreport.TestSuite
 	}{
+		// Passing test cases - no failure, error, or skipped
 		{
-			name: "regroup error message",
+			name: "Passing test case - no details",
 			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Error: &Error{
-						Message: "error message",
-					},
+					Name:      "passingTest",
+					ClassName: "TestClass",
 				},
 			}}},
-			want: []testreport.TestSuite{{Tests: 1, Failures: 1, Skipped: 0, TestCases: []testreport.TestCase{
+			want: []testreport.TestSuite{{Tests: 1, Failures: 0, Errors: 0, Skipped: 0, TestCases: []testreport.TestCase{
 				{
-					Failure: &testreport.Failure{
-						XMLName: xml.Name{Local: "failure"},
-						Value:   "Error message:\nerror message",
-					},
-				},
-			}}},
-		},
-		{
-			name: "regroup error body",
-			suites: []TestSuite{{TestCases: []TestCase{
-				{
-					Error: &Error{
-						Value: "error message",
-					},
-				},
-			}}},
-			want: []testreport.TestSuite{{Tests: 1, Failures: 1, Skipped: 0, TestCases: []testreport.TestCase{
-				{
-					Failure: &testreport.Failure{
-						XMLName: xml.Name{Local: "failure"},
-						Value:   "Error value:\nerror message",
-					},
-				},
-			}}},
-		},
-		{
-			name: "regroup system err",
-			suites: []TestSuite{{TestCases: []TestCase{
-				{
-					SystemErr: "error message",
-				},
-			}}},
-			want: []testreport.TestSuite{{Tests: 1, Failures: 1, Skipped: 0, TestCases: []testreport.TestCase{
-				{
-					Failure: &testreport.Failure{
-						XMLName: xml.Name{Local: "failure"},
-						Value:   "System error:\nerror message",
-					},
+					Name:      "passingTest",
+					ClassName: "TestClass",
 				},
 			}}},
 		},
 
 		{
-			name: "regroup error message - multiple test cases",
+			name: "Passing test case - system error and output",
 			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Error: &Error{
-						Message: "error message",
-					},
-				},
-				{
-					Error: &Error{
-						Message: "error message2",
-					},
+					Name:      "passingTestWithOutput",
+					ClassName: "TestClass",
+					SystemOut: "Test passed\nExecution time: 100ms",
+					SystemErr: "Info: deprecated method used",
 				},
 			}}},
-			want: []testreport.TestSuite{{Tests: 2, Failures: 2, Skipped: 0, TestCases: []testreport.TestCase{
+			want: []testreport.TestSuite{{Tests: 1, Failures: 0, Errors: 0, Skipped: 0, TestCases: []testreport.TestCase{
 				{
-					Failure: &testreport.Failure{
-						XMLName: xml.Name{Local: "failure"},
-						Value:   "Error message:\nerror message",
-					},
-				},
-				{
-					Failure: &testreport.Failure{
-						XMLName: xml.Name{Local: "failure"},
-						Value:   "Error message:\nerror message2",
-					},
+					Name:      "passingTestWithOutput",
+					ClassName: "TestClass",
+					SystemOut: &testreport.SystemOut{XMLName: xml.Name{Local: "system-out"}, Value: "Test passed\nExecution time: 100ms"},
+					SystemErr: &testreport.SystemErr{XMLName: xml.Name{Local: "system-err"}, Value: "Info: deprecated method used"},
 				},
 			}}},
 		},
+
+		// Failure test cases
 		{
-			name: "regroup error body - multiple test cases",
+			name: "Failure - no details",
 			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Error: &Error{
-						Value: "error message",
-					},
-				},
-				{
-					Error: &Error{
-						Value: "error message2",
-					},
+					Name:    "failureNoDetailsTest",
+					Failure: &Failure{},
 				},
 			}}},
-			want: []testreport.TestSuite{{Tests: 2, Failures: 2, Skipped: 0, TestCases: []testreport.TestCase{
+			want: []testreport.TestSuite{{Tests: 1, Failures: 1, Errors: 0, Skipped: 0, TestCases: []testreport.TestCase{
 				{
-					Failure: &testreport.Failure{
-						XMLName: xml.Name{Local: "failure"},
-						Value:   "Error value:\nerror message",
-					},
-				},
-				{
-					Failure: &testreport.Failure{
-						XMLName: xml.Name{Local: "failure"},
-						Value:   "Error value:\nerror message2",
-					},
+					Name:    "failureNoDetailsTest",
+					Failure: &testreport.Failure{XMLName: xml.Name{Local: "failure"}, Value: ""},
 				},
 			}}},
 		},
+
 		{
-			name: "regroup system err - multiple test cases",
+			name: "Failure - system error and output only",
 			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					SystemErr: "error message",
-				},
-				{
-					SystemErr: "error message2",
+					Name:      "failureSystemOutputTest",
+					Failure:   &Failure{},
+					SystemOut: "Test execution started",
+					SystemErr: "Error: NullPointerException",
 				},
 			}}},
-			want: []testreport.TestSuite{{Tests: 2, Failures: 2, Skipped: 0, TestCases: []testreport.TestCase{
+			want: []testreport.TestSuite{{Tests: 1, Failures: 1, Errors: 0, Skipped: 0, TestCases: []testreport.TestCase{
 				{
-					Failure: &testreport.Failure{
-						XMLName: xml.Name{Local: "failure"},
-						Value:   "System error:\nerror message",
-					},
-				},
-				{
-					Failure: &testreport.Failure{
-						XMLName: xml.Name{Local: "failure"},
-						Value:   "System error:\nerror message2",
-					},
+					Name:      "failureSystemOutputTest",
+					Failure:   &testreport.Failure{XMLName: xml.Name{Local: "failure"}, Value: "System error:\nError: NullPointerException\n\nSystem output:\nTest execution started"},
+					SystemOut: &testreport.SystemOut{XMLName: xml.Name{Local: "system-out"}, Value: "Test execution started"},
+					SystemErr: &testreport.SystemErr{XMLName: xml.Name{Local: "system-err"}, Value: "Error: NullPointerException"},
 				},
 			}}},
 		},
+
 		{
-			name: "should not touch failure",
+			name: "Failure - content only",
 			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &Failure{
-						Value: "error message",
-					},
+					Name:    "simpleFailureTest",
+					Failure: &Failure{Value: "assertion failed"},
 				},
 			}}},
-			want: []testreport.TestSuite{{Tests: 1, Failures: 1, Skipped: 0, TestCases: []testreport.TestCase{
+			want: []testreport.TestSuite{{Tests: 1, Failures: 1, Errors: 0, Skipped: 0, TestCases: []testreport.TestCase{
 				{
-					Failure: &testreport.Failure{
-						XMLName: xml.Name{Local: "failure"},
-						Value:   "error message",
-					},
+					Name:    "simpleFailureTest",
+					Failure: &testreport.Failure{XMLName: xml.Name{Local: "failure"}, Value: "assertion failed"},
 				},
 			}}},
 		},
+
 		{
-			name: "should append error body to failure",
+			name: "Failure - all attributes and system output",
 			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &Failure{
-						Value: "failure message",
-					},
-					Error: &Error{
-						Value: "error value",
-					},
+					Name:      "complexFailureTest",
+					Failure:   &Failure{Type: "AssertionError", Message: "expected true", Value: "Stack trace"},
+					SystemOut: "Test output: started",
+					SystemErr: "Warning: deprecated API",
 				},
 			}}},
-			want: []testreport.TestSuite{{Tests: 1, Failures: 1, Skipped: 0, TestCases: []testreport.TestCase{
+			want: []testreport.TestSuite{{Tests: 1, Failures: 1, Errors: 0, Skipped: 0, TestCases: []testreport.TestCase{
 				{
-					Failure: &testreport.Failure{
-						XMLName: xml.Name{Local: "failure"},
-						Value:   "failure message\n\nError value:\nerror value",
-					},
+					Name:      "complexFailureTest",
+					Failure:   &testreport.Failure{XMLName: xml.Name{Local: "failure"}, Value: "AssertionError: expected true\n\nStack trace\n\nSystem error:\nWarning: deprecated API\n\nSystem output:\nTest output: started"},
+					SystemOut: &testreport.SystemOut{XMLName: xml.Name{Local: "system-out"}, Value: "Test output: started"},
+					SystemErr: &testreport.SystemErr{XMLName: xml.Name{Local: "system-err"}, Value: "Warning: deprecated API"},
 				},
 			}}},
 		},
+
+		// Error test cases
 		{
-			name: "should append error message to failure",
+			name: "Error - no details",
 			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &Failure{
-						Value: "Failure message",
-					},
-					Error: &Error{
-						Message: "error value",
-					},
+					Name:  "errorNoDetailsTest",
+					Error: &Error{},
 				},
 			}}},
-			want: []testreport.TestSuite{{Tests: 1, Failures: 1, Skipped: 0, TestCases: []testreport.TestCase{
+			want: []testreport.TestSuite{{Tests: 1, Failures: 1, Errors: 0, Skipped: 0, TestCases: []testreport.TestCase{
 				{
-					Failure: &testreport.Failure{
-						XMLName: xml.Name{Local: "failure"},
-						Value:   "Failure message\n\nError message:\nerror value",
-					},
+					Name:    "errorNoDetailsTest",
+					Failure: &testreport.Failure{XMLName: xml.Name{Local: "failure"}, Value: ""},
 				},
 			}}},
 		},
+
 		{
-			name: "should append system error to failure",
+			name: "Error - system error and output only",
 			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &Failure{
-						Value: "failure message",
-					},
-					SystemErr: "error value",
+					Name:      "errorSystemOutputTest",
+					Error:     &Error{},
+					SystemOut: "Initialization complete",
+					SystemErr: "Critical error occurred",
 				},
 			}}},
-			want: []testreport.TestSuite{{Tests: 1, Failures: 1, Skipped: 0, TestCases: []testreport.TestCase{
+			want: []testreport.TestSuite{{Tests: 1, Failures: 1, Errors: 0, Skipped: 0, TestCases: []testreport.TestCase{
 				{
-					Failure: &testreport.Failure{
-						XMLName: xml.Name{Local: "failure"},
-						Value:   "failure message\n\nSystem error:\nerror value",
-					},
+					Name:      "errorSystemOutputTest",
+					Failure:   &testreport.Failure{XMLName: xml.Name{Local: "failure"}, Value: "System error:\nCritical error occurred\n\nSystem output:\nInitialization complete"},
+					SystemOut: &testreport.SystemOut{XMLName: xml.Name{Local: "system-out"}, Value: "Initialization complete"},
+					SystemErr: &testreport.SystemErr{XMLName: xml.Name{Local: "system-err"}, Value: "Critical error occurred"},
 				},
 			}}},
 		},
+
 		{
-			name: "should append system error, error message, error body to failure",
+			name: "Error - content only",
 			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &Failure{
-						Value: "failure message",
-					},
-					SystemErr: "error value",
+					Name:  "simpleErrorTest",
+					Error: &Error{Value: "null pointer"},
 				},
 			}}},
-			want: []testreport.TestSuite{{Tests: 1, Failures: 1, Skipped: 0, TestCases: []testreport.TestCase{
+			want: []testreport.TestSuite{{Tests: 1, Failures: 1, Errors: 0, Skipped: 0, TestCases: []testreport.TestCase{
 				{
-					Failure: &testreport.Failure{
-						XMLName: xml.Name{Local: "failure"},
-						Value:   "failure message\n\nSystem error:\nerror value",
-					},
+					Name:    "simpleErrorTest",
+					Failure: &testreport.Failure{XMLName: xml.Name{Local: "failure"}, Value: "null pointer"},
 				},
 			}}},
 		},
+
 		{
-			name: "should append system error, error message, error body to failure",
+			name: "Error - all attributes and system output",
 			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &Failure{
-						Message: "failure message",
-						Value:   "failure content",
-					},
-					SystemErr: "error value",
-					Error: &Error{
-						Message: "message",
-						Value:   "value",
-					},
+					Name:      "complexErrorTest",
+					Failure:   &Failure{Type: "NullPointerException", Message: "object was null", Value: "Full stack trace"},
+					SystemOut: "Test setup complete",
+					SystemErr: "System error: OutOfMemory",
 				},
 			}}},
-			want: []testreport.TestSuite{{Tests: 1, Failures: 1, Skipped: 0, TestCases: []testreport.TestCase{
+			want: []testreport.TestSuite{{Tests: 1, Failures: 1, Errors: 0, Skipped: 0, TestCases: []testreport.TestCase{
 				{
-					Failure: &testreport.Failure{
-						XMLName: xml.Name{Local: "failure"},
-						Value:   "failure message\n\nfailure content\n\nError message:\nmessage\n\nError value:\nvalue\n\nSystem error:\nerror value",
-					},
+					Name:      "complexErrorTest",
+					Failure:   &testreport.Failure{XMLName: xml.Name{Local: "failure"}, Value: "NullPointerException: object was null\n\nFull stack trace\n\nSystem error:\nSystem error: OutOfMemory\n\nSystem output:\nTest setup complete"},
+					SystemOut: &testreport.SystemOut{XMLName: xml.Name{Local: "system-out"}, Value: "Test setup complete"},
+					SystemErr: &testreport.SystemErr{XMLName: xml.Name{Local: "system-err"}, Value: "System error: OutOfMemory"},
 				},
 			}}},
 		},
+
+		// Skipped test cases
 		{
-			name: "Should convert Message attribute of Failure element to the value of a Failure element",
+			name: "Skipped - no details",
 			suites: []TestSuite{{TestCases: []TestCase{
 				{
-					Failure: &Failure{
-						Message: "ErrorMsg",
-					},
+					Name:    "skippedNoDetailsTest",
+					Skipped: &Skipped{},
 				},
 			}}},
-			want: []testreport.TestSuite{{Tests: 1, Failures: 1, Skipped: 0, TestCases: []testreport.TestCase{
+			want: []testreport.TestSuite{{Tests: 1, Failures: 0, Errors: 0, Skipped: 1, TestCases: []testreport.TestCase{
 				{
-					Failure: &testreport.Failure{
-						XMLName: xml.Name{Local: "failure"},
-						Value:   "ErrorMsg",
-					},
+					Name:    "skippedNoDetailsTest",
+					Skipped: &testreport.Skipped{XMLName: xml.Name{Local: "skipped"}, Value: ""},
+				},
+			}}},
+		},
+
+		{
+			name: "Skipped - system error and output only",
+			suites: []TestSuite{{TestCases: []TestCase{
+				{
+					Name:      "skippedSystemOutputTest",
+					Skipped:   &Skipped{},
+					SystemOut: "Skipping test due to unmet prerequisites",
+					SystemErr: "Warning: missing configuration",
+				},
+			}}},
+			want: []testreport.TestSuite{{Tests: 1, Failures: 0, Errors: 0, Skipped: 1, TestCases: []testreport.TestCase{
+				{
+					Name:      "skippedSystemOutputTest",
+					Skipped:   &testreport.Skipped{XMLName: xml.Name{Local: "skipped"}, Value: "System error:\nWarning: missing configuration\n\nSystem output:\nSkipping test due to unmet prerequisites"},
+					SystemOut: &testreport.SystemOut{XMLName: xml.Name{Local: "system-out"}, Value: "Skipping test due to unmet prerequisites"},
+					SystemErr: &testreport.SystemErr{XMLName: xml.Name{Local: "system-err"}, Value: "Warning: missing configuration"},
+				},
+			}}},
+		},
+
+		{
+			name: "Skipped - content only",
+			suites: []TestSuite{{TestCases: []TestCase{
+				{
+					Name:    "simpleSkippedTest",
+					Skipped: &Skipped{Message: "Test not implemented"},
+				},
+			}}},
+			want: []testreport.TestSuite{{Tests: 1, Failures: 0, Errors: 0, Skipped: 1, TestCases: []testreport.TestCase{
+				{
+					Name:    "simpleSkippedTest",
+					Skipped: &testreport.Skipped{XMLName: xml.Name{Local: "skipped"}, Value: "Test not implemented"},
+				},
+			}}},
+		},
+
+		{
+			name: "Skipped - all attributes and system output",
+			suites: []TestSuite{{TestCases: []TestCase{
+				{
+					Name:      "complexSkippedTest",
+					Skipped:   &Skipped{Message: "Environment not ready"},
+					SystemOut: "Setup started but aborted",
+					SystemErr: "Resource pool unavailable",
+				},
+			}}},
+			want: []testreport.TestSuite{{Tests: 1, Failures: 0, Errors: 0, Skipped: 1, TestCases: []testreport.TestCase{
+				{
+					Name:      "complexSkippedTest",
+					Skipped:   &testreport.Skipped{XMLName: xml.Name{Local: "skipped"}, Value: "Environment not ready\n\nSystem error:\nResource pool unavailable\n\nSystem output:\nSetup started but aborted"},
+					SystemOut: &testreport.SystemOut{XMLName: xml.Name{Local: "system-out"}, Value: "Setup started but aborted"},
+					SystemErr: &testreport.SystemErr{XMLName: xml.Name{Local: "system-err"}, Value: "Resource pool unavailable"},
+				},
+			}}},
+		},
+
+		// Multiple test cases in one suite
+		{
+			name: "Multiple test cases with mixed results",
+			suites: []TestSuite{{TestCases: []TestCase{
+				{
+					Name:      "passingTest",
+					ClassName: "TestClass",
+				},
+				{
+					Name:    "failureTest",
+					Failure: &Failure{Value: "expected true"},
+				},
+				{
+					Name:  "errorTest",
+					Error: &Error{Value: "null pointer"},
+				},
+				{
+					Name:    "skippedTest",
+					Skipped: &Skipped{},
+				},
+				{
+					Name:      "anotherPassingTest",
+					ClassName: "TestClass",
+					SystemOut: "All good",
+				},
+				{
+					Name:      "anotherFailureTest",
+					Failure:   &Failure{Type: "AssertionError", Message: "value mismatch", Value: "Stack trace"},
+					SystemErr: "Error details",
+				},
+				{
+					Name:      "anotherErrorTest",
+					Error:     &Error{Type: "IOException", Message: "file not found", Value: "Stack trace"},
+					SystemOut: "Attempted to read file",
+					SystemErr: "File read error",
+				},
+				{
+					Name:      "anotherSkippedTest",
+					Skipped:   &Skipped{Message: "Dependency missing"},
+					SystemOut: "Skipping due to missing dependency",
+				},
+			}}},
+			want: []testreport.TestSuite{{Tests: 8, Failures: 4, Errors: 0, Skipped: 2, TestCases: []testreport.TestCase{
+				{
+					Name:      "passingTest",
+					ClassName: "TestClass",
+				},
+				{
+					Name:    "failureTest",
+					Failure: &testreport.Failure{XMLName: xml.Name{Local: "failure"}, Value: "expected true"},
+				},
+				{
+					Name:    "errorTest",
+					Failure: &testreport.Failure{XMLName: xml.Name{Local: "failure"}, Value: "null pointer"},
+				},
+				{
+					Name:    "skippedTest",
+					Skipped: &testreport.Skipped{XMLName: xml.Name{Local: "skipped"}, Value: ""},
+				},
+				{
+					Name:      "anotherPassingTest",
+					ClassName: "TestClass",
+					SystemOut: &testreport.SystemOut{XMLName: xml.Name{Local: "system-out"}, Value: "All good"},
+				},
+				{
+					Name:      "anotherFailureTest",
+					Failure:   &testreport.Failure{XMLName: xml.Name{Local: "failure"}, Value: "AssertionError: value mismatch\n\nStack trace\n\nSystem error:\nError details"},
+					SystemErr: &testreport.SystemErr{XMLName: xml.Name{Local: "system-err"}, Value: "Error details"},
+				},
+				{
+					Name:      "anotherErrorTest",
+					Failure:   &testreport.Failure{XMLName: xml.Name{Local: "failure"}, Value: "IOException: file not found\n\nStack trace\n\nSystem error:\nFile read error\n\nSystem output:\nAttempted to read file"},
+					SystemOut: &testreport.SystemOut{XMLName: xml.Name{Local: "system-out"}, Value: "Attempted to read file"},
+					SystemErr: &testreport.SystemErr{XMLName: xml.Name{Local: "system-err"}, Value: "File read error"},
+				},
+				{
+					Name:      "anotherSkippedTest",
+					Skipped:   &testreport.Skipped{XMLName: xml.Name{Local: "skipped"}, Value: "Dependency missing\n\nSystem output:\nSkipping due to missing dependency"},
+					SystemOut: &testreport.SystemOut{XMLName: xml.Name{Local: "system-out"}, Value: "Skipping due to missing dependency"},
 				},
 			}}},
 		},
@@ -365,7 +427,7 @@ func TestConverter_Convert(t *testing.T) {
 								Time:      0.17543494701385498,
 								Failure: &testreport.Failure{
 									XMLName: xml.Name{Local: "failure"},
-									Value:   "XCTAssertTrue failed",
+									Value:   "Failure message: XCTAssertTrue failed",
 								},
 							},
 						},
@@ -507,7 +569,7 @@ Testmo test management software - https://www.testmo.com/
 									XMLName: xml.Name{
 										Local: "failure",
 									},
-									Value: "Assertion error message",
+									Value: "Failure type: AssertionError\n\nFailure message: Assertion error message",
 								},
 							},
 						},
@@ -576,18 +638,24 @@ func TestConverter_Convert_Grouped_report(t *testing.T) {
 					{
 						XMLName: xml.Name{Space: "", Local: "testsuite"},
 						Name:    "My Test Suite",
-						Tests:   7, Failures: 6, Skipped: 1,
+						Tests:   7, Failures: 5, Errors: 1, Skipped: 1,
 						Time: 28.844,
 						TestCases: []testreport.TestCase{
 							{XMLName: xml.Name{Space: "", Local: "testcase"}, ConfigurationHash: "", Name: "Testcase number 1", ClassName: "example.exampleTest", Time: 0.764,
-								Failure: nil,
-								Skipped: &testreport.Skipped{XMLName: xml.Name{Space: "", Local: "skipped"}}},
+								Failure:   nil,
+								Skipped:   &testreport.Skipped{XMLName: xml.Name{Space: "", Local: "skipped"}},
+								SystemOut: &testreport.SystemOut{XMLName: xml.Name{Space: "", Local: "system-out"}, Value: "[INFO] 13:12:43:\n[INFO] 13:12:43:\tLog line 1 1\n[INFO] 13:12:43:\tLog line 2 1\n"}},
 							{XMLName: xml.Name{Space: "", Local: "testcase"}, ConfigurationHash: "", Name: "Testcase number 2", ClassName: "example.exampleTest", Time: 0.164,
-								Failure: &testreport.Failure{XMLName: xml.Name{Space: "", Local: "failure"}, Value: "System error:\nSome error message 2"},
-								Skipped: nil},
+								Failure:   nil,
+								Skipped:   nil,
+								SystemOut: &testreport.SystemOut{XMLName: xml.Name{Space: "", Local: "system-out"}, Value: "[INFO] 13:12:43:\n[INFO] 13:12:43:\tLog line 1 2\n[INFO] 13:12:43:\tLog line 2 2\n"},
+								SystemErr: &testreport.SystemErr{XMLName: xml.Name{Space: "", Local: "system-err"}, Value: "Some error message 2"}},
 							{XMLName: xml.Name{Space: "", Local: "testcase"}, ConfigurationHash: "", Name: "Testcase number 3", ClassName: "example.exampleTest", Time: 0.445,
-								Failure: &testreport.Failure{XMLName: xml.Name{Space: "", Local: "failure"}, Value: "Failure message\n\nError value:\nError\n\nSystem error:\nSome error message 3"},
-								Skipped: nil},
+								Failure:   &testreport.Failure{XMLName: xml.Name{Space: "", Local: "failure"}, Value: "Failure message"},
+								Error:     &testreport.Error{XMLName: xml.Name{Space: "", Local: "error"}, Value: "Error"},
+								Skipped:   nil,
+								SystemOut: &testreport.SystemOut{XMLName: xml.Name{Space: "", Local: "system-out"}, Value: "[INFO] 13:12:43:\n[INFO] 13:12:43:\tLog line 1 3\n[INFO] 13:12:43:\tLog line 2 3\n"},
+								SystemErr: &testreport.SystemErr{XMLName: xml.Name{Space: "", Local: "system-err"}, Value: "Some error message 3"}},
 							{XMLName: xml.Name{Space: "", Local: "testcase"}, ConfigurationHash: "", Name: "Testcase number 3", ClassName: "example.exampleTest", Time: 0,
 								Failure: &testreport.Failure{XMLName: xml.Name{Space: "", Local: "failure"}, Value: "System error:\nFlaky failure system error"},
 								Skipped: nil},

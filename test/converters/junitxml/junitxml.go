@@ -83,6 +83,7 @@ func convertTestSuite(testSuite TestSuite) testreport.TestSuite {
 
 	tests := 0
 	failures := 0
+	errors := 0
 	skipped := 0
 
 	flattenedTestCases := flattenGroupedTestCases(testSuite.TestCases)
@@ -101,12 +102,12 @@ func convertTestSuite(testSuite TestSuite) testreport.TestSuite {
 
 	for _, childSuite := range testSuite.TestSuites {
 		convertedChildSuite := convertTestSuite(childSuite)
-		
 		convertedTestSuite.TestSuites = append(convertedTestSuite.TestSuites, convertedChildSuite)
 	}
 
 	convertedTestSuite.Tests = tests
 	convertedTestSuite.Failures = failures
+	convertedTestSuite.Errors = errors
 	convertedTestSuite.Skipped = skipped
 
 	return convertedTestSuite
@@ -187,16 +188,20 @@ func convertTestCase(testCase TestCase) testreport.TestCase {
 		Name:              testCase.Name,
 		ClassName:         testCase.ClassName,
 		Time:              testCase.Time,
+		Failure:           convertFailure(testCase.Failure),
+		Error:             convertError(testCase.Error),
+		Skipped:           convertSkipped(testCase.Skipped),
+		SystemOut:         convertSystemOut(testCase.SystemOut),
+		SystemErr:         convertSystemErr(testCase.SystemErr),
 		Properties:        convertProperties(testCase.Properties),
 	}
 
-	if testCase.Skipped != nil {
-		convertedTestCase.Skipped = &testreport.Skipped{
-			XMLName: testCase.Skipped.XMLName,
-		}
+	if convertedTestCase.Error != nil {
+		convertedTestCase.Failure = convertErrorToFailure(convertedTestCase.Error)
+		convertedTestCase.Error = nil
 	}
 
-	convertedTestCase.Failure = convertErrorsToFailure(testCase.Failure, testCase.Error, testCase.SystemErr)
+	enrichWithSystemOutputs(&convertedTestCase, testCase.SystemOut, testCase.SystemErr)
 
 	return convertedTestCase
 }
@@ -218,38 +223,146 @@ func convertProperties(properties *Properties) *testreport.Properties {
 	return convertedProperties
 }
 
-func convertErrorsToFailure(failure *Failure, error *Error, systemErr string) *testreport.Failure {
-	var messages []string
-
-	if failure != nil {
-		if len(strings.TrimSpace(failure.Message)) > 0 {
-			messages = append(messages, failure.Message)
-		}
-
-		if len(strings.TrimSpace(failure.Value)) > 0 {
-			messages = append(messages, failure.Value)
-		}
+func convertSystemOut(systemOut string) *testreport.SystemOut {
+	if systemOut == "" {
+		return nil
 	}
 
-	if error != nil {
-		if len(strings.TrimSpace(error.Message)) > 0 {
-			messages = append(messages, "Error message:\n"+error.Message)
-		}
+	return &testreport.SystemOut{
+		XMLName: xml.Name{Local: "system-out"},
+		Value:   systemOut,
+	}
+}
 
-		if len(strings.TrimSpace(error.Value)) > 0 {
-			messages = append(messages, "Error value:\n"+error.Value)
-		}
+func convertSystemErr(systemErr string) *testreport.SystemErr {
+	if systemErr == "" {
+		return nil
 	}
 
-	if len(systemErr) > 0 {
-		messages = append(messages, "System error:\n"+systemErr)
+	return &testreport.SystemErr{
+		XMLName: xml.Name{Local: "system-err"},
+		Value:   systemErr,
+	}
+}
+
+func convertSkipped(skipped *Skipped) *testreport.Skipped {
+	if skipped == nil {
+		return nil
 	}
 
-	if len(messages) > 0 {
-		return &testreport.Failure{
-			XMLName: xml.Name{Local: "failure"},
-			Value:   strings.Join(messages, "\n\n"),
+	var parts []string
+
+	if len(strings.TrimSpace(skipped.Message)) > 0 {
+		parts = append(parts, strings.TrimSpace(skipped.Message))
+	}
+
+	return &testreport.Skipped{
+		XMLName: xml.Name{Local: "skipped"},
+		Value:   strings.Join(parts, "\n\n"),
+	}
+}
+
+func convertFailure(failure *Failure) *testreport.Failure {
+	if failure == nil {
+		return nil
+	}
+
+	var parts []string
+
+	var attributes []string
+	if len(strings.TrimSpace(failure.Type)) > 0 {
+		attributes = append(attributes, failure.Type)
+	}
+	if len(strings.TrimSpace(failure.Message)) > 0 {
+		attributes = append(attributes, failure.Message)
+	}
+	if len(attributes) > 0 {
+		parts = append(parts, strings.Join(attributes, ": "))
+	}
+
+	if len(strings.TrimSpace(failure.Value)) > 0 {
+		parts = append(parts, failure.Value)
+	}
+
+	return &testreport.Failure{
+		XMLName: xml.Name{Local: "failure"},
+		Value:   strings.Join(parts, "\n\n"),
+	}
+}
+
+func convertError(error *Error) *testreport.Error {
+	if error == nil {
+		return nil
+	}
+
+	var parts []string
+
+	var attributes []string
+	if len(strings.TrimSpace(error.Type)) > 0 {
+		attributes = append(attributes, error.Type)
+	}
+	if len(strings.TrimSpace(error.Message)) > 0 {
+		attributes = append(attributes, error.Message)
+	}
+	if len(attributes) > 0 {
+		parts = append(parts, strings.Join(attributes, ": "))
+	}
+
+	if len(strings.TrimSpace(error.Value)) > 0 {
+		parts = append(parts, error.Value)
+	}
+
+	return &testreport.Error{
+		XMLName: xml.Name{Local: "error"},
+		Value:   strings.Join(parts, "\n\n"),
+	}
+}
+
+func convertErrorToFailure(error *testreport.Error) *testreport.Failure {
+	if error == nil {
+		return nil
+	}
+
+	return &testreport.Failure{
+		XMLName: xml.Name{Local: "failure"},
+		Value:   error.Value,
+	}
+}
+
+func enrichWithSystemOutputs(testCase *testreport.TestCase, systemOut, systemErr string) {
+	var testOutputs []string = []string{}
+
+	if len(strings.TrimSpace(systemErr)) > 0 {
+		testOutputs = append(testOutputs, "System error:\n"+systemErr)
+	}
+
+	if len(strings.TrimSpace(systemOut)) > 0 {
+		testOutputs = append(testOutputs, "System output:\n"+systemOut)
+	}
+
+	if (len(testOutputs)) == 0 {
+		return
+	}
+
+	combinedOutput := strings.Join(testOutputs, "\n\n")
+
+	if testCase.Error != nil {
+		if len(strings.TrimSpace(testCase.Error.Value)) > 0 {
+			testCase.Error.Value = testCase.Error.Value + "\n\n" + combinedOutput
+		} else {
+			testCase.Error.Value = combinedOutput
+		}
+	} else if testCase.Failure != nil {
+		if len(strings.TrimSpace(testCase.Failure.Value)) > 0 {
+			testCase.Failure.Value = testCase.Failure.Value + "\n\n" + combinedOutput
+		} else {
+			testCase.Failure.Value = combinedOutput
+		}
+	} else if testCase.Skipped != nil {
+		if len(strings.TrimSpace(testCase.Skipped.Value)) > 0 {
+			testCase.Skipped.Value = testCase.Skipped.Value + "\n\n" + combinedOutput
+		} else {
+			testCase.Skipped.Value = combinedOutput
 		}
 	}
-	return nil
 }
