@@ -26,6 +26,7 @@ func TestXCresult3Converters(t *testing.T) {
 				Name:     "rtgtrghtrgTests",
 				Tests:    2,
 				Failures: 0,
+				Errors:   0,
 				Time:     0.26063,
 				TestCases: []testreport.TestCase{
 					{ // plain test case
@@ -44,6 +45,7 @@ func TestXCresult3Converters(t *testing.T) {
 				Name:     "rtgtrghtrgUITests",
 				Tests:    15,
 				Failures: 3,
+				Errors:   0,
 				Time:     0.759,
 				TestCases: []testreport.TestCase{
 					// class rtgtrghtrg3UITests: XCTestCase inside rtgtrghtrgUITests class

@@ -330,7 +330,7 @@ func convertErrorToFailure(error *testreport.Error) *testreport.Failure {
 }
 
 func enrichWithSystemOutputs(testCase *testreport.TestCase, systemOut, systemErr string) {
-	var testOutputs []string = []string{}
+	testOutputs := []string{}
 
 	if len(strings.TrimSpace(systemErr)) > 0 {
 		testOutputs = append(testOutputs, "System error:\n"+systemErr)
