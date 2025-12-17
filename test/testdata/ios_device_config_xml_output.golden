@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
  <testsuite name="DarkAndLightModeTests" tests="3" failures="1" errors="0" skipped="0" time="0.3711">
-  <testcase configuration-hash="" name="testExample()" classname="DarkAndLightModeTests" time="0.11">
+  <testcase name="testExample()" classname="DarkAndLightModeTests" time="0.11">
    <failure>DarkAndLightModeTests.swift:25: failed - Reached 1</failure>
   </testcase>
-  <testcase configuration-hash="" name="testExample()" classname="DarkAndLightModeTests" time="0.0011"></testcase>
-  <testcase configuration-hash="" name="testPerformanceExample()" classname="DarkAndLightModeTests" time="0.26"></testcase>
+  <testcase name="testExample()" classname="DarkAndLightModeTests" time="0.0011"></testcase>
+  <testcase name="testPerformanceExample()" classname="DarkAndLightModeTests" time="0.26"></testcase>
  </testsuite>
  <testsuite name="DarkAndLightModeUITests" tests="3" failures="1" errors="0" skipped="0" time="36">
-  <testcase configuration-hash="" name="testExample()" classname="DarkAndLightModeUITests" time="3"></testcase>
-  <testcase configuration-hash="" name="testLaunchPerformance()" classname="DarkAndLightModeUITests" time="28"></testcase>
-  <testcase configuration-hash="" name="testLaunch()" classname="DarkAndLightModeUITestsLaunchTests" time="5">
+  <testcase name="testExample()" classname="DarkAndLightModeUITests" time="3"></testcase>
+  <testcase name="testLaunchPerformance()" classname="DarkAndLightModeUITests" time="28"></testcase>
+  <testcase name="testLaunch()" classname="DarkAndLightModeUITestsLaunchTests" time="5">
    <failure></failure>
    <properties>
     <property name="attachment_0" value="Launch Screen_1_FD1B9BC4-364B-4191-88F9-48DD5B4B251F_1702394166035000085.png"></property>

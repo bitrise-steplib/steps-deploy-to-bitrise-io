@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testreport"
-	"github.com/pkg/errors"
+	errorPkg "github.com/pkg/errors"
 )
 
 func (c *Converter) Setup(_ bool) {}
@@ -54,13 +54,9 @@ func parseTestReport(result resultReader) (TestReport, error) {
 		return TestReport{TestSuites: []TestSuite{testSuite}}, nil
 	}
 
-	return TestReport{}, errors.Wrap(errors.Wrap(testSuiteErr, string(data)), testReportErr.Error())
+	return TestReport{}, errorPkg.Wrap(errorPkg.Wrap(testSuiteErr, string(data)), testReportErr.Error())
 }
 
-// merges Suites->Cases->Error and Suites->Cases->SystemErr field values into Suites->Cases->Failure field
-// with 2 newlines and error category prefix
-// the two newlines applied only if there is a failure message already
-// this is required because our testing service currently handles failure field properly
 func convertTestReport(report TestReport) testreport.TestReport {
 	convertedReport := testreport.TestReport{
 		XMLName: report.XMLName,
@@ -76,9 +72,12 @@ func convertTestReport(report TestReport) testreport.TestReport {
 
 func convertTestSuite(testSuite TestSuite) testreport.TestSuite {
 	convertedTestSuite := testreport.TestSuite{
-		XMLName: testSuite.XMLName,
-		Name:    testSuite.Name,
-		Time:    testSuite.Time,
+		XMLName:    testSuite.XMLName,
+		Name:       testSuite.Name,
+		Time:       testSuite.Time,
+		Assertions: testSuite.Assertions,
+		Timestamp:  testSuite.Timestamp,
+		File:       testSuite.File,
 	}
 
 	tests := 0
@@ -93,6 +92,9 @@ func convertTestSuite(testSuite TestSuite) testreport.TestSuite {
 
 		if convertedTestCase.Failure != nil {
 			failures++
+		}
+		if convertedTestCase.Error != nil {
+			errors++
 		}
 		if convertedTestCase.Skipped != nil {
 			skipped++
@@ -131,54 +133,54 @@ func flattenGroupedTestCases(testCases []TestCase) []TestCase {
 		}
 
 		for _, flakyFailure := range testCase.FlakyFailures {
-			flattenedTestCase.Failure = convertToFailure(flakyFailure.Type, flakyFailure.Message, flakyFailure.SystemErr)
+			flattenedTestCase.Failure = &Failure{
+				Type:    flakyFailure.Type,
+				Message: flakyFailure.Message,
+				Value:   flakyFailure.Value,
+			}
+			flattenedTestCase.SystemErr = flakyFailure.SystemErr
+			flattenedTestCase.SystemOut = flakyFailure.SystemOut
 			flattenedTestCases = append(flattenedTestCases, flattenedTestCase)
 		}
 
+		flattenedTestCase.Failure = nil
 		for _, flakyError := range testCase.FlakyErrors {
-			flattenedTestCase.Failure = convertToFailure(flakyError.Type, flakyError.Message, flakyError.SystemErr)
+			flattenedTestCase.Error = &Error{
+				Type:    flakyError.Type,
+				Message: flakyError.Message,
+				Value:   flakyError.Value,
+			}
+			flattenedTestCase.SystemErr = flakyError.SystemErr
+			flattenedTestCase.SystemOut = flakyError.SystemOut
 			flattenedTestCases = append(flattenedTestCases, flattenedTestCase)
 		}
 
+		flattenedTestCase.Error = nil
 		for _, rerunfailure := range testCase.RerunFailures {
-			flattenedTestCase.Failure = convertToFailure(rerunfailure.Type, rerunfailure.Message, rerunfailure.SystemErr)
+			flattenedTestCase.Failure = &Failure{
+				Type:    rerunfailure.Type,
+				Message: rerunfailure.Message,
+				Value:   rerunfailure.Value,
+			}
+			flattenedTestCase.SystemErr = rerunfailure.SystemErr
+			flattenedTestCase.SystemOut = rerunfailure.SystemOut
 			flattenedTestCases = append(flattenedTestCases, flattenedTestCase)
 		}
 
+		flattenedTestCase.Failure = nil
 		for _, rerunError := range testCase.RerunErrors {
-			flattenedTestCase.Failure = convertToFailure(rerunError.Type, rerunError.Message, rerunError.SystemErr)
+			flattenedTestCase.Error = &Error{
+				Type:    rerunError.Type,
+				Message: rerunError.Message,
+				Value:   rerunError.Value,
+			}
+			flattenedTestCase.SystemErr = rerunError.SystemErr
+			flattenedTestCase.SystemOut = rerunError.SystemOut
 			flattenedTestCases = append(flattenedTestCases, flattenedTestCase)
 		}
 
 	}
 	return flattenedTestCases
-}
-
-func convertToFailure(itemType, failureMessage, systemErr string) *Failure {
-	var message string
-	if len(strings.TrimSpace(itemType)) > 0 {
-		message = itemType
-	}
-	if len(strings.TrimSpace(failureMessage)) > 0 {
-		if len(message) > 0 {
-			message += ": "
-		}
-		message += failureMessage
-	}
-
-	if len(strings.TrimSpace(systemErr)) > 0 {
-		if len(message) > 0 {
-			message += "\n\n"
-		}
-		message += "System error:\n" + systemErr
-	}
-
-	if len(message) > 0 {
-		return &Failure{
-			Value: message,
-		}
-	}
-	return nil
 }
 
 func convertTestCase(testCase TestCase) testreport.TestCase {
@@ -188,20 +190,16 @@ func convertTestCase(testCase TestCase) testreport.TestCase {
 		Name:              testCase.Name,
 		ClassName:         testCase.ClassName,
 		Time:              testCase.Time,
+		Assertions:        testCase.Assertions,
+		File:              testCase.File,
+		Line:              testCase.Line,
 		Failure:           convertFailure(testCase.Failure),
 		Error:             convertError(testCase.Error),
 		Skipped:           convertSkipped(testCase.Skipped),
+		Properties:        convertProperties(testCase.Properties),
 		SystemOut:         convertSystemOut(testCase.SystemOut),
 		SystemErr:         convertSystemErr(testCase.SystemErr),
-		Properties:        convertProperties(testCase.Properties),
 	}
-
-	if convertedTestCase.Error != nil {
-		convertedTestCase.Failure = convertErrorToFailure(convertedTestCase.Error)
-		convertedTestCase.Error = nil
-	}
-
-	enrichWithSystemOutputs(&convertedTestCase, testCase.SystemOut, testCase.SystemErr)
 
 	return convertedTestCase
 }
@@ -224,24 +222,24 @@ func convertProperties(properties *Properties) *testreport.Properties {
 }
 
 func convertSystemOut(systemOut string) *testreport.SystemOut {
-	if systemOut == "" {
+	if len(strings.TrimSpace(systemOut)) == 0 {
 		return nil
 	}
 
 	return &testreport.SystemOut{
 		XMLName: xml.Name{Local: "system-out"},
-		Value:   systemOut,
+		Value:   strings.TrimSpace(systemOut),
 	}
 }
 
 func convertSystemErr(systemErr string) *testreport.SystemErr {
-	if systemErr == "" {
+	if len(strings.TrimSpace(systemErr)) == 0 {
 		return nil
 	}
 
 	return &testreport.SystemErr{
 		XMLName: xml.Name{Local: "system-err"},
-		Value:   systemErr,
+		Value:   strings.TrimSpace(systemErr),
 	}
 }
 
@@ -250,15 +248,10 @@ func convertSkipped(skipped *Skipped) *testreport.Skipped {
 		return nil
 	}
 
-	var parts []string
-
-	if len(strings.TrimSpace(skipped.Message)) > 0 {
-		parts = append(parts, strings.TrimSpace(skipped.Message))
-	}
-
 	return &testreport.Skipped{
 		XMLName: xml.Name{Local: "skipped"},
-		Value:   strings.Join(parts, "\n\n"),
+		Message: skipped.Message,
+		Value:   strings.TrimSpace(skipped.Value),
 	}
 }
 
@@ -267,26 +260,11 @@ func convertFailure(failure *Failure) *testreport.Failure {
 		return nil
 	}
 
-	var parts []string
-
-	var attributes []string
-	if len(strings.TrimSpace(failure.Type)) > 0 {
-		attributes = append(attributes, failure.Type)
-	}
-	if len(strings.TrimSpace(failure.Message)) > 0 {
-		attributes = append(attributes, failure.Message)
-	}
-	if len(attributes) > 0 {
-		parts = append(parts, strings.Join(attributes, ": "))
-	}
-
-	if len(strings.TrimSpace(failure.Value)) > 0 {
-		parts = append(parts, failure.Value)
-	}
-
 	return &testreport.Failure{
 		XMLName: xml.Name{Local: "failure"},
-		Value:   strings.Join(parts, "\n\n"),
+		Type:    failure.Type,
+		Message: failure.Message,
+		Value:   strings.TrimSpace(failure.Value),
 	}
 }
 
@@ -295,74 +273,10 @@ func convertError(error *Error) *testreport.Error {
 		return nil
 	}
 
-	var parts []string
-
-	var attributes []string
-	if len(strings.TrimSpace(error.Type)) > 0 {
-		attributes = append(attributes, error.Type)
-	}
-	if len(strings.TrimSpace(error.Message)) > 0 {
-		attributes = append(attributes, error.Message)
-	}
-	if len(attributes) > 0 {
-		parts = append(parts, strings.Join(attributes, ": "))
-	}
-
-	if len(strings.TrimSpace(error.Value)) > 0 {
-		parts = append(parts, error.Value)
-	}
-
 	return &testreport.Error{
 		XMLName: xml.Name{Local: "error"},
-		Value:   strings.Join(parts, "\n\n"),
-	}
-}
-
-func convertErrorToFailure(error *testreport.Error) *testreport.Failure {
-	if error == nil {
-		return nil
-	}
-
-	return &testreport.Failure{
-		XMLName: xml.Name{Local: "failure"},
-		Value:   error.Value,
-	}
-}
-
-func enrichWithSystemOutputs(testCase *testreport.TestCase, systemOut, systemErr string) {
-	testOutputs := []string{}
-
-	if len(strings.TrimSpace(systemErr)) > 0 {
-		testOutputs = append(testOutputs, "System error:\n"+systemErr)
-	}
-
-	if len(strings.TrimSpace(systemOut)) > 0 {
-		testOutputs = append(testOutputs, "System output:\n"+systemOut)
-	}
-
-	if (len(testOutputs)) == 0 {
-		return
-	}
-
-	combinedOutput := strings.Join(testOutputs, "\n\n")
-
-	if testCase.Error != nil {
-		if len(strings.TrimSpace(testCase.Error.Value)) > 0 {
-			testCase.Error.Value = testCase.Error.Value + "\n\n" + combinedOutput
-		} else {
-			testCase.Error.Value = combinedOutput
-		}
-	} else if testCase.Failure != nil {
-		if len(strings.TrimSpace(testCase.Failure.Value)) > 0 {
-			testCase.Failure.Value = testCase.Failure.Value + "\n\n" + combinedOutput
-		} else {
-			testCase.Failure.Value = combinedOutput
-		}
-	} else if testCase.Skipped != nil {
-		if len(strings.TrimSpace(testCase.Skipped.Value)) > 0 {
-			testCase.Skipped.Value = testCase.Skipped.Value + "\n\n" + combinedOutput
-		} else {
-			testCase.Skipped.Value = combinedOutput
-		}
+		Type:    error.Type,
+		Message: error.Message,
+		Value:   strings.TrimSpace(error.Value),
 	}
 }
