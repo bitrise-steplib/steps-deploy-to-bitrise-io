@@ -16,24 +16,30 @@ type TestSuite struct {
 	Name       string      `xml:"name,attr"`
 	Tests      int         `xml:"tests,attr"`
 	Failures   int         `xml:"failures,attr"`
-	Skipped    int         `xml:"skipped,attr"`
 	Errors     int         `xml:"errors,attr"`
+	Skipped    int         `xml:"skipped,attr"`
+	Assertions int         `xml:"assertions,attr,omitempty"`
 	Time       float64     `xml:"time,attr"`
-	TestCases  []TestCase  `xml:"testcase"`
-	TestSuites []TestSuite `xml:"testsuite"`
+	Timestamp  string      `xml:"timestamp,attr,omitempty"`
+	File       string      `xml:"file,attr,omitempty"`
+	TestCases  []TestCase  `xml:"testcase,omitempty"`
+	TestSuites []TestSuite `xml:"testsuite,omitempty"`
 }
 
 // TestCase ...
 type TestCase struct {
 	XMLName           xml.Name    `xml:"testcase"`
-	ConfigurationHash string      `xml:"configuration-hash,attr"`
+	ConfigurationHash string      `xml:"configuration-hash,attr,omitempty"`
 	Name              string      `xml:"name,attr"`
 	ClassName         string      `xml:"classname,attr"`
+	Assertions        int         `xml:"assertions,attr,omitempty"`
 	Time              float64     `xml:"time,attr"`
+	File              string      `xml:"file,attr,omitempty"`
+	Line              int         `xml:"line,attr,omitempty"`
 	Failure           *Failure    `xml:"failure,omitempty"`
-	Properties        *Properties `xml:"properties,omitempty"`
-	Skipped           *Skipped    `xml:"skipped,omitempty"`
 	Error             *Error      `xml:"error,omitempty"`
+	Skipped           *Skipped    `xml:"skipped,omitempty"`
+	Properties        *Properties `xml:"properties,omitempty"`
 	SystemErr         string      `xml:"system-err,omitempty"`
 	SystemOut         string      `xml:"system-out,omitempty"`
 
@@ -45,32 +51,36 @@ type TestCase struct {
 
 type FlakyFailure struct {
 	XMLName   xml.Name `xml:"flakyFailure"`
-	Message   string   `xml:"message,attr"`
-	Type      string   `xml:"type,attr"`
+	Type      string   `xml:"type,attr,omitempty"`
+	Message   string   `xml:"message,attr,omitempty"`
+	Value     string   `xml:",chardata"`
 	SystemErr string   `xml:"system-err,omitempty"`
 	SystemOut string   `xml:"system-out,omitempty"`
 }
 
 type FlakyError struct {
 	XMLName   xml.Name `xml:"flakyError"`
-	Message   string   `xml:"message,attr"`
-	Type      string   `xml:"type,attr"`
+	Type      string   `xml:"type,attr,omitempty"`
+	Message   string   `xml:"message,attr,omitempty"`
+	Value     string   `xml:",chardata"`
 	SystemErr string   `xml:"system-err,omitempty"`
 	SystemOut string   `xml:"system-out,omitempty"`
 }
 
 type RerunFailure struct {
 	XMLName   xml.Name `xml:"rerunFailure"`
-	Message   string   `xml:"message,attr"`
-	Type      string   `xml:"type,attr"`
+	Type      string   `xml:"type,attr,omitempty"`
+	Message   string   `xml:"message,attr,omitempty"`
+	Value     string   `xml:",chardata"`
 	SystemErr string   `xml:"system-err,omitempty"`
 	SystemOut string   `xml:"system-out,omitempty"`
 }
 
 type RerunError struct {
 	XMLName   xml.Name `xml:"rerunError"`
-	Message   string   `xml:"message,attr"`
-	Type      string   `xml:"type,attr"`
+	Type      string   `xml:"type,attr,omitempty"`
+	Message   string   `xml:"message,attr,omitempty"`
+	Value     string   `xml:",chardata"`
 	SystemErr string   `xml:"system-err,omitempty"`
 	SystemOut string   `xml:"system-out,omitempty"`
 }
@@ -78,6 +88,15 @@ type RerunError struct {
 // Failure ...
 type Failure struct {
 	XMLName xml.Name `xml:"failure,omitempty"`
+	Type    string   `xml:"type,attr,omitempty"`
+	Message string   `xml:"message,attr,omitempty"`
+	Value   string   `xml:",chardata"`
+}
+
+// Error ...
+type Error struct {
+	XMLName xml.Name `xml:"error,omitempty"`
+	Type    string   `xml:"type,attr,omitempty"`
 	Message string   `xml:"message,attr,omitempty"`
 	Value   string   `xml:",chardata"`
 }
@@ -85,11 +104,6 @@ type Failure struct {
 // Skipped ...
 type Skipped struct {
 	XMLName xml.Name `xml:"skipped,omitempty"`
-}
-
-// Error ...
-type Error struct {
-	XMLName xml.Name `xml:"error,omitempty"`
 	Message string   `xml:"message,attr,omitempty"`
 	Value   string   `xml:",chardata"`
 }
