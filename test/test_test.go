@@ -326,53 +326,25 @@ func Test_ParseXctest3Results(t *testing.T) {
 }
 
 func Test_findSupportedAttachments(t *testing.T) {
-	t.Run("without video upload enabled", func(t *testing.T) {
-		os.Unsetenv("ENABLE_TEST_VIDEO_UPLOAD")
+	tempDir, err := pathutil.NormalizedOSTempDirPath("test_attachments")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
 
-		tempDir, err := pathutil.NormalizedOSTempDirPath("test_attachments")
-		require.NoError(t, err)
-		defer os.RemoveAll(tempDir)
+	files := []string{
+		"screenshot.JPG",
+		"screenshot2.png",
+		"log.txt",
+		"video.mp4",
+		"recording.webm",
+		"subfolder/nested.jpg",
+		"subfolder/clip.ogg",
+		"subfolder/deep/image.png",
+		"subfolder/deep/movie.mp4",
+	}
+	err = createDummyFilesInDirWithContent(tempDir, "test", files)
+	require.NoError(t, err)
 
-		files := []string{
-			"screenshot1.JPG",
-			"screenshot2.png",
-			"log.txt",
-			"video.mp4",
-			"recording.webm",
-			"subfolder/nested.jpg",
-			"subfolder/nested.mp4",
-			"subfolder/deep/image.png",
-		}
-		err = createDummyFilesInDirWithContent(tempDir, "test", files)
-		require.NoError(t, err)
+	result := findSupportedAttachments(tempDir, logV2.NewLogger())
 
-		result := findSupportedAttachments(tempDir, logV2.NewLogger())
-
-		assert.Len(t, result, 5) // jpg, png, txt, nested jpg, nested png (no videos)
-	})
-
-	t.Run("with video upload enabled", func(t *testing.T) {
-		os.Setenv("ENABLE_TEST_VIDEO_UPLOAD", "true")
-		defer os.Unsetenv("ENABLE_TEST_VIDEO_UPLOAD")
-
-		tempDir, err := pathutil.NormalizedOSTempDirPath("test_attachments")
-		require.NoError(t, err)
-		defer os.RemoveAll(tempDir)
-
-		files := []string{
-			"screenshot.JPG",
-			"video.mp4",
-			"recording.webm",
-			"subfolder/nested.png",
-			"subfolder/clip.ogg",
-			"subfolder/deep/image.jpg",
-			"subfolder/deep/movie.mp4",
-		}
-		err = createDummyFilesInDirWithContent(tempDir, "test", files)
-		require.NoError(t, err)
-
-		result := findSupportedAttachments(tempDir, logV2.NewLogger())
-
-		assert.Len(t, result, 7) // all files including videos
-	})
+	assert.Len(t, result, 9) // all supported files including videos
 }
