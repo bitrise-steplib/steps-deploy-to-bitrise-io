@@ -13,13 +13,13 @@
   <testcase name="testLaunch()" classname="DarkAndLightModeUITestsLaunchTests" time="5">
    <failure></failure>
    <properties>
-    <property name="attachment_0" value="Screen Recording 2023-12-12 at 04.16.02 PM_1702394162331000089.mp4"></property>
+    <property name="attachment_0" value="Screen Recording 2023-12-12 at 03.16.02 PM_1702394162331000089.mp4"></property>
     <property name="attachment_1" value="Launch Screen_1_FD1B9BC4-364B-4191-88F9-48DD5B4B251F_1702394166035000085.png"></property>
-    <property name="attachment_2" value="Screen Recording 2023-12-12 at 04.16.18 PM_1702394178290999889.mp4"></property>
+    <property name="attachment_2" value="Screen Recording 2023-12-12 at 03.16.18 PM_1702394178290999889.mp4"></property>
     <property name="attachment_3" value="Launch Screen_1_1FDDCFCB-A490-4773-ABC1-96BC97459F6A_1702394182316999912.png"></property>
-    <property name="attachment_4" value="Screen Recording 2023-12-12 at 04.16.33 PM_1702394193904999971.mp4"></property>
+    <property name="attachment_4" value="Screen Recording 2023-12-12 at 03.16.33 PM_1702394193904999971.mp4"></property>
     <property name="attachment_5" value="Launch Screen_1_CEFDE93C-2C43-4D5B-80B5-0B27AD09CCC5_1702394197773999929.png"></property>
-    <property name="attachment_6" value="Screen Recording 2023-12-12 at 04.16.47 PM_1702394207775000095.mp4"></property>
+    <property name="attachment_6" value="Screen Recording 2023-12-12 at 03.16.47 PM_1702394207775000095.mp4"></property>
     <property name="attachment_7" value="Launch Screen_1_6CD9C2FF-7FFC-4C37-B82A-D208F800193B_1702394211733000040.png"></property>
    </properties>
   </testcase>
