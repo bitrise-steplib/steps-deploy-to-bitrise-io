@@ -39,7 +39,7 @@ func TestConversion(t *testing.T) {
 												Type:     TestNodeTypeTestCase,
 												Name:     "TC2",
 												Result:   TestResultFailed,
-												Duration: "1s",
+												Duration: "1m 11s",
 											},
 										},
 									},
@@ -108,7 +108,7 @@ func TestConversion(t *testing.T) {
 												TestCase: TestCase{
 													Name:      "TC2",
 													ClassName: "TS1",
-													Time:      1 * time.Second,
+													Time:      71 * time.Second,
 													Result:    "Failed",
 												},
 											},
