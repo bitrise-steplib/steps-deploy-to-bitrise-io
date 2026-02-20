@@ -1,6 +1,6 @@
 module github.com/bitrise-steplib/steps-deploy-to-bitrise-io
 
-go 1.22
+go 1.22.0
 
 require (
 	github.com/bitrise-io/bitrise v0.0.0-20220808135808-3483087dd853
