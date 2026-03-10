@@ -17,15 +17,15 @@ const EmbedOnDemandResourcesAssetPacksInBundleDefault = true
 // ICloudContainerEnvironmentKey ...
 const ICloudContainerEnvironmentKey = "iCloudContainerEnvironment"
 
+// ICloudContainerEnvironment ...
+type ICloudContainerEnvironment string
+
 const (
 	// ICloudContainerEnvironmentDevelopment ...
 	ICloudContainerEnvironmentDevelopment ICloudContainerEnvironment = "Development"
 	// ICloudContainerEnvironmentProduction ...
 	ICloudContainerEnvironmentProduction ICloudContainerEnvironment = "Production"
 )
-
-// ICloudContainerEnvironment ...
-type ICloudContainerEnvironment string
 
 // DistributionBundleIdentifier ...
 const DistributionBundleIdentifier = "distributionBundleIdentifier"
@@ -79,27 +79,49 @@ func (manifest Manifest) ToHash() map[string]string {
 // MethodKey ...
 const MethodKey = "method"
 
+// Method ...
+type Method string
+
 const (
-	// MethodAppStore ...
+	// MethodAppStore is deprecated since Xcode 15.3, its new name is MethodAppStoreConnect
 	MethodAppStore Method = "app-store"
-	// MethodAdHoc ...
+	// MethodAdHoc is deprecated since Xcode 15.3, its new name is MethodReleaseTesting
 	MethodAdHoc Method = "ad-hoc"
 	// MethodPackage ...
 	MethodPackage Method = "package"
 	// MethodEnterprise ...
 	MethodEnterprise Method = "enterprise"
-	// MethodDevelopment ...
+	// MethodDevelopment is deprecated since Xcode 15.3, its new name is MethodDebugging
 	MethodDevelopment Method = "development"
 	// MethodDeveloperID ...
 	MethodDeveloperID Method = "developer-id"
+	// MethodDebugging is the new name for MethodDevelopment since Xcode 15.3
+	MethodDebugging Method = "debugging"
+	// MethodAppStoreConnect is the new name for MethodAppStore since Xcode 15.3
+	MethodAppStoreConnect Method = "app-store-connect"
+	// MethodReleaseTesting is the new name for MethodAdHoc since Xcode 15.3
+	MethodReleaseTesting Method = "release-testing"
 	// MethodDefault ...
 	MethodDefault Method = MethodDevelopment
 )
 
-// Method ...
-type Method string
+func (m Method) IsAppStore() bool {
+	return m == MethodAppStore || m == MethodAppStoreConnect
+}
 
-// ParseMethod ...
+func (m Method) IsAdHoc() bool {
+	return m == MethodAdHoc || m == MethodReleaseTesting
+}
+
+func (m Method) IsDevelopment() bool {
+	return m == MethodDevelopment || m == MethodDebugging
+}
+
+func (m Method) IsEnterprise() bool {
+	return m == MethodEnterprise
+}
+
+// ParseMethod parses Step input and returns the corresponding Method.
 func ParseMethod(method string) (Method, error) {
 	switch method {
 	case "app-store":
@@ -116,6 +138,20 @@ func ParseMethod(method string) (Method, error) {
 		return MethodDeveloperID, nil
 	default:
 		return Method(""), fmt.Errorf("unkown method (%s)", method)
+	}
+}
+
+// UpgradeToXcode15_3MethodName replaces the legacy export method strings with the ones available in Xcode 15.3 and later.
+func UpgradeToXcode15_3MethodName(method Method) Method {
+	switch method {
+	case MethodAppStore:
+		return MethodAppStoreConnect
+	case MethodAdHoc:
+		return MethodReleaseTesting
+	case MethodDevelopment:
+		return MethodDebugging
+	default:
+		return method
 	}
 }
 
@@ -165,3 +201,25 @@ const InstallerSigningCertificateKey = "installerSigningCertificate"
 
 // SigningStyleKey ...
 const SigningStyleKey = "signingStyle"
+
+// SigningStyle ...
+type SigningStyle string
+
+// SigningStyle ...
+const (
+	SigningStyleManual    SigningStyle = "manual"
+	SigningStyleAutomatic SigningStyle = "automatic"
+)
+
+const DestinationKey = "destination"
+
+const TestFlightInternalTestingOnlyDefault = false
+const TestFlightInternalTestingOnlyKey = "testFlightInternalTestingOnly"
+
+type Destination string
+
+// Destination ...
+const (
+	DestinationExport  Destination = "export"
+	DestinationDefault Destination = DestinationExport
+)
