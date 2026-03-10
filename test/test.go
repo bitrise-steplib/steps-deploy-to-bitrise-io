@@ -12,12 +12,11 @@ import (
 	"strings"
 
 	"github.com/bitrise-io/bitrise/models"
+	"github.com/bitrise-io/go-steputils/v2/testasset"
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/pathutil"
 	logV2 "github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/retryhttp"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testasset"
 	"github.com/hashicorp/go-retryablehttp"
 )
 
@@ -208,7 +207,7 @@ func ParseTestResults(testsRootDir string, useLegacyXCResultExtractionMethod boo
 			}
 
 			// get the converter that can manage test type contained in the dir
-			for _, converter := range converters.List() {
+			for _, converter := range List() {
 				logger.Debugf("Running converter: %T", converter)
 
 				converter.Setup(useLegacyXCResultExtractionMethod)

@@ -1,15 +1,15 @@
-// Package converters contains the interface that is required to be a package a test result converter.
+// Package test contains the interface that is required to be a package a test result converter.
 // It must be possible to set files from outside(for example if someone wants to use
 // a pre-filtered files list), need to return Junit4 xml test result, and needs to have a
 // Detect method to see if the converter can run with the files included in the test result dictionary.
 // (So a converter can run only if the dir has a TestSummaries.plist file for example)
-package converters
+package test
 
 import (
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/junitxml"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testreport"
+	"github.com/bitrise-io/go-android/v2/testresult/junitxml"
+	"github.com/bitrise-io/go-steputils/v2/testreport"
+	"github.com/bitrise-io/go-xcode/v2/testresult/xcresult"
+	"github.com/bitrise-io/go-xcode/v2/testresult/xcresult3"
 )
 
 // Converter is the required interface a converter needs to match
@@ -19,7 +19,7 @@ type Converter interface {
 	Convert() (testreport.TestReport, error)
 }
 
-var converters = []Converter{
+var converterList = []Converter{
 	&junitxml.Converter{},
 	&xcresult.Converter{},
 	&xcresult3.Converter{},
@@ -27,5 +27,5 @@ var converters = []Converter{
 
 // List lists all supported converters
 func List() []Converter {
-	return converters
+	return converterList
 }

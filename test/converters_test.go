@@ -1,9 +1,4 @@
-// Package converters contains the interface that is required to be a package a test result converter.
-// It must be possible to set files from outside(for example if someone wants to use
-// a pre-filtered files list), need to return Junit4 xml test result, and needs to have a
-// Detect method to see if the converter can run with the files included in the test result dictionary.
-// (So a converter can run only if the dir has a TestSummaries.plist file for example)
-package converters
+package test
 
 import (
 	"path/filepath"
@@ -12,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/bitrise-io/go-utils/log"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/converters/xcresult3"
-	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/test/testreport"
+	"github.com/bitrise-io/go-steputils/v2/testreport"
+	"github.com/bitrise-io/go-xcode/v2/testresult/xcresult3"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 )
@@ -178,8 +173,7 @@ func TestXCresult3Converters(t *testing.T) {
 	}
 
 	_, b, _, _ := runtime.Caller(0)
-	convertersPackageDir := filepath.Dir(b)
-	testPackageDir := filepath.Dir(convertersPackageDir)
+	testPackageDir := filepath.Dir(b)
 	projectRootDir := filepath.Dir(testPackageDir)
 
 	for _, test := range []struct {
