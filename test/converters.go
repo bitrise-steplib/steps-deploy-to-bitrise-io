@@ -25,7 +25,7 @@ var converterList = []Converter{
 	&xcresult3.Converter{},
 }
 
-// List lists all supported converters
-func List() []Converter {
+// AvailableConverters lists all supported converters
+func AvailableConverters() []Converter {
 	return converterList
 }
