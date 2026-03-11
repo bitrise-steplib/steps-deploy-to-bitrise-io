@@ -27,7 +27,7 @@ github.com/bitrise-io/go-plist
 ## explicit; go 1.15
 github.com/bitrise-io/go-steputils/stepconf
 github.com/bitrise-io/go-steputils/tools
-# github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.48.0.20260309144725-a75605d075c2
+# github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.48.0.20260311110650-2026f65db4da
 ## explicit; go 1.21
 github.com/bitrise-io/go-steputils/v2/secretkeys
 github.com/bitrise-io/go-steputils/v2/testasset

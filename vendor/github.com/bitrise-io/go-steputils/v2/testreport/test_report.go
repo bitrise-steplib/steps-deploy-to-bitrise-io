@@ -89,8 +89,17 @@ type SystemOut struct {
 	Value   string   `xml:",chardata"`
 }
 
-// SystemErr holds captured standard error from a test case.
+// SystemErr holds a captured standard error from a test case.
 type SystemErr struct {
 	XMLName xml.Name `xml:"system-err,omitempty"`
 	Value   string   `xml:",chardata"`
+}
+
+// Converter is the interface that a test result converter must implement.
+// It must be able to detect whether it can handle a set of files, run the conversion,
+// and optionally accept a legacy extraction flag for backwards compatibility.
+type Converter interface {
+	Setup(useOldXCResultExtractionMethod bool)
+	Detect([]string) bool
+	Convert() (TestReport, error)
 }
