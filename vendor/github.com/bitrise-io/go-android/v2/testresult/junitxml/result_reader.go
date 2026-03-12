@@ -21,8 +21,3 @@ type stringReader struct {
 func (r *stringReader) ReadAll() ([]byte, error) {
 	return []byte(r.Contents), nil
 }
-
-// Converter holds data of the converter
-type Converter struct {
-	results []resultReader
-}

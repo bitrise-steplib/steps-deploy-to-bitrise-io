@@ -96,10 +96,8 @@ type SystemErr struct {
 }
 
 // Converter is the interface that a test result converter must implement.
-// It must be able to detect whether it can handle a set of files, run the conversion,
-// and optionally accept a legacy extraction flag for backwards compatibility.
+// It must be able to detect whether it can handle a set of files and run the conversion.
 type Converter interface {
-	Setup(useOldXCResultExtractionMethod bool)
 	Detect([]string) bool
 	Convert() (TestReport, error)
 }
