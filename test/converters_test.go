@@ -186,7 +186,7 @@ func TestXCresult3Converters(t *testing.T) {
 	}{
 		{
 			name:          "xcresult3",
-			converter:     &xcresult3.Converter{},
+			converter:     xcresult3.NewConverter(false),
 			testFilePaths: []string{filepath.Join(projectRootDir, "_tmp/xcresults/xcresult3_multi_level_UI_tests.xcresult")},
 			wantDetect:    true,
 			wantXMLError:  false,
@@ -194,7 +194,7 @@ func TestXCresult3Converters(t *testing.T) {
 		},
 		{
 			name:          "Long running test",
-			converter:     &xcresult3.Converter{},
+			converter:     xcresult3.NewConverter(false),
 			testFilePaths: []string{filepath.Join(testPackageDir, "testdata/test_result_with_18m_long_test_case.xcresult")},
 			wantDetect:    true,
 			wantXMLError:  false,

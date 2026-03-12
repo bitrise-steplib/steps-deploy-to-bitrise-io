@@ -8,12 +8,10 @@ import (
 	"github.com/bitrise-io/go-xcode/v2/testresult/xcresult3"
 )
 
-var converterList = []testreport.Converter{
-	&junitxml.Converter{},
-	&xcresult.Converter{},
-	&xcresult3.Converter{},
-}
-
-func AvailableConverters() []testreport.Converter {
-	return converterList
+func NewConverters(useLegacy bool) []testreport.Converter {
+	return []testreport.Converter{
+		&junitxml.Converter{},
+		&xcresult.Converter{},
+		xcresult3.NewConverter(useLegacy),
+	}
 }

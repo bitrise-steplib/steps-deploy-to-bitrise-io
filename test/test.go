@@ -207,10 +207,8 @@ func ParseTestResults(testsRootDir string, useLegacyXCResultExtractionMethod boo
 			}
 
 			// get the converter that can manage test type contained in the dir
-			for _, converter := range AvailableConverters() {
+			for _, converter := range NewConverters(useLegacyXCResultExtractionMethod) {
 				logger.Debugf("Running converter: %T", converter)
-
-				converter.Setup(useLegacyXCResultExtractionMethod)
 
 				// skip if it couldn't find a converter for the content type
 				detected := converter.Detect(testFiles)
