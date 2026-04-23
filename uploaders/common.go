@@ -19,7 +19,7 @@ import (
 	androidparser "github.com/bitrise-io/go-android/v2/metaparser"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/retry"
-	"github.com/bitrise-io/go-utils/urlutil"
+	"github.com/bitrise-io/go-utils/v2/urlutil"
 	iosparser "github.com/bitrise-io/go-xcode/v2/metaparser"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
