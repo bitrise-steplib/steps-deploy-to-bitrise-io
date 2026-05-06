@@ -9,7 +9,9 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -103,4 +105,98 @@ func Test_uploadArtifact(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_uploadPart(t *testing.T) {
+	content := make([]byte, 100)
+	for i := range content {
+		content[i] = byte(i)
+	}
+	filePath := writeTempFile(t, content)
+
+	var gotBody []byte
+	var gotContentLength int64
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotContentLength = r.ContentLength
+		gotBody, _ = io.ReadAll(r.Body)
+		w.Header().Set("ETag", `"test-etag"`)
+	}))
+	defer server.Close()
+
+	etag, err := uploadPart(server.URL, filePath, 25, 50, 1)
+
+	require.NoError(t, err)
+	require.Equal(t, `"test-etag"`, etag)
+	require.Equal(t, int64(50), gotContentLength)
+	require.Equal(t, content[25:75], gotBody)
+}
+
+func Test_uploadAllParts(t *testing.T) {
+	makeContent := func(size int) []byte {
+		b := make([]byte, size)
+		for i := range b {
+			b[i] = byte(i % 256)
+		}
+		return b
+	}
+
+	t.Run("even split", func(t *testing.T) {
+		content := makeContent(100)
+		filePath := writeTempFile(t, content)
+
+		var mu sync.Mutex
+		var bodies [][]byte
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			body, _ := io.ReadAll(r.Body)
+			mu.Lock()
+			bodies = append(bodies, body)
+			mu.Unlock()
+			w.Header().Set("ETag", `"etag"`)
+		}))
+		defer server.Close()
+
+		parts, err := uploadAllParts(filePath, 100, []string{server.URL, server.URL})
+
+		require.NoError(t, err)
+		require.Len(t, parts, 2)
+		sort.Slice(bodies, func(i, j int) bool { return bodies[i][0] < bodies[j][0] })
+		require.Equal(t, content[:50], bodies[0])
+		require.Equal(t, content[50:], bodies[1])
+	})
+
+	t.Run("odd size: last part trimmed", func(t *testing.T) {
+		content := makeContent(101)
+		filePath := writeTempFile(t, content)
+
+		var mu sync.Mutex
+		var sizes []int64
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			mu.Lock()
+			sizes = append(sizes, r.ContentLength)
+			mu.Unlock()
+			w.Header().Set("ETag", `"etag"`)
+		}))
+		defer server.Close()
+
+		parts, err := uploadAllParts(filePath, 101, []string{server.URL, server.URL})
+
+		require.NoError(t, err)
+		require.Len(t, parts, 2)
+		sort.Slice(sizes, func(i, j int) bool { return sizes[i] > sizes[j] })
+		require.Equal(t, []int64{51, 50}, sizes)
+	})
+}
+
+func writeTempFile(t *testing.T, content []byte) string {
+	t.Helper()
+	f, err := os.CreateTemp("", "uploadtest-*")
+	require.NoError(t, err)
+
+	t.Cleanup(func() { os.Remove(f.Name()) })
+	_, err = f.Write(content)
+
+	require.NoError(t, err)
+	require.NoError(t, f.Close())
+
+	return f.Name()
 }
