@@ -155,7 +155,7 @@ func Test_uploadAllParts(t *testing.T) {
 		}))
 		defer server.Close()
 
-		parts, err := uploadAllParts(filePath, 100, []string{server.URL, server.URL})
+		parts, err := uploadAllParts(filePath, 100, 50, []string{server.URL, server.URL})
 
 		require.NoError(t, err)
 		require.Len(t, parts, 2)
@@ -164,7 +164,7 @@ func Test_uploadAllParts(t *testing.T) {
 		require.Equal(t, content[50:], bodies[1])
 	})
 
-	t.Run("odd size: last part trimmed", func(t *testing.T) {
+	t.Run("last part trimmed to remaining bytes", func(t *testing.T) {
 		content := makeContent(101)
 		filePath := writeTempFile(t, content)
 
@@ -178,12 +178,31 @@ func Test_uploadAllParts(t *testing.T) {
 		}))
 		defer server.Close()
 
-		parts, err := uploadAllParts(filePath, 101, []string{server.URL, server.URL})
+		parts, err := uploadAllParts(filePath, 101, 51, []string{server.URL, server.URL})
 
 		require.NoError(t, err)
 		require.Len(t, parts, 2)
 		sort.Slice(sizes, func(i, j int) bool { return sizes[i] > sizes[j] })
 		require.Equal(t, []int64{51, 50}, sizes)
+	})
+
+	t.Run("rejects zero part size", func(t *testing.T) {
+		filePath := writeTempFile(t, []byte("x"))
+
+		_, err := uploadAllParts(filePath, 1, 0, []string{"http://unused"})
+
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "invalid part size")
+	})
+
+	t.Run("rejects mismatch between part_urls count and the count implied by part size", func(t *testing.T) {
+		filePath := writeTempFile(t, make([]byte, 100))
+
+		// 100 bytes / 50-byte parts → 2 parts expected, but we pass 3 URLs
+		_, err := uploadAllParts(filePath, 100, 50, []string{"http://a", "http://b", "http://c"})
+
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "does not match expected")
 	})
 }
 

@@ -55,7 +55,7 @@ func (u *Uploader) upload(buildURL, token string, artifact ArtifactArgs, artifac
 	var artifactURLs []ArtifactURLs
 	for _, task := range tasks {
 		start := time.Now()
-		parts, uploadErr := uploadAllParts(artifact.Path, artifact.FileSize, task.PartURLs)
+		parts, uploadErr := uploadAllParts(artifact.Path, artifact.FileSize, task.PartSize, task.PartURLs)
 
 		transferType := Artifact
 		if task.IsIntermediate {

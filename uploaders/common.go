@@ -56,6 +56,7 @@ type TransferDetails struct {
 type UploadTask struct {
 	PartURLs       []string `json:"part_urls"`
 	ID             int64    `json:"id"`
+	PartSize       int64    `json:"part_size"`
 	IsIntermediate bool     `json:"is_intermediate_file"`
 }
 
@@ -405,11 +406,18 @@ func uploadPart(partURL, filePath string, offset, size int64, partNumber int) (s
 	return etag, err
 }
 
-// uploadAllParts splits the file into len(partURLs) chunks and uploads them concurrently,
-// up to multipartConcurrentParts at a time. Returns the ETags required by the finish call.
-func uploadAllParts(filePath string, fileSize int64, partURLs []string) ([]UploadedPart, error) {
+// uploadAllParts uploads the file in partSize-byte chunks, one per partURL, up to
+// multipartConcurrentParts concurrently. The last part is trimmed to the file's
+// remaining bytes. Returns the ETags required by the finish call.
+func uploadAllParts(filePath string, fileSize int64, partSize int64, partURLs []string) ([]UploadedPart, error) {
 	partCount := len(partURLs)
-	chunkSize := (fileSize + int64(partCount) - 1) / int64(partCount)
+	if partSize <= 0 {
+		return nil, fmt.Errorf("invalid part size %d", partSize)
+	}
+	expectedPartCount := (fileSize + partSize - 1) / partSize
+	if int64(partCount) != expectedPartCount {
+		return nil, fmt.Errorf("part_urls count (%d) does not match expected (%d) for file size %d and part size %d", partCount, expectedPartCount, fileSize, partSize)
+	}
 
 	type partResult struct {
 		partNumber int
@@ -424,8 +432,8 @@ func uploadAllParts(filePath string, fileSize int64, partURLs []string) ([]Uploa
 	for i, partURL := range partURLs {
 		partNumber := i + 1
 		url := partURL
-		offset := int64(i) * chunkSize
-		size := chunkSize
+		offset := int64(i) * partSize
+		size := partSize
 		if offset+size > fileSize {
 			size = fileSize - offset
 		}
