@@ -25,7 +25,6 @@ import (
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
 
-const multipartConcurrentParts = 4
 
 type ArtifactURLs struct {
 	PublicInstallPageURL string
@@ -407,9 +406,9 @@ func uploadPart(partURL, filePath string, offset, size int64, partNumber int) (s
 }
 
 // uploadAllParts uploads the file in partSize-byte chunks, one per partURL, up to
-// multipartConcurrentParts concurrently. The last part is trimmed to the file's
+// concurrency parts at a time. The last part is trimmed to the file's
 // remaining bytes. Returns the ETags required by the finish call.
-func uploadAllParts(filePath string, fileSize int64, partSize int64, partURLs []string) ([]UploadedPart, error) {
+func uploadAllParts(filePath string, fileSize int64, partSize int64, partURLs []string, concurrency int) ([]UploadedPart, error) {
 	partCount := len(partURLs)
 	if partSize <= 0 {
 		return nil, fmt.Errorf("invalid part size %d", partSize)
@@ -426,7 +425,7 @@ func uploadAllParts(filePath string, fileSize int64, partSize int64, partURLs []
 	}
 
 	results := make(chan partResult, partCount)
-	sem := make(chan struct{}, multipartConcurrentParts)
+	sem := make(chan struct{}, concurrency)
 
 	var wg sync.WaitGroup
 	for i, partURL := range partURLs {

@@ -13,11 +13,12 @@ import (
 )
 
 type Uploader struct {
-	logger        log.Logger
-	fileManager   fileutil.FileManager
-	androidParser *androidparser.Parser
-	iosParser     *iosparser.Parser
-	tracker       tracker
+	logger               log.Logger
+	fileManager          fileutil.FileManager
+	androidParser        *androidparser.Parser
+	iosParser            *iosparser.Parser
+	tracker              tracker
+	multipartConcurrency int
 }
 
 func New(
@@ -25,13 +26,15 @@ func New(
 	fileManager fileutil.FileManager,
 	androidParser *androidparser.Parser,
 	iosParser *iosparser.Parser,
+	multipartConcurrency int,
 ) *Uploader {
 	return &Uploader{
-		logger:        logger,
-		fileManager:   fileManager,
-		androidParser: androidParser,
-		iosParser:     iosParser,
-		tracker:       newTracker(env.NewRepository(), logger),
+		logger:               logger,
+		fileManager:          fileManager,
+		androidParser:        androidParser,
+		iosParser:            iosParser,
+		tracker:              newTracker(env.NewRepository(), logger),
+		multipartConcurrency: multipartConcurrency,
 	}
 }
 
@@ -55,7 +58,7 @@ func (u *Uploader) upload(buildURL, token string, artifact ArtifactArgs, artifac
 	var artifactURLs []ArtifactURLs
 	for _, task := range tasks {
 		start := time.Now()
-		parts, uploadErr := uploadAllParts(artifact.Path, artifact.FileSize, task.PartSize, task.PartURLs)
+		parts, uploadErr := uploadAllParts(artifact.Path, artifact.FileSize, task.PartSize, task.PartURLs, u.multipartConcurrency)
 
 		transferType := Artifact
 		if task.IsIntermediate {

@@ -51,6 +51,12 @@ var acceptedUserGroups = []string{
 
 var fileBaseNamesToSkip = []string{".DS_Store"}
 
+const (
+	defaultUploadConcurrency          = 1
+	defaultMultipartUploadConcurrency = 4
+	maxConcurrency                    = 20
+)
+
 // Config ...
 type Config struct {
 	PipelineIntermediateFiles         string `env:"pipeline_intermediate_files"`
@@ -76,6 +82,7 @@ type Config struct {
 	UseLegacyXCResultExtractionMethod bool   `env:"use_legacy_xcresult_extraction_method,opt[true,false]"`
 	BundletoolVersion                 string `env:"bundletool_version,required"`
 	UploadConcurrency                 string `env:"BITRISE_DEPLOY_UPLOAD_CONCURRENCY"`
+	MultipartUploadConcurrency        string `env:"BITRISE_MULTIPART_UPLOAD_CONCURRENCY"`
 	HTMLReportDir                     string `env:"BITRISE_HTML_REPORT_DIR"`
 }
 
@@ -539,6 +546,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config, logger l
 		fileManager,
 		androidparser.New(uploaders.NewLogger(), bTool, fileManager),
 		iosparser.New(logger, fileManager),
+		determineMultipartConcurrency(config),
 	)
 
 	for _, item := range combinedItems {
@@ -641,25 +649,26 @@ func validateGoTemplate(publicInstallPageMapFormat string) error {
 	return err
 }
 
-func determineConcurrency(config Config) int {
-	if config.UploadConcurrency == "" {
-		return 1
+func parseConcurrency(raw string, defaultValue int) int {
+	if raw == "" {
+		return defaultValue
 	}
-
-	value, err := strconv.Atoi(config.UploadConcurrency)
-	if err != nil {
-		return 1
+	value, err := strconv.Atoi(raw)
+	if err != nil || value < 1 {
+		return defaultValue
 	}
-
-	if value < 1 {
-		return 1
+	if value > maxConcurrency {
+		return maxConcurrency
 	}
-
-	if value > 20 {
-		return 20
-	}
-
 	return value
+}
+
+func determineMultipartConcurrency(config Config) int {
+	return parseConcurrency(config.MultipartUploadConcurrency, defaultMultipartUploadConcurrency)
+}
+
+func determineConcurrency(config Config) int {
+	return parseConcurrency(config.UploadConcurrency, defaultUploadConcurrency)
 }
 
 func validateUserGroups(userGroupsStr string, logger loggerV2.Logger) error {
