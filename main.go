@@ -82,6 +82,7 @@ type Config struct {
 	UseLegacyXCResultExtractionMethod bool   `env:"use_legacy_xcresult_extraction_method,opt[true,false]"`
 	BundletoolVersion                 string `env:"bundletool_version,required"`
 	UploadConcurrency                 string `env:"BITRISE_DEPLOY_UPLOAD_CONCURRENCY"`
+	UseMultipartUpload                string `env:"BITRISE_USE_MULTIPART_UPLOAD"`
 	MultipartUploadConcurrency        string `env:"BITRISE_MULTIPART_UPLOAD_CONCURRENCY"`
 	HTMLReportDir                     string `env:"BITRISE_HTML_REPORT_DIR"`
 }
@@ -546,6 +547,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config, logger l
 		fileManager,
 		androidparser.New(uploaders.NewLogger(), bTool, fileManager),
 		iosparser.New(logger, fileManager),
+		config.UseMultipartUpload == "true",
 		determineMultipartConcurrency(config),
 	)
 
