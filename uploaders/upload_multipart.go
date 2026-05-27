@@ -158,10 +158,6 @@ func finishMultipartArtifact(buildURL, token, artifactID string, success bool, p
 		"api_token": {token},
 		"success":   {strconv.FormatBool(success)},
 	}
-	for _, part := range parts {
-		data.Add("parts[][part_number]", strconv.Itoa(part.PartNumber))
-		data.Add("parts[][etag]", part.ETag)
-	}
 	if appDeploymentMeta != nil {
 		var artifactInfoBytes []byte
 		var err error
@@ -199,6 +195,26 @@ func finishMultipartArtifact(buildURL, token, artifactID string, success bool, p
 		return ArtifactURLs{}, fmt.Errorf("failed to generate finish artifact url, error: %s", err)
 	}
 
+	// url.Values.Encode() sorts keys alphabetically, which groups all parts[][etag]
+	// entries before all parts[][part_number] entries. The nested parameter parser
+	// creates a new array element each time it sees a key the tail already has, so
+	// 3 etags + 3 part_numbers becomes 5 objects instead of 3. To work around this,
+	// we need to encode the parts manually after encoding the other parameters.
+	partNumKey := url.QueryEscape("parts[][part_number]")
+	partEtagKey := url.QueryEscape("parts[][etag]")
+	var partsEncoded strings.Builder
+	for _, part := range parts {
+		partsEncoded.WriteByte('&')
+		partsEncoded.WriteString(partNumKey)
+		partsEncoded.WriteByte('=')
+		partsEncoded.WriteString(strconv.Itoa(part.PartNumber))
+		partsEncoded.WriteByte('&')
+		partsEncoded.WriteString(partEtagKey)
+		partsEncoded.WriteByte('=')
+		partsEncoded.WriteString(url.QueryEscape(part.ETag))
+	}
+	encodedBody := data.Encode() + partsEncoded.String()
+
 	var response *http.Response
 
 	type finishArtifactResponse struct {
@@ -214,7 +230,7 @@ func finishMultipartArtifact(buildURL, token, artifactID string, success bool, p
 			log.Warnf("%d attempt failed", attempt)
 		}
 
-		req, err := http.NewRequest(http.MethodPost, uri, strings.NewReader(data.Encode()))
+		req, err := http.NewRequest(http.MethodPost, uri, strings.NewReader(encodedBody))
 		if err != nil {
 			return fmt.Errorf("failed to create request: %s", err)
 		}
