@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -19,6 +20,7 @@ import (
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-io/go-utils/urlutil"
+	logV2 "github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
 
@@ -40,7 +42,7 @@ type UploadedPart struct {
 	ETag       string `json:"etag"`
 }
 
-func createMultipartArtifact(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, archiveAsArtifact bool, pipelineMeta *deployment.IntermediateFileMetaData) ([]MultipartUploadTask, error) {
+func createMultipartArtifact(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, archiveAsArtifact bool, pipelineMeta *deployment.IntermediateFileMetaData, logger logV2.Logger) ([]MultipartUploadTask, error) {
 	artifactName := filepath.Base(artifact.Path)
 
 	log.Printf("file size: %s", units.BytesSize(float64(artifact.FileSize)))
@@ -83,7 +85,18 @@ func createMultipartArtifact(buildURL, token string, artifact ArtifactArgs, arti
 		if attempt > 0 {
 			log.Warnf("%d attempt failed", attempt)
 		}
-		response, err = http.PostForm(uri, data)
+
+		req, err := http.NewRequest(http.MethodPost, uri, strings.NewReader(data.Encode()))
+		if err != nil {
+			return fmt.Errorf("failed to create request: %s", err)
+		}
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+		if dump, dumpErr := httputil.DumpRequestOut(req, true); dumpErr == nil {
+			logger.Debugf("create_multipart_upload request:\n%s", dump)
+		}
+
+		response, err = http.DefaultClient.Do(req)
 		if err != nil {
 			return fmt.Errorf("failed to perform create artifact request, error: %s", err)
 		}
@@ -94,10 +107,15 @@ func createMultipartArtifact(buildURL, token string, artifact ArtifactArgs, arti
 			}
 		}()
 
+		if dump, dumpErr := httputil.DumpResponse(response, true); dumpErr == nil {
+			logger.Debugf("create_multipart_upload response:\n%s", dump)
+		}
+
 		body, err := io.ReadAll(response.Body)
 		if err != nil {
 			return fmt.Errorf("failed to read create artifact response, error: %s", err)
 		}
+
 		if response.StatusCode != http.StatusOK {
 			type errorResponse struct {
 				ErrorMessage string `json:"error_msg"`
@@ -135,7 +153,7 @@ func createMultipartArtifact(buildURL, token string, artifact ArtifactArgs, arti
 	return uploadTasks, nil
 }
 
-func finishMultipartArtifact(buildURL, token, artifactID string, success bool, parts []UploadedPart, appDeploymentMeta *AppDeploymentMetaData) (ArtifactURLs, error) {
+func finishMultipartArtifact(buildURL, token, artifactID string, success bool, parts []UploadedPart, appDeploymentMeta *AppDeploymentMetaData, logger logV2.Logger) (ArtifactURLs, error) {
 	data := url.Values{
 		"api_token": {token},
 		"success":   {strconv.FormatBool(success)},
@@ -195,7 +213,18 @@ func finishMultipartArtifact(buildURL, token, artifactID string, success bool, p
 		if attempt > 0 {
 			log.Warnf("%d attempt failed", attempt)
 		}
-		response, err = http.PostForm(uri, data)
+
+		req, err := http.NewRequest(http.MethodPost, uri, strings.NewReader(data.Encode()))
+		if err != nil {
+			return fmt.Errorf("failed to create request: %s", err)
+		}
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+		if dump, dumpErr := httputil.DumpRequestOut(req, true); dumpErr == nil {
+			logger.Debugf("finish_multipart_upload request:\n%s", dump)
+		}
+
+		response, err = http.DefaultClient.Do(req)
 		if err != nil {
 			return fmt.Errorf("failed to perform finish artifact request, error: %s", err)
 		}
@@ -205,10 +234,15 @@ func finishMultipartArtifact(buildURL, token, artifactID string, success bool, p
 			}
 		}()
 
+		if dump, dumpErr := httputil.DumpResponse(response, true); dumpErr == nil {
+			logger.Debugf("finish_multipart_upload response:\n%s", dump)
+		}
+
 		body, err := io.ReadAll(response.Body)
 		if err != nil {
 			return fmt.Errorf("failed to read finish artifact response, error: %s", err)
 		}
+
 		if response.StatusCode != http.StatusOK {
 			return fmt.Errorf("failed to create artifact on bitrise, status code: %d, response: %s", response.StatusCode, string(body))
 		}
@@ -236,7 +270,7 @@ func finishMultipartArtifact(buildURL, token, artifactID string, success bool, p
 // uploadPart uploads a single chunk of a file to a presigned S3 part URL.
 // It opens the file independently to allow concurrent calls without seeking conflicts.
 // Returns the ETag header value which must be included in the finish call.
-func uploadPart(partURL, filePath string, offset, size int64, partNumber int) (string, error) {
+func uploadPart(partURL, filePath string, offset, size int64, partNumber int, logger logV2.Logger) (string, error) {
 	netClient := &http.Client{Timeout: 10 * time.Minute}
 
 	var etag string
@@ -266,6 +300,8 @@ func uploadPart(partURL, filePath string, offset, size int64, partNumber int) (s
 		}
 		req.ContentLength = size
 
+		logger.Debugf("part %d upload: PUT %s (offset=%d size=%d)", partNumber, partURL, offset, size)
+
 		resp, err := netClient.Do(req)
 		if err != nil {
 			return fmt.Errorf("failed to upload part %d: %s", partNumber, err)
@@ -275,6 +311,10 @@ func uploadPart(partURL, filePath string, offset, size int64, partNumber int) (s
 				log.Errorf("Failed to close response body, error: %s", err)
 			}
 		}()
+
+		if dump, dumpErr := httputil.DumpResponse(resp, true); dumpErr == nil {
+			logger.Debugf("part %d response:\n%s", partNumber, dump)
+		}
 
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
@@ -298,7 +338,7 @@ func uploadPart(partURL, filePath string, offset, size int64, partNumber int) (s
 // uploadAllParts uploads the file in partSize-byte chunks, one per partURL, up to
 // concurrency parts at a time. The last part is trimmed to the file's
 // remaining bytes. Returns the ETags required by the finish call.
-func uploadAllParts(filePath string, fileSize int64, partSize int64, partURLs []string, concurrency int) ([]UploadedPart, error) {
+func uploadAllParts(filePath string, fileSize int64, partSize int64, partURLs []string, concurrency int, logger logV2.Logger) ([]UploadedPart, error) {
 	partCount := len(partURLs)
 	if partSize <= 0 {
 		return nil, fmt.Errorf("invalid part size %d", partSize)
@@ -332,7 +372,7 @@ func uploadAllParts(filePath string, fileSize int64, partSize int64, partURLs []
 			defer wg.Done()
 			sem <- struct{}{}
 			defer func() { <-sem }()
-			etag, err := uploadPart(url, filePath, offset, size, partNumber)
+			etag, err := uploadPart(url, filePath, offset, size, partNumber, logger)
 			results <- partResult{partNumber: partNumber, etag: etag, err: err}
 		}()
 	}
@@ -360,7 +400,7 @@ func uploadAllParts(filePath string, fileSize int64, partSize int64, partURLs []
 }
 
 func (u *Uploader) uploadMultipart(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, item *deployment.DeployableItem, buildArtifactMeta *AppDeploymentMetaData) ([]ArtifactURLs, error) {
-	tasks, err := createMultipartArtifact(buildURL, token, artifact, artifactType, contentType, item.ArchiveAsArtifact, item.IntermediateFileMeta)
+	tasks, err := createMultipartArtifact(buildURL, token, artifact, artifactType, contentType, item.ArchiveAsArtifact, item.IntermediateFileMeta, u.logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create artifact (%s): %w", artifact.Path, err)
 	}
@@ -375,7 +415,7 @@ func (u *Uploader) uploadMultipart(buildURL, token string, artifact ArtifactArgs
 	var artifactURLs []ArtifactURLs
 	for _, task := range tasks {
 		start := time.Now()
-		parts, uploadErr := uploadAllParts(artifact.Path, artifact.FileSize, task.PartSize, task.PartURLs, u.multipartConcurrency)
+		parts, uploadErr := uploadAllParts(artifact.Path, artifact.FileSize, task.PartSize, task.PartURLs, u.multipartConcurrency, u.logger)
 
 		transferType := Artifact
 		if task.IsIntermediate {
@@ -389,13 +429,13 @@ func (u *Uploader) uploadMultipart(buildURL, token string, artifact ArtifactArgs
 		u.tracker.logFileTransfer(transferType, details, uploadErr, item.ArchiveAsArtifact, item.IsIntermediateFile())
 
 		if uploadErr != nil {
-			if _, abortErr := finishMultipartArtifact(buildURL, token, task.Identifier(), false, nil, nil); abortErr != nil {
+			if _, abortErr := finishMultipartArtifact(buildURL, token, task.Identifier(), false, nil, nil, u.logger); abortErr != nil {
 				u.logger.Warnf("Failed to abort multipart upload for artifact %d: %s", task.ID, abortErr)
 			}
 			return nil, fmt.Errorf("failed to upload artifact parts (%s): %w", artifact.Path, uploadErr)
 		}
 
-		urls, err := finishMultipartArtifact(buildURL, token, task.Identifier(), true, parts, buildArtifactMeta)
+		urls, err := finishMultipartArtifact(buildURL, token, task.Identifier(), true, parts, buildArtifactMeta, u.logger)
 		if err != nil {
 			return nil, fmt.Errorf("failed to finish artifact upload (%s): %w", artifact.Path, err)
 		}

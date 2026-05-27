@@ -14,6 +14,7 @@ import (
 	"sync"
 	"testing"
 
+	logV2 "github.com/bitrise-io/go-utils/v2/log"
 	"github.com/stretchr/testify/require"
 )
 
@@ -123,7 +124,7 @@ func Test_uploadPart(t *testing.T) {
 	}))
 	defer server.Close()
 
-	etag, err := uploadPart(server.URL, filePath, 25, 50, 1)
+	etag, err := uploadPart(server.URL, filePath, 25, 50, 1, logV2.NewLogger())
 
 	require.NoError(t, err)
 	require.Equal(t, `"test-etag"`, etag)
@@ -155,7 +156,7 @@ func Test_uploadAllParts(t *testing.T) {
 		}))
 		defer server.Close()
 
-		parts, err := uploadAllParts(filePath, 100, 50, []string{server.URL, server.URL}, 2)
+		parts, err := uploadAllParts(filePath, 100, 50, []string{server.URL, server.URL}, 2, logV2.NewLogger())
 
 		require.NoError(t, err)
 		require.Len(t, parts, 2)
@@ -178,7 +179,7 @@ func Test_uploadAllParts(t *testing.T) {
 		}))
 		defer server.Close()
 
-		parts, err := uploadAllParts(filePath, 101, 51, []string{server.URL, server.URL}, 2)
+		parts, err := uploadAllParts(filePath, 101, 51, []string{server.URL, server.URL}, 2, logV2.NewLogger())
 
 		require.NoError(t, err)
 		require.Len(t, parts, 2)
@@ -189,7 +190,7 @@ func Test_uploadAllParts(t *testing.T) {
 	t.Run("rejects zero part size", func(t *testing.T) {
 		filePath := writeTempFile(t, []byte("x"))
 
-		_, err := uploadAllParts(filePath, 1, 0, []string{"http://unused"}, 1)
+		_, err := uploadAllParts(filePath, 1, 0, []string{"http://unused"}, 1, logV2.NewLogger())
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "invalid part size")
@@ -199,7 +200,7 @@ func Test_uploadAllParts(t *testing.T) {
 		filePath := writeTempFile(t, make([]byte, 100))
 
 		// 100 bytes / 50-byte parts → 2 parts expected, but we pass 3 URLs
-		_, err := uploadAllParts(filePath, 100, 50, []string{"http://a", "http://b", "http://c"}, 1)
+		_, err := uploadAllParts(filePath, 100, 50, []string{"http://a", "http://b", "http://c"}, 1, logV2.NewLogger())
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "does not match expected")
