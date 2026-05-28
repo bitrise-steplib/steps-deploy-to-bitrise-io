@@ -42,6 +42,55 @@ type UploadedPart struct {
 	ETag       string `json:"etag"`
 }
 
+func (u *Uploader) uploadMultipart(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, item *deployment.DeployableItem, buildArtifactMeta *AppDeploymentMetaData) ([]ArtifactURLs, error) {
+	tasks, err := createMultipartArtifact(buildURL, token, artifact, artifactType, contentType, item.ArchiveAsArtifact, item.IntermediateFileMeta, u.logger)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create artifact (%s): %w", artifact.Path, err)
+	}
+
+	useIntermediateFileURLs := true
+	if item.ArchiveAsArtifact && item.IntermediateFileMeta != nil && len(tasks) > 1 {
+		// When the item is both a Build Artifact and an Intermediate File,
+		// only surface the artifact URLs from the Build Artifact task.
+		useIntermediateFileURLs = false
+	}
+
+	var artifactURLs []ArtifactURLs
+	for _, task := range tasks {
+		start := time.Now()
+		parts, uploadErr := uploadAllParts(artifact.Path, artifact.FileSize, task.PartSize, task.PartURLs, u.multipartConcurrency, u.logger)
+
+		transferType := Artifact
+		if task.IsIntermediate {
+			transferType = Intermediate
+		}
+		details := TransferDetails{
+			Size:     artifact.FileSize,
+			Duration: time.Since(start),
+			Hostname: extractHost(task.PartURLs[0]),
+		}
+		u.tracker.logFileTransfer(transferType, details, uploadErr, item.ArchiveAsArtifact, item.IsIntermediateFile())
+
+		if uploadErr != nil {
+			if _, abortErr := finishMultipartArtifact(buildURL, token, task.Identifier(), false, nil, nil, u.logger); abortErr != nil {
+				u.logger.Warnf("Failed to abort multipart upload for artifact %d: %s", task.ID, abortErr)
+			}
+			return nil, fmt.Errorf("failed to upload artifact parts (%s): %w", artifact.Path, uploadErr)
+		}
+
+		urls, err := finishMultipartArtifact(buildURL, token, task.Identifier(), true, parts, buildArtifactMeta, u.logger)
+		if err != nil {
+			return nil, fmt.Errorf("failed to finish artifact upload (%s): %w", artifact.Path, err)
+		}
+
+		if !task.IsIntermediate || useIntermediateFileURLs {
+			artifactURLs = append(artifactURLs, urls)
+		}
+	}
+
+	return artifactURLs, nil
+}
+
 func createMultipartArtifact(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, archiveAsArtifact bool, pipelineMeta *deployment.IntermediateFileMetaData, logger logV2.Logger) ([]MultipartUploadTask, error) {
 	artifactName := filepath.Base(artifact.Path)
 
@@ -412,53 +461,4 @@ func uploadAllParts(filePath string, fileSize int64, partSize int64, partURLs []
 	}
 
 	return parts, nil
-}
-
-func (u *Uploader) uploadMultipart(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, item *deployment.DeployableItem, buildArtifactMeta *AppDeploymentMetaData) ([]ArtifactURLs, error) {
-	tasks, err := createMultipartArtifact(buildURL, token, artifact, artifactType, contentType, item.ArchiveAsArtifact, item.IntermediateFileMeta, u.logger)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create artifact (%s): %w", artifact.Path, err)
-	}
-
-	useIntermediateFileURLs := true
-	if item.ArchiveAsArtifact && item.IntermediateFileMeta != nil && len(tasks) > 1 {
-		// When the item is both a Build Artifact and an Intermediate File,
-		// only surface the artifact URLs from the Build Artifact task.
-		useIntermediateFileURLs = false
-	}
-
-	var artifactURLs []ArtifactURLs
-	for _, task := range tasks {
-		start := time.Now()
-		parts, uploadErr := uploadAllParts(artifact.Path, artifact.FileSize, task.PartSize, task.PartURLs, u.multipartConcurrency, u.logger)
-
-		transferType := Artifact
-		if task.IsIntermediate {
-			transferType = Intermediate
-		}
-		details := TransferDetails{
-			Size:     artifact.FileSize,
-			Duration: time.Since(start),
-			Hostname: extractHost(task.PartURLs[0]),
-		}
-		u.tracker.logFileTransfer(transferType, details, uploadErr, item.ArchiveAsArtifact, item.IsIntermediateFile())
-
-		if uploadErr != nil {
-			if _, abortErr := finishMultipartArtifact(buildURL, token, task.Identifier(), false, nil, nil, u.logger); abortErr != nil {
-				u.logger.Warnf("Failed to abort multipart upload for artifact %d: %s", task.ID, abortErr)
-			}
-			return nil, fmt.Errorf("failed to upload artifact parts (%s): %w", artifact.Path, uploadErr)
-		}
-
-		urls, err := finishMultipartArtifact(buildURL, token, task.Identifier(), true, parts, buildArtifactMeta, u.logger)
-		if err != nil {
-			return nil, fmt.Errorf("failed to finish artifact upload (%s): %w", artifact.Path, err)
-		}
-
-		if !task.IsIntermediate || useIntermediateFileURLs {
-			artifactURLs = append(artifactURLs, urls)
-		}
-	}
-
-	return artifactURLs, nil
 }
