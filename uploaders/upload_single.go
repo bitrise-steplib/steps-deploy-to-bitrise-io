@@ -33,6 +33,46 @@ func (u UploadTask) Identifier() string {
 	return fmt.Sprintf("%d", u.ID)
 }
 
+func (u *Uploader) uploadSingle(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, item *deployment.DeployableItem, buildArtifactMeta *AppDeploymentMetaData) ([]ArtifactURLs, error) {
+	tasks, err := createArtifact(buildURL, token, artifact, artifactType, contentType, item.ArchiveAsArtifact, item.IntermediateFileMeta)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create artifact (%s): %w", artifact.Path, err)
+	}
+
+	useIntermediateFileURLs := true
+	if item.ArchiveAsArtifact && item.IntermediateFileMeta != nil && len(tasks) > 1 {
+		// When the item is both a Build Artifact and an Intermediate File,
+		// only surface the artifact URLs from the Build Artifact task.
+		useIntermediateFileURLs = false
+	}
+
+	var artifactURLs []ArtifactURLs
+	for _, task := range tasks {
+		details, uploadErr := UploadArtifact(task.URL, artifact, contentType)
+
+		transferType := Artifact
+		if task.IsIntermediate {
+			transferType = Intermediate
+		}
+		u.tracker.logFileTransfer(transferType, details, uploadErr, item.ArchiveAsArtifact, item.IsIntermediateFile())
+
+		if uploadErr != nil {
+			return nil, fmt.Errorf("failed to upload artifact (%s): %w", artifact.Path, uploadErr)
+		}
+
+		urls, err := finishArtifact(buildURL, token, task.Identifier(), buildArtifactMeta)
+		if err != nil {
+			return nil, fmt.Errorf("failed to finish artifact upload (%s): %w", artifact.Path, err)
+		}
+
+		if !task.IsIntermediate || useIntermediateFileURLs {
+			artifactURLs = append(artifactURLs, urls)
+		}
+	}
+
+	return artifactURLs, nil
+}
+
 func createArtifact(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, archiveAsArtifact bool, pipelineMeta *deployment.IntermediateFileMetaData) ([]UploadTask, error) {
 	// create form data
 	artifactName := filepath.Base(artifact.Path)
@@ -298,44 +338,4 @@ func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDe
 		DetailsPageURL:       artifactResponse.DetailsPageURL,
 		PublicInstallPageURL: artifactResponse.PublicInstallPageURL,
 	}, nil
-}
-
-func (u *Uploader) uploadSingle(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, item *deployment.DeployableItem, buildArtifactMeta *AppDeploymentMetaData) ([]ArtifactURLs, error) {
-	tasks, err := createArtifact(buildURL, token, artifact, artifactType, contentType, item.ArchiveAsArtifact, item.IntermediateFileMeta)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create artifact (%s): %w", artifact.Path, err)
-	}
-
-	useIntermediateFileURLs := true
-	if item.ArchiveAsArtifact && item.IntermediateFileMeta != nil && len(tasks) > 1 {
-		// When the item is both a Build Artifact and an Intermediate File,
-		// only surface the artifact URLs from the Build Artifact task.
-		useIntermediateFileURLs = false
-	}
-
-	var artifactURLs []ArtifactURLs
-	for _, task := range tasks {
-		details, uploadErr := UploadArtifact(task.URL, artifact, contentType)
-
-		transferType := Artifact
-		if task.IsIntermediate {
-			transferType = Intermediate
-		}
-		u.tracker.logFileTransfer(transferType, details, uploadErr, item.ArchiveAsArtifact, item.IsIntermediateFile())
-
-		if uploadErr != nil {
-			return nil, fmt.Errorf("failed to upload artifact (%s): %w", artifact.Path, uploadErr)
-		}
-
-		urls, err := finishArtifact(buildURL, token, task.Identifier(), buildArtifactMeta)
-		if err != nil {
-			return nil, fmt.Errorf("failed to finish artifact upload (%s): %w", artifact.Path, err)
-		}
-
-		if !task.IsIntermediate || useIntermediateFileURLs {
-			artifactURLs = append(artifactURLs, urls)
-		}
-	}
-
-	return artifactURLs, nil
 }

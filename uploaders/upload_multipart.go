@@ -355,13 +355,12 @@ func uploadPart(partURL, filePath string, offset, size int64, partNumber int, lo
 // concurrency parts at a time. The last part is trimmed to the file's
 // remaining bytes. Returns the ETags required by the finish call.
 func uploadAllParts(filePath string, fileSize int64, partSize int64, partURLs []string, concurrency int, logger logV2.Logger) ([]UploadedPart, error) {
-	partCount := len(partURLs)
 	if partSize <= 0 {
 		return nil, fmt.Errorf("invalid part size %d", partSize)
 	}
 	expectedPartCount := (fileSize + partSize - 1) / partSize
-	if int64(partCount) != expectedPartCount {
-		return nil, fmt.Errorf("part_urls count (%d) does not match expected (%d) for file size %d and part size %d", partCount, expectedPartCount, fileSize, partSize)
+	if int64(len(partURLs)) != expectedPartCount {
+		return nil, fmt.Errorf("part_urls count (%d) does not match expected (%d) for file size %d and part size %d", len(partURLs), expectedPartCount, fileSize, partSize)
 	}
 
 	type partResult struct {
@@ -370,7 +369,7 @@ func uploadAllParts(filePath string, fileSize int64, partSize int64, partURLs []
 		err        error
 	}
 
-	results := make(chan partResult, partCount)
+	results := make(chan partResult, len(partURLs))
 	sem := make(chan struct{}, concurrency)
 
 	var wg sync.WaitGroup
@@ -398,7 +397,7 @@ func uploadAllParts(filePath string, fileSize int64, partSize int64, partURLs []
 		close(results)
 	}()
 
-	parts := make([]UploadedPart, 0, partCount)
+	parts := make([]UploadedPart, 0, len(partURLs))
 	var errs []string
 	for result := range results {
 		if result.err != nil {
