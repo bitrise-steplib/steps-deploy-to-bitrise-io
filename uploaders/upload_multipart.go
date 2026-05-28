@@ -68,6 +68,11 @@ func (u *Uploader) uploadMultipart(buildURL, token string, artifact ArtifactArgs
 			Size:     artifact.FileSize,
 			Duration: time.Since(start),
 			Hostname: extractHost(task.PartURLs[0]),
+			Multipart: &MultipartTransferDetails{
+				PartCount:   len(task.PartURLs),
+				PartSize:    task.PartSize,
+				Concurrency: u.multipartConcurrency,
+			},
 		}
 		u.tracker.logFileTransfer(transferType, details, uploadErr, item.ArchiveAsArtifact, item.IsIntermediateFile())
 
