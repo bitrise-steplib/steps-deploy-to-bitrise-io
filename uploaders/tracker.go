@@ -39,6 +39,11 @@ func (t *tracker) logFileTransfer(transferType TransferType, details TransferDet
 	if err != nil {
 		properties["error"] = err.Error()
 	}
+	if details.Multipart != nil {
+		properties["part_count"] = details.Multipart.PartCount
+		properties["part_size_bytes"] = details.Multipart.PartSize
+		properties["concurrency"] = details.Multipart.Concurrency
+	}
 
 	var eventName string
 	switch transferType {

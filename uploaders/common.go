@@ -32,9 +32,16 @@ type ArtifactArgs struct {
 }
 
 type TransferDetails struct {
-	Size     int64
-	Duration time.Duration
-	Hostname string
+	Size      int64
+	Duration  time.Duration
+	Hostname  string
+	Multipart *MultipartTransferDetails
+}
+
+type MultipartTransferDetails struct {
+	PartCount   int
+	PartSize    int64
+	Concurrency int
 }
 
 func printableAppInfo(appInfo interface{}) string {
