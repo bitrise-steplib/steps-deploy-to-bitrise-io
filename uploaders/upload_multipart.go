@@ -464,7 +464,10 @@ func uploadPart(partURL, filePath string, offset, size int64, partNumber int, lo
 		// safe for concurrent use since each goroutine opens its own file descriptor.
 		section := io.NewSectionReader(file, offset, size)
 
-		req, err := http.NewRequest(http.MethodPut, partURL, section)
+		// Hash the part as it streams to the server (no extra read), so the
+		// returned ETag can be validated against it below.
+		hasher := md5.New() //nolint:gosec // S3 ETag algorithm; not used for security
+		req, err := http.NewRequest(http.MethodPut, partURL, io.TeeReader(section, hasher))
 		if err != nil {
 			return fmt.Errorf("failed to create request: %s", err)
 		}
@@ -499,10 +502,26 @@ func uploadPart(partURL, filePath string, offset, size int64, partNumber int, lo
 			return fmt.Errorf("part %d: response missing ETag header", partNumber)
 		}
 
+		// Validate the part against its locally computed md5. Warn only: an S3
+		// part ETag equals the md5 only for unencrypted / SSE-S3 objects.
+		computed := hex.EncodeToString(hasher.Sum(nil))
+		if remote := strings.Trim(etag, `"`); isMD5Hex(remote) && remote != computed {
+			logger.Warnf("Part %d ETag mismatch: computed md5 %s from local bytes, but the backend reported %s. The part may have been altered in transit.",
+				partNumber, computed, remote)
+		}
+
 		return nil
 	})
 
 	return etag, err
+}
+
+// isMD5Hex reports whether s is a hex-encoded md5 digest (16 bytes), i.e. the
+// shape of a plain S3 part ETag. Used to skip validation when the backend
+// returns a non-md5 ETag (e.g. SSE-KMS/SSE-C).
+func isMD5Hex(s string) bool {
+	b, err := hex.DecodeString(s)
+	return err == nil && len(b) == 16
 }
 
 // uploadAllParts uploads the file in partSize-byte chunks, one per partURL, up to
