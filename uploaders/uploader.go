@@ -1,7 +1,7 @@
 package uploaders
 
 import (
-	"crypto/sha256"
+	"crypto/md5" //nolint:gosec // file content hash for logging/validation, not security
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -49,7 +49,7 @@ func (u *Uploader) Wait() {
 }
 
 func (u *Uploader) upload(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, item *deployment.DeployableItem, buildArtifactMeta *AppDeploymentMetaData) ([]ArtifactURLs, error) {
-	u.logFileHash(artifact, item)
+	u.logFileHash(artifact)
 
 	if u.useMultipartUpload {
 		return u.uploadMultipart(buildURL, token, artifact, artifactType, contentType, item, buildArtifactMeta)
@@ -57,18 +57,21 @@ func (u *Uploader) upload(buildURL, token string, artifact ArtifactArgs, artifac
 	return u.uploadSingle(buildURL, token, artifact, artifactType, contentType, item, buildArtifactMeta)
 }
 
-// logFileHash computes and logs the SHA256 of the file being uploaded. It also
+// logFileHash computes and logs the MD5 of the whole file being uploaded. This
+// is the hash of the entire file regardless of upload mode — for a single-part
+// upload it equals the object ETag, while for a multipart upload it differs
+// from the composite ETag (which is a hash of the per-part hashes). It also
 // verifies that the number of bytes readable from the file matches the size
 // reported by os.Stat (artifact.FileSize) — the value sent to the backend as
 // file_size_bytes and used as the upload Content-Length. A mismatch means the
 // file changed between sizing and upload, which would corrupt the artifact.
-func (u *Uploader) logFileHash(artifact ArtifactArgs, item *deployment.DeployableItem) {
-	hash, size, err := u.sha256OfFile(artifact.Path)
+func (u *Uploader) logFileHash(artifact ArtifactArgs) {
+	hash, size, err := u.md5OfFile(artifact.Path)
 	if err != nil {
-		u.logger.Warnf("Failed to compute SHA256 of %s: %s", artifact.Path, err)
+		u.logger.Warnf("Failed to compute MD5 of %s: %s", artifact.Path, err)
 		return
 	}
-	u.logger.Printf("SHA256: %s", hash)
+	u.logger.Printf("MD5: %s", hash)
 
 	if size != artifact.FileSize {
 		u.logger.Warnf("File size mismatch for %s: reported %d bytes, but %d bytes are uploadable. The file changed during deployment.",
@@ -76,9 +79,9 @@ func (u *Uploader) logFileHash(artifact ArtifactArgs, item *deployment.Deployabl
 	}
 }
 
-// sha256OfFile streams the file once, returning both its SHA256 and the number
-// of bytes read.
-func (u *Uploader) sha256OfFile(path string) (string, int64, error) {
+// md5OfFile streams the file once, returning both its MD5 and the number of
+// bytes read.
+func (u *Uploader) md5OfFile(path string) (string, int64, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return "", 0, fmt.Errorf("open file: %w", err)
@@ -89,7 +92,7 @@ func (u *Uploader) sha256OfFile(path string) (string, int64, error) {
 		}
 	}()
 
-	hasher := sha256.New()
+	hasher := md5.New() //nolint:gosec // file content hash for logging/validation, not security
 	size, err := io.Copy(hasher, file)
 	if err != nil {
 		return "", 0, fmt.Errorf("read file: %w", err)
