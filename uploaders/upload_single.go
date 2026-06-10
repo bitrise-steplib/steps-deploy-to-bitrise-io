@@ -62,6 +62,7 @@ func (u *Uploader) uploadSingle(buildURL, token string, artifact ArtifactArgs, a
 
 		if details.ETag != "" {
 			u.logger.Printf("ETag: %s", details.ETag)
+			u.validateETag(artifact.Path, 0, details.ETag)
 		}
 
 		urls, err := finishArtifact(buildURL, token, task.Identifier(), buildArtifactMeta)
