@@ -35,6 +35,7 @@ type TransferDetails struct {
 	Size      int64
 	Duration  time.Duration
 	Hostname  string
+	ETag      string
 	Multipart *MultipartTransferDetails
 }
 

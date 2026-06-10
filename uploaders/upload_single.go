@@ -60,6 +60,10 @@ func (u *Uploader) uploadSingle(buildURL, token string, artifact ArtifactArgs, a
 			return nil, fmt.Errorf("failed to upload artifact (%s): %w", artifact.Path, uploadErr)
 		}
 
+		if details.ETag != "" {
+			u.logger.Printf("ETag: %s", details.ETag)
+		}
+
 		urls, err := finishArtifact(buildURL, token, task.Identifier(), buildArtifactMeta)
 		if err != nil {
 			return nil, fmt.Errorf("failed to finish artifact upload (%s): %w", artifact.Path, err)
@@ -179,6 +183,7 @@ func UploadArtifact(uploadURL string, artifact ArtifactArgs, contentType string)
 
 	start := time.Now()
 
+	var etag string
 	err := retry.Times(3).Wait(5).Try(func(attempt uint) error {
 		file, err := os.Open(artifact.Path)
 		if err != nil {
@@ -232,6 +237,8 @@ func UploadArtifact(uploadURL string, artifact ArtifactArgs, contentType string)
 			return fmt.Errorf("non success status code: %d, headers: %s, body: %s", resp.StatusCode, resp.Header, body)
 		}
 
+		etag = resp.Header.Get("ETag")
+
 		return nil
 	})
 
@@ -239,6 +246,7 @@ func UploadArtifact(uploadURL string, artifact ArtifactArgs, contentType string)
 		Size:     artifact.FileSize,
 		Duration: time.Since(start),
 		Hostname: extractHost(uploadURL),
+		ETag:     etag,
 	}
 
 	return details, err

@@ -1,6 +1,8 @@
 package uploaders
 
 import (
+	"crypto/md5" //nolint:gosec // required by S3's multipart ETag algorithm
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -83,6 +86,12 @@ func (u *Uploader) uploadMultipart(buildURL, token string, artifact ArtifactArgs
 			return nil, fmt.Errorf("failed to upload artifact parts (%s): %w", artifact.Path, uploadErr)
 		}
 
+		if etag, etagErr := multipartETag(parts); etagErr != nil {
+			u.logger.Warnf("Failed to compute multipart ETag: %s", etagErr)
+		} else {
+			u.logger.Printf("ETag: %s", etag)
+		}
+
 		urls, err := finishMultipartArtifact(buildURL, token, task.Identifier(), true, parts, buildArtifactMeta, u.logger)
 		if err != nil {
 			return nil, fmt.Errorf("failed to finish artifact upload (%s): %w", artifact.Path, err)
@@ -94,6 +103,28 @@ func (u *Uploader) uploadMultipart(buildURL, token string, artifact ArtifactArgs
 	}
 
 	return artifactURLs, nil
+}
+
+// multipartETag reconstructs the final S3 multipart object ETag from the
+// per-part ETags, so it can be validated against the storage backend later.
+// S3 computes it as md5(concat of each part's binary md5 digest), hex-encoded
+// and suffixed with "-<partCount>". Each part ETag is that part's hex md5.
+func multipartETag(parts []UploadedPart) (string, error) {
+	sorted := make([]UploadedPart, len(parts))
+	copy(sorted, parts)
+	sort.Slice(sorted, func(i, j int) bool { return sorted[i].PartNumber < sorted[j].PartNumber })
+
+	var digests []byte
+	for _, part := range sorted {
+		decoded, err := hex.DecodeString(strings.Trim(part.ETag, `"`))
+		if err != nil {
+			return "", fmt.Errorf("part %d ETag %q is not a hex digest: %w", part.PartNumber, part.ETag, err)
+		}
+		digests = append(digests, decoded...)
+	}
+
+	sum := md5.Sum(digests) //nolint:gosec // S3's ETag algorithm mandates md5; not used for security
+	return fmt.Sprintf("%s-%d", hex.EncodeToString(sum[:]), len(sorted)), nil
 }
 
 func createMultipartArtifact(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, archiveAsArtifact bool, pipelineMeta *deployment.IntermediateFileMetaData, logger logV2.Logger) ([]MultipartUploadTask, error) {
