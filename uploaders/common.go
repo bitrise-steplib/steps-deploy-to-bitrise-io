@@ -32,11 +32,16 @@ type ArtifactArgs struct {
 }
 
 type TransferDetails struct {
-	Size      int64
-	Duration  time.Duration
-	Hostname  string
-	ETag      string
-	Multipart *MultipartTransferDetails
+	Size     int64
+	Duration time.Duration
+	Hostname string
+	// MD5 is the hex-encoded MD5 of the whole uploaded file.
+	MD5 string
+	// ETag is the object ETag the backend reported (quotes stripped).
+	ETag string
+	// ChecksumStatus is the outcome of validating MD5/ETag.
+	ChecksumStatus string
+	Multipart      *MultipartTransferDetails
 }
 
 type MultipartTransferDetails struct {

@@ -77,6 +77,18 @@ func (u *Uploader) uploadMultipart(buildURL, token string, artifact ArtifactArgs
 				Concurrency: u.multipartConcurrency,
 			},
 		}
+
+		if uploadErr == nil {
+			// finish_multipart_upload doesn't return the object ETag, so reconstruct it
+			// from the per-part ETags, then validate it against the local file.
+			if etag, etagErr := reconstructMultipartETag(parts); etagErr != nil {
+				u.logger.Warnf("Failed to reconstruct multipart ETag: %s", etagErr)
+			} else {
+				details.ETag = etag
+			}
+			u.verifyAndLogChecksum(artifact.Path, task.PartSize, &details)
+		}
+
 		u.tracker.logFileTransfer(transferType, details, uploadErr, item.ArchiveAsArtifact, item.IsIntermediateFile())
 
 		if uploadErr != nil {
@@ -84,13 +96,6 @@ func (u *Uploader) uploadMultipart(buildURL, token string, artifact ArtifactArgs
 				u.logger.Warnf("Failed to abort multipart upload for artifact %d: %s", task.ID, abortErr)
 			}
 			return nil, fmt.Errorf("failed to upload artifact parts (%s): %w", artifact.Path, uploadErr)
-		}
-
-		if etag, etagErr := multipartETag(parts); etagErr != nil {
-			u.logger.Warnf("Failed to compute multipart ETag: %s", etagErr)
-		} else {
-			u.logger.Printf("ETag: %s", etag)
-			u.validateETag(artifact.Path, task.PartSize, etag)
 		}
 
 		urls, err := finishMultipartArtifact(buildURL, token, task.Identifier(), true, parts, buildArtifactMeta, u.logger)
@@ -106,11 +111,11 @@ func (u *Uploader) uploadMultipart(buildURL, token string, artifact ArtifactArgs
 	return artifactURLs, nil
 }
 
-// multipartETag reconstructs the final S3 multipart object ETag from the
-// per-part ETags, so it can be validated against the storage backend later.
-// S3 computes it as md5(concat of each part's binary md5 digest), hex-encoded
-// and suffixed with "-<partCount>". Each part ETag is that part's hex md5.
-func multipartETag(parts []UploadedPart) (string, error) {
+// reconstructMultipartETag rebuilds the object's multipart ETag from the per-part ETags returned
+// during upload, since finish_multipart_upload does not return it. S3/R2 compute it as md5(concat
+// of each part's binary md5 digest), hex-encoded and suffixed with "-<partCount>"; each part ETag
+// is that part's hex md5.
+func reconstructMultipartETag(parts []UploadedPart) (string, error) {
 	sorted := make([]UploadedPart, len(parts))
 	copy(sorted, parts)
 	sort.Slice(sorted, func(i, j int) bool { return sorted[i].PartNumber < sorted[j].PartNumber })
@@ -125,75 +130,7 @@ func multipartETag(parts []UploadedPart) (string, error) {
 	}
 
 	sum := md5.Sum(digests) //nolint:gosec // S3's ETag algorithm mandates md5; not used for security
-	return fmt.Sprintf("%s-%d", hex.EncodeToString(sum[:]), len(sorted)), nil
-}
-
-// localETag computes the ETag the storage backend is expected to assign,
-// directly from the file on disk, so it can be compared against the ETag
-// returned after upload. With partSize <= 0 it returns the single-part ETag
-// (md5 of the whole file); otherwise the S3 multipart ETag for that part size.
-//
-// NOTE: an S3 ETag equals the md5 only for objects stored unencrypted or with
-// SSE-S3 (AES256). SSE-KMS / SSE-C objects use a different ETag, so a mismatch
-// there is expected and does not imply corruption.
-func localETag(path string, partSize int64) (string, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return "", fmt.Errorf("open file: %w", err)
-	}
-	defer func() { _ = file.Close() }()
-
-	if partSize <= 0 {
-		hasher := md5.New() //nolint:gosec // S3 ETag algorithm; not used for security
-		if _, err := io.Copy(hasher, file); err != nil {
-			return "", fmt.Errorf("read file: %w", err)
-		}
-		return hex.EncodeToString(hasher.Sum(nil)), nil
-	}
-
-	var digests []byte
-	var count int
-	for {
-		hasher := md5.New() //nolint:gosec // S3 ETag algorithm; not used for security
-		n, err := io.CopyN(hasher, file, partSize)
-		if n > 0 {
-			digests = append(digests, hasher.Sum(nil)...)
-			count++
-		}
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return "", fmt.Errorf("read file: %w", err)
-		}
-	}
-
-	sum := md5.Sum(digests) //nolint:gosec // S3 ETag algorithm; not used for security
-	return fmt.Sprintf("%s-%d", hex.EncodeToString(sum[:]), count), nil
-}
-
-// validateETag recomputes the expected ETag from the local file and compares it
-// against the ETag the backend reported, logging the outcome. A mismatch is a
-// warning (not a hard failure) since some storage configurations legitimately
-// use non-md5 ETags. partSize <= 0 selects the single-part calculation.
-func (u *Uploader) validateETag(path string, partSize int64, actualETag string) {
-	actual := strings.Trim(actualETag, `"`)
-	if actual == "" {
-		return
-	}
-
-	expected, err := localETag(path, partSize)
-	if err != nil {
-		u.logger.Warnf("Could not validate ETag for %s: %s", path, err)
-		return
-	}
-
-	if expected == actual {
-		u.logger.Donef("ETag validated against local file: %s", actual)
-	} else {
-		u.logger.Warnf("ETag mismatch for %s: computed %s from the local file, but the backend reported %s. The uploaded bytes may differ from the local file (or the object is stored with SSE-KMS/SSE-C).",
-			path, expected, actual)
-	}
+	return fmt.Sprintf("%x-%d", sum, len(sorted)), nil
 }
 
 func createMultipartArtifact(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, archiveAsArtifact bool, pipelineMeta *deployment.IntermediateFileMetaData, logger logV2.Logger) ([]MultipartUploadTask, error) {
@@ -464,10 +401,7 @@ func uploadPart(partURL, filePath string, offset, size int64, partNumber int, lo
 		// safe for concurrent use since each goroutine opens its own file descriptor.
 		section := io.NewSectionReader(file, offset, size)
 
-		// Hash the part as it streams to the server (no extra read), so the
-		// returned ETag can be validated against it below.
-		hasher := md5.New() //nolint:gosec // S3 ETag algorithm; not used for security
-		req, err := http.NewRequest(http.MethodPut, partURL, io.TeeReader(section, hasher))
+		req, err := http.NewRequest(http.MethodPut, partURL, section)
 		if err != nil {
 			return fmt.Errorf("failed to create request: %s", err)
 		}
@@ -502,26 +436,10 @@ func uploadPart(partURL, filePath string, offset, size int64, partNumber int, lo
 			return fmt.Errorf("part %d: response missing ETag header", partNumber)
 		}
 
-		// Validate the part against its locally computed md5. Warn only: an S3
-		// part ETag equals the md5 only for unencrypted / SSE-S3 objects.
-		computed := hex.EncodeToString(hasher.Sum(nil))
-		if remote := strings.Trim(etag, `"`); isMD5Hex(remote) && remote != computed {
-			logger.Warnf("Part %d ETag mismatch: computed md5 %s from local bytes, but the backend reported %s. The part may have been altered in transit.",
-				partNumber, computed, remote)
-		}
-
 		return nil
 	})
 
 	return etag, err
-}
-
-// isMD5Hex reports whether s is a hex-encoded md5 digest (16 bytes), i.e. the
-// shape of a plain S3 part ETag. Used to skip validation when the backend
-// returns a non-md5 ETag (e.g. SSE-KMS/SSE-C).
-func isMD5Hex(s string) bool {
-	b, err := hex.DecodeString(s)
-	return err == nil && len(b) == 16
 }
 
 // uploadAllParts uploads the file in partSize-byte chunks, one per partURL, up to

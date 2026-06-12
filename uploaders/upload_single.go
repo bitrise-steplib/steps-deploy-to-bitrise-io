@@ -50,6 +50,11 @@ func (u *Uploader) uploadSingle(buildURL, token string, artifact ArtifactArgs, a
 	for _, task := range tasks {
 		details, uploadErr := UploadArtifact(task.URL, artifact, contentType)
 
+		if uploadErr == nil {
+			// Single-shot: the object ETag is the whole-file MD5 (partSize 0).
+			u.verifyAndLogChecksum(artifact.Path, 0, &details)
+		}
+
 		transferType := Artifact
 		if task.IsIntermediate {
 			transferType = Intermediate
@@ -58,11 +63,6 @@ func (u *Uploader) uploadSingle(buildURL, token string, artifact ArtifactArgs, a
 
 		if uploadErr != nil {
 			return nil, fmt.Errorf("failed to upload artifact (%s): %w", artifact.Path, uploadErr)
-		}
-
-		if details.ETag != "" {
-			u.logger.Printf("ETag: %s", details.ETag)
-			u.validateETag(artifact.Path, 0, details.ETag)
 		}
 
 		urls, err := finishArtifact(buildURL, token, task.Identifier(), buildArtifactMeta)
@@ -238,7 +238,7 @@ func UploadArtifact(uploadURL string, artifact ArtifactArgs, contentType string)
 			return fmt.Errorf("non success status code: %d, headers: %s, body: %s", resp.StatusCode, resp.Header, body)
 		}
 
-		etag = resp.Header.Get("ETag")
+		etag = strings.Trim(resp.Header.Get("ETag"), `"`)
 
 		return nil
 	})

@@ -39,6 +39,15 @@ func (t *tracker) logFileTransfer(transferType TransferType, details TransferDet
 	if err != nil {
 		properties["error"] = err.Error()
 	}
+	if details.MD5 != "" {
+		properties["md5"] = details.MD5
+	}
+	if details.ETag != "" {
+		properties["etag"] = details.ETag
+	}
+	if details.ChecksumStatus != "" {
+		properties["checksum_status"] = details.ChecksumStatus
+	}
 	if details.Multipart != nil {
 		properties["part_count"] = details.Multipart.PartCount
 		properties["part_size_bytes"] = details.Multipart.PartSize
