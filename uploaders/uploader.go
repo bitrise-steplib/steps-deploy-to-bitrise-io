@@ -43,7 +43,11 @@ func (u *Uploader) Wait() {
 }
 
 func (u *Uploader) upload(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, item *deployment.DeployableItem, buildArtifactMeta *AppDeploymentMetaData) ([]ArtifactURLs, error) {
-	if u.useMultipartUpload {
+	// Empty files always go through the single-shot path: a multipart upload
+	// needs at least one part with content, so a zero-byte file has no valid
+	// part layout (the backend still issues one part URL, which the part-count
+	// check would reject).
+	if u.useMultipartUpload && artifact.FileSize > 0 {
 		return u.uploadMultipart(buildURL, token, artifact, artifactType, contentType, item, buildArtifactMeta)
 	}
 	return u.uploadSingle(buildURL, token, artifact, artifactType, contentType, item, buildArtifactMeta)
