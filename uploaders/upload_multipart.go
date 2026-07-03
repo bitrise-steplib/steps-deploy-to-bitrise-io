@@ -175,11 +175,12 @@ func createMultipartArtifact(buildURL, token string, artifact ArtifactArgs, arti
 				ErrorMessage string `json:"error_msg"`
 			}
 			var createResponse errorResponse
-			if unmarshalErr := json.Unmarshal(body, &createResponse); unmarshalErr != nil || createResponse.ErrorMessage == "" {
-				return fmt.Errorf("non success status code: %d, url: %s, body: %s", response.StatusCode, uri, body)
+			errMsg := fmt.Sprintf("non success status code: %d, url: %s, body: %s", response.StatusCode, uri, body)
+			if unmarshalErr := json.Unmarshal(body, &createResponse); unmarshalErr == nil && createResponse.ErrorMessage != "" {
+				errMsg = createResponse.ErrorMessage
 			}
 
-			return errors.New(createResponse.ErrorMessage)
+			return errors.New(errMsg)
 		}
 
 		if err := json.Unmarshal(body, &uploadTasks); err != nil {
