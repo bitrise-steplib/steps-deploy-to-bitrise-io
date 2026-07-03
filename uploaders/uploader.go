@@ -20,6 +20,7 @@ import (
 
 type Uploader struct {
 	logger               log.Logger
+	httpClient           *HTTPClient
 	fileManager          fileutil.FileManager
 	androidParser        *androidparser.Parser
 	iosParser            *iosparser.Parser
@@ -38,6 +39,7 @@ func New(
 ) *Uploader {
 	return &Uploader{
 		logger:               logger,
+		httpClient:           NewHTTPClient(logger),
 		fileManager:          fileManager,
 		androidParser:        androidParser,
 		iosParser:            iosParser,

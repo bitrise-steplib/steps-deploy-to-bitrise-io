@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -16,11 +15,9 @@ import (
 	"time"
 
 	"github.com/docker/go-units"
+	"github.com/hashicorp/go-retryablehttp"
 
-	"github.com/bitrise-io/go-utils/log"
-	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-io/go-utils/urlutil"
-	logV2 "github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
 
@@ -43,7 +40,7 @@ type UploadedPart struct {
 }
 
 func (u *Uploader) uploadMultipart(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, item *deployment.DeployableItem, buildArtifactMeta *AppDeploymentMetaData) ([]ArtifactURLs, error) {
-	tasks, err := createMultipartArtifact(buildURL, token, artifact, artifactType, contentType, item.ArchiveAsArtifact, item.IntermediateFileMeta, u.logger)
+	tasks, err := createMultipartArtifact(buildURL, token, artifact, artifactType, contentType, item.ArchiveAsArtifact, item.IntermediateFileMeta, u.httpClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create artifact (%s): %w", artifact.Path, err)
 	}
@@ -58,7 +55,7 @@ func (u *Uploader) uploadMultipart(buildURL, token string, artifact ArtifactArgs
 	var artifactURLs []ArtifactURLs
 	for _, task := range tasks {
 		start := time.Now()
-		parts, uploadErr := uploadAllParts(artifact.Path, artifact.FileSize, task.PartSize, task.PartURLs, u.multipartConcurrency, u.logger)
+		parts, uploadErr := uploadAllParts(artifact.Path, artifact.FileSize, task.PartSize, task.PartURLs, u.multipartConcurrency, u.httpClient)
 
 		transferType := Artifact
 		if task.IsIntermediate {
@@ -77,13 +74,13 @@ func (u *Uploader) uploadMultipart(buildURL, token string, artifact ArtifactArgs
 		u.tracker.logFileTransfer(transferType, details, uploadErr, item.ArchiveAsArtifact, item.IsIntermediateFile())
 
 		if uploadErr != nil {
-			if _, abortErr := finishMultipartArtifact(buildURL, token, task.Identifier(), false, nil, nil, u.logger); abortErr != nil {
+			if _, abortErr := finishMultipartArtifact(buildURL, token, task.Identifier(), false, nil, nil, u.httpClient); abortErr != nil {
 				u.logger.Warnf("Failed to abort multipart upload for artifact %d: %s", task.ID, abortErr)
 			}
 			return nil, fmt.Errorf("failed to upload artifact parts (%s): %w", artifact.Path, uploadErr)
 		}
 
-		urls, err := finishMultipartArtifact(buildURL, token, task.Identifier(), true, parts, buildArtifactMeta, u.logger)
+		urls, err := finishMultipartArtifact(buildURL, token, task.Identifier(), true, parts, buildArtifactMeta, u.httpClient)
 		if err != nil {
 			return nil, fmt.Errorf("failed to finish artifact upload (%s): %w", artifact.Path, err)
 		}
@@ -96,10 +93,10 @@ func (u *Uploader) uploadMultipart(buildURL, token string, artifact ArtifactArgs
 	return artifactURLs, nil
 }
 
-func createMultipartArtifact(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, archiveAsArtifact bool, pipelineMeta *deployment.IntermediateFileMetaData, logger logV2.Logger) ([]MultipartUploadTask, error) {
+func createMultipartArtifact(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, archiveAsArtifact bool, pipelineMeta *deployment.IntermediateFileMetaData, httpClient *HTTPClient) ([]MultipartUploadTask, error) {
 	artifactName := filepath.Base(artifact.Path)
 
-	log.Printf("file size: %s", units.BytesSize(float64(artifact.FileSize)))
+	httpClient.logger.Printf("file size: %s", units.BytesSize(float64(artifact.FileSize)))
 
 	if strings.TrimSpace(token) == "" {
 		return nil, fmt.Errorf("provided API token is empty")
@@ -132,83 +129,40 @@ func createMultipartArtifact(buildURL, token string, artifact ArtifactArgs, arti
 		return nil, fmt.Errorf("failed to generate create artifact url, error: %s", err)
 	}
 
-	var response *http.Response
-	var uploadTasks []MultipartUploadTask
-
-	if err := retry.Times(3).Wait(5 * time.Second).Try(func(attempt uint) error {
-		if attempt > 0 {
-			log.Warnf("%d attempt failed", attempt)
+	body, err := httpClient.doFormRequest(http.MethodPost, uri, data)
+	if err != nil {
+		type errorResponse struct {
+			ErrorMessage string `json:"error_msg"`
 		}
-
-		req, err := http.NewRequest(http.MethodPost, uri, strings.NewReader(data.Encode()))
-		if err != nil {
-			return fmt.Errorf("failed to create request: %s", err)
+		var createResponse errorResponse
+		if unmarshalErr := json.Unmarshal(body, &createResponse); unmarshalErr == nil && createResponse.ErrorMessage != "" {
+			return nil, errors.New(createResponse.ErrorMessage)
 		}
-		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-		if dump, dumpErr := httputil.DumpRequestOut(req, true); dumpErr == nil {
-			logger.Debugf("create_multipart_upload request:\n%s", dump)
-		}
-
-		response, err = http.DefaultClient.Do(req)
-		if err != nil {
-			return fmt.Errorf("failed to perform create artifact request (%s), error: %s", uri, err)
-		}
-
-		defer func() {
-			if err := response.Body.Close(); err != nil {
-				log.Errorf("Failed to close reponse body, error: %s", err)
-			}
-		}()
-
-		if dump, dumpErr := httputil.DumpResponse(response, true); dumpErr == nil {
-			logger.Debugf("create_multipart_upload response:\n%s", dump)
-		}
-
-		body, err := io.ReadAll(response.Body)
-		if err != nil {
-			return fmt.Errorf("failed to read create artifact response, error: %s", err)
-		}
-
-		if response.StatusCode != http.StatusOK {
-			type errorResponse struct {
-				ErrorMessage string `json:"error_msg"`
-			}
-			var createResponse errorResponse
-			errMsg := fmt.Sprintf("non success status code: %d, url: %s, body: %s", response.StatusCode, uri, body)
-			if unmarshalErr := json.Unmarshal(body, &createResponse); unmarshalErr == nil && createResponse.ErrorMessage != "" {
-				errMsg = createResponse.ErrorMessage
-			}
-
-			return errors.New(errMsg)
-		}
-
-		if err := json.Unmarshal(body, &uploadTasks); err != nil {
-			return fmt.Errorf("failed to unmarshal response (%s), error: %s", string(body), err)
-		}
-
-		if len(uploadTasks) == 0 {
-			return fmt.Errorf("failed to create artifact on bitrise, error: no upload task received")
-		}
-
-		for _, task := range uploadTasks {
-			if len(task.PartURLs) == 0 {
-				return fmt.Errorf("failed to create artifact on bitrise, error: missing part urls")
-			}
-			if task.ID == 0 {
-				return fmt.Errorf("failed to create artifact on bitrise, error: missing artifact id")
-			}
-		}
-
-		return nil
-	}); err != nil {
 		return nil, err
+	}
+
+	var uploadTasks []MultipartUploadTask
+	if err := json.Unmarshal(body, &uploadTasks); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response (%s), error: %s", string(body), err)
+	}
+
+	if len(uploadTasks) == 0 {
+		return nil, fmt.Errorf("failed to create artifact on bitrise, error: no upload task received")
+	}
+
+	for _, task := range uploadTasks {
+		if len(task.PartURLs) == 0 {
+			return nil, fmt.Errorf("failed to create artifact on bitrise, error: missing part urls")
+		}
+		if task.ID == 0 {
+			return nil, fmt.Errorf("failed to create artifact on bitrise, error: missing artifact id")
+		}
 	}
 
 	return uploadTasks, nil
 }
 
-func finishMultipartArtifact(buildURL, token, artifactID string, success bool, parts []UploadedPart, appDeploymentMeta *AppDeploymentMetaData, logger logV2.Logger) (ArtifactURLs, error) {
+func finishMultipartArtifact(buildURL, token, artifactID string, success bool, parts []UploadedPart, appDeploymentMeta *AppDeploymentMetaData, httpClient *HTTPClient) (ArtifactURLs, error) {
 	data := url.Values{
 		"api_token": {token},
 		"success":   {strconv.FormatBool(success)},
@@ -270,7 +224,16 @@ func finishMultipartArtifact(buildURL, token, artifactID string, success bool, p
 	}
 	encodedBody := data.Encode() + partsEncoded.String()
 
-	var response *http.Response
+	req, err := retryablehttp.NewRequest(http.MethodPost, uri, strings.NewReader(encodedBody))
+	if err != nil {
+		return ArtifactURLs{}, fmt.Errorf("failed to create request (%s): %s", uri, err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	body, err := httpClient.doRequest(req)
+	if err != nil {
+		return ArtifactURLs{}, err
+	}
 
 	type finishArtifactResponse struct {
 		PublicInstallPageURL string   `json:"public_install_page_url"`
@@ -280,55 +243,12 @@ func finishMultipartArtifact(buildURL, token, artifactID string, success bool, p
 	}
 
 	var artifactResponse finishArtifactResponse
-	if err := retry.Times(3).Wait(5 * time.Second).Try(func(attempt uint) error {
-		if attempt > 0 {
-			log.Warnf("%d attempt failed", attempt)
-		}
-
-		req, err := http.NewRequest(http.MethodPost, uri, strings.NewReader(encodedBody))
-		if err != nil {
-			return fmt.Errorf("failed to create request: %s", err)
-		}
-		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-		if dump, dumpErr := httputil.DumpRequestOut(req, true); dumpErr == nil {
-			logger.Debugf("finish_multipart_upload request:\n%s", dump)
-		}
-
-		response, err = http.DefaultClient.Do(req)
-		if err != nil {
-			return fmt.Errorf("failed to perform finish artifact request, error: %s", err)
-		}
-		defer func() {
-			if err := response.Body.Close(); err != nil {
-				log.Errorf("Failed to close reponse body, error: %s", err)
-			}
-		}()
-
-		if dump, dumpErr := httputil.DumpResponse(response, true); dumpErr == nil {
-			logger.Debugf("finish_multipart_upload response:\n%s", dump)
-		}
-
-		body, err := io.ReadAll(response.Body)
-		if err != nil {
-			return fmt.Errorf("failed to read finish artifact response, error: %s", err)
-		}
-
-		if response.StatusCode != http.StatusOK {
-			return fmt.Errorf("failed to create artifact on bitrise, status code: %d, response: %s", response.StatusCode, string(body))
-		}
-
-		if err := json.Unmarshal(body, &artifactResponse); err != nil {
-			return fmt.Errorf("failed to unmarshal response (%s), error: %s", string(body), err)
-		}
-
-		return nil
-	}); err != nil {
-		return ArtifactURLs{}, err
+	if err := json.Unmarshal(body, &artifactResponse); err != nil {
+		return ArtifactURLs{}, fmt.Errorf("failed to unmarshal response (%s), error: %s", string(body), err)
 	}
 
 	if len(artifactResponse.InvalidEmails) > 0 {
-		log.Warnf("Invalid e-mail addresses: %s", strings.Join(artifactResponse.InvalidEmails, ", "))
+		httpClient.logger.Warnf("Invalid e-mail addresses: %s", strings.Join(artifactResponse.InvalidEmails, ", "))
 	}
 
 	return ArtifactURLs{
@@ -341,75 +261,44 @@ func finishMultipartArtifact(buildURL, token, artifactID string, success bool, p
 // uploadPart uploads a single chunk of a file to a presigned S3 part URL.
 // It opens the file independently to allow concurrent calls without seeking conflicts.
 // Returns the ETag header value which must be included in the finish call.
-func uploadPart(partURL, filePath string, offset, size int64, partNumber int, logger logV2.Logger) (string, error) {
-	netClient := &http.Client{Timeout: 10 * time.Minute}
-
-	var etag string
-
-	err := retry.Times(3).Wait(5 * time.Second).Try(func(attempt uint) error {
-		if attempt > 0 {
-			log.Warnf("part %d: attempt %d failed, retrying", partNumber, attempt)
+func uploadPart(partURL, filePath string, offset, size int64, partNumber int, httpClient *HTTPClient) (string, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to open file: %s", err)
+	}
+	defer func() {
+		if err := file.Close(); err != nil {
+			httpClient.logger.Warnf("failed to close file: %s", err)
 		}
+	}()
 
-		file, err := os.Open(filePath)
-		if err != nil {
-			return fmt.Errorf("failed to open file: %s", err)
-		}
-		defer func() {
-			if err := file.Close(); err != nil {
-				log.Warnf("failed to close file: %s", err)
-			}
-		}()
+	// SectionReader provides a bounded, independently seekable view into the file,
+	// safe for concurrent use since each goroutine opens its own file descriptor.
+	section := io.NewSectionReader(file, offset, size)
 
-		// SectionReader provides a bounded, independently seekable view into the file,
-		// safe for concurrent use since each goroutine opens its own file descriptor.
-		section := io.NewSectionReader(file, offset, size)
+	req, err := retryablehttp.NewRequest(http.MethodPut, partURL, section)
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %s", err)
+	}
+	req.ContentLength = size
 
-		req, err := http.NewRequest(http.MethodPut, partURL, section)
-		if err != nil {
-			return fmt.Errorf("failed to create request: %s", err)
-		}
-		req.ContentLength = size
+	resp, _, err := httpClient.doRequestWithResponse(req)
+	if err != nil {
+		return "", fmt.Errorf("part %d: %w", partNumber, err)
+	}
 
-		logger.Debugf("part %d upload: PUT %s (offset=%d size=%d)", partNumber, partURL, offset, size)
+	etag := resp.Header.Get("ETag")
+	if etag == "" {
+		return "", fmt.Errorf("part %d: response missing ETag header", partNumber)
+	}
 
-		resp, err := netClient.Do(req)
-		if err != nil {
-			return fmt.Errorf("failed to upload part %d: %s", partNumber, err)
-		}
-		defer func() {
-			if err := resp.Body.Close(); err != nil {
-				log.Errorf("Failed to close response body, error: %s", err)
-			}
-		}()
-
-		if dump, dumpErr := httputil.DumpResponse(resp, true); dumpErr == nil {
-			logger.Debugf("part %d response:\n%s", partNumber, dump)
-		}
-
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return fmt.Errorf("failed to read response body: %s", err)
-		}
-		if resp.StatusCode != http.StatusOK {
-			return fmt.Errorf("part %d: non-200 status %d: %s", partNumber, resp.StatusCode, body)
-		}
-
-		etag = resp.Header.Get("ETag")
-		if etag == "" {
-			return fmt.Errorf("part %d: response missing ETag header", partNumber)
-		}
-
-		return nil
-	})
-
-	return etag, err
+	return etag, nil
 }
 
 // uploadAllParts uploads the file in partSize-byte chunks, one per partURL, up to
 // concurrency parts at a time. The last part is trimmed to the file's
 // remaining bytes. Returns the ETags required by the finish call.
-func uploadAllParts(filePath string, fileSize int64, partSize int64, partURLs []string, concurrency int, logger logV2.Logger) ([]UploadedPart, error) {
+func uploadAllParts(filePath string, fileSize int64, partSize int64, partURLs []string, concurrency int, httpClient *HTTPClient) ([]UploadedPart, error) {
 	if partSize <= 0 {
 		return nil, fmt.Errorf("invalid part size %d", partSize)
 	}
@@ -442,7 +331,7 @@ func uploadAllParts(filePath string, fileSize int64, partSize int64, partURLs []
 			defer wg.Done()
 			sem <- struct{}{}
 			defer func() { <-sem }()
-			etag, err := uploadPart(url, filePath, offset, size, partNumber, logger)
+			etag, err := uploadPart(url, filePath, offset, size, partNumber, httpClient)
 			results <- partResult{partNumber: partNumber, etag: etag, err: err}
 		}()
 	}

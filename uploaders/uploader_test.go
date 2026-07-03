@@ -17,6 +17,7 @@ func newTestUploader(t *testing.T, useMultipart bool) *Uploader {
 	logger := logV2.NewLogger()
 	return &Uploader{
 		logger:               logger,
+		httpClient:           NewHTTPClient(logger),
 		tracker:              newTracker(env.NewRepository(), logger),
 		useMultipartUpload:   useMultipart,
 		multipartConcurrency: 1,

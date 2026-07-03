@@ -1,11 +1,9 @@
 package uploaders
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -15,9 +13,8 @@ import (
 	"time"
 
 	"github.com/docker/go-units"
+	"github.com/hashicorp/go-retryablehttp"
 
-	"github.com/bitrise-io/go-utils/log"
-	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-io/go-utils/urlutil"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
@@ -34,7 +31,7 @@ func (u UploadTask) Identifier() string {
 }
 
 func (u *Uploader) uploadSingle(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, item *deployment.DeployableItem, buildArtifactMeta *AppDeploymentMetaData) ([]ArtifactURLs, error) {
-	tasks, err := createArtifact(buildURL, token, artifact, artifactType, contentType, item.ArchiveAsArtifact, item.IntermediateFileMeta)
+	tasks, err := createArtifact(buildURL, token, artifact, artifactType, contentType, item.ArchiveAsArtifact, item.IntermediateFileMeta, u.httpClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create artifact (%s): %w", artifact.Path, err)
 	}
@@ -48,7 +45,7 @@ func (u *Uploader) uploadSingle(buildURL, token string, artifact ArtifactArgs, a
 
 	var artifactURLs []ArtifactURLs
 	for _, task := range tasks {
-		details, uploadErr := UploadArtifact(task.URL, artifact, contentType)
+		details, uploadErr := UploadArtifact(task.URL, artifact, contentType, u.httpClient)
 
 		transferType := Artifact
 		if task.IsIntermediate {
@@ -60,7 +57,7 @@ func (u *Uploader) uploadSingle(buildURL, token string, artifact ArtifactArgs, a
 			return nil, fmt.Errorf("failed to upload artifact (%s): %w", artifact.Path, uploadErr)
 		}
 
-		urls, err := finishArtifact(buildURL, token, task.Identifier(), buildArtifactMeta)
+		urls, err := finishArtifact(buildURL, token, task.Identifier(), buildArtifactMeta, u.httpClient)
 		if err != nil {
 			return nil, fmt.Errorf("failed to finish artifact upload (%s): %w", artifact.Path, err)
 		}
@@ -73,11 +70,11 @@ func (u *Uploader) uploadSingle(buildURL, token string, artifact ArtifactArgs, a
 	return artifactURLs, nil
 }
 
-func createArtifact(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, archiveAsArtifact bool, pipelineMeta *deployment.IntermediateFileMetaData) ([]UploadTask, error) {
+func createArtifact(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, archiveAsArtifact bool, pipelineMeta *deployment.IntermediateFileMetaData, httpClient *HTTPClient) ([]UploadTask, error) {
 	// create form data
 	artifactName := filepath.Base(artifact.Path)
 
-	log.Printf("file size: %s", units.BytesSize(float64(artifact.FileSize)))
+	httpClient.logger.Printf("file size: %s", units.BytesSize(float64(artifact.FileSize)))
 
 	if strings.TrimSpace(token) == "" {
 		return nil, fmt.Errorf("provided API token is empty")
@@ -109,132 +106,73 @@ func createArtifact(buildURL, token string, artifact ArtifactArgs, artifactType,
 		return nil, fmt.Errorf("failed to generate create artifact url, error: %s", err)
 	}
 
-	var response *http.Response
-	var uploadTasks []UploadTask
-
-	if err := retry.Times(3).Wait(5 * time.Second).Try(func(attempt uint) error {
-		if attempt > 0 {
-			log.Warnf("%d attempt failed", attempt)
+	body, err := httpClient.doFormRequest(http.MethodPost, uri, data)
+	if err != nil {
+		type errorResponse struct {
+			ErrorMessage string `json:"error_msg"`
 		}
-		response, err = http.PostForm(uri, data)
-		if err != nil {
-			return fmt.Errorf("failed to perform create artifact request (%s), error: %s", uri, err)
+		var createResponse errorResponse
+		if unmarshalErr := json.Unmarshal(body, &createResponse); unmarshalErr == nil && createResponse.ErrorMessage != "" {
+			return nil, errors.New(createResponse.ErrorMessage)
 		}
-
-		defer func() {
-			if err := response.Body.Close(); err != nil {
-				log.Errorf("Failed to close reponse body, error: %s", err)
-			}
-		}()
-
-		body, err := io.ReadAll(response.Body)
-		if err != nil {
-			return fmt.Errorf("failed to read create artifact response, error: %s", err)
-		}
-		if response.StatusCode != http.StatusOK {
-			type errorResponse struct {
-				ErrorMessage string `json:"error_msg"`
-			}
-			var createResponse errorResponse
-			errMsg := fmt.Sprintf("non success status code: %d, url: %s, body: %s", response.StatusCode, uri, body)
-			if unmarshalErr := json.Unmarshal(body, &createResponse); unmarshalErr == nil && createResponse.ErrorMessage != "" {
-				errMsg = createResponse.ErrorMessage
-			}
-
-			return errors.New(errMsg)
-		}
-
-		if err := json.Unmarshal(body, &uploadTasks); err != nil {
-			return fmt.Errorf("failed to unmarshal response (%s), error: %s", string(body), err)
-		}
-
-		if len(uploadTasks) == 0 {
-			return fmt.Errorf("failed to create artifact on bitrise, error: no upload task received")
-		}
-
-		for _, task := range uploadTasks {
-			if task.ErrorMessage != "" {
-				return fmt.Errorf("failed to create artifact on bitrise, error message: %s", task.ErrorMessage)
-			}
-
-			if task.URL == "" {
-				return fmt.Errorf("failed to create artifact on bitrise, error: missing upload url")
-			}
-			if task.ID == 0 {
-				return fmt.Errorf("failed to create artifact on bitrise, error: missing artifact id")
-			}
-		}
-
-		return nil
-	}); err != nil {
 		return nil, err
+	}
+
+	var uploadTasks []UploadTask
+	if err := json.Unmarshal(body, &uploadTasks); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response (%s), error: %s", string(body), err)
+	}
+
+	if len(uploadTasks) == 0 {
+		return nil, fmt.Errorf("failed to create artifact on bitrise, error: no upload task received")
+	}
+
+	for _, task := range uploadTasks {
+		if task.ErrorMessage != "" {
+			return nil, fmt.Errorf("failed to create artifact on bitrise, error message: %s", task.ErrorMessage)
+		}
+
+		if task.URL == "" {
+			return nil, fmt.Errorf("failed to create artifact on bitrise, error: missing upload url")
+		}
+		if task.ID == 0 {
+			return nil, fmt.Errorf("failed to create artifact on bitrise, error: missing artifact id")
+		}
 	}
 
 	return uploadTasks, nil
 }
 
-func UploadArtifact(uploadURL string, artifact ArtifactArgs, contentType string) (TransferDetails, error) {
-	netClient := &http.Client{
-		Timeout: 10 * time.Minute,
-	}
-
+func UploadArtifact(uploadURL string, artifact ArtifactArgs, contentType string, httpClient *HTTPClient) (TransferDetails, error) {
 	start := time.Now()
 
-	err := retry.Times(3).Wait(5).Try(func(attempt uint) error {
+	// Initializes request body to nil to send a Content-Length of 0: https://github.com/golang/go/issues/20257#issuecomment-299509391
+	var rawBody any
+	if artifact.FileSize > 0 {
 		file, err := os.Open(artifact.Path)
 		if err != nil {
-			return fmt.Errorf("failed to open artifact, error: %s", err)
+			return TransferDetails{}, fmt.Errorf("failed to open artifact, error: %s", err)
 		}
 		defer func() {
 			if err := file.Close(); err != nil {
-				log.Warnf("failed to close file, error: %s", err)
+				httpClient.logger.Warnf("failed to close file, error: %s", err)
 			}
 		}()
+		rawBody = file
+	}
 
-		// Initializes request body to nil to send a Content-Length of 0: https://github.com/golang/go/issues/20257#issuecomment-299509391
-		var reqBody io.Reader
-		if artifact.FileSize > 0 {
-			reqBody = io.NopCloser(file)
-		}
+	req, err := retryablehttp.NewRequest(http.MethodPut, uploadURL, rawBody)
+	if err != nil {
+		return TransferDetails{}, fmt.Errorf("failed to create request, error: %s", err)
+	}
 
-		request, err := http.NewRequest(http.MethodPut, uploadURL, reqBody)
-		if err != nil {
-			return fmt.Errorf("failed to create request, error: %s", err)
-		}
+	if contentType != "" {
+		req.Header.Add("Content-Type", contentType)
+	}
+	req.Header.Add("X-Upload-Content-Length", strconv.FormatInt(artifact.FileSize, 10)) // header used by Google Cloud Storage signed URLs
+	req.ContentLength = artifact.FileSize
 
-		if contentType != "" {
-			request.Header.Add("Content-Type", contentType)
-		}
-
-		request.Header.Add("X-Upload-Content-Length", strconv.FormatInt(artifact.FileSize, 10)) // header used by Google Cloud Storage signed URLs
-		request.ContentLength = artifact.FileSize
-
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
-		defer cancel()
-		request = request.WithContext(ctx)
-
-		resp, err := netClient.Do(request)
-		if err != nil {
-			return fmt.Errorf("failed to upload artifact, error: %s", err)
-		}
-
-		defer func() {
-			if err := resp.Body.Close(); err != nil {
-				log.Errorf("Failed to close response body, error: %s", err)
-			}
-		}()
-
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return fmt.Errorf("failed to read response body, error: %s", err)
-		}
-
-		if resp.StatusCode != http.StatusOK {
-			return fmt.Errorf("non success status code: %d, headers: %s, body: %s", resp.StatusCode, resp.Header, body)
-		}
-
-		return nil
-	})
+	_, err = httpClient.doRequest(req)
 
 	details := TransferDetails{
 		Size:     artifact.FileSize,
@@ -245,7 +183,7 @@ func UploadArtifact(uploadURL string, artifact ArtifactArgs, contentType string)
 	return details, err
 }
 
-func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDeploymentMetaData) (ArtifactURLs, error) {
+func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDeploymentMetaData, httpClient *HTTPClient) (ArtifactURLs, error) {
 	// create form data
 	data := url.Values{"api_token": {token}}
 	if appDeploymentMeta != nil {
@@ -288,8 +226,6 @@ func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDe
 		return ArtifactURLs{}, fmt.Errorf("failed to generate finish artifact url, error: %s", err)
 	}
 
-	var response *http.Response
-
 	type finishArtifactResponse struct {
 		PublicInstallPageURL string   `json:"public_install_page_url"`
 		PermanentDownloadURL string   `json:"permanent_download_url"`
@@ -297,41 +233,18 @@ func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDe
 		InvalidEmails        []string `json:"invalid_emails"`
 	}
 
-	var artifactResponse finishArtifactResponse
-	if err := retry.Times(3).Wait(5 * time.Second).Try(func(attempt uint) error {
-		if attempt > 0 {
-			log.Warnf("%d attempt failed", attempt)
-		}
-		response, err = http.PostForm(uri, data)
-		if err != nil {
-			return fmt.Errorf("failed to perform finish artifact request, error: %s", err)
-		}
-		defer func() {
-			if err := response.Body.Close(); err != nil {
-				log.Errorf("Failed to close reponse body, error: %s", err)
-			}
-		}()
-
-		// process response
-		body, err := io.ReadAll(response.Body)
-		if err != nil {
-			return fmt.Errorf("failed to read finish artifact response, error: %s", err)
-		}
-		if response.StatusCode != http.StatusOK {
-			return fmt.Errorf("failed to create artifact on bitrise, status code: %d, response: %s", response.StatusCode, string(body))
-		}
-
-		if err := json.Unmarshal(body, &artifactResponse); err != nil {
-			return fmt.Errorf("failed to unmarshal response (%s), error: %s", string(body), err)
-		}
-
-		return nil
-	}); err != nil {
+	body, err := httpClient.doFormRequest(http.MethodPost, uri, data)
+	if err != nil {
 		return ArtifactURLs{}, err
 	}
 
+	var artifactResponse finishArtifactResponse
+	if err := json.Unmarshal(body, &artifactResponse); err != nil {
+		return ArtifactURLs{}, fmt.Errorf("failed to unmarshal response (%s), error: %s", string(body), err)
+	}
+
 	if len(artifactResponse.InvalidEmails) > 0 {
-		log.Warnf("Invalid e-mail addresses: %s", strings.Join(artifactResponse.InvalidEmails, ", "))
+		httpClient.logger.Warnf("Invalid e-mail addresses: %s", strings.Join(artifactResponse.InvalidEmails, ", "))
 	}
 
 	return ArtifactURLs{
