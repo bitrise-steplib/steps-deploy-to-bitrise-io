@@ -16,6 +16,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const sampleArtifactsGitURL = "https://github.com/bitrise-io/sample-artifacts.git"
+
 func TestXCresult3Converters(t *testing.T) {
 	// xcresulttool renders attachment timestamps in the process timezone; the expected reports are UTC.
 	t.Setenv("TZ", "UTC")
@@ -179,9 +181,8 @@ func TestXCresult3Converters(t *testing.T) {
 
 	_, b, _, _ := runtime.Caller(0)
 	testPackageDir := filepath.Dir(b)
-	projectRootDir := filepath.Dir(testPackageDir)
 
-	multiLevelUITestsXCResult := resolveSampleArtifact(t, projectRootDir, "xcresults/xcresult3_multi_level_UI_tests.xcresult")
+	multiLevelUITestsXCResult := resolveSampleArtifact(t, "xcresults/xcresult3_multi_level_UI_tests.xcresult")
 
 	for _, test := range []struct {
 		name          string
@@ -263,9 +264,11 @@ func TestXCresult3Converters(t *testing.T) {
 // _tmp checkout the _download_sample_artifacts CI workflow creates when the fixture is present, and
 // otherwise clones into that same _tmp dir, so local runs share one checkout with CI and re-cloning
 // is avoided across runs.
-func resolveSampleArtifact(t *testing.T, projectRootDir, relPath string) string {
+func resolveSampleArtifact(t *testing.T, relPath string) string {
 	t.Helper()
 
+	_, thisFile, _, _ := runtime.Caller(0)
+	projectRootDir := filepath.Dir(filepath.Dir(thisFile))
 	tmpDir := filepath.Join(projectRootDir, "_tmp")
 	artifactPath := filepath.Join(tmpDir, relPath)
 	if dirExists(artifactPath) {
@@ -273,7 +276,7 @@ func resolveSampleArtifact(t *testing.T, projectRootDir, relPath string) string 
 	}
 
 	require.NoError(t, os.RemoveAll(tmpDir))
-	cmd := command.NewFactory(env.NewRepository()).Create("git", []string{"clone", "--depth", "1", "https://github.com/bitrise-io/sample-artifacts.git", tmpDir}, nil)
+	cmd := command.NewFactory(env.NewRepository()).Create("git", []string{"clone", "--depth", "1", sampleArtifactsGitURL, tmpDir}, nil)
 	require.NoError(t, cmd.Run())
 
 	return artifactPath
