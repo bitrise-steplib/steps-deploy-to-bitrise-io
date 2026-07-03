@@ -30,8 +30,12 @@ type HTTPClient interface {
 type TestReportClient struct {
 	logger     log.Logger
 	httpClient HTTPClient
-	buildURL   string
-	authToken  string
+	// artifactClient is a second, separate retrying HTTP client (uploaders.HTTPClient) used only
+	// for UploadAsset, because uploaders.UploadArtifact requires this concrete type.
+	// perform() below should eventually be migrated onto artifactClient so this client only needs one retrying HTTP stack.
+	artifactClient *uploaders.HTTPClient
+	buildURL       string
+	authToken      string
 }
 
 // NewBitriseClient ...
@@ -39,10 +43,11 @@ func NewBitriseClient(buildURL, authToken string, logger log.Logger) *TestReport
 	httpClient := retry.NewHTTPClient().StandardClient()
 
 	return &TestReportClient{
-		logger:     logger,
-		httpClient: httpClient,
-		buildURL:   buildURL,
-		authToken:  authToken,
+		logger:         logger,
+		httpClient:     httpClient,
+		artifactClient: uploaders.NewHTTPClient(logger),
+		buildURL:       buildURL,
+		authToken:      authToken,
 	}
 }
 
@@ -88,7 +93,7 @@ func (t *TestReportClient) UploadAsset(url, path, contentType string) error {
 		Path:     path,
 		FileSize: fileInfo.Size(),
 	}
-	_, err = uploaders.UploadArtifact(url, artifact, contentType)
+	_, err = uploaders.UploadArtifact(url, artifact, contentType, t.artifactClient)
 	return err
 }
 
