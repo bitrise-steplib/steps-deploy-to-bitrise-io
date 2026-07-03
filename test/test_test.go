@@ -284,6 +284,8 @@ func Test_ParseXctestResults(t *testing.T) {
 }
 
 func Test_ParseXctest3Results(t *testing.T) {
+	// xcresulttool renders attachment timestamps in the process timezone; the golden is UTC.
+	t.Setenv("TZ", "UTC")
 	tmpDir := t.TempDir()
 	gitDir := path.Join(tmpDir, "git")
 
