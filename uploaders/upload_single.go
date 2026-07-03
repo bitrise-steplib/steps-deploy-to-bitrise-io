@@ -118,7 +118,7 @@ func createArtifact(buildURL, token string, artifact ArtifactArgs, artifactType,
 		}
 		response, err = http.PostForm(uri, data)
 		if err != nil {
-			return fmt.Errorf("failed to perform create artifact request, error: %s", err)
+			return fmt.Errorf("failed to perform create artifact request (%s), error: %s", uri, err)
 		}
 
 		defer func() {
@@ -136,11 +136,12 @@ func createArtifact(buildURL, token string, artifact ArtifactArgs, artifactType,
 				ErrorMessage string `json:"error_msg"`
 			}
 			var createResponse errorResponse
-			if unmarshalErr := json.Unmarshal(body, &createResponse); unmarshalErr != nil {
-				return errors.New(string(body))
+			errMsg := fmt.Sprintf("non success status code: %d, url: %s, body: %s", response.StatusCode, uri, body)
+			if unmarshalErr := json.Unmarshal(body, &createResponse); unmarshalErr == nil && createResponse.ErrorMessage != "" {
+				errMsg = createResponse.ErrorMessage
 			}
 
-			return errors.New(createResponse.ErrorMessage)
+			return errors.New(errMsg)
 		}
 
 		if err := json.Unmarshal(body, &uploadTasks); err != nil {
