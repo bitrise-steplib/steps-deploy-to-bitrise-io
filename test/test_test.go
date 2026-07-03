@@ -284,18 +284,13 @@ func Test_ParseXctestResults(t *testing.T) {
 }
 
 func Test_ParseXctest3Results(t *testing.T) {
+	// xcresulttool renders attachment timestamps in the process timezone; the golden is UTC.
+	t.Setenv("TZ", "UTC")
 	tmpDir := t.TempDir()
-	gitDir := path.Join(tmpDir, "git")
-
-	// The xcresult3 format has many small encoded binary files, so it is better to use a real xcresult file.
-	// We are storing these in the sample-artifacts git repo.
-	cmd := command.NewFactory(env.NewRepository()).Create("git", []string{"clone", "--depth", "1", "https://github.com/bitrise-io/sample-artifacts.git", gitDir}, nil)
-	err := cmd.Run()
-	require.NoError(t, err)
 
 	testDir := path.Join(tmpDir, "tests")
 	testResultDir := path.Join(testDir, "test-result")
-	err = os.MkdirAll(testDir, os.ModePerm)
+	err := os.MkdirAll(testDir, os.ModePerm)
 	require.NoError(t, err)
 
 	phaseDir := path.Join(testResultDir, "phase")
@@ -309,7 +304,7 @@ func Test_ParseXctest3Results(t *testing.T) {
 		t.Fatal("failed to create dummy files in dir, error:", err)
 	}
 
-	oldDir := path.Join(gitDir, "xcresults", "xcresult3-device-configuration-tests.xcresult")
+	oldDir := resolveSampleArtifact(t, "xcresults/xcresult3-device-configuration-tests.xcresult")
 	newDir := path.Join(phaseDir, "xcresult3-device-configuration-tests.xcresult")
 	copyCmd := command.NewFactory(env.NewRepository()).Create("cp", []string{"-a", oldDir, newDir}, nil)
 	err = copyCmd.Run()

@@ -1,19 +1,26 @@
 package test
 
 import (
+	"os"
 	"path/filepath"
 	"runtime"
 	"sort"
 	"testing"
 
-	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-steputils/v2/testreport"
+	"github.com/bitrise-io/go-utils/log"
+	"github.com/bitrise-io/go-utils/v2/command"
+	"github.com/bitrise-io/go-utils/v2/env"
 	"github.com/bitrise-io/go-xcode/v2/testresult/xcresult3"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 )
 
+const sampleArtifactsGitURL = "https://github.com/bitrise-io/sample-artifacts.git"
+
 func TestXCresult3Converters(t *testing.T) {
+	// xcresulttool renders attachment timestamps in the process timezone; the expected reports are UTC.
+	t.Setenv("TZ", "UTC")
 	log.SetEnableDebugLog(true)
 	want := testreport.TestReport{
 		TestSuites: []testreport.TestSuite{
@@ -174,7 +181,8 @@ func TestXCresult3Converters(t *testing.T) {
 
 	_, b, _, _ := runtime.Caller(0)
 	testPackageDir := filepath.Dir(b)
-	projectRootDir := filepath.Dir(testPackageDir)
+
+	multiLevelUITestsXCResult := resolveSampleArtifact(t, "xcresults/xcresult3_multi_level_UI_tests.xcresult")
 
 	for _, test := range []struct {
 		name          string
@@ -187,7 +195,7 @@ func TestXCresult3Converters(t *testing.T) {
 		{
 			name:          "xcresult3",
 			converter:     xcresult3.NewConverter(false),
-			testFilePaths: []string{filepath.Join(projectRootDir, "_tmp/xcresults/xcresult3_multi_level_UI_tests.xcresult")},
+			testFilePaths: []string{multiLevelUITestsXCResult},
 			wantDetect:    true,
 			wantXMLError:  false,
 			wantXML:       want,
@@ -250,4 +258,31 @@ func TestXCresult3Converters(t *testing.T) {
 			}
 		})
 	}
+}
+
+// resolveSampleArtifact returns a path to a fixture from the sample-artifacts repo. It reuses the
+// _tmp checkout the _download_sample_artifacts CI workflow creates when the fixture is present, and
+// otherwise clones into that same _tmp dir, so local runs share one checkout with CI and re-cloning
+// is avoided across runs.
+func resolveSampleArtifact(t *testing.T, relPath string) string {
+	t.Helper()
+
+	_, thisFile, _, _ := runtime.Caller(0)
+	projectRootDir := filepath.Dir(filepath.Dir(thisFile))
+	tmpDir := filepath.Join(projectRootDir, "_tmp")
+	artifactPath := filepath.Join(tmpDir, relPath)
+	if dirExists(artifactPath) {
+		return artifactPath
+	}
+
+	require.NoError(t, os.RemoveAll(tmpDir))
+	cmd := command.NewFactory(env.NewRepository()).Create("git", []string{"clone", "--depth", "1", sampleArtifactsGitURL, tmpDir}, nil)
+	require.NoError(t, cmd.Run())
+
+	return artifactPath
+}
+
+func dirExists(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.IsDir()
 }
