@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"html/template"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -192,4 +195,45 @@ func Test_validateUserGroups(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_deployTestResults(t *testing.T) {
+	// writeTestResult creates a minimal, valid test result under root so that
+	// test.ParseTestResults returns a non-empty result.
+	writeTestResult := func(t *testing.T, root string) {
+		t.Helper()
+		phaseDir := filepath.Join(root, "test-result", "phase")
+		require.NoError(t, os.MkdirAll(phaseDir, 0755))
+		require.NoError(t, os.WriteFile(filepath.Join(root, "test-result", "step-info.json"), []byte(`{"title":"test title"}`), 0644))
+		require.NoError(t, os.WriteFile(filepath.Join(phaseDir, "test-info.json"), []byte(`{"test-name":"test name"}`), 0644))
+		xml := `<?xml version="1.0" encoding="UTF-8"?>` + "\n" + `<testsuites><testsuite name="suite" tests="1"><testcase name="case"></testcase></testsuite></testsuites>`
+		require.NoError(t, os.WriteFile(filepath.Join(phaseDir, "result.xml"), []byte(xml), 0644))
+	}
+
+	t.Run("warns when test results are present but the API token is empty", func(t *testing.T) {
+		deployDir := t.TempDir()
+		writeTestResult(t, deployDir)
+
+		var buf bytes.Buffer
+		logger := log.NewLogger(log.WithOutput(&buf))
+
+		deployTestResults(Config{TestDeployDir: deployDir, AddonAPIToken: ""}, logger)
+
+		out := buf.String()
+		assert.Contains(t, out, "will not be uploaded to the Tests tab")
+		assert.NotContains(t, out, "Deploying test results...")
+	})
+
+	t.Run("stays silent about the token when there are no test results", func(t *testing.T) {
+		deployDir := t.TempDir()
+
+		var buf bytes.Buffer
+		logger := log.NewLogger(log.WithOutput(&buf))
+
+		deployTestResults(Config{TestDeployDir: deployDir, AddonAPIToken: ""}, logger)
+
+		out := buf.String()
+		assert.Contains(t, out, "No test results found")
+		assert.NotContains(t, out, "will not be uploaded to the Tests tab")
+	})
 }
