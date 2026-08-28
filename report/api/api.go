@@ -9,8 +9,8 @@ import (
 	"net/http/httputil"
 	"os"
 
-	"github.com/bitrise-io/go-utils/retry"
 	"github.com/bitrise-io/go-utils/v2/log"
+	"github.com/bitrise-io/go-utils/v2/retryhttp"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/uploaders"
 )
 
@@ -36,7 +36,7 @@ type TestReportClient struct {
 
 // NewBitriseClient ...
 func NewBitriseClient(buildURL, authToken string, logger log.Logger) *TestReportClient {
-	httpClient := retry.NewHTTPClient().StandardClient()
+	httpClient := retryhttp.NewClient(logger).StandardClient()
 
 	return &TestReportClient{
 		logger:     logger,

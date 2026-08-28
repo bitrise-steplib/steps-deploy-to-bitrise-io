@@ -13,9 +13,8 @@ import (
 
 	"github.com/bitrise-io/bitrise/models"
 	"github.com/bitrise-io/go-steputils/v2/testasset"
-	"github.com/bitrise-io/go-utils/fileutil"
-	"github.com/bitrise-io/go-utils/pathutil"
 	logV2 "github.com/bitrise-io/go-utils/v2/log"
+	"github.com/bitrise-io/go-utils/v2/pathutil"
 	"github.com/bitrise-io/go-utils/v2/retryhttp"
 	"github.com/hashicorp/go-retryablehttp"
 )
@@ -146,6 +145,9 @@ The Test Deploy directory has the following directory structure:
 			└── test-info.json
 */
 func ParseTestResults(testsRootDir string, useLegacyXCResultExtractionMethod bool, logger logV2.Logger) (results Results, err error) {
+	pathChecker := pathutil.NewPathChecker()
+	pathModifier := pathutil.NewPathModifier()
+
 	// read dirs in base tests dir
 	// <root_tests_dir>
 
@@ -174,7 +176,7 @@ func ParseTestResults(testsRootDir string, useLegacyXCResultExtractionMethod boo
 		// <root_tests_dir>/<test_dir>/step-info.json
 
 		stepInfoPth := filepath.Join(testDirPath, "step-info.json")
-		if isExists, err := pathutil.IsPathExists(stepInfoPth); err != nil {
+		if isExists, err := pathChecker.IsPathExists(stepInfoPth); err != nil {
 			logger.Warnf("Failed to check if step-info.json file exists in dir: %s: %s", testDirPath, err)
 			continue
 		} else if !isExists {
@@ -182,7 +184,7 @@ func ParseTestResults(testsRootDir string, useLegacyXCResultExtractionMethod boo
 		}
 
 		var stepInfo *models.TestResultStepInfo
-		stepInfoFileContent, err := fileutil.ReadBytesFromFile(stepInfoPth)
+		stepInfoFileContent, err := os.ReadFile(stepInfoPth)
 		if err != nil {
 			logger.Warnf("Failed to read step-info.json file in dir: %s, error: %s", testDirPath, err)
 			continue
@@ -201,7 +203,7 @@ func ParseTestResults(testsRootDir string, useLegacyXCResultExtractionMethod boo
 			// <root_tests_dir>/<test_dir>/<unique_dir>
 			testPhaseDirPath := filepath.Join(testDirPath, testPhaseDir.Name())
 			// read one level of file set only <root_tests_dir>/<test_dir>/<unique_dir>/files_to_get
-			testFiles, err := filepath.Glob(filepath.Join(pathutil.EscapeGlobPath(testPhaseDirPath), "*"))
+			testFiles, err := filepath.Glob(filepath.Join(pathModifier.EscapeGlobPath(testPhaseDirPath), "*"))
 			if err != nil {
 				return nil, err
 			}
@@ -217,7 +219,7 @@ func ParseTestResults(testsRootDir string, useLegacyXCResultExtractionMethod boo
 
 				if detected {
 					// test-info.json file is required
-					testInfoFileContent, err := fileutil.ReadBytesFromFile(filepath.Join(testPhaseDirPath, "test-info.json"))
+					testInfoFileContent, err := os.ReadFile(filepath.Join(testPhaseDirPath, "test-info.json"))
 					if err != nil {
 						return nil, err
 					}

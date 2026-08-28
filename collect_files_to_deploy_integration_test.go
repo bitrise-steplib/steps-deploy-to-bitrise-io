@@ -25,7 +25,7 @@ func TestCollectFilesToDeploy_compressDir_producesZipWithContentsAndSymlink(t *t
 	require.NoError(t, os.Symlink("top.txt", filepath.Join(srcDir, "link.txt")))
 
 	config := Config{IsCompress: true}
-	files, err := collectFilesToDeploy(srcDir, config, tmpDir, newZipManager(), loggerV2.NewLogger())
+	files, err := collectFilesToDeploy(srcDir, config, tmpDir, newZipManager(), pathutil2.NewPathChecker(), loggerV2.NewLogger())
 	require.NoError(t, err)
 
 	wantZip := filepath.Join(tmpDir, filepath.Base(srcDir)+".zip")
@@ -51,14 +51,14 @@ func TestCollectFilesToDeploy_compressDir_usesCustomZipName(t *testing.T) {
 	require.NoError(t, os.WriteFile(filepath.Join(srcDir, "a.txt"), []byte("a"), 0644))
 
 	config := Config{IsCompress: true, ZipName: "custom-name"}
-	files, err := collectFilesToDeploy(srcDir, config, tmpDir, newZipManager(), loggerV2.NewLogger())
+	files, err := collectFilesToDeploy(srcDir, config, tmpDir, newZipManager(), pathutil2.NewPathChecker(), loggerV2.NewLogger())
 	require.NoError(t, err)
 	require.Equal(t, []string{filepath.Join(tmpDir, "custom-name.zip")}, files)
 }
 
 func TestCollectFilesToDeploy_compressEmptyDir_returnsNothing(t *testing.T) {
 	config := Config{IsCompress: true}
-	files, err := collectFilesToDeploy(t.TempDir(), config, t.TempDir(), newZipManager(), loggerV2.NewLogger())
+	files, err := collectFilesToDeploy(t.TempDir(), config, t.TempDir(), newZipManager(), pathutil2.NewPathChecker(), loggerV2.NewLogger())
 	require.NoError(t, err)
 	require.Empty(t, files)
 }
@@ -69,7 +69,7 @@ func TestCollectFilesToDeploy_uncompressedDir_listsFilesSkipsSubdirs(t *testing.
 	require.NoError(t, os.MkdirAll(filepath.Join(srcDir, "sub"), 0755))
 
 	config := Config{IsCompress: false}
-	files, err := collectFilesToDeploy(srcDir, config, t.TempDir(), newZipManager(), loggerV2.NewLogger())
+	files, err := collectFilesToDeploy(srcDir, config, t.TempDir(), newZipManager(), pathutil2.NewPathChecker(), loggerV2.NewLogger())
 	require.NoError(t, err)
 	require.Equal(t, []string{filepath.Join(srcDir, "a.txt")}, files)
 }

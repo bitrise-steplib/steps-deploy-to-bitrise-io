@@ -23,13 +23,11 @@ github.com/bitrise-io/go-pkcs12/internal/rc2
 # github.com/bitrise-io/go-plist v0.0.0-20210301100253-4b1a112ccd10
 ## explicit; go 1.15
 github.com/bitrise-io/go-plist
-# github.com/bitrise-io/go-steputils v1.0.6
-## explicit; go 1.15
-github.com/bitrise-io/go-steputils/stepconf
-github.com/bitrise-io/go-steputils/tools
 # github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.52
 ## explicit; go 1.21
+github.com/bitrise-io/go-steputils/v2/export
 github.com/bitrise-io/go-steputils/v2/secretkeys
+github.com/bitrise-io/go-steputils/v2/stepconf
 github.com/bitrise-io/go-steputils/v2/testasset
 github.com/bitrise-io/go-steputils/v2/testreport
 # github.com/bitrise-io/go-utils v1.0.15
@@ -46,7 +44,7 @@ github.com/bitrise-io/go-utils/pointers
 github.com/bitrise-io/go-utils/pretty
 github.com/bitrise-io/go-utils/retry
 github.com/bitrise-io/go-utils/sliceutil
-github.com/bitrise-io/go-utils/urlutil
+github.com/bitrise-io/go-utils/ziputil
 # github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.38
 ## explicit; go 1.21
 github.com/bitrise-io/go-utils/v2/analytics
@@ -54,12 +52,16 @@ github.com/bitrise-io/go-utils/v2/command
 github.com/bitrise-io/go-utils/v2/env
 github.com/bitrise-io/go-utils/v2/errorutil
 github.com/bitrise-io/go-utils/v2/exitcode
+github.com/bitrise-io/go-utils/v2/filedownloader
 github.com/bitrise-io/go-utils/v2/fileutil
 github.com/bitrise-io/go-utils/v2/log
 github.com/bitrise-io/go-utils/v2/log/colorstring
+github.com/bitrise-io/go-utils/v2/parseutil
 github.com/bitrise-io/go-utils/v2/pathutil
 github.com/bitrise-io/go-utils/v2/redactwriter
+github.com/bitrise-io/go-utils/v2/retry
 github.com/bitrise-io/go-utils/v2/retryhttp
+github.com/bitrise-io/go-utils/v2/urlutil
 github.com/bitrise-io/go-utils/v2/ziputil
 # github.com/bitrise-io/go-xcode v1.3.3
 ## explicit; go 1.20

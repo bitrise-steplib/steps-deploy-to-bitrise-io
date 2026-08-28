@@ -16,17 +16,17 @@ import (
 	"github.com/bitrise-io/envman/envman"
 	androidparser "github.com/bitrise-io/go-android/v2/metaparser"
 	"github.com/bitrise-io/go-android/v2/metaparser/bundletool"
-	"github.com/bitrise-io/go-steputils/stepconf"
-	"github.com/bitrise-io/go-steputils/tools"
+	"github.com/bitrise-io/go-steputils/v2/export"
 	"github.com/bitrise-io/go-steputils/v2/secretkeys"
+	"github.com/bitrise-io/go-steputils/v2/stepconf"
 	"github.com/bitrise-io/go-utils/log"
-	"github.com/bitrise-io/go-utils/pathutil"
+	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/env"
 	"github.com/bitrise-io/go-utils/v2/errorutil"
 	"github.com/bitrise-io/go-utils/v2/exitcode"
 	"github.com/bitrise-io/go-utils/v2/fileutil"
 	loggerV2 "github.com/bitrise-io/go-utils/v2/log"
-	pathutil2 "github.com/bitrise-io/go-utils/v2/pathutil"
+	"github.com/bitrise-io/go-utils/v2/pathutil"
 	"github.com/bitrise-io/go-utils/v2/ziputil"
 	iosparser "github.com/bitrise-io/go-xcode/v2/metaparser"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
@@ -110,8 +110,11 @@ func fail(logger loggerV2.Logger, format string, v ...interface{}) {
 func main() {
 	logger := loggerV2.NewLogger() // TODO: replace v1 logger with v2 logger all around the code
 
+	envRepository := env.NewRepository()
+	exporter := export.NewExporter(command.NewFactory(envRepository), fileutil.NewFileManager())
+
 	var config Config
-	if err := stepconf.Parse(&config); err != nil {
+	if err := stepconf.NewInputParser(envRepository).Parse(&config); err != nil {
 		fail(logger, "Issue with input: %s", err)
 	}
 
@@ -132,7 +135,8 @@ func main() {
 		fail(logger, "public_install_page_url_map_format - %s", err)
 	}
 
-	tmpDir, err := pathutil.NormalizedOSTempDirPath("__deploy-to-bitrise-io__")
+	pathProvider := pathutil.NewPathProvider()
+	tmpDir, err := pathProvider.CreateTempDir("__deploy-to-bitrise-io__")
 	if err != nil {
 		fail(logger, "Failed to create tmp dir, error: %s", err)
 	}
@@ -140,8 +144,8 @@ func main() {
 	logger.Println()
 	logger.Infof("Collecting files to redact...")
 
-	pathModifier := pathutil2.NewPathModifier()
-	pathChecker := pathutil2.NewPathChecker()
+	pathModifier := pathutil.NewPathModifier()
+	pathChecker := pathutil.NewPathChecker()
 	zipManager := ziputil.NewZipManager(pathChecker)
 	pathProcessor := fileredactor.NewFilePathProcessor(pathModifier, pathChecker)
 	filePaths, err := pathProcessor.ProcessFilePaths(config.FilesToRedact)
@@ -171,12 +175,12 @@ func main() {
 
 	var deployableItems []deployment.DeployableItem
 	if strings.TrimSpace(config.DeployPath) != "" {
-		absDeployPth, err := pathutil.AbsPath(config.DeployPath)
+		absDeployPth, err := pathModifier.AbsPath(config.DeployPath)
 		if err != nil {
 			fail(logger, "Failed to expand path: %s, error: %s", config.DeployPath, err)
 		}
 
-		filesToDeploy, err := collectFilesToDeploy(absDeployPth, config, tmpDir, zipManager, logger)
+		filesToDeploy, err := collectFilesToDeploy(absDeployPth, config, tmpDir, zipManager, pathChecker, logger)
 		if err != nil {
 			fail(logger, "%s", err)
 		}
@@ -217,7 +221,7 @@ func main() {
 		logger.Donef("Success")
 		logger.Printf("You can find the Build Artifact on the Build's page: %s", config.BuildURL)
 
-		if err := exportInstallPages(artifactURLCollection, config, logger); err != nil {
+		if err := exportInstallPages(artifactURLCollection, config, exporter, logger); err != nil {
 			fail(logger, "%s", err)
 		}
 	}
@@ -263,16 +267,16 @@ func loadSecrets() []string {
 	return values
 }
 
-func exportInstallPages(artifactURLCollection ArtifactURLCollection, config Config, logger loggerV2.Logger) error {
+func exportInstallPages(artifactURLCollection ArtifactURLCollection, config Config, exporter export.Exporter, logger loggerV2.Logger) error {
 	if len(artifactURLCollection.PublicInstallPageURLs) > 0 {
 		pages := mapURLsToInstallPages(artifactURLCollection.PublicInstallPageURLs)
 
-		if err := tools.ExportEnvironmentWithEnvman("BITRISE_PUBLIC_INSTALL_PAGE_URL", pages[0].URL); err != nil {
+		if err := exporter.ExportOutput("BITRISE_PUBLIC_INSTALL_PAGE_URL", pages[0].URL); err != nil {
 			return fmt.Errorf("failed to export BITRISE_PUBLIC_INSTALL_PAGE_URL: %s", err)
 		}
 		logger.Printf("The public install page url is now available in the Environment Variable: BITRISE_PUBLIC_INSTALL_PAGE_URL (value: %s)\n", pages[0].URL)
 
-		value, err := exportMapEnvironment("Public Install Page template", config.PublicInstallPageMapFormat, "PublicInstallPageMap", "BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP", pages, logger)
+		value, err := exportMapEnvironment("Public Install Page template", config.PublicInstallPageMapFormat, "PublicInstallPageMap", "BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP", pages, exporter, logger)
 		if err != nil {
 			return fmt.Errorf("failed to export BITRISE_PUBLIC_INSTALL_PAGE_URL_MAP, error: %s", err)
 		}
@@ -280,7 +284,7 @@ func exportInstallPages(artifactURLCollection ArtifactURLCollection, config Conf
 	}
 	if len(artifactURLCollection.PermanentDownloadURLs) > 0 {
 		pages := mapURLsToInstallPages(artifactURLCollection.PermanentDownloadURLs)
-		value, err := exportMapEnvironment("Permanent Download URL template", config.PermanentDownloadURLMapFormat, "PermanentDownloadURLMap", "BITRISE_PERMANENT_DOWNLOAD_URL_MAP", pages, logger)
+		value, err := exportMapEnvironment("Permanent Download URL template", config.PermanentDownloadURLMapFormat, "PermanentDownloadURLMap", "BITRISE_PERMANENT_DOWNLOAD_URL_MAP", pages, exporter, logger)
 		if err != nil {
 			return fmt.Errorf("failed to export BITRISE_PERMANENT_DOWNLOAD_URL_MAP: %s", err)
 		}
@@ -289,12 +293,12 @@ func exportInstallPages(artifactURLCollection ArtifactURLCollection, config Conf
 	if len(artifactURLCollection.DetailsPageURLs) > 0 {
 		pages := mapURLsToInstallPages(artifactURLCollection.DetailsPageURLs)
 
-		if err := tools.ExportEnvironmentWithEnvman("BITRISE_ARTIFACT_DETAILS_PAGE_URL", pages[0].URL); err != nil {
+		if err := exporter.ExportOutput("BITRISE_ARTIFACT_DETAILS_PAGE_URL", pages[0].URL); err != nil {
 			return fmt.Errorf("failed to export BITRISE_ARTIFACT_DETAILS_PAGE_URL: %s", err)
 		}
 		log.Printf("The artifact details page url is now available in the Environment Variable: BITRISE_ARTIFACT_DETAILS_PAGE_URL (value: %s)\n", pages[0].URL)
 
-		value, err := exportMapEnvironment("Details Page URL template", config.DetailsPageURLMapFormat, "DetailsPageURLMap", "BITRISE_ARTIFACT_DETAILS_PAGE_URL_MAP", pages, logger)
+		value, err := exportMapEnvironment("Details Page URL template", config.DetailsPageURLMapFormat, "DetailsPageURLMap", "BITRISE_ARTIFACT_DETAILS_PAGE_URL_MAP", pages, exporter, logger)
 		if err != nil {
 			return fmt.Errorf("failed to export BITRISE_ARTIFACT_DETAILS_PAGE_URL_MAP, error: %s", err)
 		}
@@ -314,7 +318,7 @@ func mapURLsToInstallPages(URLs map[string]string) []PublicInstallPage {
 	return pages
 }
 
-func exportMapEnvironment(templateName string, format string, formatName string, outputKey string, pages []PublicInstallPage, logger loggerV2.Logger) (string, error) {
+func exportMapEnvironment(templateName string, format string, formatName string, outputKey string, pages []PublicInstallPage, exporter export.Exporter, logger loggerV2.Logger) (string, error) {
 	var maxEnvLength int
 
 	if configs, err := envman.GetConfigs(); err != nil {
@@ -338,7 +342,7 @@ func exportMapEnvironment(templateName string, format string, formatName string,
 		logger.Warnf("too many artifacts, not all urls has been written to output: %s", outputKey)
 	}
 
-	return value, tools.ExportEnvironmentWithEnvman(outputKey, value)
+	return value, exporter.ExportOutput(outputKey, value)
 }
 
 func applyTemplateWithMaxSize(temp *template.Template, pages []PublicInstallPage, maxEnvLength int) (string, bool, error) {
@@ -391,8 +395,8 @@ func clearDeployFiles(filesToDeploy []string, logger loggerV2.Logger) []string {
 	return clearedFilesToDeploy
 }
 
-func collectFilesToDeploy(absDeployPth string, config Config, tmpDir string, zipManager *ziputil.ZipManager, logger loggerV2.Logger) (filesToDeploy []string, err error) {
-	pathExists, err := pathutil.IsPathExists(absDeployPth)
+func collectFilesToDeploy(absDeployPth string, config Config, tmpDir string, zipManager *ziputil.ZipManager, pathChecker pathutil.PathChecker, logger loggerV2.Logger) (filesToDeploy []string, err error) {
+	pathExists, err := pathChecker.IsPathExists(absDeployPth)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check if %s exists: %s", absDeployPth, err)
 	}
@@ -401,7 +405,7 @@ func collectFilesToDeploy(absDeployPth string, config Config, tmpDir string, zip
 		return
 	}
 
-	isDeployPathDir, err := pathutil.IsDirExists(absDeployPth)
+	isDeployPathDir, err := pathChecker.IsDirExists(absDeployPth)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check if %s is a directory or a file: %s", absDeployPth, err)
 	}
@@ -443,7 +447,7 @@ func collectFilesToDeploy(absDeployPth string, config Config, tmpDir string, zip
 		}
 
 		for _, pth := range pths {
-			if isDir, err := pathutil.IsDirExists(pth); err != nil {
+			if isDir, err := pathChecker.IsDirExists(pth); err != nil {
 				return nil, fmt.Errorf("failed to check if path (%s) is a directory or a file, error: %s", pth, err)
 			} else if !isDir {
 				filesToDeploy = append(filesToDeploy, pth)
