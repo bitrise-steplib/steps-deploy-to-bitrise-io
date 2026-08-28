@@ -144,10 +144,7 @@ The Test Deploy directory has the following directory structure:
 			├── screenshot_3.png
 			└── test-info.json
 */
-func ParseTestResults(testsRootDir string, useLegacyXCResultExtractionMethod bool, logger logV2.Logger) (results Results, err error) {
-	pathChecker := pathutil.NewPathChecker()
-	pathModifier := pathutil.NewPathModifier()
-
+func ParseTestResults(testsRootDir string, useLegacyXCResultExtractionMethod bool, pathChecker pathutil.PathChecker, pathModifier pathutil.PathModifier, logger logV2.Logger) (results Results, err error) {
 	// read dirs in base tests dir
 	// <root_tests_dir>
 

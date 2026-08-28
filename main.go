@@ -227,7 +227,7 @@ func main() {
 	}
 
 	if config.AddonAPIToken != "" {
-		deployTestResults(config, logger)
+		deployTestResults(config, pathChecker, pathModifier, logger)
 	}
 
 	if config.HTMLReportDir != "" {
@@ -466,10 +466,10 @@ func stepNameWithIndex(stepInfo models.TestResultStepInfo) string {
 	return fmt.Sprintf("%d. Step (%s)", stepInfo.Number, name)
 }
 
-func deployTestResults(config Config, logger loggerV2.Logger) {
+func deployTestResults(config Config, pathChecker pathutil.PathChecker, pathModifier pathutil.PathModifier, logger loggerV2.Logger) {
 	logger.Println()
 	logger.Infof("Collecting test results...")
-	testResults, err := test.ParseTestResults(config.TestDeployDir, config.UseLegacyXCResultExtractionMethod, logger)
+	testResults, err := test.ParseTestResults(config.TestDeployDir, config.UseLegacyXCResultExtractionMethod, pathChecker, pathModifier, logger)
 	if err != nil {
 		logger.Warnf("Failed to parse test results: %s", err)
 		return

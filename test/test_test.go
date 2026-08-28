@@ -15,6 +15,7 @@ import (
 	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/env"
 	logV2 "github.com/bitrise-io/go-utils/v2/log"
+	"github.com/bitrise-io/go-utils/v2/pathutil"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -185,7 +186,7 @@ func Test_ParseXctestResults(t *testing.T) {
 			t.Fatal("failed to create temp dir, error:", err)
 		}
 
-		bundle, err := ParseTestResults(testsDir, false, logV2.NewLogger())
+		bundle, err := ParseTestResults(testsDir, false, pathutil.NewPathChecker(), pathutil.NewPathModifier(), logV2.NewLogger())
 		if err != nil {
 			t.Fatal("failed to get bundle, error:", err)
 		}
@@ -225,7 +226,7 @@ func Test_ParseXctestResults(t *testing.T) {
 			t.Fatal("failed to create dummy files in dir, error:", err)
 		}
 
-		bundle, err := ParseTestResults(testsDir, false, logV2.NewLogger())
+		bundle, err := ParseTestResults(testsDir, false, pathutil.NewPathChecker(), pathutil.NewPathModifier(), logV2.NewLogger())
 		if err != nil {
 			t.Fatal("failed to get bundle, error:", err)
 		}
@@ -269,7 +270,7 @@ func Test_ParseXctestResults(t *testing.T) {
 			t.Fatal("failed to create dummy files in dir, error:", err)
 		}
 
-		bundle, err := ParseTestResults(testsDir, false, logV2.NewLogger())
+		bundle, err := ParseTestResults(testsDir, false, pathutil.NewPathChecker(), pathutil.NewPathModifier(), logV2.NewLogger())
 		if err != nil {
 			t.Fatal("failed to get bundle, error:", err)
 		}
@@ -309,7 +310,7 @@ func Test_ParseXctest3Results(t *testing.T) {
 	err = copyCmd.Run()
 	require.NoError(t, err)
 
-	bundle, err := ParseTestResults(testDir, false, logV2.NewLogger())
+	bundle, err := ParseTestResults(testDir, false, pathutil.NewPathChecker(), pathutil.NewPathModifier(), logV2.NewLogger())
 	require.NoError(t, err)
 
 	want := readFileString(t, filepath.Join("testdata", "ios_device_config_xml_output.golden"))
