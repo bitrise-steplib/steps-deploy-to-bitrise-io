@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	logV2 "github.com/bitrise-io/go-utils/v2/log"
+	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
 
@@ -58,7 +58,7 @@ func (u *Uploader) DeployFile(item deployment.DeployableItem, buildURL, token st
 }
 
 // createSnapshot copies a file to a temporary directory with the same file name.
-func createSnapshot(originalPath string, logger logV2.Logger) (string, error) {
+func createSnapshot(originalPath string, logger log.Logger) (string, error) {
 	originalFile, err := os.Open(originalPath)
 	if err != nil {
 		return "", fmt.Errorf("failed to open original file: %w", err)

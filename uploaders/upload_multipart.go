@@ -17,7 +17,7 @@ import (
 
 	"github.com/docker/go-units"
 
-	logV2 "github.com/bitrise-io/go-utils/v2/log"
+	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/retry"
 	"github.com/bitrise-io/go-utils/v2/urlutil"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
@@ -95,7 +95,7 @@ func (u *Uploader) uploadMultipart(buildURL, token string, artifact ArtifactArgs
 	return artifactURLs, nil
 }
 
-func createMultipartArtifact(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, archiveAsArtifact bool, pipelineMeta *deployment.IntermediateFileMetaData, logger logV2.Logger) ([]MultipartUploadTask, error) {
+func createMultipartArtifact(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, archiveAsArtifact bool, pipelineMeta *deployment.IntermediateFileMetaData, logger log.Logger) ([]MultipartUploadTask, error) {
 	artifactName := filepath.Base(artifact.Path)
 
 	logger.Printf("file size: %s", units.BytesSize(float64(artifact.FileSize)))
@@ -207,7 +207,7 @@ func createMultipartArtifact(buildURL, token string, artifact ArtifactArgs, arti
 	return uploadTasks, nil
 }
 
-func finishMultipartArtifact(buildURL, token, artifactID string, success bool, parts []UploadedPart, appDeploymentMeta *AppDeploymentMetaData, logger logV2.Logger) (ArtifactURLs, error) {
+func finishMultipartArtifact(buildURL, token, artifactID string, success bool, parts []UploadedPart, appDeploymentMeta *AppDeploymentMetaData, logger log.Logger) (ArtifactURLs, error) {
 	data := url.Values{
 		"api_token": {token},
 		"success":   {strconv.FormatBool(success)},
@@ -340,7 +340,7 @@ func finishMultipartArtifact(buildURL, token, artifactID string, success bool, p
 // uploadPart uploads a single chunk of a file to a presigned S3 part URL.
 // It opens the file independently to allow concurrent calls without seeking conflicts.
 // Returns the ETag header value which must be included in the finish call.
-func uploadPart(partURL, filePath string, offset, size int64, partNumber int, logger logV2.Logger) (string, error) {
+func uploadPart(partURL, filePath string, offset, size int64, partNumber int, logger log.Logger) (string, error) {
 	netClient := &http.Client{Timeout: 10 * time.Minute}
 
 	var etag string
@@ -408,7 +408,7 @@ func uploadPart(partURL, filePath string, offset, size int64, partNumber int, lo
 // uploadAllParts uploads the file in partSize-byte chunks, one per partURL, up to
 // concurrency parts at a time. The last part is trimmed to the file's
 // remaining bytes. Returns the ETags required by the finish call.
-func uploadAllParts(filePath string, fileSize int64, partSize int64, partURLs []string, concurrency int, logger logV2.Logger) ([]UploadedPart, error) {
+func uploadAllParts(filePath string, fileSize int64, partSize int64, partURLs []string, concurrency int, logger log.Logger) ([]UploadedPart, error) {
 	if partSize <= 0 {
 		return nil, fmt.Errorf("invalid part size %d", partSize)
 	}

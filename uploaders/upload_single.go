@@ -16,7 +16,7 @@ import (
 
 	"github.com/docker/go-units"
 
-	logV2 "github.com/bitrise-io/go-utils/v2/log"
+	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/retry"
 	"github.com/bitrise-io/go-utils/v2/urlutil"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
@@ -73,7 +73,7 @@ func (u *Uploader) uploadSingle(buildURL, token string, artifact ArtifactArgs, a
 	return artifactURLs, nil
 }
 
-func createArtifact(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, archiveAsArtifact bool, pipelineMeta *deployment.IntermediateFileMetaData, logger logV2.Logger) ([]UploadTask, error) {
+func createArtifact(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, archiveAsArtifact bool, pipelineMeta *deployment.IntermediateFileMetaData, logger log.Logger) ([]UploadTask, error) {
 	// create form data
 	artifactName := filepath.Base(artifact.Path)
 
@@ -173,7 +173,7 @@ func createArtifact(buildURL, token string, artifact ArtifactArgs, artifactType,
 	return uploadTasks, nil
 }
 
-func UploadArtifact(uploadURL string, artifact ArtifactArgs, contentType string, logger logV2.Logger) (TransferDetails, error) {
+func UploadArtifact(uploadURL string, artifact ArtifactArgs, contentType string, logger log.Logger) (TransferDetails, error) {
 	netClient := &http.Client{
 		Timeout: 10 * time.Minute,
 	}
@@ -245,7 +245,7 @@ func UploadArtifact(uploadURL string, artifact ArtifactArgs, contentType string,
 	return details, err
 }
 
-func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDeploymentMetaData, logger logV2.Logger) (ArtifactURLs, error) {
+func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDeploymentMetaData, logger log.Logger) (ArtifactURLs, error) {
 	// create form data
 	data := url.Values{"api_token": {token}}
 	if appDeploymentMeta != nil {
