@@ -19,7 +19,6 @@ import (
 	"github.com/bitrise-io/go-steputils/v2/export"
 	"github.com/bitrise-io/go-steputils/v2/secretkeys"
 	"github.com/bitrise-io/go-steputils/v2/stepconf"
-	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/env"
 	"github.com/bitrise-io/go-utils/v2/errorutil"
@@ -120,7 +119,6 @@ func main() {
 
 	stepconf.Print(config)
 
-	log.SetEnableDebugLog(config.DebugMode)
 	logger.EnableDebugLog(config.DebugMode)
 
 	if err := validateUserGroups(config.NotifyUserGroups, logger); err != nil {
@@ -189,9 +187,9 @@ func main() {
 	}
 
 	if strings.TrimSpace(config.PipelineIntermediateFiles) != "" {
-		zipComparator := deployment.NewZipComparator(deployment.DefaultReadZipFunction)
+		zipComparator := deployment.NewZipComparator(deployment.DefaultReadZipFunction, logger)
 		repository := env.NewRepository()
-		collector := deployment.NewCollector(zipComparator, deployment.DefaultIsDirFunction, zipManager.ZipDir, repository, tmpDir)
+		collector := deployment.NewCollector(zipComparator, deployment.DefaultIsDirFunction, zipManager.ZipDir, repository, tmpDir, logger)
 		deployableItems, err = collector.AddIntermediateFiles(deployableItems, config.PipelineIntermediateFiles)
 		if err != nil {
 			fail(logger, "%s", err)
@@ -296,13 +294,13 @@ func exportInstallPages(artifactURLCollection ArtifactURLCollection, config Conf
 		if err := exporter.ExportOutput("BITRISE_ARTIFACT_DETAILS_PAGE_URL", pages[0].URL); err != nil {
 			return fmt.Errorf("failed to export BITRISE_ARTIFACT_DETAILS_PAGE_URL: %s", err)
 		}
-		log.Printf("The artifact details page url is now available in the Environment Variable: BITRISE_ARTIFACT_DETAILS_PAGE_URL (value: %s)\n", pages[0].URL)
+		logger.Printf("The artifact details page url is now available in the Environment Variable: BITRISE_ARTIFACT_DETAILS_PAGE_URL (value: %s)\n", pages[0].URL)
 
 		value, err := exportMapEnvironment("Details Page URL template", config.DetailsPageURLMapFormat, "DetailsPageURLMap", "BITRISE_ARTIFACT_DETAILS_PAGE_URL_MAP", pages, exporter, logger)
 		if err != nil {
 			return fmt.Errorf("failed to export BITRISE_ARTIFACT_DETAILS_PAGE_URL_MAP, error: %s", err)
 		}
-		log.Printf("A map of deployed files and their details page urls is now available in the Environment Variable: BITRISE_ARTIFACT_DETAILS_PAGE_URL_MAP (value: %s)", value)
+		logger.Printf("A map of deployed files and their details page urls is now available in the Environment Variable: BITRISE_ARTIFACT_DETAILS_PAGE_URL_MAP (value: %s)", value)
 	}
 	return nil
 }

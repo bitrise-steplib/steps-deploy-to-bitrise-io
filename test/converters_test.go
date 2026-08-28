@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/bitrise-io/go-steputils/v2/testreport"
-	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/env"
 	"github.com/bitrise-io/go-xcode/v2/testresult/xcresult3"
@@ -21,7 +20,6 @@ const sampleArtifactsGitURL = "https://github.com/bitrise-io/sample-artifacts.gi
 func TestXCresult3Converters(t *testing.T) {
 	// xcresulttool renders attachment timestamps in the process timezone; the expected reports are UTC.
 	t.Setenv("TZ", "UTC")
-	log.SetEnableDebugLog(true)
 	want := testreport.TestReport{
 		TestSuites: []testreport.TestSuite{
 			{ // unit test
