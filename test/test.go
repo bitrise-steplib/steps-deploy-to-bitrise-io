@@ -13,7 +13,7 @@ import (
 
 	"github.com/bitrise-io/bitrise/models"
 	"github.com/bitrise-io/go-steputils/v2/testasset"
-	logV2 "github.com/bitrise-io/go-utils/v2/log"
+	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/pathutil"
 	"github.com/bitrise-io/go-utils/v2/retryhttp"
 	"github.com/hashicorp/go-retryablehttp"
@@ -60,7 +60,7 @@ type Result struct {
 // Results ...
 type Results []Result
 
-func httpCall(apiToken, method, url string, input io.Reader, output interface{}, logger logV2.Logger) error {
+func httpCall(apiToken, method, url string, input io.Reader, output interface{}, logger log.Logger) error {
 	if apiToken != "" {
 		url = url + "/" + apiToken
 	}
@@ -96,7 +96,7 @@ func httpCall(apiToken, method, url string, input io.Reader, output interface{},
 	return nil
 }
 
-func findSupportedAttachments(testDir string, logger logV2.Logger) (attachmentPaths []string) {
+func findSupportedAttachments(testDir string, logger log.Logger) (attachmentPaths []string) {
 	err := filepath.WalkDir(testDir, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -144,7 +144,7 @@ The Test Deploy directory has the following directory structure:
 			├── screenshot_3.png
 			└── test-info.json
 */
-func ParseTestResults(testsRootDir string, useLegacyXCResultExtractionMethod bool, pathChecker pathutil.PathChecker, pathModifier pathutil.PathModifier, logger logV2.Logger) (results Results, err error) {
+func ParseTestResults(testsRootDir string, useLegacyXCResultExtractionMethod bool, pathChecker pathutil.PathChecker, pathModifier pathutil.PathModifier, logger log.Logger) (results Results, err error) {
 	// read dirs in base tests dir
 	// <root_tests_dir>
 
@@ -256,7 +256,7 @@ func ParseTestResults(testsRootDir string, useLegacyXCResultExtractionMethod boo
 }
 
 // Upload ...
-func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug string, logger logV2.Logger) error {
+func (results Results) Upload(apiToken, endpointBaseURL, appSlug, buildSlug string, logger log.Logger) error {
 	if results.calculateTotalSizeOfXMLContent() > maxTotalXMLSize {
 		return fmt.Errorf("the total size of the test result XML files (%d MiB) exceeds the maximum allowed size of 100 MiB", results.calculateTotalSizeOfXMLContent()/1024/1024)
 	}

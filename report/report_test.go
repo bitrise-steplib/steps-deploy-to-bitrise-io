@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	loggerV2 "github.com/bitrise-io/go-utils/v2/log"
+	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/report/api"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/report/mocks"
 	"github.com/stretchr/testify/assert"
@@ -35,7 +35,7 @@ func TestFindsAndUploadsReports(t *testing.T) {
 
 	uploader := HTMLReportUploader{
 		client:      mockClient,
-		logger:      loggerV2.NewLogger(),
+		logger:      log.NewLogger(),
 		reportDir:   reportDir,
 		concurrency: 1,
 	}
@@ -50,7 +50,7 @@ func TestInvalidReportFiltering(t *testing.T) {
 	reportDir, reports := createReports(t)
 	uploader := HTMLReportUploader{
 		client:      nil,
-		logger:      loggerV2.NewLogger(),
+		logger:      log.NewLogger(),
 		reportDir:   reportDir,
 		concurrency: 1,
 	}
