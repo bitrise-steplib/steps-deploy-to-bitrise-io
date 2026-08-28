@@ -27,7 +27,7 @@ import (
 	"github.com/bitrise-io/go-utils/v2/fileutil"
 	loggerV2 "github.com/bitrise-io/go-utils/v2/log"
 	pathutil2 "github.com/bitrise-io/go-utils/v2/pathutil"
-	"github.com/bitrise-io/go-utils/ziputil"
+	"github.com/bitrise-io/go-utils/v2/ziputil"
 	iosparser "github.com/bitrise-io/go-xcode/v2/metaparser"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/fileredactor"
@@ -142,6 +142,7 @@ func main() {
 
 	pathModifier := pathutil2.NewPathModifier()
 	pathChecker := pathutil2.NewPathChecker()
+	zipManager := ziputil.NewZipManager(pathChecker)
 	pathProcessor := fileredactor.NewFilePathProcessor(pathModifier, pathChecker)
 	filePaths, err := pathProcessor.ProcessFilePaths(config.FilesToRedact)
 	if err != nil {
@@ -175,7 +176,7 @@ func main() {
 			fail(logger, "Failed to expand path: %s, error: %s", config.DeployPath, err)
 		}
 
-		filesToDeploy, err := collectFilesToDeploy(absDeployPth, config, tmpDir, logger)
+		filesToDeploy, err := collectFilesToDeploy(absDeployPth, config, tmpDir, zipManager, logger)
 		if err != nil {
 			fail(logger, "%s", err)
 		}
@@ -186,7 +187,7 @@ func main() {
 	if strings.TrimSpace(config.PipelineIntermediateFiles) != "" {
 		zipComparator := deployment.NewZipComparator(deployment.DefaultReadZipFunction)
 		repository := env.NewRepository()
-		collector := deployment.NewCollector(zipComparator, deployment.DefaultIsDirFunction, ziputil.ZipDir, repository, tmpDir)
+		collector := deployment.NewCollector(zipComparator, deployment.DefaultIsDirFunction, zipManager.ZipDir, repository, tmpDir)
 		deployableItems, err = collector.AddIntermediateFiles(deployableItems, config.PipelineIntermediateFiles)
 		if err != nil {
 			fail(logger, "%s", err)
@@ -390,7 +391,7 @@ func clearDeployFiles(filesToDeploy []string, logger loggerV2.Logger) []string {
 	return clearedFilesToDeploy
 }
 
-func collectFilesToDeploy(absDeployPth string, config Config, tmpDir string, logger loggerV2.Logger) (filesToDeploy []string, err error) {
+func collectFilesToDeploy(absDeployPth string, config Config, tmpDir string, zipManager *ziputil.ZipManager, logger loggerV2.Logger) (filesToDeploy []string, err error) {
 	pathExists, err := pathutil.IsPathExists(absDeployPth)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check if %s exists: %s", absDeployPth, err)
@@ -427,7 +428,7 @@ func collectFilesToDeploy(absDeployPth string, config Config, tmpDir string, log
 		}
 		tmpZipPath := filepath.Join(tmpDir, zipName+".zip")
 
-		if err := ziputil.ZipDir(absDeployPth, tmpZipPath, true); err != nil {
+		if err := zipManager.ZipDir(absDeployPth, tmpZipPath, true); err != nil {
 			return nil, fmt.Errorf("failed to zip output dir, error: %s", err)
 		}
 
