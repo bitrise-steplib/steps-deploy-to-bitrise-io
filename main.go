@@ -548,7 +548,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config, logger l
 	uploader := uploaders.New(
 		logger,
 		fileManager,
-		androidparser.New(uploaders.NewLogger(), bTool, fileManager),
+		androidparser.New(uploaders.NewLogger(logger), bTool, fileManager),
 		iosparser.New(logger, fileManager),
 		config.UseMultipartUpload == "true",
 		determineMultipartConcurrency(config),

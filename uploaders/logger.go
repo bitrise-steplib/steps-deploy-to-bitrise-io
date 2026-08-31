@@ -1,31 +1,24 @@
 package uploaders
 
 import (
-	"github.com/bitrise-io/go-utils/log"
+	"github.com/bitrise-io/go-utils/v2/log"
 )
 
-type logger struct{}
-
-func NewLogger() *logger {
-	return &logger{}
+type metaparserLogger struct {
+	logger log.Logger
 }
 
-func (l *logger) Printf(format string, v ...interface{}) {
-	log.Printf(format, v...)
+func NewLogger(logger log.Logger) *metaparserLogger {
+	return &metaparserLogger{logger: logger}
 }
 
-func (l *logger) Errorf(format string, v ...interface{}) {
-	log.Errorf(format, v...)
+func (l *metaparserLogger) Warnf(format string, v ...interface{}) {
+	l.logger.Warnf(format, v...)
 }
 
-func (l *logger) Warnf(format string, v ...interface{}) {
-	log.Warnf(format, v...)
-}
+// AABParseWarnf and APKParseWarnf are telemetry hooks the metaparser calls on
+// parse failures. The step does not collect this telemetry, and the failures
+// are already surfaced to the user via Warnf, so these are intentionally no-ops.
+func (l *metaparserLogger) AABParseWarnf(_ string, _ string, _ ...interface{}) {}
 
-func (l *logger) AABParseWarnf(tag string, format string, v ...interface{}) {
-	log.RWarnf("deploy-to-bitrise-io", tag, nil, format, v...)
-}
-
-func (l *logger) APKParseWarnf(tag string, format string, v ...interface{}) {
-	log.RWarnf("deploy-to-bitrise-io", tag, nil, format, v...)
-}
+func (l *metaparserLogger) APKParseWarnf(_ string, _ string, _ ...interface{}) {}
