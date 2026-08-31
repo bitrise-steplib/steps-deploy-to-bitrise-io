@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/bitrise-io/go-utils/log"
+	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
 
@@ -24,7 +24,7 @@ func (u *Uploader) DeployFile(item deployment.DeployableItem, buildURL, token st
 	//  which can cause an issue like: request body larger than specified content length at file upload.
 	deploySnapshot := false
 	if fileSize <= snapshotFileSizeLimitInBytes {
-		snapshotPth, err := createSnapshot(pth)
+		snapshotPth, err := createSnapshot(pth, u.logger)
 		if err != nil {
 			u.logger.Warnf("failed to create snapshot of %s: %s", pth, err)
 		} else {
@@ -58,14 +58,14 @@ func (u *Uploader) DeployFile(item deployment.DeployableItem, buildURL, token st
 }
 
 // createSnapshot copies a file to a temporary directory with the same file name.
-func createSnapshot(originalPath string) (string, error) {
+func createSnapshot(originalPath string, logger log.Logger) (string, error) {
 	originalFile, err := os.Open(originalPath)
 	if err != nil {
 		return "", fmt.Errorf("failed to open original file: %w", err)
 	}
 	defer func() {
 		if err := originalFile.Close(); err != nil {
-			log.Warnf("Failed to close original file: %s", err)
+			logger.Warnf("Failed to close original file: %s", err)
 		}
 	}()
 
@@ -81,7 +81,7 @@ func createSnapshot(originalPath string) (string, error) {
 	}
 	defer func() {
 		if err := tmpFile.Close(); err != nil {
-			log.Warnf("Failed to close temp file: %s", err)
+			logger.Warnf("Failed to close temp file: %s", err)
 		}
 	}()
 

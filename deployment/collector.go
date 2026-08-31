@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/v2/env"
+	"github.com/bitrise-io/go-utils/v2/log"
 )
 
 const (
@@ -72,6 +72,7 @@ type Collector struct {
 	zipDirFunction  ZipDirFunction
 	envRepository   env.Repository
 	temporaryFolder string
+	logger          log.Logger
 }
 
 // NewCollector ...
@@ -81,6 +82,7 @@ func NewCollector(
 	zipDirFunction ZipDirFunction,
 	envRepository env.Repository,
 	temporaryFolder string,
+	logger log.Logger,
 ) Collector {
 	return Collector{
 		zipComparator:   zipComparator,
@@ -88,6 +90,7 @@ func NewCollector(
 		zipDirFunction:  zipDirFunction,
 		envRepository:   envRepository,
 		temporaryFolder: temporaryFolder,
+		logger:          logger,
 	}
 }
 
@@ -258,12 +261,12 @@ func (c Collector) mergeZipPairs(deployableItems []DeployableItem) []DeployableI
 		for pth, zipBuildArtifact := range zipBuildArtifacts {
 			same, err := c.zipComparator.Equals(pipelineDir.Path, zipBuildArtifact.Path)
 			if err != nil {
-				log.Warnf("Couldn't compare Pipeline File (%s) and Build Artifact (%s): %s", pipelineDir.Path, zipBuildArtifact.Path, err)
+				c.logger.Warnf("Couldn't compare Pipeline File (%s) and Build Artifact (%s): %s", pipelineDir.Path, zipBuildArtifact.Path, err)
 				continue
 			}
 
 			if same {
-				log.Warnf("Same directory specified both as Build Artifact (%s) and Pipeline File (%s), keeping Pipeline File...", zipBuildArtifact.Path, pipelineDir.Path)
+				c.logger.Warnf("Same directory specified both as Build Artifact (%s) and Pipeline File (%s), keeping Pipeline File...", zipBuildArtifact.Path, pipelineDir.Path)
 				delete(zipBuildArtifacts, pth)
 			}
 		}

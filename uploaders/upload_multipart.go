@@ -17,8 +17,7 @@ import (
 
 	"github.com/docker/go-units"
 
-	"github.com/bitrise-io/go-utils/log"
-	logV2 "github.com/bitrise-io/go-utils/v2/log"
+	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/retry"
 	"github.com/bitrise-io/go-utils/v2/urlutil"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
@@ -96,10 +95,10 @@ func (u *Uploader) uploadMultipart(buildURL, token string, artifact ArtifactArgs
 	return artifactURLs, nil
 }
 
-func createMultipartArtifact(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, archiveAsArtifact bool, pipelineMeta *deployment.IntermediateFileMetaData, logger logV2.Logger) ([]MultipartUploadTask, error) {
+func createMultipartArtifact(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, archiveAsArtifact bool, pipelineMeta *deployment.IntermediateFileMetaData, logger log.Logger) ([]MultipartUploadTask, error) {
 	artifactName := filepath.Base(artifact.Path)
 
-	log.Printf("file size: %s", units.BytesSize(float64(artifact.FileSize)))
+	logger.Printf("file size: %s", units.BytesSize(float64(artifact.FileSize)))
 
 	if strings.TrimSpace(token) == "" {
 		return nil, fmt.Errorf("provided API token is empty")
@@ -137,7 +136,7 @@ func createMultipartArtifact(buildURL, token string, artifact ArtifactArgs, arti
 
 	if err := retry.Times(3).Wait(5 * time.Second).Try(func(attempt uint) error {
 		if attempt > 0 {
-			log.Warnf("%d attempt failed", attempt)
+			logger.Warnf("%d attempt failed", attempt)
 		}
 
 		req, err := http.NewRequest(http.MethodPost, uri, strings.NewReader(data.Encode()))
@@ -157,7 +156,7 @@ func createMultipartArtifact(buildURL, token string, artifact ArtifactArgs, arti
 
 		defer func() {
 			if err := response.Body.Close(); err != nil {
-				log.Errorf("Failed to close reponse body, error: %s", err)
+				logger.Errorf("Failed to close reponse body, error: %s", err)
 			}
 		}()
 
@@ -208,7 +207,7 @@ func createMultipartArtifact(buildURL, token string, artifact ArtifactArgs, arti
 	return uploadTasks, nil
 }
 
-func finishMultipartArtifact(buildURL, token, artifactID string, success bool, parts []UploadedPart, appDeploymentMeta *AppDeploymentMetaData, logger logV2.Logger) (ArtifactURLs, error) {
+func finishMultipartArtifact(buildURL, token, artifactID string, success bool, parts []UploadedPart, appDeploymentMeta *AppDeploymentMetaData, logger log.Logger) (ArtifactURLs, error) {
 	data := url.Values{
 		"api_token": {token},
 		"success":   {strconv.FormatBool(success)},
@@ -282,7 +281,7 @@ func finishMultipartArtifact(buildURL, token, artifactID string, success bool, p
 	var artifactResponse finishArtifactResponse
 	if err := retry.Times(3).Wait(5 * time.Second).Try(func(attempt uint) error {
 		if attempt > 0 {
-			log.Warnf("%d attempt failed", attempt)
+			logger.Warnf("%d attempt failed", attempt)
 		}
 
 		req, err := http.NewRequest(http.MethodPost, uri, strings.NewReader(encodedBody))
@@ -301,7 +300,7 @@ func finishMultipartArtifact(buildURL, token, artifactID string, success bool, p
 		}
 		defer func() {
 			if err := response.Body.Close(); err != nil {
-				log.Errorf("Failed to close reponse body, error: %s", err)
+				logger.Errorf("Failed to close reponse body, error: %s", err)
 			}
 		}()
 
@@ -328,7 +327,7 @@ func finishMultipartArtifact(buildURL, token, artifactID string, success bool, p
 	}
 
 	if len(artifactResponse.InvalidEmails) > 0 {
-		log.Warnf("Invalid e-mail addresses: %s", strings.Join(artifactResponse.InvalidEmails, ", "))
+		logger.Warnf("Invalid e-mail addresses: %s", strings.Join(artifactResponse.InvalidEmails, ", "))
 	}
 
 	return ArtifactURLs{
@@ -341,14 +340,14 @@ func finishMultipartArtifact(buildURL, token, artifactID string, success bool, p
 // uploadPart uploads a single chunk of a file to a presigned S3 part URL.
 // It opens the file independently to allow concurrent calls without seeking conflicts.
 // Returns the ETag header value which must be included in the finish call.
-func uploadPart(partURL, filePath string, offset, size int64, partNumber int, logger logV2.Logger) (string, error) {
+func uploadPart(partURL, filePath string, offset, size int64, partNumber int, logger log.Logger) (string, error) {
 	netClient := &http.Client{Timeout: 10 * time.Minute}
 
 	var etag string
 
 	err := retry.Times(3).Wait(5 * time.Second).Try(func(attempt uint) error {
 		if attempt > 0 {
-			log.Warnf("part %d: attempt %d failed, retrying", partNumber, attempt)
+			logger.Warnf("part %d: attempt %d failed, retrying", partNumber, attempt)
 		}
 
 		file, err := os.Open(filePath)
@@ -357,7 +356,7 @@ func uploadPart(partURL, filePath string, offset, size int64, partNumber int, lo
 		}
 		defer func() {
 			if err := file.Close(); err != nil {
-				log.Warnf("failed to close file: %s", err)
+				logger.Warnf("failed to close file: %s", err)
 			}
 		}()
 
@@ -379,7 +378,7 @@ func uploadPart(partURL, filePath string, offset, size int64, partNumber int, lo
 		}
 		defer func() {
 			if err := resp.Body.Close(); err != nil {
-				log.Errorf("Failed to close response body, error: %s", err)
+				logger.Errorf("Failed to close response body, error: %s", err)
 			}
 		}()
 
@@ -409,7 +408,7 @@ func uploadPart(partURL, filePath string, offset, size int64, partNumber int, lo
 // uploadAllParts uploads the file in partSize-byte chunks, one per partURL, up to
 // concurrency parts at a time. The last part is trimmed to the file's
 // remaining bytes. Returns the ETags required by the finish call.
-func uploadAllParts(filePath string, fileSize int64, partSize int64, partURLs []string, concurrency int, logger logV2.Logger) ([]UploadedPart, error) {
+func uploadAllParts(filePath string, fileSize int64, partSize int64, partURLs []string, concurrency int, logger log.Logger) ([]UploadedPart, error) {
 	if partSize <= 0 {
 		return nil, fmt.Errorf("invalid part size %d", partSize)
 	}

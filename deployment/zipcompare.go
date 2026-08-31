@@ -5,18 +5,20 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/bitrise-io/go-utils/log"
+	"github.com/bitrise-io/go-utils/v2/log"
 )
 
 // ZipComparator ...
 type ZipComparator struct {
 	readZipFunction ReadZipFunction
+	logger          log.Logger
 }
 
 // NewZipComparator ...
-func NewZipComparator(readZipFunction ReadZipFunction) ZipComparator {
+func NewZipComparator(readZipFunction ReadZipFunction, logger log.Logger) ZipComparator {
 	return ZipComparator{
 		readZipFunction: readZipFunction,
+		logger:          logger,
 	}
 }
 
@@ -35,7 +37,7 @@ func (c ZipComparator) Equals(aZip, bZip string) (bool, error) {
 	result := c.compareZipDescriptors(aDescriptor, bDescriptor)
 	hasChanges := result.hasChanges()
 	if hasChanges {
-		log.Debugf("%s and %s are not the same:\n%s", aZip, bZip, result)
+		c.logger.Debugf("%s and %s are not the same:\n%s", aZip, bZip, result)
 	}
 	return !hasChanges, nil
 }

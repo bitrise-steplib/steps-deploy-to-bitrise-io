@@ -19,13 +19,12 @@ import (
 	"github.com/bitrise-io/go-steputils/v2/export"
 	"github.com/bitrise-io/go-steputils/v2/secretkeys"
 	"github.com/bitrise-io/go-steputils/v2/stepconf"
-	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/env"
 	"github.com/bitrise-io/go-utils/v2/errorutil"
 	"github.com/bitrise-io/go-utils/v2/exitcode"
 	"github.com/bitrise-io/go-utils/v2/fileutil"
-	loggerV2 "github.com/bitrise-io/go-utils/v2/log"
+	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/pathutil"
 	"github.com/bitrise-io/go-utils/v2/ziputil"
 	iosparser "github.com/bitrise-io/go-xcode/v2/metaparser"
@@ -102,13 +101,13 @@ type ArtifactURLCollection struct {
 
 const zippedXcarchiveExt = ".xcarchive.zip"
 
-func fail(logger loggerV2.Logger, format string, v ...interface{}) {
+func fail(logger log.Logger, format string, v ...interface{}) {
 	logger.Errorf(format, v...)
 	os.Exit(int(exitcode.Failure))
 }
 
 func main() {
-	logger := loggerV2.NewLogger() // TODO: replace v1 logger with v2 logger all around the code
+	logger := log.NewLogger() // TODO: replace v1 logger with v2 logger all around the code
 
 	envRepository := env.NewRepository()
 	exporter := export.NewExporter(command.NewFactory(envRepository), fileutil.NewFileManager())
@@ -120,7 +119,6 @@ func main() {
 
 	stepconf.Print(config)
 
-	log.SetEnableDebugLog(config.DebugMode)
 	logger.EnableDebugLog(config.DebugMode)
 
 	if err := validateUserGroups(config.NotifyUserGroups, logger); err != nil {
@@ -189,9 +187,9 @@ func main() {
 	}
 
 	if strings.TrimSpace(config.PipelineIntermediateFiles) != "" {
-		zipComparator := deployment.NewZipComparator(deployment.DefaultReadZipFunction)
+		zipComparator := deployment.NewZipComparator(deployment.DefaultReadZipFunction, logger)
 		repository := env.NewRepository()
-		collector := deployment.NewCollector(zipComparator, deployment.DefaultIsDirFunction, zipManager.ZipDir, repository, tmpDir)
+		collector := deployment.NewCollector(zipComparator, deployment.DefaultIsDirFunction, zipManager.ZipDir, repository, tmpDir, logger)
 		deployableItems, err = collector.AddIntermediateFiles(deployableItems, config.PipelineIntermediateFiles)
 		if err != nil {
 			fail(logger, "%s", err)
@@ -235,7 +233,7 @@ func main() {
 	}
 }
 
-func deployHTMLReports(config Config, logger loggerV2.Logger) {
+func deployHTMLReports(config Config, logger log.Logger) {
 	logger.Println()
 	logger.Infof("Deploying html reports...")
 
@@ -267,7 +265,7 @@ func loadSecrets() []string {
 	return values
 }
 
-func exportInstallPages(artifactURLCollection ArtifactURLCollection, config Config, exporter export.Exporter, logger loggerV2.Logger) error {
+func exportInstallPages(artifactURLCollection ArtifactURLCollection, config Config, exporter export.Exporter, logger log.Logger) error {
 	if len(artifactURLCollection.PublicInstallPageURLs) > 0 {
 		pages := mapURLsToInstallPages(artifactURLCollection.PublicInstallPageURLs)
 
@@ -296,13 +294,13 @@ func exportInstallPages(artifactURLCollection ArtifactURLCollection, config Conf
 		if err := exporter.ExportOutput("BITRISE_ARTIFACT_DETAILS_PAGE_URL", pages[0].URL); err != nil {
 			return fmt.Errorf("failed to export BITRISE_ARTIFACT_DETAILS_PAGE_URL: %s", err)
 		}
-		log.Printf("The artifact details page url is now available in the Environment Variable: BITRISE_ARTIFACT_DETAILS_PAGE_URL (value: %s)\n", pages[0].URL)
+		logger.Printf("The artifact details page url is now available in the Environment Variable: BITRISE_ARTIFACT_DETAILS_PAGE_URL (value: %s)\n", pages[0].URL)
 
 		value, err := exportMapEnvironment("Details Page URL template", config.DetailsPageURLMapFormat, "DetailsPageURLMap", "BITRISE_ARTIFACT_DETAILS_PAGE_URL_MAP", pages, exporter, logger)
 		if err != nil {
 			return fmt.Errorf("failed to export BITRISE_ARTIFACT_DETAILS_PAGE_URL_MAP, error: %s", err)
 		}
-		log.Printf("A map of deployed files and their details page urls is now available in the Environment Variable: BITRISE_ARTIFACT_DETAILS_PAGE_URL_MAP (value: %s)", value)
+		logger.Printf("A map of deployed files and their details page urls is now available in the Environment Variable: BITRISE_ARTIFACT_DETAILS_PAGE_URL_MAP (value: %s)", value)
 	}
 	return nil
 }
@@ -318,7 +316,7 @@ func mapURLsToInstallPages(URLs map[string]string) []PublicInstallPage {
 	return pages
 }
 
-func exportMapEnvironment(templateName string, format string, formatName string, outputKey string, pages []PublicInstallPage, exporter export.Exporter, logger loggerV2.Logger) (string, error) {
+func exportMapEnvironment(templateName string, format string, formatName string, outputKey string, pages []PublicInstallPage, exporter export.Exporter, logger log.Logger) (string, error) {
 	var maxEnvLength int
 
 	if configs, err := envman.GetConfigs(); err != nil {
@@ -363,7 +361,7 @@ func applyTemplateWithMaxSize(temp *template.Template, pages []PublicInstallPage
 	return value, logWarning, nil
 }
 
-func logDeployFiles(files []deployment.DeployableItem, logger loggerV2.Logger) {
+func logDeployFiles(files []deployment.DeployableItem, logger log.Logger) {
 	for _, file := range files {
 		message := fmt.Sprintf("- %s", file.Path)
 
@@ -375,7 +373,7 @@ func logDeployFiles(files []deployment.DeployableItem, logger loggerV2.Logger) {
 	}
 }
 
-func clearDeployFiles(filesToDeploy []string, logger loggerV2.Logger) []string {
+func clearDeployFiles(filesToDeploy []string, logger log.Logger) []string {
 	var clearedFilesToDeploy []string
 	for _, pth := range filesToDeploy {
 		_, err := os.Stat(pth)
@@ -395,7 +393,7 @@ func clearDeployFiles(filesToDeploy []string, logger loggerV2.Logger) []string {
 	return clearedFilesToDeploy
 }
 
-func collectFilesToDeploy(absDeployPth string, config Config, tmpDir string, zipManager *ziputil.ZipManager, pathChecker pathutil.PathChecker, logger loggerV2.Logger) (filesToDeploy []string, err error) {
+func collectFilesToDeploy(absDeployPth string, config Config, tmpDir string, zipManager *ziputil.ZipManager, pathChecker pathutil.PathChecker, logger log.Logger) (filesToDeploy []string, err error) {
 	pathExists, err := pathChecker.IsPathExists(absDeployPth)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check if %s exists: %s", absDeployPth, err)
@@ -466,7 +464,7 @@ func stepNameWithIndex(stepInfo models.TestResultStepInfo) string {
 	return fmt.Sprintf("%d. Step (%s)", stepInfo.Number, name)
 }
 
-func deployTestResults(config Config, pathChecker pathutil.PathChecker, pathModifier pathutil.PathModifier, logger loggerV2.Logger) {
+func deployTestResults(config Config, pathChecker pathutil.PathChecker, pathModifier pathutil.PathModifier, logger log.Logger) {
 	logger.Println()
 	logger.Infof("Collecting test results...")
 	testResults, err := test.ParseTestResults(config.TestDeployDir, config.UseLegacyXCResultExtractionMethod, pathChecker, pathModifier, logger)
@@ -516,7 +514,7 @@ func findAPKsAndAABs(items []deployment.DeployableItem) (apks []deployment.Deplo
 	return
 }
 
-func deploy(deployableItems []deployment.DeployableItem, config Config, logger loggerV2.Logger) (ArtifactURLCollection, []error) {
+func deploy(deployableItems []deployment.DeployableItem, config Config, logger log.Logger) (ArtifactURLCollection, []error) {
 	apks, aabs, others := findAPKsAndAABs(deployableItems)
 
 	var androidArtifacts []string
@@ -583,7 +581,7 @@ func deploy(deployableItems []deployment.DeployableItem, config Config, logger l
 	return artifactURLCollection, errorCollection
 }
 
-func deploySingleItem(logger loggerV2.Logger, uploader *uploaders.Uploader, item deployment.DeployableItem, config Config, androidArtifacts []string) ([]uploaders.ArtifactURLs, error) {
+func deploySingleItem(logger log.Logger, uploader *uploaders.Uploader, item deployment.DeployableItem, config Config, androidArtifacts []string) ([]uploaders.ArtifactURLs, error) {
 	pth := item.Path
 	fileType := getFileType(pth)
 
@@ -618,7 +616,7 @@ func deploySingleItem(logger loggerV2.Logger, uploader *uploaders.Uploader, item
 	}
 }
 
-func handleDeploymentFailureError(err error, errorCollection []error, logger loggerV2.Logger) []error {
+func handleDeploymentFailureError(err error, errorCollection []error, logger log.Logger) []error {
 	logger.Errorf("%s", errorutil.FormattedError(err))
 	err = fmt.Errorf("deploy failed, error: %w", err)
 	errorCollection = append(errorCollection, err)
@@ -678,7 +676,7 @@ func determineConcurrency(config Config) int {
 	return parseConcurrency(config.UploadConcurrency, defaultUploadConcurrency)
 }
 
-func validateUserGroups(userGroupsStr string, logger loggerV2.Logger) error {
+func validateUserGroups(userGroupsStr string, logger log.Logger) error {
 	if userGroupsStr == "" {
 		return nil
 	}

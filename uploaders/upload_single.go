@@ -16,7 +16,7 @@ import (
 
 	"github.com/docker/go-units"
 
-	"github.com/bitrise-io/go-utils/log"
+	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/retry"
 	"github.com/bitrise-io/go-utils/v2/urlutil"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
@@ -34,7 +34,7 @@ func (u UploadTask) Identifier() string {
 }
 
 func (u *Uploader) uploadSingle(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, item *deployment.DeployableItem, buildArtifactMeta *AppDeploymentMetaData) ([]ArtifactURLs, error) {
-	tasks, err := createArtifact(buildURL, token, artifact, artifactType, contentType, item.ArchiveAsArtifact, item.IntermediateFileMeta)
+	tasks, err := createArtifact(buildURL, token, artifact, artifactType, contentType, item.ArchiveAsArtifact, item.IntermediateFileMeta, u.logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create artifact (%s): %w", artifact.Path, err)
 	}
@@ -48,7 +48,7 @@ func (u *Uploader) uploadSingle(buildURL, token string, artifact ArtifactArgs, a
 
 	var artifactURLs []ArtifactURLs
 	for _, task := range tasks {
-		details, uploadErr := UploadArtifact(task.URL, artifact, contentType)
+		details, uploadErr := UploadArtifact(task.URL, artifact, contentType, u.logger)
 
 		transferType := Artifact
 		if task.IsIntermediate {
@@ -60,7 +60,7 @@ func (u *Uploader) uploadSingle(buildURL, token string, artifact ArtifactArgs, a
 			return nil, fmt.Errorf("failed to upload artifact (%s): %w", artifact.Path, uploadErr)
 		}
 
-		urls, err := finishArtifact(buildURL, token, task.Identifier(), buildArtifactMeta)
+		urls, err := finishArtifact(buildURL, token, task.Identifier(), buildArtifactMeta, u.logger)
 		if err != nil {
 			return nil, fmt.Errorf("failed to finish artifact upload (%s): %w", artifact.Path, err)
 		}
@@ -73,11 +73,11 @@ func (u *Uploader) uploadSingle(buildURL, token string, artifact ArtifactArgs, a
 	return artifactURLs, nil
 }
 
-func createArtifact(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, archiveAsArtifact bool, pipelineMeta *deployment.IntermediateFileMetaData) ([]UploadTask, error) {
+func createArtifact(buildURL, token string, artifact ArtifactArgs, artifactType, contentType string, archiveAsArtifact bool, pipelineMeta *deployment.IntermediateFileMetaData, logger log.Logger) ([]UploadTask, error) {
 	// create form data
 	artifactName := filepath.Base(artifact.Path)
 
-	log.Printf("file size: %s", units.BytesSize(float64(artifact.FileSize)))
+	logger.Printf("file size: %s", units.BytesSize(float64(artifact.FileSize)))
 
 	if strings.TrimSpace(token) == "" {
 		return nil, fmt.Errorf("provided API token is empty")
@@ -114,7 +114,7 @@ func createArtifact(buildURL, token string, artifact ArtifactArgs, artifactType,
 
 	if err := retry.Times(3).Wait(5 * time.Second).Try(func(attempt uint) error {
 		if attempt > 0 {
-			log.Warnf("%d attempt failed", attempt)
+			logger.Warnf("%d attempt failed", attempt)
 		}
 		response, err = http.PostForm(uri, data)
 		if err != nil {
@@ -123,7 +123,7 @@ func createArtifact(buildURL, token string, artifact ArtifactArgs, artifactType,
 
 		defer func() {
 			if err := response.Body.Close(); err != nil {
-				log.Errorf("Failed to close reponse body, error: %s", err)
+				logger.Errorf("Failed to close reponse body, error: %s", err)
 			}
 		}()
 
@@ -173,7 +173,7 @@ func createArtifact(buildURL, token string, artifact ArtifactArgs, artifactType,
 	return uploadTasks, nil
 }
 
-func UploadArtifact(uploadURL string, artifact ArtifactArgs, contentType string) (TransferDetails, error) {
+func UploadArtifact(uploadURL string, artifact ArtifactArgs, contentType string, logger log.Logger) (TransferDetails, error) {
 	netClient := &http.Client{
 		Timeout: 10 * time.Minute,
 	}
@@ -187,7 +187,7 @@ func UploadArtifact(uploadURL string, artifact ArtifactArgs, contentType string)
 		}
 		defer func() {
 			if err := file.Close(); err != nil {
-				log.Warnf("failed to close file, error: %s", err)
+				logger.Warnf("failed to close file, error: %s", err)
 			}
 		}()
 
@@ -220,7 +220,7 @@ func UploadArtifact(uploadURL string, artifact ArtifactArgs, contentType string)
 
 		defer func() {
 			if err := resp.Body.Close(); err != nil {
-				log.Errorf("Failed to close response body, error: %s", err)
+				logger.Errorf("Failed to close response body, error: %s", err)
 			}
 		}()
 
@@ -245,7 +245,7 @@ func UploadArtifact(uploadURL string, artifact ArtifactArgs, contentType string)
 	return details, err
 }
 
-func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDeploymentMetaData) (ArtifactURLs, error) {
+func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDeploymentMetaData, logger log.Logger) (ArtifactURLs, error) {
 	// create form data
 	data := url.Values{"api_token": {token}}
 	if appDeploymentMeta != nil {
@@ -300,7 +300,7 @@ func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDe
 	var artifactResponse finishArtifactResponse
 	if err := retry.Times(3).Wait(5 * time.Second).Try(func(attempt uint) error {
 		if attempt > 0 {
-			log.Warnf("%d attempt failed", attempt)
+			logger.Warnf("%d attempt failed", attempt)
 		}
 		response, err = http.PostForm(uri, data)
 		if err != nil {
@@ -308,7 +308,7 @@ func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDe
 		}
 		defer func() {
 			if err := response.Body.Close(); err != nil {
-				log.Errorf("Failed to close reponse body, error: %s", err)
+				logger.Errorf("Failed to close reponse body, error: %s", err)
 			}
 		}()
 
@@ -331,7 +331,7 @@ func finishArtifact(buildURL, token, artifactID string, appDeploymentMeta *AppDe
 	}
 
 	if len(artifactResponse.InvalidEmails) > 0 {
-		log.Warnf("Invalid e-mail addresses: %s", strings.Join(artifactResponse.InvalidEmails, ", "))
+		logger.Warnf("Invalid e-mail addresses: %s", strings.Join(artifactResponse.InvalidEmails, ", "))
 	}
 
 	return ArtifactURLs{

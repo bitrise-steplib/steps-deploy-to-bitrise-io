@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/mocks"
 	"github.com/stretchr/testify/assert"
 )
@@ -140,8 +141,8 @@ func Test_GivenIntermediateFiles_WhenProcessing_ThenConvertsCorrectly(t *testing
 			for key, value := range tt.environment {
 				mockRepository.On("Get", key).Return(value).Once()
 			}
-			zipComparator := NewZipComparator(DefaultReadZipFunction)
-			collector := NewCollector(zipComparator, isDirFunction(directories), emptyZipFunction(), mockRepository, tempDir)
+			zipComparator := NewZipComparator(DefaultReadZipFunction, log.NewLogger())
+			collector := NewCollector(zipComparator, isDirFunction(directories), emptyZipFunction(), mockRepository, tempDir, log.NewLogger())
 
 			var deployableItems []DeployableItem
 			deployableItems, err := collector.AddIntermediateFiles(deployableItems, tt.list)
@@ -276,9 +277,9 @@ func Test_GivenDeployFiles_WhenIntermediateFilesSpecified_ThenMergesThem(t *test
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			zipComparator := NewZipComparator(DefaultReadZipFunction)
+			zipComparator := NewZipComparator(DefaultReadZipFunction, log.NewLogger())
 			mockRepository := new(mocks.Repository)
-			collector := NewCollector(zipComparator, isDirFunction(directories), emptyZipFunction(), mockRepository, tempDir)
+			collector := NewCollector(zipComparator, isDirFunction(directories), emptyZipFunction(), mockRepository, tempDir, log.NewLogger())
 			deployableItems := ConvertPaths(tt.deployFiles)
 			deployableItems, err := collector.AddIntermediateFiles(deployableItems, tt.intermediateFiles)
 
@@ -340,9 +341,9 @@ func Test_GivenDeployDirectories_WhenIntermediateDirectoriesSpecified_ThenMerges
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			zipComparator := NewZipComparator(readZipFunction(zips))
+			zipComparator := NewZipComparator(readZipFunction(zips), log.NewLogger())
 			mockRepository := new(mocks.Repository)
-			collector := NewCollector(zipComparator, isDirFunction(directories), emptyZipFunction(), mockRepository, tempDir)
+			collector := NewCollector(zipComparator, isDirFunction(directories), emptyZipFunction(), mockRepository, tempDir, log.NewLogger())
 			deployableItems := ConvertPaths(tt.deployFiles)
 			deployableItems, err := collector.AddIntermediateFiles(deployableItems, tt.intermediateFiles)
 
