@@ -17,8 +17,8 @@ import (
 	"github.com/docker/go-units"
 
 	"github.com/bitrise-io/go-utils/log"
-	"github.com/bitrise-io/go-utils/retry"
-	"github.com/bitrise-io/go-utils/urlutil"
+	"github.com/bitrise-io/go-utils/v2/retry"
+	"github.com/bitrise-io/go-utils/v2/urlutil"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
 

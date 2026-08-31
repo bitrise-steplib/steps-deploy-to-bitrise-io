@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 
 	"github.com/bitrise-io/go-utils/log"
-	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 )
 
@@ -70,7 +69,7 @@ func createSnapshot(originalPath string) (string, error) {
 		}
 	}()
 
-	tmpDir, err := pathutil.NormalizedOSTempDirPath("snapshot")
+	tmpDir, err := os.MkdirTemp("", "snapshot")
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp directory: %w", err)
 	}

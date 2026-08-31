@@ -12,11 +12,10 @@ import (
 	"time"
 
 	"github.com/bitrise-io/bitrise/models"
-	"github.com/bitrise-io/go-utils/fileutil"
-	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/env"
-	logV2 "github.com/bitrise-io/go-utils/v2/log"
+	"github.com/bitrise-io/go-utils/v2/log"
+	"github.com/bitrise-io/go-utils/v2/pathutil"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -28,15 +27,22 @@ func createDummyFilesInDirWithContent(dir, content string, fileNames []string) e
 		if err := os.MkdirAll(filepath.Dir(filepath.Join(dir, file)), 0777); err != nil {
 			return err
 		}
-		if err := fileutil.WriteStringToFile(filepath.Join(dir, file), content); err != nil {
+		if err := os.WriteFile(filepath.Join(dir, file), []byte(content), 0644); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
+func readFileString(t *testing.T, path string) string {
+	t.Helper()
+	content, err := os.ReadFile(path)
+	require.NoError(t, err)
+	return string(content)
+}
+
 func Test_Upload(t *testing.T) {
-	tempDir, err := pathutil.NormalizedOSTempDirPath("test")
+	tempDir, err := os.MkdirTemp("", "test")
 	if err != nil {
 		t.Fatal("failed to create temp dir, error:", err)
 	}
@@ -117,12 +123,12 @@ func Test_Upload(t *testing.T) {
 
 			for _, assetPath := range testAssetPaths {
 				if filepath.Base(assetPath) == fName {
-					fileData, err := fileutil.ReadStringFromFile(assetPath)
+					fileData, err := os.ReadFile(assetPath)
 					if err != nil {
 						t.Fatal(err) //nolint:govet // We should fix it one day, but it requires a bigger refactor
 					}
 
-					if fileData != string(receivedData) {
+					if string(fileData) != string(receivedData) {
 						t.Fatal("files are not the same!") //nolint:govet // We should fix it one day, but it requires a bigger refactor
 					}
 
@@ -158,25 +164,19 @@ func Test_Upload(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	if err := results.Upload("access-token", "http://localhost:8893/test", "test-app-slug", "test-build-slug", logV2.NewLogger()); err != nil {
+	if err := results.Upload("access-token", "http://localhost:8893/test", "test-app-slug", "test-build-slug", log.NewLogger()); err != nil {
 		t.Fatalf("%v", errors.WithStack(err))
 		return
 	}
 }
 
 func Test_ParseXctestResults(t *testing.T) {
-	sampleTestSummariesPlist, err := fileutil.ReadStringFromFile(filepath.Join("testdata", "ios_testsummaries_plist.golden"))
-	if err != nil {
-		t.Fatal("unable to read golden file, error:", err)
-	}
-	sampleIOSXmlOutput, err := fileutil.ReadStringFromFile(filepath.Join("testdata", "ios_xml_output.golden"))
-	if err != nil {
-		t.Fatal("unable to read golden file, error:", err)
-	}
+	sampleTestSummariesPlist := readFileString(t, filepath.Join("testdata", "ios_testsummaries_plist.golden"))
+	sampleIOSXmlOutput := readFileString(t, filepath.Join("testdata", "ios_xml_output.golden"))
 
 	// creating test results
 	{
-		testsDir, err := pathutil.NormalizedOSTempDirPath("test")
+		testsDir, err := os.MkdirTemp("", "test")
 		if err != nil {
 			t.Fatal("failed to create temp dir, error:", err)
 		}
@@ -186,7 +186,7 @@ func Test_ParseXctestResults(t *testing.T) {
 			t.Fatal("failed to create temp dir, error:", err)
 		}
 
-		bundle, err := ParseTestResults(testsDir, false, logV2.NewLogger())
+		bundle, err := ParseTestResults(testsDir, false, pathutil.NewPathChecker(), pathutil.NewPathModifier(), log.NewLogger())
 		if err != nil {
 			t.Fatal("failed to get bundle, error:", err)
 		}
@@ -198,7 +198,7 @@ func Test_ParseXctestResults(t *testing.T) {
 
 	// creating android test results
 	{
-		testsDir, err := pathutil.NormalizedOSTempDirPath("test")
+		testsDir, err := os.MkdirTemp("", "test")
 		if err != nil {
 			t.Fatal("failed to create temp dir, error:", err)
 		}
@@ -226,7 +226,7 @@ func Test_ParseXctestResults(t *testing.T) {
 			t.Fatal("failed to create dummy files in dir, error:", err)
 		}
 
-		bundle, err := ParseTestResults(testsDir, false, logV2.NewLogger())
+		bundle, err := ParseTestResults(testsDir, false, pathutil.NewPathChecker(), pathutil.NewPathModifier(), log.NewLogger())
 		if err != nil {
 			t.Fatal("failed to get bundle, error:", err)
 		}
@@ -245,7 +245,7 @@ func Test_ParseXctestResults(t *testing.T) {
 
 	// creating ios test results
 	{
-		testsDir, err := pathutil.NormalizedOSTempDirPath("test")
+		testsDir, err := os.MkdirTemp("", "test")
 		if err != nil {
 			t.Fatal("failed to create temp dir, error:", err)
 		}
@@ -270,7 +270,7 @@ func Test_ParseXctestResults(t *testing.T) {
 			t.Fatal("failed to create dummy files in dir, error:", err)
 		}
 
-		bundle, err := ParseTestResults(testsDir, false, logV2.NewLogger())
+		bundle, err := ParseTestResults(testsDir, false, pathutil.NewPathChecker(), pathutil.NewPathModifier(), log.NewLogger())
 		if err != nil {
 			t.Fatal("failed to get bundle, error:", err)
 		}
@@ -310,18 +310,17 @@ func Test_ParseXctest3Results(t *testing.T) {
 	err = copyCmd.Run()
 	require.NoError(t, err)
 
-	bundle, err := ParseTestResults(testDir, false, logV2.NewLogger())
+	bundle, err := ParseTestResults(testDir, false, pathutil.NewPathChecker(), pathutil.NewPathModifier(), log.NewLogger())
 	require.NoError(t, err)
 
-	want, err := fileutil.ReadStringFromFile(filepath.Join("testdata", "ios_device_config_xml_output.golden"))
-	require.NoError(t, err)
+	want := readFileString(t, filepath.Join("testdata", "ios_device_config_xml_output.golden"))
 
 	assert.Equal(t, 1, len(bundle))
 	assert.Equal(t, want, string(bundle[0].XMLContent))
 }
 
 func Test_findSupportedAttachments(t *testing.T) {
-	tempDir, err := pathutil.NormalizedOSTempDirPath("test_attachments")
+	tempDir, err := os.MkdirTemp("", "test_attachments")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
 
@@ -339,7 +338,7 @@ func Test_findSupportedAttachments(t *testing.T) {
 	err = createDummyFilesInDirWithContent(tempDir, "test", files)
 	require.NoError(t, err)
 
-	result := findSupportedAttachments(tempDir, logV2.NewLogger())
+	result := findSupportedAttachments(tempDir, log.NewLogger())
 
 	assert.Len(t, result, 9) // all supported files including videos
 }

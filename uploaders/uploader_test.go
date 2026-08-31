@@ -7,14 +7,14 @@ import (
 	"testing"
 
 	"github.com/bitrise-io/go-utils/v2/env"
-	logV2 "github.com/bitrise-io/go-utils/v2/log"
+	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-steplib/steps-deploy-to-bitrise-io/deployment"
 	"github.com/stretchr/testify/require"
 )
 
 func newTestUploader(t *testing.T, useMultipart bool) *Uploader {
 	t.Helper()
-	logger := logV2.NewLogger()
+	logger := log.NewLogger()
 	return &Uploader{
 		logger:               logger,
 		tracker:              newTracker(env.NewRepository(), logger),
