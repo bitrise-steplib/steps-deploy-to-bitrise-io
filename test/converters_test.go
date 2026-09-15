@@ -199,6 +199,69 @@ func TestXCresult3Converters(t *testing.T) {
 			wantXML:       want,
 		},
 		{
+			name:          "Swift Testing display names and a nested suite",
+			converter:     xcresult3.NewConverter(false),
+			testFilePaths: []string{filepath.Join(testPackageDir, "testdata/xcresult3-swift-testing.xcresult")},
+			wantDetect:    true,
+			wantXMLError:  false,
+			wantXML: testreport.TestReport{
+				TestSuites: []testreport.TestSuite{
+					{
+						Name:  "BullsEyeTests",
+						Tests: 8,
+						Time:  0.0298,
+						TestCases: []testreport.TestCase{
+							{ // nested suite, the class name holds the outer suite only
+								Name:       "newGameResetsTheTotal()",
+								ClassName:  "BullsEyeSwiftTestingTests",
+								Time:       0.0037,
+								Properties: testCaseIdentifier("BullsEyeSwiftTestingTests/TotalScore/newGameResetsTheTotal()"),
+							},
+							{
+								Name:       "totalAddsUpTheRoundScores()",
+								ClassName:  "BullsEyeSwiftTestingTests",
+								Time:       0.0037,
+								Properties: testCaseIdentifier("BullsEyeSwiftTestingTests/TotalScore/totalAddsUpTheRoundScores()"),
+							},
+							{
+								Name:       "totalIsAddedUpEventually()",
+								ClassName:  "BullsEyeSwiftTestingTests",
+								Time:       0.0037,
+								Properties: testCaseIdentifier("BullsEyeSwiftTestingTests/TotalScore/totalIsAddedUpEventually()"),
+							},
+							{ // display name, reported instead of the function name
+								Name:       "Score is eventually computed when the guess matches the target",
+								ClassName:  "BullsEyeSwiftTestingTests",
+								Time:       0.0037,
+								Properties: testCaseIdentifier("BullsEyeSwiftTestingTests/scoreIsEventuallyComputedWhenGuessMatchesTarget()"),
+							},
+							{
+								Name:       "Score is computed when the guess matches the target",
+								ClassName:  "BullsEyeSwiftTestingTests",
+								Time:       0.0037,
+								Properties: testCaseIdentifier("BullsEyeSwiftTestingTests/scoreIsComputedWhenGuessMatchesTarget()"),
+							},
+							{ // the class name and the name compose the identifier, so it is not reported
+								Name:      "scoreIsComputedWhenGuessIsHigherThanTarget()",
+								ClassName: "BullsEyeSwiftTestingTests",
+								Time:      0.0038,
+							},
+							{
+								Name:      "scoreIsComputedEventually()",
+								ClassName: "BullsEyeSwiftTestingTests",
+								Time:      0.0038,
+							},
+							{
+								Name:      "scoreIsComputedWhenGuessIsLowerThanTarget()",
+								ClassName: "BullsEyeSwiftTestingTests",
+								Time:      0.0037,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name:          "Long running test",
 			converter:     xcresult3.NewConverter(false),
 			testFilePaths: []string{filepath.Join(testPackageDir, "testdata/test_result_with_18m_long_test_case.xcresult")},
@@ -262,6 +325,14 @@ func TestXCresult3Converters(t *testing.T) {
 // _tmp checkout the _download_sample_artifacts CI workflow creates when the fixture is present, and
 // otherwise clones into that same _tmp dir, so local runs share one checkout with CI and re-cloning
 // is avoided across runs.
+func testCaseIdentifier(identifier string) *testreport.Properties {
+	return &testreport.Properties{
+		Property: []testreport.Property{
+			{Name: testreport.TestCaseIdentifierPropertyName, Value: identifier},
+		},
+	}
+}
+
 func resolveSampleArtifact(t *testing.T, relPath string) string {
 	t.Helper()
 
