@@ -110,7 +110,7 @@ func main() {
 	logger := log.NewLogger() // TODO: replace v1 logger with v2 logger all around the code
 
 	envRepository := env.NewRepository()
-	exporter := export.NewExporter(command.NewFactory(envRepository), fileutil.NewFileManager())
+	exporter := export.NewDefaultExporter(command.NewFactory(envRepository))
 
 	var config Config
 	if err := stepconf.NewInputParser(envRepository).Parse(&config); err != nil {
