@@ -23,7 +23,7 @@ github.com/bitrise-io/go-pkcs12/internal/rc2
 # github.com/bitrise-io/go-plist v0.0.0-20210301100253-4b1a112ccd10
 ## explicit; go 1.15
 github.com/bitrise-io/go-plist
-# github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.52
+# github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.55
 ## explicit; go 1.21
 github.com/bitrise-io/go-steputils/v2/export
 github.com/bitrise-io/go-steputils/v2/secretkeys
@@ -44,8 +44,7 @@ github.com/bitrise-io/go-utils/pointers
 github.com/bitrise-io/go-utils/pretty
 github.com/bitrise-io/go-utils/retry
 github.com/bitrise-io/go-utils/sliceutil
-github.com/bitrise-io/go-utils/ziputil
-# github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.38
+# github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.39
 ## explicit; go 1.21
 github.com/bitrise-io/go-utils/v2/analytics
 github.com/bitrise-io/go-utils/v2/command
@@ -67,18 +66,18 @@ github.com/bitrise-io/go-utils/v2/ziputil
 ## explicit; go 1.20
 github.com/bitrise-io/go-xcode/certificateutil
 github.com/bitrise-io/go-xcode/exportoptions
-github.com/bitrise-io/go-xcode/plistutil
-github.com/bitrise-io/go-xcode/profileutil
 github.com/bitrise-io/go-xcode/xcodeproject/serialized
-# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.80
+# github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.86
 ## explicit; go 1.22
 github.com/bitrise-io/go-xcode/v2/artifacts
 github.com/bitrise-io/go-xcode/v2/internal/zip
 github.com/bitrise-io/go-xcode/v2/metaparser
 github.com/bitrise-io/go-xcode/v2/plistutil
+github.com/bitrise-io/go-xcode/v2/profileutil
 github.com/bitrise-io/go-xcode/v2/testresult/xcresult
 github.com/bitrise-io/go-xcode/v2/testresult/xcresult3
 github.com/bitrise-io/go-xcode/v2/testresult/xcresult3/model3
+github.com/bitrise-io/go-xcode/v2/timeutil
 github.com/bitrise-io/go-xcode/v2/zip
 # github.com/bitrise-io/goinp v0.0.0-20211005113137-305e91b481f4
 ## explicit; go 1.16
