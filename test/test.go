@@ -232,15 +232,18 @@ func ParseTestResults(testsRootDir string, useLegacyXCResultExtractionMethod boo
 					if err != nil {
 						return nil, err
 					}
+
+					attachments := findSupportedAttachments(testPhaseDirPath, logger)
+
+					logger.Debugf("found attachments: %d", len(attachments))
+
+					linkAttachments(&testReport, attachments, testInfo.Name, logger)
+
 					xmlData, err := xml.MarshalIndent(testReport, "", " ")
 					if err != nil {
 						return nil, err
 					}
 					xmlData = append([]byte(`<?xml version="1.0" encoding="UTF-8"?>`+"\n"), xmlData...)
-
-					attachments := findSupportedAttachments(testPhaseDirPath, logger)
-
-					logger.Debugf("found attachments: %d", len(attachments))
 
 					results = append(results, Result{
 						Name:            testInfo.Name,

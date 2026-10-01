@@ -6,7 +6,7 @@ require (
 	github.com/bitrise-io/bitrise v0.0.0-20220808135808-3483087dd853
 	github.com/bitrise-io/envman v0.0.0-20220401145857-d11e00a5dc55
 	github.com/bitrise-io/go-android/v2 v2.0.0-alpha.15
-	github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.55
+	github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.56
 	github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.39
 	github.com/bitrise-io/go-xcode v1.3.3
 	github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.86
@@ -14,6 +14,7 @@ require (
 	github.com/google/go-cmp v0.6.0
 	github.com/gorilla/mux v1.8.0
 	github.com/hashicorp/go-retryablehttp v0.7.7
+	github.com/maruel/natural v1.3.0
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.10.0
 )

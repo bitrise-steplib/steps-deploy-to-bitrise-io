@@ -23,12 +23,13 @@ github.com/bitrise-io/go-pkcs12/internal/rc2
 # github.com/bitrise-io/go-plist v0.0.0-20210301100253-4b1a112ccd10
 ## explicit; go 1.15
 github.com/bitrise-io/go-plist
-# github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.55
+# github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.56
 ## explicit; go 1.21
 github.com/bitrise-io/go-steputils/v2/export
 github.com/bitrise-io/go-steputils/v2/secretkeys
 github.com/bitrise-io/go-steputils/v2/stepconf
 github.com/bitrise-io/go-steputils/v2/testasset
+github.com/bitrise-io/go-steputils/v2/testattachment
 github.com/bitrise-io/go-steputils/v2/testreport
 # github.com/bitrise-io/go-utils v1.0.15
 ## explicit; go 1.13
@@ -120,6 +121,9 @@ github.com/hashicorp/go-version
 ## explicit; go 1.22
 github.com/klauspost/compress/flate
 github.com/klauspost/compress/internal/le
+# github.com/maruel/natural v1.3.0
+## explicit; go 1.21
+github.com/maruel/natural
 # github.com/mitchellh/mapstructure v1.5.0
 ## explicit; go 1.14
 github.com/mitchellh/mapstructure
