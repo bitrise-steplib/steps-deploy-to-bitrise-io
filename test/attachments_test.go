@@ -97,16 +97,25 @@ func Test_linkAttachments(t *testing.T) {
 			},
 		},
 		{
-			name:            "links neither file when two have the same test case and label",
+			name:            "links neither file when two have the same name",
 			testCases:       []testreport.TestCase{{ClassName: "LoginTest", Name: "emptyState"}},
 			attachmentNames: []string{"a/LoginTest__emptyState__1.png", "b/LoginTest__emptyState__1.png", "LoginTest__emptyState__01.png"},
 			want: [][]testreport.Property{
 				{{Name: "attachment_0", Value: "LoginTest__emptyState__01.png"}},
 			},
 			wantWarnings: []string{
-				"Test attachment a/LoginTest__emptyState__1.png is not linked to a test case: another file has the same test case and label",
-				"Test attachment b/LoginTest__emptyState__1.png is not linked to a test case: another file has the same test case and label",
+				"Test attachment a/LoginTest__emptyState__1.png is not linked to a test case: another file in the report has the same name",
+				"Test attachment b/LoginTest__emptyState__1.png is not linked to a test case: another file in the report has the same name",
 			},
+		},
+		{
+			name:            "links files with the same label and different extensions",
+			testCases:       []testreport.TestCase{{ClassName: "LoginTest", Name: "emptyState"}},
+			attachmentNames: []string{"LoginTest__emptyState__1.png", "LoginTest__emptyState__1.mp4"},
+			want: [][]testreport.Property{{
+				{Name: "attachment_0", Value: "LoginTest__emptyState__1.png"},
+				{Name: "attachment_1", Value: "LoginTest__emptyState__1.mp4"},
+			}},
 		},
 		{
 			name: "warns about a file that more than one test case matches",

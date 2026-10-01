@@ -3,6 +3,7 @@ package test
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -47,15 +48,15 @@ func linkAttachments(report *testreport.TestReport, attachmentPaths []string, re
 	}
 
 	for testCase, attachments := range byTestCase {
-		labelCounts := map[string]int{}
+		baseNameCounts := map[string]int{}
 		for _, attachment := range attachments {
-			labelCounts[attachment.label]++
+			baseNameCounts[filepath.Base(attachment.fileName)]++
 		}
 
 		var kept []linkedAttachment
 		for _, attachment := range attachments {
-			if labelCounts[attachment.label] > 1 {
-				logger.Warnf("Test attachment %s is not linked to a test case: another file has the same test case and label", attachment.fileName)
+			if baseNameCounts[filepath.Base(attachment.fileName)] > 1 {
+				logger.Warnf("Test attachment %s is not linked to a test case: another file in the report has the same name", attachment.fileName)
 				continue
 			}
 			kept = append(kept, attachment)
