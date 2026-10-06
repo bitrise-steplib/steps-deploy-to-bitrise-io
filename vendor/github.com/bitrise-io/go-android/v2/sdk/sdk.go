@@ -7,13 +7,14 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/bitrise-io/go-utils/pathutil"
+	"github.com/bitrise-io/go-utils/v2/pathutil"
 	"github.com/hashicorp/go-version"
 )
 
 // Model ...
 type Model struct {
 	androidHome string
+	pathChecker pathutil.PathChecker
 }
 
 // Environment is used to pass in environment variables used to locate Android SDK
@@ -37,17 +38,17 @@ type AndroidSdkInterface interface {
 }
 
 // New creates a Model with a supplied Android SDK path
-func New(androidHome string) (*Model, error) {
-	evaluatedSDKRoot, err := validateAndroidSDKRoot(androidHome)
+func New(androidHome string, pathChecker pathutil.PathChecker) (*Model, error) {
+	evaluatedSDKRoot, err := validateAndroidSDKRoot(androidHome, pathChecker)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Model{androidHome: evaluatedSDKRoot}, nil
+	return &Model{androidHome: evaluatedSDKRoot, pathChecker: pathChecker}, nil
 }
 
 // NewDefaultModel locates Android SDK based on environement variables
-func NewDefaultModel(envs Environment) (*Model, error) {
+func NewDefaultModel(envs Environment, pathChecker pathutil.PathChecker) (*Model, error) {
 	// https://developer.android.com/studio/command-line/variables#envar
 	// Sets the path to the SDK installation directory.
 	// ANDROID_HOME, which also points to the SDK installation directory, is deprecated.
@@ -61,25 +62,25 @@ func NewDefaultModel(envs Environment) (*Model, error) {
 			continue
 		}
 
-		evaluatedSDKRoot, err := validateAndroidSDKRoot(SDKdir)
+		evaluatedSDKRoot, err := validateAndroidSDKRoot(SDKdir, pathChecker)
 		if err != nil {
 			warnings = append(warnings, err.Error())
 			continue
 		}
 
-		return &Model{androidHome: evaluatedSDKRoot}, nil
+		return &Model{androidHome: evaluatedSDKRoot, pathChecker: pathChecker}, nil
 	}
 
 	return nil, fmt.Errorf("could not locate Android SDK root directory: %s", warnings)
 }
 
-func validateAndroidSDKRoot(androidSDKRoot string) (string, error) {
+func validateAndroidSDKRoot(androidSDKRoot string, pathChecker pathutil.PathChecker) (string, error) {
 	evaluatedSDKRoot, err := filepath.EvalSymlinks(androidSDKRoot)
 	if err != nil {
 		return "", err
 	}
 
-	if exist, err := pathutil.IsDirExists(evaluatedSDKRoot); err != nil {
+	if exist, err := pathChecker.IsDirExists(evaluatedSDKRoot); err != nil {
 		return "", err
 	} else if !exist {
 		return "", fmt.Errorf("(%s) is not a valid Android SDK root", evaluatedSDKRoot)
@@ -131,7 +132,7 @@ func (model *Model) LatestBuildToolPath(name string) (string, error) {
 	}
 
 	pth := filepath.Join(buildToolsDir, name)
-	if exist, err := pathutil.IsPathExists(pth); err != nil {
+	if exist, err := model.pathChecker.IsPathExists(pth); err != nil {
 		return "", err
 	} else if !exist {
 		return "", fmt.Errorf("tool (%s) not found at: %s", name, buildToolsDir)
@@ -161,7 +162,7 @@ func (model *Model) CmdlineToolsPath() (string, error) {
 		}
 
 		sdkmanagerPath := matches[0]
-		if exists, err := pathutil.IsDirExists(sdkmanagerPath); err != nil {
+		if exists, err := model.pathChecker.IsDirExists(sdkmanagerPath); err != nil {
 			warnings = append(warnings, fmt.Sprintf("failed to validate path (%s): %v", sdkmanagerPath, err))
 			continue
 		} else if !exists {

@@ -7,7 +7,7 @@ import (
 
 // ParseAABData ...
 func (m *Parser) ParseAABData(pth string) (*ArtifactMetadata, error) {
-	aabInfo, err := androidartifact.GetAABInfo(m.bundletoolPath, pth)
+	aabInfo, err := androidartifact.GetAABInfo(m.cmdFactory, m.bundletoolPath, pth)
 	if err != nil {
 		m.logger.Warnf("Failed to parse AAB info: %s", err)
 		m.logger.AABParseWarnf("aab-parse", "aabparser package failed to parse AAB, error: %s", err)

@@ -3,12 +3,12 @@ package androidartifact
 import (
 	"fmt"
 	"path/filepath"
+	"slices"
 	"strings"
 	"unicode"
 
-	"github.com/bitrise-io/go-utils/pretty"
-	"github.com/bitrise-io/go-utils/sliceutil"
 	"github.com/bitrise-io/go-utils/v2/log"
+	"github.com/bitrise-io/go-utils/v2/pretty"
 )
 
 const universalSplitParam = "universal"
@@ -164,7 +164,7 @@ func FindSameArtifact(pth string, pths []string) string {
 		_, base := parseSigningInfo(pth)
 		artifactPth := filepath.Join(filepath.Dir(pth), base+suffix+filepath.Ext(pth))
 
-		if idx := sliceutil.IndexOfStringInSlice(artifactPth, pths); idx > -1 {
+		if idx := slices.Index(pths, artifactPth); idx > -1 {
 			return pths[idx]
 		}
 	}

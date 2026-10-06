@@ -6,11 +6,12 @@ import (
 	"strings"
 
 	"github.com/bitrise-io/go-android/v2/metaparser/bundletool"
+	"github.com/bitrise-io/go-utils/v2/command"
 )
 
 // GetAABInfo returns infos about the AAB.
-func GetAABInfo(bt bundletool.Path, aabPath string) (Info, error) {
-	manifestContent, err := bt.Exec("dump", "manifest", "--bundle", aabPath)
+func GetAABInfo(cmdFactory command.Factory, bt bundletool.Path, aabPath string) (Info, error) {
+	manifestContent, err := bt.Exec(cmdFactory, "dump", "manifest", "--bundle", aabPath)
 	if err != nil {
 		return Info{}, err
 	}
@@ -20,7 +21,7 @@ func GetAABInfo(bt bundletool.Path, aabPath string) (Info, error) {
 	appName := getAppNameFromManifest(manifestContent)
 
 	if strings.HasPrefix(appName, "@") {
-		resourcesContent, err := bt.Exec("dump", "resources", "--bundle", aabPath, "--resource", appName[1:], "--values")
+		resourcesContent, err := bt.Exec(cmdFactory, "dump", "resources", "--bundle", aabPath, "--resource", appName[1:], "--values")
 		if err != nil {
 			return Info{}, err
 		}

@@ -319,6 +319,22 @@ func Test_ParseXctest3Results(t *testing.T) {
 	assert.Equal(t, want, string(bundle[0].XMLContent))
 }
 
+func Test_ParseTestResults_uppercaseJUnitExtension(t *testing.T) {
+	sampleIOSXmlOutput := readFileString(t, filepath.Join("testdata", "ios_xml_output.golden"))
+	testsDir := t.TempDir()
+	testDir := filepath.Join(testsDir, "test-result")
+	phaseDir := filepath.Join(testDir, "phase")
+	require.NoError(t, createDummyFilesInDirWithContent(testDir, `{"title": "test title"}`, []string{"step-info.json"}))
+	require.NoError(t, createDummyFilesInDirWithContent(phaseDir, `{"test-name": "test name"}`, []string{"test-info.json"}))
+	require.NoError(t, createDummyFilesInDirWithContent(phaseDir, sampleIOSXmlOutput, []string{"TEST-Login.XML"}))
+
+	bundle, err := ParseTestResults(testsDir, false, pathutil.NewPathChecker(), pathutil.NewPathModifier(), log.NewLogger())
+	require.NoError(t, err)
+
+	require.Len(t, bundle, 1)
+	assert.Equal(t, sampleIOSXmlOutput, string(bundle[0].XMLContent))
+}
+
 func Test_findSupportedAttachments(t *testing.T) {
 	tempDir, err := os.MkdirTemp("", "test_attachments")
 	require.NoError(t, err)
