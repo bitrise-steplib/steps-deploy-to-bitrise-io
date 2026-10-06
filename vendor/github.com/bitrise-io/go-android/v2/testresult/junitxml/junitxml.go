@@ -3,6 +3,8 @@ package junitxml
 import (
 	"encoding/xml"
 	"fmt"
+	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/bitrise-io/go-steputils/v2/testreport"
@@ -16,7 +18,7 @@ type Converter struct {
 func (c *Converter) Detect(files []string) bool {
 	c.results = nil
 	for _, file := range files {
-		if strings.HasSuffix(file, ".xml") || strings.HasSuffix(file, ".junit") {
+		if slices.Contains([]string{".xml", ".junit"}, strings.ToLower(filepath.Ext(file))) {
 			c.results = append(c.results, &fileReader{Filename: file})
 		}
 	}

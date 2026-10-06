@@ -23,6 +23,7 @@ import (
 	"github.com/bitrise-io/go-utils/v2/env"
 	"github.com/bitrise-io/go-utils/v2/errorutil"
 	"github.com/bitrise-io/go-utils/v2/exitcode"
+	"github.com/bitrise-io/go-utils/v2/filedownloader"
 	"github.com/bitrise-io/go-utils/v2/fileutil"
 	"github.com/bitrise-io/go-utils/v2/log"
 	"github.com/bitrise-io/go-utils/v2/pathutil"
@@ -539,16 +540,17 @@ func deploy(deployableItems []deployment.DeployableItem, config Config, logger l
 
 	var bTool bundletool.Path
 	if len(aabs) > 0 {
-		bTool, err = bundletool.New(config.BundletoolVersion)
+		bTool, err = bundletool.New(filedownloader.NewDownloader(logger), config.BundletoolVersion)
 		if err != nil {
 			errorCollection = handleDeploymentFailureError(err, errorCollection, logger)
 		}
 	}
+	envRepository := env.NewRepository()
 	fileManager := fileutil.NewFileManager()
 	uploader := uploaders.New(
 		logger,
 		fileManager,
-		androidparser.New(uploaders.NewLogger(logger), bTool, fileManager),
+		androidparser.New(uploaders.NewLogger(logger), bTool, fileManager, command.NewFactory(envRepository), uploaders.NewSDKLocator(envRepository)),
 		iosparser.New(logger, fileManager),
 		config.UseMultipartUpload == "true",
 		determineMultipartConcurrency(config),

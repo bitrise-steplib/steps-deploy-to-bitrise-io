@@ -7,7 +7,7 @@ import (
 
 // ParseAPKData ...
 func (m *Parser) ParseAPKData(pth string) (*ArtifactMetadata, error) {
-	apkInfo, err := androidartifact.GetAPKInfoWithFallback(m.logger, pth)
+	apkInfo, err := androidartifact.GetAPKInfoWithFallback(m.logger, m.cmdFactory, m.sdkModel, pth)
 	if err != nil {
 		return nil, err
 	}

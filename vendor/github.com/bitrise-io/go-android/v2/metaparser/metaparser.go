@@ -3,6 +3,7 @@ package metaparser
 import (
 	"github.com/bitrise-io/go-android/v2/metaparser/androidartifact"
 	"github.com/bitrise-io/go-android/v2/metaparser/bundletool"
+	"github.com/bitrise-io/go-utils/v2/command"
 	"github.com/bitrise-io/go-utils/v2/fileutil"
 )
 
@@ -20,13 +21,17 @@ type Parser struct {
 	logger         androidartifact.Logger
 	bundletoolPath bundletool.Path
 	fileManager    fileutil.FileManager
+	cmdFactory     command.Factory
+	sdkModel       androidartifact.SDKLocator
 }
 
 // New ...
-func New(logger androidartifact.Logger, bundletoolPath bundletool.Path, fileManager fileutil.FileManager) *Parser {
+func New(logger androidartifact.Logger, bundletoolPath bundletool.Path, fileManager fileutil.FileManager, cmdFactory command.Factory, sdkModel androidartifact.SDKLocator) *Parser {
 	return &Parser{
 		logger:         logger,
 		bundletoolPath: bundletoolPath,
 		fileManager:    fileManager,
+		cmdFactory:     cmdFactory,
+		sdkModel:       sdkModel,
 	}
 }
