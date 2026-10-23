@@ -1,6 +1,6 @@
 module github.com/bitrise-steplib/steps-deploy-to-bitrise-io
 
-go 1.22
+go 1.24
 
 require (
 	github.com/bitrise-io/bitrise v0.0.0-20220808135808-3483087dd853
@@ -31,7 +31,7 @@ require (
 	github.com/gofrs/uuid/v5 v5.2.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-version v1.7.0 // indirect
-	github.com/klauspost/compress v1.18.0 // indirect
+	github.com/klauspost/compress v1.18.7 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rogpeppe/go-internal v1.10.0 // indirect
