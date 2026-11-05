@@ -11,7 +11,7 @@
   <testcase name="testExample()" classname="DarkAndLightModeUITests" time="3"></testcase>
   <testcase name="testLaunchPerformance()" classname="DarkAndLightModeUITests" time="28"></testcase>
   <testcase name="testLaunch()" classname="DarkAndLightModeUITestsLaunchTests" time="7">
-   <failure>Dark Appearance, Landscape Right: XCTAssertTrue failed&#xA;Dark Appearance, Portrait: XCTAssertTrue failed&#xA;Light Appearance, Landscape Right: XCTAssertTrue failed&#xA;Light Appearance, Portrait: XCTAssertTrue failed&#xA;</failure>
+   <failure>Dark Appearance, LandscapeRight: DarkAndLightModeUITestsLaunchTests.swift:32: XCTAssertTrue failed&#xA;Dark Appearance, Portrait: DarkAndLightModeUITestsLaunchTests.swift:32: XCTAssertTrue failed&#xA;Light Appearance, LandscapeRight: DarkAndLightModeUITestsLaunchTests.swift:32: XCTAssertTrue failed&#xA;Light Appearance, Portrait: DarkAndLightModeUITestsLaunchTests.swift:32: XCTAssertTrue failed&#xA;</failure>
    <properties>
     <property name="attachment_0" value="Screen Recording 2023-12-12 at 03.16.02 PM_1702394162331000089.mp4"></property>
     <property name="attachment_1" value="Launch Screen_1_FD1B9BC4-364B-4191-88F9-48DD5B4B251F_1702394166035000085.png"></property>
@@ -24,7 +24,7 @@
    </properties>
   </testcase>
   <testcase name="testLaunch()" classname="DarkAndLightModeUITestsLaunchTests" time="4">
-   <failure>Dark Appearance, Landscape Right: XCTAssertTrue failed&#xA;Dark Appearance, Portrait: XCTAssertTrue failed&#xA;Light Appearance, Landscape Right: XCTAssertTrue failed&#xA;Light Appearance, Portrait: XCTAssertTrue failed&#xA;</failure>
+   <failure>Dark Appearance, LandscapeRight: DarkAndLightModeUITestsLaunchTests.swift:32: XCTAssertTrue failed&#xA;Dark Appearance, Portrait: DarkAndLightModeUITestsLaunchTests.swift:32: XCTAssertTrue failed&#xA;Light Appearance, LandscapeRight: DarkAndLightModeUITestsLaunchTests.swift:32: XCTAssertTrue failed&#xA;Light Appearance, Portrait: DarkAndLightModeUITestsLaunchTests.swift:32: XCTAssertTrue failed&#xA;</failure>
    <properties>
     <property name="attachment_0" value="Screen Recording 2023-12-12 at 03.16.06 PM_1702394166621000051.mp4"></property>
     <property name="attachment_1" value="Launch Screen_1_DC094C24-8A20-4B15-BF9C-20CCE4270EF2_1702394170198999881.png"></property>
@@ -37,7 +37,7 @@
    </properties>
   </testcase>
   <testcase name="testLaunch()" classname="DarkAndLightModeUITestsLaunchTests" time="4">
-   <failure>Dark Appearance, Landscape Right: XCTAssertTrue failed&#xA;Dark Appearance, Portrait: XCTAssertTrue failed&#xA;Light Appearance, Landscape Right: XCTAssertTrue failed&#xA;Light Appearance, Portrait: XCTAssertTrue failed&#xA;</failure>
+   <failure>Dark Appearance, LandscapeRight: DarkAndLightModeUITestsLaunchTests.swift:32: XCTAssertTrue failed&#xA;Dark Appearance, Portrait: DarkAndLightModeUITestsLaunchTests.swift:32: XCTAssertTrue failed&#xA;Light Appearance, LandscapeRight: DarkAndLightModeUITestsLaunchTests.swift:32: XCTAssertTrue failed&#xA;Light Appearance, Portrait: DarkAndLightModeUITestsLaunchTests.swift:32: XCTAssertTrue failed&#xA;</failure>
    <properties>
     <property name="attachment_0" value="Screen Recording 2023-12-12 at 03.16.10 PM_1702394170773999929.mp4"></property>
     <property name="attachment_1" value="Launch Screen_1_9FC899BE-9B79-4FC0-8A4E-B41218954C96_1702394174743000030.png"></property>
