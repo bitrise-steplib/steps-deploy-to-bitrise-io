@@ -9,7 +9,7 @@ require (
 	github.com/bitrise-io/go-steputils/v2 v2.0.0-alpha.56
 	github.com/bitrise-io/go-utils/v2 v2.0.0-alpha.39
 	github.com/bitrise-io/go-xcode v1.3.3
-	github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.86
+	github.com/bitrise-io/go-xcode/v2 v2.0.0-alpha.92
 	github.com/docker/go-units v0.5.0
 	github.com/google/go-cmp v0.6.0
 	github.com/gorilla/mux v1.8.0
@@ -27,7 +27,6 @@ require (
 	github.com/bitrise-io/goinp v0.0.0-20211005113137-305e91b481f4 // indirect
 	github.com/bitrise-io/stepman v0.0.0-20220808095634-6e12d2726f30 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/fullsailor/pkcs7 v0.0.0-20190404230743-d7302db945fa // indirect
 	github.com/gofrs/uuid/v5 v5.2.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-version v1.7.0 // indirect
@@ -36,6 +35,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rogpeppe/go-internal v1.10.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
+	github.com/smallstep/pkcs7 v0.2.3 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	golang.org/x/crypto v0.33.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
